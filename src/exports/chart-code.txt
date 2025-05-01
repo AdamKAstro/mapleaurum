@@ -1,0 +1,157 @@
+// Chart Component Code Export
+// Generated automatically - DO NOT EDIT
+
+// Required dependencies in package.json:
+{
+  "dependencies": {
+    "@supabase/supabase-js": "^2.39.7",
+    "lucide-react": "^0.344.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-router-dom": "^6.22.3",
+    "clsx": "^2.1.0",
+    "tailwind-merge": "^2.2.1",
+    "@radix-ui/react-tooltip": "^1.0.7",
+    "@radix-ui/react-select": "^2.0.0",
+    "@radix-ui/react-dialog": "^1.0.5",
+    "framer-motion": "^11.0.8",
+    "recharts": "^2.12.2",
+    "d3-force": "^3.0.0",
+    "@dnd-kit/core": "^6.1.0",
+    "@dnd-kit/modifiers": "^7.0.0"
+  }
+}
+
+// Required files:
+
+// 1. src/pages/scatter-chart/index.tsx
+import React, { useState, useCallback, useMemo, useEffect, useRef } from 'react';
+import { Link } from 'react-router-dom';
+import { Home, Table2, ZoomIn, ZoomOut, RotateCcw, Settings, GripHorizontal } from 'lucide-react';
+import { ScatterChart, Scatter, XAxis, YAxis, ZAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { motion, AnimatePresence } from 'framer-motion';
+import { DndContext, DragEndEvent, useDraggable } from '@dnd-kit/core';
+import { restrictToWindowEdges } from '@dnd-kit/modifiers';
+import { Button } from '../../components/ui/button';
+import { MetricSelector } from '../../components/metric-selector';
+import { TierSelector } from '../../components/tier-selector';
+import { LoadingIndicator } from '../../components/ui/loading-indicator';
+import { useSubscription } from '../../contexts/subscription-context';
+import { useCurrency } from '../../contexts/currency-context';
+import { cn, formatNumber, formatCurrency, formatPercent, formatMoz, formatKoz, getNestedValue } from '../../lib/utils';
+import { metrics, getMetricByKey, getAccessibleMetrics } from '../../lib/metric-types';
+import { getCompaniesForScatterChart } from '../../lib/supabase';
+import { createLabelSimulation } from '../../lib/force-simulation';
+import type { Company, ColumnTier, MetricConfig } from '../../lib/types';
+
+// [Rest of scatter-chart/index.tsx code...]
+
+// 2. src/lib/force-simulation.ts
+import { forceSimulation, forceCollide, forceX, forceY } from 'd3-force';
+import type { SimulationNodeDatum } from 'd3-force';
+
+interface LabelNode extends SimulationNodeDatum {
+  id: string;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  dataX: number;
+  dataY: number;
+  radius: number;
+  density: number;
+}
+
+// [Rest of force-simulation.ts code...]
+
+// 3. src/lib/metric-types.ts
+import type { ColumnTier } from './types';
+
+export interface MetricConfig {
+  key: string;
+  label: string;
+  description: string;
+  unit: string;
+  higherIsBetter: boolean;
+  category: MetricCategory;
+  tier: ColumnTier;
+  path: string;
+  format: 'number' | 'currency' | 'percent' | 'moz' | 'koz';
+}
+
+// [Rest of metric-types.ts code...]
+
+// 4. src/lib/utils.ts
+import { type ClassValue, clsx } from "clsx";
+import { twMerge } from "tailwind-merge";
+
+export function cn(...inputs: ClassValue[]): string {
+  return twMerge(clsx(inputs));
+}
+
+// [Rest of utils.ts code...]
+
+// 5. src/lib/types.ts
+export type Theme = 'default' | 'ocean' | 'sunset';
+
+export interface ThemeConfig {
+  name: Theme;
+  label: string;
+  colors: {
+    background: string;
+    foreground: string;
+    accent: string;
+    muted: string;
+  };
+}
+
+// [Rest of types.ts code...]
+
+// 6. src/lib/supabase.ts
+import { supabase } from './supabaseClient';
+import type { Company, Currency, FilterState, SortState, RpcResponseRow, PaginatedRowData } from './types';
+
+interface GetPaginatedCompaniesResult {
+  companies: Company[];
+  totalCount: number;
+}
+
+// [Rest of supabase.ts code...]
+
+// Required Tailwind configuration:
+/** @type {import('tailwindcss').Config} */
+export default {
+  content: ['./index.html', './src/**/*.{js,ts,jsx,tsx}'],
+  theme: {
+    extend: {
+      colors: {
+        navy: {
+          DEFAULT: '#1C2526',
+          50: '#E8EAEB',
+          100: '#D1D6D7',
+          200: '#A3ACAE',
+          300: '#758386',
+          400: '#47595D',
+          500: '#1C2526',
+          600: '#161E1F',
+          700: '#101617',
+          800: '#0B0F10',
+          900: '#050708',
+        },
+        accent: {
+          red: '#E63946',
+          yellow: '#F4A261',
+          pink: '#F4A6A9',
+          teal: '#457B9D',
+          brown: '#3C2F2F',
+        },
+        surface: {
+          white: '#F5F5F5',
+          light: '#FFFFFF',
+          dark: '#1C2526',
+        },
+      },
+    },
+  },
+  plugins: [],
+}

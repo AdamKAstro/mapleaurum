@@ -1,0 +1,350 @@
+// src/pages/scatter-chart/index.tsx
+import React, { useState, useCallback, useMemo, useEffect, useRef } from 'react';
+// Icons
+import { Download, Settings, ZoomIn, ZoomOut, RotateCcw, Lock } from 'lucide-react';
+// Charting Libraries
+import { Chart as ChartJS, LinearScale, PointElement, LogarithmicScale, Tooltip, Legend, ChartOptions, ScatterDataPoint, ScriptableContext } from 'chart.js';
+import { Scatter } from 'react-chartjs-2';
+import zoomPlugin from 'chartjs-plugin-zoom';
+import gradient from 'chartjs-plugin-gradient';
+import ChartDataLabels, { Context as DataLabelsContext } from 'chartjs-plugin-datalabels';
+
+// Context Hooks
+import { useFilters } from '../../contexts/filter-context';
+import { useCurrency } from '../../contexts/currency-context';
+
+// Lib Utilities and Types
+import { cn, getNestedValue, isValidNumber } from '../../lib/utils';
+import { getMetricByKey, getAccessibleMetrics, MetricConfig } from '../../lib/metric-types';
+import { normalizeValues, formatValueWrapper, exportChartCode, downloadJson } from './chartUtils';
+import type { Company, ColumnTier, Currency, MetricFormat } from '../../lib/types';
+
+// UI Components
+import { Button } from '../../components/ui/button';
+import { MetricSelector } from '../../components/metric-selector';
+import { LoadingIndicator } from '../../components/ui/loading-indicator';
+import { PageContainer } from '../../components/ui/page-container';
+import { FeatureAccess } from '../../components/ui/feature-access';
+
+// Register Chart.js plugins
+ChartJS.register( LinearScale, LogarithmicScale, PointElement, Tooltip, Legend, zoomPlugin, gradient, ChartDataLabels );
+
+// --- Constants ---
+const statusColors: Record<string, { background: string; border: string }> = { producer:{background:'rgba(34,197,94,0.7)',border:'rgb(12,163,74)'}, developer:{background:'rgba(59,130,246,0.7)',border:'rgb(37,99,195)'}, explorer:{background:'rgba(168,85,247,0.7)',border:'rgb(147,51,194)'}, royalty:{background:'rgba(244,162,97,0.7)',border:'rgb(217,119,6)'}, other:{background:'rgba(107,114,128,0.7)',border:'rgb(75,85,99)'}, default:{background:'rgba(107,114,128,0.7)',border:'rgb(75,85,99)'} };
+const chartSettingsFunctions = { pointRadius: (n: number): number => 6+(Math.max(0, Math.min(1, n||0))*35), pointHoverRadius: (n: number): number => 8+(Math.max(0, Math.min(1, n||0))*48) };
+const EMPTY_COMPANY_ARRAY: Company[] = [];
+
+// --- ScaleToggle Component ---
+function ScaleToggle({ scale, onChange, label }: { scale: 'linear' | 'log', onChange: (scale: 'linear' | 'log') => void, label: string }) {
+    return ( <div className="flex items-center gap-2 text-xs"> <span className="text-surface-white/70">{label}:</span> <div className="flex bg-navy-400/20 rounded-lg overflow-hidden p-0.5 gap-0.5"> <button className={cn("px-3 py-1.5 text-xs font-medium rounded-md transition-all duration-200", scale === 'linear' ? "bg-navy-400 text-surface-white shadow-lg shadow-navy-300/30 ring-1 ring-navy-300/30" : "text-surface-white/70 hover:bg-navy-400/30")} onClick={() => onChange('linear')} aria-pressed={scale === 'linear'}>Linear</button> <button className={cn("px-3 py-1.5 text-xs font-medium rounded-md transition-all duration-200", scale === 'log' ? "bg-navy-400 text-surface-white shadow-lg shadow-navy-300/30 ring-1 ring-navy-300/30" : "text-surface-white/70 hover:bg-navy-400/30")} onClick={() => onChange('log')} aria-pressed={scale === 'log'}>Log</button> </div> </div> );
+}
+
+// --- ScatterChartPage Component ---
+export function ScatterChartPage() {
+    // Hooks for Context
+    const {
+        currentUserTier,
+        filteredCompanyIds,
+        loadingFilteredSet,
+        error: contextError,
+        fetchCompaniesByIds,
+        totalCount,
+        excludedCompanyIds // Need this to filter data locally for the chart
+    } = useFilters();
+    const { currency } = useCurrency();
+
+    // Local State for Chart Data (fetched based on IDs)
+    const [chartCompanyData, setChartCompanyData] = useState<Company[]>(EMPTY_COMPANY_ARRAY); // Initialized to []
+    const [isChartDataLoading, setIsChartDataLoading] = useState<boolean>(false); // Separate loading for ID->Data fetch
+
+    // Local state for chart axis/scale settings
+    const [xMetric, setXMetric] = useState('financials.market_cap_value');
+    const [yMetric, setYMetric] = useState('valuation_metrics.ev_per_resource_oz_all');
+    const [zMetric, setZMetric] = useState('production.current_production_total_aueq_koz');
+    const [xScale, setXScale] = useState<'linear' | 'log'>('log');
+    const [yScale, setYScale] = useState<'linear' | 'log'>('log');
+    const [zScale, setZScale] = useState<'linear' | 'log'>('linear');
+
+    // Refs
+    const chartRef = useRef<ChartJS<'scatter', (number | ScatterDataPoint | null)[], unknown> | null>(null);
+    const containerRef = useRef<HTMLDivElement>(null);
+
+    // Effect to destroy chart on unmount
+    useEffect(() => {
+        const chart = chartRef.current;
+        // Return cleanup function
+        return () => {
+            if (chart) {
+                console.log("[ScatterChart] Destroying chart instance.");
+                chart.destroy();
+                chartRef.current = null;
+            }
+        };
+    }, []); // Empty dependency array ensures this runs only on mount and unmount
+
+    // Effect to fetch data for the chart using IDs from context
+    useEffect(() => {
+        let isMounted = true;
+        const fetchDataForChart = async () => {
+            // Only proceed if context has finished loading the IDs and we have some IDs
+            if (!loadingFilteredSet && filteredCompanyIds && filteredCompanyIds.length > 0) {
+                setIsChartDataLoading(true);
+                setChartCompanyData(EMPTY_COMPANY_ARRAY); // Clear previous data
+                try {
+                    console.log(`[ScatterChart] Fetching company details for ${filteredCompanyIds.length} IDs.`);
+                    const data = await fetchCompaniesByIds(filteredCompanyIds); // fetchCompaniesByIds should return [] on error or no data
+                    if (isMounted) {
+                        // Ensure data is an array before setting state
+                        setChartCompanyData(Array.isArray(data) ? data : EMPTY_COMPANY_ARRAY);
+                        console.log(`[ScatterChart] Received data for ${Array.isArray(data) ? data.length : 'N/A'} companies.`);
+                    }
+                } catch (e) {
+                    console.error("[ScatterChart] Error in fetchDataForChart effect:", e);
+                    if (isMounted) setChartCompanyData(EMPTY_COMPANY_ARRAY); // Reset on error
+                } finally {
+                    if (isMounted) setIsChartDataLoading(false);
+                }
+            } else if (!loadingFilteredSet) {
+                 // If context is not loading and there are no IDs, ensure data is empty
+                if (isMounted && chartCompanyData.length > 0) { // Only update if needed
+                    console.log("[ScatterChart] No filtered IDs from context, clearing chart data.");
+                    setChartCompanyData(EMPTY_COMPANY_ARRAY);
+                }
+            }
+        };
+
+        fetchDataForChart();
+
+        // Cleanup function
+        return () => {
+            isMounted = false;
+            console.log("[ScatterChart] Cleanup fetch data effect.");
+        };
+    }, [filteredCompanyIds, loadingFilteredSet, fetchCompaniesByIds]); // Dependencies
+
+    // Memos for configs and datasets
+    const accessibleMetrics = useMemo(() => getAccessibleMetrics(currentUserTier), [currentUserTier]);
+    const xMetricConfig = useMemo(() => getMetricByKey(xMetric), [xMetric]);
+    const yMetricConfig = useMemo(() => getMetricByKey(yMetric), [yMetric]);
+    const zMetricConfig = useMemo(() => getMetricByKey(zMetric), [zMetric]);
+
+    // Chart Datasets memoization (Apply exclusion filter and safety check)
+    const chartDatasets = useMemo(() => {
+        // *** ADDED SAFETY CHECK ***
+        // Ensure chartCompanyData is an array before proceeding
+        if (!Array.isArray(chartCompanyData)) {
+             console.warn("[ScatterChart] chartCompanyData is not an array during chartDatasets calculation. Value:", chartCompanyData);
+             return []; // Return empty dataset if data isn't an array
+        }
+
+        const idsToExclude = excludedCompanyIds instanceof Set ? excludedCompanyIds : new Set<number>();
+        // Filter the fetched data *before* processing for the chart
+        const includedCompanies = chartCompanyData.filter(c => !idsToExclude.has(c.company_id));
+
+        // Check if loading or essential configs/data are missing
+        if (isChartDataLoading || !includedCompanies.length || !xMetricConfig?.nested_path || !yMetricConfig?.nested_path || !zMetricConfig?.nested_path) {
+            return [];
+        }
+
+        // Process points using includedCompanies
+        const points = includedCompanies
+            .map(c => ({
+                x: getNestedValue(c, xMetricConfig.nested_path),
+                y: getNestedValue(c, yMetricConfig.nested_path),
+                z: getNestedValue(c, zMetricConfig.nested_path),
+                company: c
+            }))
+            .filter(p => // Filter for valid, positive numbers if using log scale
+                isValidNumber(p.x) && isValidNumber(p.y) && isValidNumber(p.z) &&
+                (xScale !== 'log' || (typeof p.x === 'number' && p.x > 0)) &&
+                (yScale !== 'log' || (typeof p.y === 'number' && p.y > 0)) &&
+                (zScale !== 'log' || (typeof p.z === 'number' && p.z > 0))
+            );
+
+        if (points.length === 0) {
+            console.log("[ScatterChart] No valid points after filtering for scales/values.");
+            return []; // No valid points after filtering for scales/values
+        }
+
+        const zValues = points.map(p => p.z as number);
+        const normalizedZ = normalizeValues(zValues, zScale);
+
+        // Group points by status
+        const groupedPoints = points.reduce((acc, point, i) => {
+            const status = point.company.status?.toLowerCase() || 'default';
+            if (!acc[status]) {
+                acc[status] = {
+                    label: status.charAt(0).toUpperCase() + status.slice(1),
+                    data: [],
+                    backgroundColor: statusColors[status]?.background || statusColors.default.background,
+                    borderColor: statusColors[status]?.border || statusColors.default.border,
+                    borderWidth: 1,
+                    hoverBorderWidth: 2,
+                    datalabels: {
+                        backgroundColor: 'rgba(30,41,59,0.75)',
+                        borderRadius: 3,
+                        padding: { top: 2, bottom: 1, left: 4, right: 4 },
+                        color: '#F8FAFC',
+                        font: { size: 9, weight: '500', family: "'Inter', sans-serif" },
+                        textAlign: 'center', anchor: 'center', align: 'center', offset: 0, clamp: true,
+                        display: (ctx: DataLabelsContext) => ((ctx.dataset?.data?.[ctx.dataIndex] as any)?.r_normalized ?? 0) > 0.1, // Check if r_normalized exists
+                        formatter: (v, ctx: DataLabelsContext) => {
+                            const dp = ctx.chart.data.datasets[ctx.datasetIndex]?.data?.[ctx.dataIndex] as any;
+                            return dp?.company?.tsx_code || null;
+                        }
+                    }
+                };
+            }
+            // Push point data including normalized radius value
+            acc[status].data.push({
+                x: point.x as number,
+                y: point.y as number,
+                r_normalized: normalizedZ[i] ?? 0, // Use calculated normalized value
+                company: point.company // Attach full company object for tooltips/labels
+            });
+            return acc;
+        }, {} as Record<string, any>); // Initialize accumulator correctly
+
+        return Object.values(groupedPoints); // Return array of dataset objects
+    }, [chartCompanyData, excludedCompanyIds, isChartDataLoading, xMetricConfig, yMetricConfig, zMetricConfig, xScale, yScale, zScale]); // Dependencies list
+
+
+    // Chart Options memoization (Unchanged)
+    const chartOptions = useMemo((): ChartOptions<'scatter'> => {
+        return {
+            responsive: true,
+            maintainAspectRatio: false,
+            animation: false, // Generally disable for performance with dynamic data
+            elements: {
+                point: {
+                    radius: (c: ScriptableContext<'scatter'>) => chartSettingsFunctions.pointRadius((c.raw as any)?.r_normalized ?? 0),
+                    hoverRadius: (c: ScriptableContext<'scatter'>) => chartSettingsFunctions.pointHoverRadius((c.raw as any)?.r_normalized ?? 0),
+                    hitRadius: 5,
+                    hoverBorderWidth: 2,
+                }
+            },
+            scales: {
+                x: {
+                    type: xScale === 'log' ? 'logarithmic' : 'linear',
+                    position: 'bottom',
+                    title: { display: true, text: xMetricConfig?.label ? `${xMetricConfig.label}${xScale === 'log' ? ' (Log)' : ''}` : 'X Axis', color: '#94A3B8', font: { size: 12 } },
+                    ticks: { color: '#64748B', font: { size: 9 }, callback: (v) => formatValueWrapper(typeof v === 'number' ? v : NaN, xMetricConfig?.format, currency as Currency), maxTicksLimit: 8, autoSkipPadding: 15 },
+                    grid: { color: 'rgba(51,65,85,0.2)', borderColor: 'rgba(51,65,85,0.5)' }
+                },
+                y: {
+                    type: yScale === 'log' ? 'logarithmic' : 'linear',
+                    position: 'left',
+                    title: { display: true, text: yMetricConfig?.label ? `${yMetricConfig.label}${yScale === 'log' ? ' (Log)' : ''}` : 'Y Axis', color: '#94A3B8', font: { size: 12 } },
+                    ticks: { color: '#64748B', font: { size: 9 }, callback: (v) => formatValueWrapper(typeof v === 'number' ? v : NaN, yMetricConfig?.format, currency as Currency), maxTicksLimit: 8, autoSkipPadding: 15 },
+                    grid: { color: 'rgba(51,65,85,0.2)', borderColor: 'rgba(51,65,85,0.5)' }
+                }
+            },
+            plugins: {
+                legend: { position: 'bottom', labels: { color: '#CBD5E1', usePointStyle: true, pointStyle: 'circle', padding: 20, font: { size: 11 } } },
+                tooltip: {
+                    enabled: true, backgroundColor: 'rgba(15,23,42,0.9)', titleColor: '#5EEAD4', bodyColor: '#E2E8F0', borderColor: 'rgba(51,65,85,0.7)', borderWidth: 1, padding: 10, cornerRadius: 4, boxPadding: 4, usePointStyle: true,
+                    callbacks: {
+                        label: (ctx: any) => {
+                            const dp = ctx.raw as any;
+                            if (!dp || !dp.company) return '';
+                            const company = dp.company as Company;
+                            const lines = [` ${company.company_name} (${company.tsx_code || 'N/A'})`];
+                            if (xMetricConfig) lines.push(` ${xMetricConfig.label}: ${formatValueWrapper(dp.x, xMetricConfig.format, currency as Currency)}`);
+                            if (yMetricConfig) lines.push(` ${yMetricConfig.label}: ${formatValueWrapper(dp.y, yMetricConfig.format, currency as Currency)}`);
+                            if (zMetricConfig) {
+                                const originalZ = getNestedValue(company, zMetricConfig.nested_path);
+                                lines.push(` ${zMetricConfig.label}: ${formatValueWrapper(originalZ, zMetricConfig.format, currency as Currency)}`);
+                            }
+                            return lines;
+                        }
+                    }
+                },
+                zoom: { pan: { enabled: true, mode: 'xy', threshold: 5 }, zoom: { wheel: { enabled: true, speed: 0.1 }, pinch: { enabled: true }, mode: 'xy' } },
+                datalabels: { display: false } // Default off, enabled per dataset
+            }
+        };
+    }, [xScale, yScale, xMetricConfig, yMetricConfig, zMetricConfig, currency]);
+
+    // Handlers for zoom
+    const handleZoomIn = useCallback(() => { chartRef.current?.zoom(1.2); }, []);
+    const handleZoomOut = useCallback(() => { chartRef.current?.zoom(0.8); }, []);
+    const handleResetZoom = useCallback(() => { chartRef.current?.resetZoom(); }, []);
+    // Optional: handleExportCode if needed
+    // const handleExportCode = useCallback(() => { /* ... */ }, []);
+
+    // Page Actions (No Reset Button)
+    const pageActions = (
+        <>
+            {/* Add other relevant actions like Download if desired */}
+        </>
+    );
+
+    // Combined loading state for UI
+    const isLoading = loadingFilteredSet || isChartDataLoading;
+
+    // Description Text
+    const descriptionText = isLoading ? "Loading chart data..."
+        : contextError ? "Error loading chart data"
+        : `Comparing ${totalCount ?? 0} companies based on filters`;
+
+    // Determine chart empty/error state message
+    const getChartMessage = () => {
+         if (isLoading) return "Loading chart data...";
+         if (contextError) return `Error: ${contextError}`;
+         if (!filteredCompanyIds || filteredCompanyIds.length === 0) return "No companies match the current filters.";
+         if (!chartCompanyData.length && !isChartDataLoading) return "Could not load company details for the chart."; // After fetch attempt
+         if (chartDatasets.length === 0 && !isChartDataLoading) return "No valid data points for the selected metrics/scales. (Check exclusions or try linear scale)";
+         return null; // Ready to render chart
+     };
+     const chartMessage = getChartMessage();
+
+
+    return (
+        <PageContainer
+            title="Scatter Analysis"
+            description={descriptionText}
+            actions={pageActions} // Pass actions without Reset button
+            className="relative isolate flex flex-col flex-grow" // Added flex properties
+            contentClassName="flex flex-col flex-grow min-h-0" // Added flex properties
+        >
+            {/* Background Div */}
+            <div className="absolute inset-0 bg-cover bg-center bg-no-repeat bg-fixed -z-10 opacity-[0.03]" style={{ backgroundImage: "url('/Background2.jpg')" }} aria-hidden="true" />
+
+            {/* Content Area */}
+            <div className="space-y-6 relative z-0 flex flex-col flex-grow min-h-0">
+                {/* Controls Section */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-start bg-navy-400/10 p-4 rounded-lg flex-shrink-0">
+                    <FeatureAccess requiredTier={xMetricConfig?.tier ?? 'free'} currentTier={currentUserTier}> <div className="space-y-2"><MetricSelector label="X Axis" selectedMetric={xMetric} onMetricChange={setXMetric} metrics={accessibleMetrics} currentTier={currentUserTier}/><ScaleToggle scale={xScale} onChange={setXScale} label="X Scale"/></div> </FeatureAccess>
+                    <FeatureAccess requiredTier={yMetricConfig?.tier ?? 'free'} currentTier={currentUserTier}> <div className="space-y-2"><MetricSelector label="Y Axis" selectedMetric={yMetric} onMetricChange={setYMetric} metrics={accessibleMetrics} currentTier={currentUserTier}/><ScaleToggle scale={yScale} onChange={setYScale} label="Y Scale"/></div> </FeatureAccess>
+                    <FeatureAccess requiredTier={zMetricConfig?.tier ?? 'free'} currentTier={currentUserTier}> <div className="space-y-2"><MetricSelector label="Bubble Size" selectedMetric={zMetric} onMetricChange={setZMetric} metrics={accessibleMetrics} currentTier={currentUserTier}/><ScaleToggle scale={zScale} onChange={setZScale} label="Size Scale"/></div> </FeatureAccess>
+                </div>
+
+                {/* Chart Section */}
+                <div className="relative bg-navy-800/70 backdrop-blur-sm rounded-lg p-4 shadow-lg border border-navy-700/50 flex flex-col flex-grow min-h-0">
+                    {/* Zoom Buttons */}
+                    <div className="absolute top-3 right-3 flex items-center gap-1.5 z-10">
+                        <Button variant="outline" size="icon-sm" onClick={handleZoomIn} title="Zoom In" className="bg-navy-700/50 border-navy-600 hover:bg-navy-600"> <ZoomIn className="h-4 w-4" /> </Button>
+                        <Button variant="outline" size="icon-sm" onClick={handleZoomOut} title="Zoom Out" className="bg-navy-700/50 border-navy-600 hover:bg-navy-600"> <ZoomOut className="h-4 w-4" /> </Button>
+                        <Button variant="outline" size="icon-sm" onClick={handleResetZoom} title="Reset Zoom" className="bg-navy-700/50 border-navy-600 hover:bg-navy-600"> <RotateCcw className="h-4 w-4" /> </Button>
+                    </div>
+
+                    {/* Chart Area - Takes remaining space */}
+                    <div className="flex-grow min-h-[400px] sm:min-h-[500px]" ref={containerRef}>
+                        {chartMessage ? (
+                            // Display message if chart cannot be rendered
+                            <div className="h-full flex flex-col items-center justify-center text-center text-gray-400 p-4">
+                                {isLoading && !contextError ? <LoadingIndicator message={chartMessage}/> : <p>{chartMessage}</p>}
+                            </div>
+                        ) : containerRef.current ? (
+                            // Render chart only if container exists and no message needed
+                            <Scatter ref={chartRef} data={{ datasets: chartDatasets }} options={chartOptions} />
+                        ) : (
+                            // Fallback while container ref might not be ready on initial render
+                            <div className="h-full flex items-center justify-center text-gray-600"> Initializing chart... </div>
+                        )}
+                    </div>
+                </div>
+            </div>
+        </PageContainer>
+    );
+}

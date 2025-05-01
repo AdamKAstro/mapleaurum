@@ -1,0 +1,244 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply text-surface-white antialiased; /* Removed bg-navy */
+  }
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-bold tracking-tight;
+  }
+}
+
+@layer components {
+  .table-container {
+    @apply relative border border-navy-400/30 rounded-lg shadow-lg;
+    height: calc(100vh - 180px);
+    overflow: auto;
+  }
+
+  .table-header {
+    @apply sticky top-0 z-20;
+  }
+
+  .table-header th {
+    @apply bg-navy-500;
+  }
+
+  .table-cell {
+    @apply px-3 py-2.5 text-sm border-b border-navy-400/20;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  /* Column widths */
+  .col-company {
+    width: 180px;
+    min-width: 180px;
+  }
+
+  .col-status {
+    width: 120px;
+    min-width: 120px;
+  }
+
+  .col-minerals {
+    width: 120px;
+    min-width: 120px;
+  }
+
+  .col-percent {
+    width: 90px;
+    min-width: 90px;
+  }
+
+  .col-price {
+    width: 90px;
+    min-width: 90px;
+  }
+
+  .col-market-cap {
+    width: 110px;
+    min-width: 110px;
+  }
+
+  .col-enterprise-value {
+    width: 120px;
+    min-width: 120px;
+  }
+
+  .col-cash {
+    width: 100px;
+    min-width: 100px;
+  }
+
+  .col-debt {
+    width: 100px;
+    min-width: 100px;
+  }
+
+  .col-net-assets {
+    width: 110px;
+    min-width: 110px;
+  }
+
+  .col-revenue {
+    width: 110px;
+    min-width: 110px;
+  }
+
+  .col-ebitda {
+    width: 110px;
+    min-width: 110px;
+  }
+
+  .col-fcf {
+    width: 110px;
+    min-width: 110px;
+  }
+
+  .col-reserves {
+    width: 120px;
+    min-width: 120px;
+  }
+
+  .col-resources {
+    width: 120px;
+    min-width: 120px;
+  }
+
+  .col-production {
+    width: 120px;
+    min-width: 120px;
+  }
+
+  .col-costs {
+    width: 110px;
+    min-width: 110px;
+  }
+
+  .col-ratios {
+    width: 100px;
+    min-width: 100px;
+  }
+
+  /* Sticky columns with improved positioning */
+  .sticky-col {
+    @apply sticky bg-navy-500 z-10 border-r border-navy-400/20;
+  }
+
+  .sticky-col-1 {
+    @apply sticky-col left-0;
+  }
+
+  /* Table background */
+  .table-bg {
+    @apply bg-navy-500;
+    min-width: max-content;
+    border-collapse: separate;
+    border-spacing: 0;
+  }
+
+  /* Z-index layers */
+  .z-header {
+    @apply z-30;
+  }
+
+  .z-sticky {
+    @apply z-20;
+  }
+
+  .z-content {
+    @apply z-10;
+  }
+
+  /* Row hover effect */
+  .hover-highlight {
+    @apply transition-colors duration-150;
+  }
+
+  .hover-highlight:hover > td {
+    @apply bg-navy-400/20;
+  }
+
+  /* Group header styles */
+  .group-header {
+    @apply bg-navy-500 font-semibold text-surface-white/90;
+  }
+
+  /* Locked column overlay */
+  .locked-overlay {
+    @apply absolute inset-0 bg-navy-400/80 backdrop-blur-sm 
+           flex items-center justify-center transition-opacity;
+  }
+
+  /* Minerals container */
+  .minerals-container {
+    @apply flex flex-wrap gap-1;
+    max-width: 120px;
+  }
+
+  /* Tooltip styles */
+  .tooltip-content {
+    @apply z-50;
+  }
+
+  /* Radix Tooltip Portal styles */
+  [data-radix-popper-content-wrapper] {
+    @apply !z-[100];
+  }
+
+  /* Company name and code container */
+  .company-name-code {
+    @apply flex items-center gap-2;
+  }
+
+  .company-code {
+    @apply text-sm font-mono text-accent-yellow/80;
+  }
+
+  /* Status filter styles */
+  .status-filters {
+    @apply flex gap-4 p-4 bg-navy-400/10 rounded-lg;
+  }
+
+  .status-checkbox {
+    @apply flex items-center gap-2;
+  }
+
+  .status-checkbox input[type="checkbox"] {
+    @apply w-4 h-4 rounded border-navy-300 text-accent-teal 
+           focus:ring-accent-teal focus:ring-offset-navy-500;
+  }
+
+  .status-checkbox label {
+    @apply text-sm font-medium text-surface-white cursor-pointer;
+  }
+
+  /* Pagination styles */
+  .pagination-container {
+    @apply flex items-center justify-between px-4 py-3 bg-navy-400/10 
+           border-t border-navy-400/20 rounded-b-lg;
+  }
+
+  .pagination-info {
+    @apply text-sm text-surface-white/70;
+  }
+
+  .pagination-controls {
+    @apply flex items-center gap-2;
+  }
+
+  .page-button {
+    @apply p-2 text-surface-white/70 rounded-md hover:bg-navy-400/20 
+           disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  .page-size-select {
+    @apply text-sm bg-navy-400/20 border-navy-300/20 rounded-md text-surface-white
+           px-2 py-1 focus:outline-none focus:ring-2 focus:ring-accent-teal;
+  }
+}
