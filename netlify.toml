@@ -1,7 +1,14 @@
 [build]
   functions = "functions"
+  publish = "dist"
+
 [[redirects]]
   from = "/webhook"
   to = "/.netlify/functions/webhook"
   status = 200
   force = true
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
