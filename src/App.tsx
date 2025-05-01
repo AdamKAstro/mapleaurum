@@ -1,6 +1,7 @@
 // src/App.tsx
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { Helmet } from 'react-helmet';
 
 // Providers
 import { SubscriptionProvider } from './contexts/subscription-context';
@@ -16,7 +17,7 @@ import ErrorBoundary from './components/ErrorBoundary';
 // Page Components
 import { CompaniesPage } from './pages/companies';
 import { SubscribePage } from './pages/subscribe';
-import { SuccessPage } from './pages/success'; // Add this import
+import { SuccessPage } from './pages/success';
 import { ScatterChartPage } from './pages/scatter-chart';
 import { FilterPage } from './pages/filter';
 import ScoringPage from './pages/scoring';
@@ -31,7 +32,6 @@ import { HelpScatterPage } from './pages/help/scatter-guide';
 import { HelpTiersPage } from './pages/help/tiers';
 import { HelpGeneralPage } from './pages/help/general';
 
-// Define a simple 404 component
 function NotFoundPage() {
     return (
         <div className="flex items-center justify-center h-full p-10 text-white">
@@ -48,6 +48,24 @@ function NotFoundPage() {
 }
 
 function App() {
+    const jsonLd = {
+        "@context": "https://schema.org",
+        "@type": "WebSite",
+        "name": "MapleAurum",
+        "url": "https://mapleaurum.com",
+        "description": "Financial data and analytics for Canadian precious metals companies.",
+        "publisher": {
+            "@type": "Organization",
+            "name": "MapleAurum",
+            "email": "support@mapleaurum.com"
+        },
+        "potentialAction": {
+            "@type": "SearchAction",
+            "target": "https://mapleaurum.com/companies?search={search_term_string}",
+            "query-input": "required name=search_term_string"
+        }
+    };
+
     return (
         <Router>
             <ThemeProvider>
@@ -55,6 +73,9 @@ function App() {
                     <CurrencyProvider>
                         <FilterProvider>
                             <ErrorBoundary fallback={<div>Something went terribly wrong! Please reload.</div>}>
+                                <Helmet>
+                                    <script type="application/ld+json">{JSON.stringify(jsonLd)}</script>
+                                </Helmet>
                                 <div className="flex flex-col min-h-screen">
                                     <Header />
                                     <div className="flex flex-1 overflow-hidden">
@@ -66,18 +87,15 @@ function App() {
                                                 aria-hidden="true"
                                             />
                                             <div className="absolute inset-0 bg-noise opacity-[0.07] -z-10" aria-hidden="true" />
-
                                             <ErrorBoundary fallback={<div>Error loading this page section.</div>}>
                                                 <Routes>
                                                     <Route path="/" element={<Hero />} />
                                                     <Route path="/companies" element={<CompaniesPage />} />
                                                     <Route path="/scatter-chart" element={<ScatterChartPage />} />
                                                     <Route path="/subscribe" element={<SubscribePage />} />
-                                                    <Route path="/subscribe/success" element={<SuccessPage />} /> {/* Add this route */}
+                                                    <Route path="/subscribe/success" element={<SuccessPage />} />
                                                     <Route path="/filter" element={<FilterPage />} />
                                                     <Route path="/scoring" element={<ScoringPage />} />
-
-                                                    {/* Help Section Routes */}
                                                     <Route path="/help" element={<HelpLandingPage />} />
                                                     <Route path="/help/metrics" element={<HelpMetricsPage />} />
                                                     <Route path="/help/filters" element={<HelpFiltersPage />} />
@@ -85,8 +103,6 @@ function App() {
                                                     <Route path="/help/scatter-chart" element={<HelpScatterPage />} />
                                                     <Route path="/help/tiers" element={<HelpTiersPage />} />
                                                     <Route path="/help/general" element={<HelpGeneralPage />} />
-
-                                                    {/* Catch-all 404 Route */}
                                                     <Route path="*" element={<NotFoundPage />} />
                                                 </Routes>
                                             </ErrorBoundary>
