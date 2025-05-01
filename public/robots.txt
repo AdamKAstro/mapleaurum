@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+Disallow: /subscribe/success
+
+Sitemap: https://mapleaurum.com/sitemap.xml
