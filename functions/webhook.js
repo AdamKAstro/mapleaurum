@@ -28,7 +28,6 @@ exports.handler = async (event) => {
     if (!customerId && session.customer_email) {
       console.log('No customer ID, attempting to fetch or create customer with email:', session.customer_email);
       try {
-        // Search for existing customer by email
         const customers = await stripe.customers.list({
           email: session.customer_email,
           limit: 1,
@@ -37,7 +36,6 @@ exports.handler = async (event) => {
           customerId = customers.data[0].id;
           console.log('Found existing customer:', customerId);
         } else {
-          // Create new customer
           const newCustomer = await stripe.customers.create({
             email: session.customer_email,
             metadata: { source: 'webhook_checkout_session' },
@@ -106,9 +104,40 @@ exports.handler = async (event) => {
       console.log('Stripe customer found:', JSON.stringify(customerRecord, null, 2));
     }
 
-    // Fetch subscription details from Stripe
-    let subscriptionData = {};
-    if (session.subscription) {
+    // Handle one-time payment or subscription
+    if (session.mode === 'payment') {
+      // Store payment details in stripe_orders
+      const orderData = {
+        customer_id: customerId,
+        checkout_session_id: session.id,
+        payment_intent_id: session.payment_intent,
+        amount_subtotal: session.amount_subtotal,
+        amount_total: session.amount_total,
+        currency: session.currency,
+        payment_status: session.payment_status,
+        status: session.status,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        deleted_at: null,
+      };
+
+      const { data: order, error: orderInsertError } = await supabase
+        .from('stripe_orders')
+        .insert(orderData)
+        .select()
+        .single();
+
+      if (orderInsertError) {
+        console.error('Supabase insert error (stripe_orders):', orderInsertError.message);
+        return {
+          statusCode: 500,
+          body: JSON.stringify({ error: `Supabase insert error (stripe_orders): ${orderInsertError.message}` }),
+        };
+      }
+      console.log('Stripe order created:', JSON.stringify(order, null, 2));
+    } else if (session.mode === 'subscription' && session.subscription) {
+      // Existing subscription logic
+      let subscriptionData = {};
       try {
         const subscription = await stripe.subscriptions.retrieve(session.subscription);
         subscriptionData = {
@@ -123,7 +152,6 @@ exports.handler = async (event) => {
           deleted_at: null,
         };
 
-        // Fetch payment method details if available
         if (subscription.default_payment_method) {
           const paymentMethod = await stripe.paymentMethods.retrieve(subscription.default_payment_method);
           subscriptionData.payment_method_brand = paymentMethod.card?.brand || null;
@@ -138,78 +166,71 @@ exports.handler = async (event) => {
           body: JSON.stringify({ error: `Stripe subscription fetch error: ${err.message}` }),
         };
       }
-    } else {
-      console.warn('No subscription ID in session, using fallback');
-      subscriptionData = {
-        subscription_id: 'sub_' + Date.now(),
-        status: 'active',
-        price_id: null,
-        payment_method_brand: null,
-        payment_method_last4: null,
-        cancel_at_period_end: false,
-        current_period_start: Math.floor(Date.now() / 1000),
-        current_period_end: Math.floor((Date.now() + 30 * 24 * 60 * 60 * 1000) / 1000),
-        deleted_at: null,
-      };
-    }
 
-    // Fetch or create stripe_subscriptions record
-    const { data: subscription, error: subFetchError } = await supabase
-      .from('stripe_subscriptions')
-      .select('*')
-      .eq('customer_id', customerId)
-      .is('deleted_at', null)
-      .single();
-
-    if (subFetchError && subFetchError.code !== 'PGRST116') {
-      console.error('Supabase fetch error (stripe_subscriptions):', subFetchError.message);
-      return {
-        statusCode: 500,
-        body: JSON.stringify({ error: `Supabase fetch error: ${subFetchError.message}` }),
-      };
-    }
-
-    if (!subscription) {
-      const { data: newSubscription, error: subInsertError } = await supabase
+      const { data: subscription, error: subFetchError } = await supabase
         .from('stripe_subscriptions')
-        .insert({
-          customer_id: customerId,
-          ...subscriptionData,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        })
-        .select()
-        .single();
-
-      if (subInsertError) {
-        console.error('Supabase insert error (stripe_subscriptions):', subInsertError.message);
-        return {
-          statusCode: 500,
-          body: JSON.stringify({ error: `Supabase insert error: ${subInsertError.message}` }),
-        };
-      }
-      console.log('Stripe subscription created:', JSON.stringify(newSubscription, null, 2));
-    } else {
-      const { data: updatedSubscription, error: subUpdateError } = await supabase
-        .from('stripe_subscriptions')
-        .update({
-          ...subscriptionData,
-          updated_at: new Date().toISOString(),
-        })
+        .select('*')
         .eq('customer_id', customerId)
         .is('deleted_at', null)
-        .select()
         .single();
 
-      if (subUpdateError) {
-        console.error('Supabase update error (stripe_subscriptions):', subUpdateError.message);
+      if (subFetchError && subFetchError.code !== 'PGRST116') {
+        console.error('Supabase fetch error (stripe_subscriptions):', subFetchError.message);
         return {
           statusCode: 500,
-          body: JSON.stringify({ error: `Supabase update error: ${subUpdateError.message}` }),
+          body: JSON.stringify({ error: `Supabase fetch error: ${subFetchError.message}` }),
         };
       }
-      console.log('Stripe subscription updated:', JSON.stringify(updatedSubscription, null, 2));
+
+      if (!subscription) {
+        const { data: newSubscription, error: subInsertError } = await supabase
+          .from('stripe_subscriptions')
+          .insert({
+            customer_id: customerId,
+            ...subscriptionData,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          })
+          .select()
+          .single();
+
+        if (subInsertError) {
+          console.error('Supabase insert error (stripe_subscriptions):', subInsertError.message);
+          return {
+            statusCode: 500,
+            body: JSON.stringify({ error: `Supabase insert error (stripe_subscriptions): ${subInsertError.message}` }),
+          };
+        }
+        console.log('Stripe subscription created:', JSON.stringify(newSubscription, null, 2));
+      } else {
+        const { data: updatedSubscription, error: subUpdateError } = await supabase
+          .from('stripe_subscriptions')
+          .update({
+            ...subscriptionData,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('customer_id', customerId)
+          .is('deleted_at', null)
+          .select()
+          .single();
+
+        if (subUpdateError) {
+          console.error('Supabase update error (stripe_subscriptions):', subUpdateError.message);
+          return {
+            statusCode: 500,
+            body: JSON.stringify({ error: `Supabase update error: ${subUpdateError.message}` }),
+          };
+        }
+        console.log('Stripe subscription updated:', JSON.stringify(updatedSubscription, null, 2));
+      }
+    } else {
+      console.warn('No subscription or payment mode detected, skipping further processing');
     }
+
+    return {
+      statusCode: 200,
+      body: JSON.stringify({ received: true }),
+    };
   }
 
   return {
