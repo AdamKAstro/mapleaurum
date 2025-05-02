@@ -38,6 +38,7 @@ exports.handler = async (event) => {
       .from('stripe_customers')
       .select('*')
       .eq('customer_id', session.customer)
+      .is('deleted_at', null)
       .single();
 
     if (fetchError && fetchError.code !== 'PGRST116') {
@@ -56,6 +57,7 @@ exports.handler = async (event) => {
           user_id: '00000000-0000-0000-0000-000000000000', // Placeholder UUID
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
+          deleted_at: null,
         })
         .select()
         .single();
@@ -82,9 +84,20 @@ exports.handler = async (event) => {
         subscriptionData = {
           subscription_id: subscription.id,
           status: subscription.status,
-          current_period_start: subscription.current_period_start,
-          current_period_end: subscription.current_period_end,
-        };
+          denormalize()(subscription);
+        subscriptionData.price_id = subscription.items.data[0]?.price.id || null;
+        subscriptionData.payment_method_brand =
+          subscription.default_payment_method
+            ? (await stripe.paymentMethods.retrieve(subscription.default_payment_method)).card?.brand || null
+            : null;
+        subscriptionData.payment_method_last4 =
+          subscription.default_payment_method
+            ? (await stripe.paymentMethods.retrieve(subscription.default_payment_method)).card?.last4 || null
+            : null;
+        subscriptionData.cancel_at_period_end = subscription.cancel_at_period_end;
+        subscriptionData.current_period_start = subscription.current_period_start;
+        subscriptionData.current_period_end = subscription.current_period_end;
+        subscriptionData.deleted_at = null;
         console.log('Fetched subscription:', JSON.stringify(subscriptionData, null, 2));
       } catch (err) {
         console.error('Stripe subscription fetch error:', err.message);
@@ -98,8 +111,13 @@ exports.handler = async (event) => {
       subscriptionData = {
         subscription_id: 'sub_' + Date.now(),
         status: 'active',
+        price_id: null,
+        payment_method_brand: null,
+        payment_method_last4: null,
+        cancel_at_period_end: false,
         current_period_start: Math.floor(Date.now() / 1000),
         current_period_end: Math.floor((Date.now() + 30 * 24 * 60 * 60 * 1000) / 1000),
+        deleted_at: null,
       };
     }
 
@@ -108,6 +126,7 @@ exports.handler = async (event) => {
       .from('stripe_subscriptions')
       .select('*')
       .eq('customer_id', session.customer)
+      .is('deleted_at', null)
       .single();
 
     if (subFetchError && subFetchError.code !== 'PGRST116') {
@@ -146,6 +165,7 @@ exports.handler = async (event) => {
           updated_at: new Date().toISOString(),
         })
         .eq('customer_id', session.customer)
+        .is('deleted_at', null)
         .select()
         .single();
 
