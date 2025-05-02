@@ -23,12 +23,42 @@ exports.handler = async (event) => {
     const session = stripeEvent.data.object;
     console.log('Checkout completed:', JSON.stringify(session, null, 2));
 
-    // Validate customer ID
-    if (!session.customer) {
-      console.error('No customer ID in session');
+    // Determine customer ID
+    let customerId = session.customer;
+    if (!customerId && session.customer_email) {
+      console.log('No customer ID, attempting to fetch or create customer with email:', session.customer_email);
+      try {
+        // Search for existing customer by email
+        const customers = await stripe.customers.list({
+          email: session.customer_email,
+          limit: 1,
+        });
+        if (customers.data.length > 0) {
+          customerId = customers.data[0].id;
+          console.log('Found existing customer:', customerId);
+        } else {
+          // Create new customer
+          const newCustomer = await stripe.customers.create({
+            email: session.customer_email,
+            metadata: { source: 'webhook_checkout_session' },
+          });
+          customerId = newCustomer.id;
+          console.log('Created new customer:', customerId);
+        }
+      } catch (err) {
+        console.error('Stripe customer fetch/create error:', err.message);
+        return {
+          statusCode: 500,
+          body: JSON.stringify({ error: `Stripe customer fetch/create error: ${err.message}` }),
+        };
+      }
+    }
+
+    if (!customerId) {
+      console.error('No customer ID or email in session');
       return {
         statusCode: 400,
-        body: JSON.stringify({ error: 'No customer ID in session' }),
+        body: JSON.stringify({ error: 'No customer ID or email in session' }),
       };
     }
 
@@ -37,7 +67,7 @@ exports.handler = async (event) => {
     const { data: customer, error: fetchError } = await supabase
       .from('stripe_customers')
       .select('*')
-      .eq('customer_id', session.customer)
+      .eq('customer_id', customerId)
       .is('deleted_at', null)
       .single();
 
@@ -53,7 +83,7 @@ exports.handler = async (event) => {
       const { data: newCustomer, error: insertError } = await supabase
         .from('stripe_customers')
         .insert({
-          customer_id: session.customer,
+          customer_id: customerId,
           user_id: '00000000-0000-0000-0000-000000000000', // Placeholder UUID
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
@@ -127,7 +157,7 @@ exports.handler = async (event) => {
     const { data: subscription, error: subFetchError } = await supabase
       .from('stripe_subscriptions')
       .select('*')
-      .eq('customer_id', session.customer)
+      .eq('customer_id', customerId)
       .is('deleted_at', null)
       .single();
 
@@ -140,10 +170,10 @@ exports.handler = async (event) => {
     }
 
     if (!subscription) {
-      const { data: newSubscription, errorproveError: subInsertError } = await supabase
+      const { data: newSubscription, error: subInsertError } = await supabase
         .from('stripe_subscriptions')
         .insert({
-          customer_id: session.customer,
+          customer_id: customerId,
           ...subscriptionData,
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
@@ -155,7 +185,7 @@ exports.handler = async (event) => {
         console.error('Supabase insert error (stripe_subscriptions):', subInsertError.message);
         return {
           statusCode: 500,
-          body: JSON.stringify({ error: `Supabase insert error (stripe_subscriptions): ${subInsertError.message}` }),
+          body: JSON.stringify({ error: `Supabase insert error: ${subInsertError.message}` }),
         };
       }
       console.log('Stripe subscription created:', JSON.stringify(newSubscription, null, 2));
@@ -166,7 +196,7 @@ exports.handler = async (event) => {
           ...subscriptionData,
           updated_at: new Date().toISOString(),
         })
-        .eq('customer_id', session.customer)
+        .eq('customer_id', customerId)
         .is('deleted_at', null)
         .select()
         .single();
