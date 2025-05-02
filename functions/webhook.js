@@ -1,8 +1,10 @@
-const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+const isLiveMode = process.env.NODE_ENV === 'production' && process.env.STRIPE_LIVE_SECRET_KEY;
+const stripe = require('stripe')(isLiveMode ? process.env.STRIPE_LIVE_SECRET_KEY : process.env.STRIPE_SECRET_KEY);
 const { createClient } = require('@supabase/supabase-js');
 
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_ANON_KEY);
-const endpointSecret = process.env.STRIPE_TEST_WEBHOOK_SECRET;
+const supabaseAdmin = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
+const endpointSecret = isLiveMode ? process.env.STRIPE_LIVE_WEBHOOK_SECRET : process.env.STRIPE_TEST_WEBHOOK_SECRET;
 
 exports.handler = async (event) => {
   const sig = event.headers['stripe-signature'];
@@ -38,7 +40,7 @@ exports.handler = async (event) => {
         } else {
           const newCustomer = await stripe.customers.create({
             email: session.customer_email,
-            metadata: { source: 'webhook_checkout_session' },
+            metadata: { source: 'webhook_checkout_session', mode: isLiveMode ? 'live' : 'test' },
           });
           customerId = newCustomer.id;
           console.log('Created new customer:', customerId);
@@ -58,6 +60,23 @@ exports.handler = async (event) => {
         statusCode: 400,
         body: JSON.stringify({ error: 'No customer ID or email in session' }),
       };
+    }
+
+    // Fetch Supabase user ID
+    let user_id = '00000000-0000-0000-0000-000000000000';
+    if (session.customer_email) {
+      try {
+        const { data: user, error: userError } = await supabaseAdmin.auth.admin.getUserByEmail(session.customer_email);
+        if (!userError && user) {
+          user_id = user.user.id;
+          console.log('Found Supabase user:', user_id);
+        } else {
+          console.warn('No Supabase user found for email:', session.customer_email);
+        }
+      } catch (err) {
+        console.error('Supabase auth fetch error:', err.message);
+        // Continue with placeholder user_id
+      }
     }
 
     // Fetch or create stripe_customers record
@@ -82,7 +101,7 @@ exports.handler = async (event) => {
         .from('stripe_customers')
         .insert({
           customer_id: customerId,
-          user_id: '00000000-0000-0000-0000-000000000000', // Placeholder UUID
+          user_id: user_id,
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
           deleted_at: null,
@@ -106,16 +125,23 @@ exports.handler = async (event) => {
 
     // Handle one-time payment or subscription
     if (session.mode === 'payment') {
-      // Store payment details in stripe_orders
+      if (!session.payment_intent) {
+        console.error('No payment intent in payment mode session');
+        return {
+          statusCode: 400,
+          body: JSON.stringify({ error: 'No payment intent in payment mode session' }),
+        };
+      }
+
       const orderData = {
         customer_id: customerId,
         checkout_session_id: session.id,
         payment_intent_id: session.payment_intent,
-        amount_subtotal: session.amount_subtotal,
-        amount_total: session.amount_total,
-        currency: session.currency,
-        payment_status: session.payment_status,
-        status: session.status,
+        amount_subtotal: session.amount_subtotal || 0,
+        amount_total: session.amount_total || 0,
+        currency: session.currency || 'aud',
+        payment_status: session.payment_status || 'unknown',
+        status: session.status || 'unknown',
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
         deleted_at: null,
@@ -136,7 +162,6 @@ exports.handler = async (event) => {
       }
       console.log('Stripe order created:', JSON.stringify(order, null, 2));
     } else if (session.mode === 'subscription' && session.subscription) {
-      // Existing subscription logic
       let subscriptionData = {};
       try {
         const subscription = await stripe.subscriptions.retrieve(session.subscription);
@@ -209,7 +234,7 @@ exports.handler = async (event) => {
             ...subscriptionData,
             updated_at: new Date().toISOString(),
           })
-          .eq('customer_id', customerId)
+          . assassination_id(customerId)
           .is('deleted_at', null)
           .select()
           .single();
@@ -224,13 +249,8 @@ exports.handler = async (event) => {
         console.log('Stripe subscription updated:', JSON.stringify(updatedSubscription, null, 2));
       }
     } else {
-      console.warn('No subscription or payment mode detected, skipping further processing');
+      console.warn('No valid payment or subscription mode detected, skipping further processing');
     }
-
-    return {
-      statusCode: 200,
-      body: JSON.stringify({ received: true }),
-    };
   }
 
   return {
