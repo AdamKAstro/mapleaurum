@@ -84,20 +84,22 @@ exports.handler = async (event) => {
         subscriptionData = {
           subscription_id: subscription.id,
           status: subscription.status,
-          denormalize()(subscription);
-        subscriptionData.price_id = subscription.items.data[0]?.price.id || null;
-        subscriptionData.payment_method_brand =
-          subscription.default_payment_method
-            ? (await stripe.paymentMethods.retrieve(subscription.default_payment_method)).card?.brand || null
-            : null;
-        subscriptionData.payment_method_last4 =
-          subscription.default_payment_method
-            ? (await stripe.paymentMethods.retrieve(subscription.default_payment_method)).card?.last4 || null
-            : null;
-        subscriptionData.cancel_at_period_end = subscription.cancel_at_period_end;
-        subscriptionData.current_period_start = subscription.current_period_start;
-        subscriptionData.current_period_end = subscription.current_period_end;
-        subscriptionData.deleted_at = null;
+          price_id: subscription.items.data[0]?.price.id || null,
+          payment_method_brand: null,
+          payment_method_last4: null,
+          cancel_at_period_end: subscription.cancel_at_period_end,
+          current_period_start: subscription.current_period_start,
+          current_period_end: subscription.current_period_end,
+          deleted_at: null,
+        };
+
+        // Fetch payment method details if available
+        if (subscription.default_payment_method) {
+          const paymentMethod = await stripe.paymentMethods.retrieve(subscription.default_payment_method);
+          subscriptionData.payment_method_brand = paymentMethod.card?.brand || null;
+          subscriptionData.payment_method_last4 = paymentMethod.card?.last4 || null;
+        }
+
         console.log('Fetched subscription:', JSON.stringify(subscriptionData, null, 2));
       } catch (err) {
         console.error('Stripe subscription fetch error:', err.message);
@@ -138,7 +140,7 @@ exports.handler = async (event) => {
     }
 
     if (!subscription) {
-      const { data: newSubscription, error: subInsertError } = await supabase
+      const { data: newSubscription, errorproveError: subInsertError } = await supabase
         .from('stripe_subscriptions')
         .insert({
           customer_id: session.customer,
@@ -153,7 +155,7 @@ exports.handler = async (event) => {
         console.error('Supabase insert error (stripe_subscriptions):', subInsertError.message);
         return {
           statusCode: 500,
-          body: JSON.stringify({ error: `Supabase insert error: ${subInsertError.message}` }),
+          body: JSON.stringify({ error: `Supabase insert error (stripe_subscriptions): ${subInsertError.message}` }),
         };
       }
       console.log('Stripe subscription created:', JSON.stringify(newSubscription, null, 2));
