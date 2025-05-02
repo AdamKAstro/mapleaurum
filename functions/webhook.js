@@ -19,10 +19,44 @@ exports.handler = async (event) => {
     };
   }
 
+  // Handle events
   if (stripeEvent.type === 'checkout.session.completed') {
     const session = stripeEvent.data.object;
     console.log('Checkout completed:', JSON.stringify(session));
 
+    // Verify customer_email exists
+    if (!session.customer_email) {
+      console.error('No customer_email in session');
+      return {
+        statusCode: 400,
+        body: JSON.stringify({ error: 'No customer_email in session' }),
+      };
+    }
+
+    // Check if user exists
+    const { data: user, error: fetchError } = await supabase
+      .from('users')
+      .select('*')
+      .eq('email', session.customer_email)
+      .single();
+
+    if (fetchError) {
+      console.error('Supabase fetch error:', fetchError.message);
+      return {
+        statusCode: 500,
+        body: JSON.stringify({ error: `Supabase fetch error: ${fetchError.message}` }),
+      };
+    }
+
+    if (!user) {
+      console.error('No user found with email:', session.customer_email);
+      return {
+        statusCode: 404,
+        body: JSON.stringify({ error: `No user found with email: ${session.customer_email}` }),
+      };
+    }
+
+    // Update user
     const { data, error } = await supabase
       .from('users')
       .update({ subscription_status: 'active', stripe_customer_id: session.customer })
@@ -30,7 +64,10 @@ exports.handler = async (event) => {
 
     if (error) {
       console.error('Supabase update error:', error.message);
-      return { statusCode: 500, body: JSON.stringify({ error: `Supabase error: ${error.message}` }) };
+      return {
+        statusCode: 500,
+        body: JSON.stringify({ error: `Supabase update error: ${error.message}` }),
+      };
     }
     console.log('User updated:', JSON.stringify(data));
   }
