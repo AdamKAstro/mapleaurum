@@ -1,3 +1,4 @@
+//src/contexts/subscription-context.tsx
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { getSubscriptionStatus } from '../lib/stripe';
 import type { SubscriptionTier } from '../lib/types';

@@ -59,8 +59,8 @@ export function ScatterChartPage() {
 
     // Local state for chart axis/scale settings
     const [xMetric, setXMetric] = useState('financials.market_cap_value');
-    const [yMetric, setYMetric] = useState('valuation_metrics.ev_per_resource_oz_all');
-    const [zMetric, setZMetric] = useState('production.current_production_total_aueq_koz');
+    const [yMetric, setYMetric] = useState('financials.market_cap_value');
+    const [zMetric, setZMetric] = useState('financials.market_cap_value');
     const [xScale, setXScale] = useState<'linear' | 'log'>('log');
     const [yScale, setYScale] = useState<'linear' | 'log'>('log');
     const [zScale, setZScale] = useState<'linear' | 'log'>('linear');

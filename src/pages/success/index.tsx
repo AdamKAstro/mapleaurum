@@ -1,3 +1,4 @@
+//src/pages/success/index.tsx
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { CheckCircle, ArrowRight, Home, Table2 } from 'lucide-react';
