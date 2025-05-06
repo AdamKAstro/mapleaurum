@@ -26,3 +26,5 @@ dist-ssr
 webhooksStripe01.txt
 .env
 .env
+create_checkout.js
+create_checkout.js

@@ -35,7 +35,7 @@ import { HelpTiersPage } from './pages/help/tiers';
 import { HelpGeneralPage } from './pages/help/general';
 
 // Debug Component (Optional - Renders only in dev)
-import { DebugTierSelector } from './components/ui/DebugTierSelector';
+//import { DebugTierSelector } from './components/ui/DebugTierSelector';
 
 function NotFoundPage() {
     return (
@@ -123,7 +123,7 @@ function App() {
                                         </div>
                                     </div>
                                     {/* Optional Debug Tier Selector - Renders only in dev */}
-                                    <DebugTierSelector />
+                                    //<DebugTierSelector />
                                 </ErrorBoundary>
                             </FilterProvider>
                         </CurrencyProvider>
