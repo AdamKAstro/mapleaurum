@@ -1,4 +1,4 @@
-//src/contexts/filter-contexts.tsx
+// src/contexts/filter-context.tsx
 import React, {
     createContext,
     useState,
@@ -9,11 +9,12 @@ import React, {
     useMemo,
     useRef,
 } from 'react';
-import type { Company, RpcResponseRow, CompanyStatus, ColumnTier, Currency, SortState, FilterSettings, MetricConfig } from '../lib/types';
+import type { Company, RpcResponseRow, CompanyStatus, ColumnTier, Currency, SortState, FilterSettings, MetricConfig, SubscriptionTier } from '../lib/types'; // Added SubscriptionTier
 import { supabase } from '../lib/supabaseClient';
 import { convertRpcRowsToCompanies } from '../lib/converters';
 import { metrics as allMetricConfigs } from '../lib/metric-types';
 import { isValidNumber } from '../lib/utils';
+import { useSubscription } from './subscription-context'; // Import useSubscription
 
 // --- State Types ---
 interface MetricRanges { [db_column: string]: [number | null, number | null]; }
@@ -21,22 +22,22 @@ interface MetricFullRanges { [db_column: string]: [number, number]; }
 
 // --- Context Type ---
 interface FilterContextType {
-    currentUserTier: ColumnTier;
+    currentUserTier: ColumnTier; // This will now be derived from SubscriptionProvider
     currentCurrency: Currency;
     filterSettings: FilterSettings;
     metricFullRanges: MetricFullRanges;
     displayData: Company[];
     totalCount: number;
-    effectiveTotalCount: number; // NEW: Total count after exclusions
+    effectiveTotalCount: number;
     filteredCompanyIds: number[];
     excludedCompanyIds: Set<number>;
     toggleCompanyExclusion: (companyId: number) => void;
     loadingPaginated: boolean;
     loadingRanges: boolean;
     loadingFilteredSet: boolean;
-    loading: boolean;
+    loading: boolean; // Overall loading state
     error: string | null;
-    setCurrentUserTier: (tier: ColumnTier) => void;
+    // setCurrentUserTier: (tier: ColumnTier) => void; // We will remove this setter
     setCurrentCurrency: (currency: Currency) => void;
     setDevelopmentStatusFilter: (statuses: CompanyStatus[]) => void;
     setMetricRange: (db_column: string, min: number | null, max: number | null) => void;
@@ -66,8 +67,11 @@ const EMPTY_SET = new Set<number>();
 
 // --- Provider Component ---
 export const FilterProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-    // --- State ---
-    const [currentUserTier, setCurrentUserTierState] = useState<ColumnTier>('free');
+    // --- Get Tier from SubscriptionProvider ---
+    const { getEffectiveTier, isLoading: isSubscriptionLoading } = useSubscription();
+    const currentUserTier = getEffectiveTier(); // Get the current tier
+
+    // --- Other State ---
     const [currentCurrency, setCurrentCurrencyState] = useState<Currency>('USD');
     const [filterSettings, setFilterSettings] = useState<FilterSettings>(DEFAULT_FILTER_SETTINGS);
     const [metricFullRanges, setMetricFullRanges] = useState<MetricFullRanges>({});
@@ -84,16 +88,27 @@ export const FilterProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     const [pageSize, setPageSizeState] = useState<number>(DEFAULT_PAGE_SIZE);
     const lastFetchedPageRef = useRef<number>(DEFAULT_PAGE);
 
-    // NEW: Compute effective total count after exclusions
+    // Log when currentUserTier from subscription changes
+    useEffect(() => {
+        console.log('[FilterContext] currentUserTier from SubscriptionProvider updated:', currentUserTier);
+        // If your data fetching or other logic needs to re-run when the tier changes,
+        // ensure `currentUserTier` is a dependency of those useEffects.
+        // For example, if `fetchFilteredSetAndFirstPage` needs to be re-called:
+        // This might be too aggressive if it causes too many re-fetches,
+        // but it ensures data reflects the new tier if backend filtering depends on it.
+        // Consider if this is needed based on your backend logic.
+        // If filtering by tier is purely client-side, this re-fetch might not be essential here.
+    }, [currentUserTier]);
+
+
     const effectiveTotalCount = useMemo(() => {
         const count = totalCount - excludedCompanyIds.size;
-        return Math.max(0, count); // Ensure non-negative
+        return Math.max(0, count);
     }, [totalCount, excludedCompanyIds]);
 
-    // Combined loading state
-    const loading = useMemo(() => loadingRanges || loadingFilteredSet || loadingPaginated, [loadingRanges, loadingFilteredSet, loadingPaginated]);
+    // Combined loading state, now includes subscription loading
+    const loading = useMemo(() => isSubscriptionLoading || loadingRanges || loadingFilteredSet || loadingPaginated, [isSubscriptionLoading, loadingRanges, loadingFilteredSet, loadingPaginated]);
 
-    // --- Fetch Full Metric Ranges ---
     useEffect(() => {
         let mounted = true;
         const fetchFullRanges = async () => {
@@ -119,7 +134,6 @@ export const FilterProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         return () => { mounted = false; };
     }, []);
 
-    // --- Core Data Fetching Logic ---
     const buildFiltersJson = useCallback((settings: FilterSettings): Record<string, any> => {
         const filtersJson: Record<string, any> = {};
         if (settings.developmentStatus?.length > 0) filtersJson.status = settings.developmentStatus.filter(s => typeof s === 'string');
@@ -138,18 +152,18 @@ export const FilterProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     }, []);
 
     // fetchPaginatedDataOnly - Fetches ONLY data for a specific page > 1
-    const fetchPaginatedDataOnly = useCallback(async (pageToFetch: number, sizeToFetch: number, currentSort: SortState, currentFilters: FilterSettings, currency: Currency) => {
+    const fetchPaginatedDataOnly = useCallback(async (pageToFetch: number, sizeToFetch: number, currentSort: SortState, currentFilters: FilterSettings, currency: Currency, tier: ColumnTier) => {
         if (pageToFetch <= 1) {
             console.warn(`[FilterContext] fetchPaginatedDataOnly called for page ${pageToFetch}, skipping.`);
             return;
         }
-        if (loadingPaginated || loadingFilteredSet || loadingRanges) {
-            console.log(`[FilterContext] Skipping Paginated Fetch (loading active)`);
+        if (loadingPaginated || loadingFilteredSet || loadingRanges || isSubscriptionLoading) { // Added isSubscriptionLoading
+            console.log(`[FilterContext] Skipping Paginated Fetch (loading active or sub loading)`);
             return;
         }
         setLoadingPaginated(true);
         setError(null);
-        console.log(`[FilterContext] Fetching Page Only: ${pageToFetch}, Size: ${sizeToFetch}, Sort: ${currentSort.key}, Currency: ${currency}`);
+        console.log(`[FilterContext] Fetching Page Only: ${pageToFetch}, Size: ${sizeToFetch}, Sort: ${currentSort.key}, Currency: ${currency}, Tier: ${tier}`);
         const filtersJson = buildFiltersJson(currentFilters);
         try {
             const { data, error: rpcError } = await supabase.rpc('get_companies_paginated', {
@@ -159,6 +173,7 @@ export const FilterProvider: React.FC<{ children: ReactNode }> = ({ children }) 
                 sort_direction: currentSort.direction,
                 target_currency: currency,
                 filters: filtersJson,
+                // p_user_tier: tier // Example: Pass tier to backend if RPC function expects it
             });
             if (rpcError) throw rpcError;
             const fetchedData = data ? convertRpcRowsToCompanies(data as RpcResponseRow[]) : EMPTY_ARRAY;
@@ -177,14 +192,20 @@ export const FilterProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         } finally {
             setLoadingPaginated(false);
         }
-    }, [buildFiltersJson, loadingPaginated, loadingFilteredSet, loadingRanges, totalCount]);
+    }, [buildFiltersJson, loadingPaginated, loadingFilteredSet, loadingRanges, totalCount, isSubscriptionLoading]); // Added isSubscriptionLoading
 
     // fetchFilteredSetAndFirstPage - Fetches total count, all IDs, and data for page 1
-    const fetchFilteredSetAndFirstPage = useCallback(async (currentFilters: FilterSettings, currentSort: SortState, sizeForFirstPage: number, currency: Currency) => {
+    const fetchFilteredSetAndFirstPage = useCallback(async (currentFilters: FilterSettings, currentSort: SortState, sizeForFirstPage: number, currency: Currency, tier: ColumnTier) => {
+        if (isSubscriptionLoading) { // Don't fetch if subscription is still loading
+            console.log('[FilterContext] Subscription loading, delaying fetchFilteredSetAndFirstPage.');
+            setLoadingFilteredSet(false); // Ensure this doesn't stay true
+            setLoadingPaginated(false); // Ensure this doesn't stay true
+            return;
+        }
         setLoadingFilteredSet(true);
         setLoadingPaginated(true);
         setError(null);
-        console.log(`[FilterContext] Updating Full Filtered Set & Fetching Page 1. Size: ${sizeForFirstPage}, Sort: ${currentSort.key}, Currency: ${currency}`);
+        console.log(`[FilterContext] Updating Full Filtered Set & Fetching Page 1. Size: ${sizeForFirstPage}, Sort: ${currentSort.key}, Currency: ${currency}, Tier: ${tier}`);
         const filtersJson = buildFiltersJson(currentFilters);
         let fetchedCount = 0;
         let firstPageData: Company[] = EMPTY_ARRAY;
@@ -197,6 +218,7 @@ export const FilterProvider: React.FC<{ children: ReactNode }> = ({ children }) 
                 sort_direction: currentSort.direction,
                 target_currency: currency,
                 filters: filtersJson,
+                // p_user_tier: tier // Example: Pass tier to backend if RPC function expects it
             });
             if (pageError) throw new Error(`Failed to fetch initial page data: ${pageError.message}`);
             if (!pageData || pageData.length === 0) {
@@ -209,7 +231,7 @@ export const FilterProvider: React.FC<{ children: ReactNode }> = ({ children }) 
                 fetchedCount = exactTotal;
                 firstPageData = convertRpcRowsToCompanies(pageData as RpcResponseRow[]);
                 if (fetchedCount > 0) {
-                    const { data: idData, error: idError } = await supabase.rpc('get_filtered_company_ids', { filters: filtersJson });
+                    const { data: idData, error: idError } = await supabase.rpc('get_filtered_company_ids', { filters: filtersJson /*, p_user_tier: tier */ }); // Pass tier if needed
                     if (idError) throw new Error(`Failed to fetch filtered company IDs: ${idError.message}`);
                     allIds = (idData as { company_id: number }[] || []).map(r => r.company_id);
                     if (allIds.length !== fetchedCount) console.warn(`[FilterContext] Count mismatch: paginated total (${fetchedCount}) vs fetched IDs (${allIds.length}).`);
@@ -231,19 +253,24 @@ export const FilterProvider: React.FC<{ children: ReactNode }> = ({ children }) 
             setLoadingFilteredSet(false);
             setLoadingPaginated(false);
         }
-    }, [buildFiltersJson]);
+    }, [buildFiltersJson, isSubscriptionLoading]); // Added isSubscriptionLoading
 
     // --- Effects to Trigger Fetches ---
+    // This effect handles changes to primary filters, currency, page size, sort, or TIER
     useEffect(() => {
-        if (loadingRanges) return;
-        console.log("[FilterContext] Effect 1 Triggered: Filters/Currency/Sort/PageSize changed. Fetching full set + page 1.");
-        setCurrentPage(DEFAULT_PAGE);
-        fetchFilteredSetAndFirstPage(filterSettings, sortState, pageSize, currentCurrency);
-    }, [filterSettings, currentCurrency, pageSize, sortState, loadingRanges, fetchFilteredSetAndFirstPage]);
+        if (loadingRanges || isSubscriptionLoading) { // Also wait for subscription status to be known
+             console.log(`[FilterContext] Effect 1: Skipping data fetch (initial load in progress ranges=${loadingRanges}, subLoading=${isSubscriptionLoading}).`);
+            return;
+        }
+        console.log("[FilterContext] Effect 1 Triggered: Filters/Currency/Sort/PageSize/Tier changed. Fetching full set + page 1. Current Tier:", currentUserTier);
+        setCurrentPage(DEFAULT_PAGE); // Reset to page 1 on these changes
+        fetchFilteredSetAndFirstPage(filterSettings, sortState, pageSize, currentCurrency, currentUserTier);
+    }, [filterSettings, currentCurrency, pageSize, sortState, loadingRanges, fetchFilteredSetAndFirstPage, currentUserTier, isSubscriptionLoading]); // Added currentUserTier and isSubscriptionLoading
 
+    // This effect handles pagination (when currentPage changes)
     useEffect(() => {
-        if (loadingRanges || loadingFilteredSet) {
-            console.log(`[FilterContext] Effect 2: Skipping run (initial load in progress ranges=${loadingRanges}, set=${loadingFilteredSet}).`);
+        if (loadingRanges || loadingFilteredSet || isSubscriptionLoading) {
+            console.log(`[FilterContext] Effect 2: Skipping pagination fetch (initial load in progress ranges=${loadingRanges}, set=${loadingFilteredSet}, subLoading=${isSubscriptionLoading}).`);
             return;
         }
         if (currentPage === lastFetchedPageRef.current) {
@@ -252,14 +279,18 @@ export const FilterProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         }
         if (currentPage !== DEFAULT_PAGE) {
             console.log(`[FilterContext] Effect 2 Triggered: Page changed to ${currentPage}. Fetching paginated data.`);
-            fetchPaginatedDataOnly(currentPage, pageSize, sortState, filterSettings, currentCurrency);
+            fetchPaginatedDataOnly(currentPage, pageSize, sortState, filterSettings, currentCurrency, currentUserTier);
         } else {
-            console.log(`[FilterContext] Effect 2: Page is ${currentPage}. No fetch needed (handled by Effect 1).`);
+            // Page 1 is handled by the effect above when filters/sort/tier change.
+            // If only page number changed back to 1, and other deps of Effect 1 didn't change,
+            // Effect 1 might not re-run. However, setting page to 1 typically happens
+            // alongside other filter changes handled by Effect 1.
+            console.log(`[FilterContext] Effect 2: Page is ${currentPage}. No explicit fetch for page 1 here (handled by filter/sort/tier change effect).`);
         }
-    }, [currentPage, loadingRanges, loadingFilteredSet, fetchPaginatedDataOnly]);
+    }, [currentPage, pageSize, sortState, filterSettings, currentCurrency, currentUserTier, loadingRanges, loadingFilteredSet, fetchPaginatedDataOnly, isSubscriptionLoading]); // Added dependencies
 
-    // --- Function to fetch full company data ---
     const fetchCompaniesByIds = useCallback(async (ids: number[]): Promise<Company[]> => {
+        // ... (fetchCompaniesByIds remains the same)
         if (!Array.isArray(ids) || ids.length === 0) return EMPTY_ARRAY;
         console.log(`[FilterContext] Fetching full data for ${ids.length} companies by ID using view.`);
         setError(null);
@@ -277,7 +308,6 @@ export const FilterProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         }
     }, []);
 
-    // --- State Setters (Handlers) ---
     const handleSetDevelopmentStatus = useCallback((statuses: CompanyStatus[]) => {
         setFilterSettings(prev => ({ ...prev, developmentStatus: statuses }));
     }, []);
@@ -290,13 +320,14 @@ export const FilterProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     const handleResetFilters = useCallback(() => {
         console.log("[FilterContext] Resetting filters to default.");
         const needsReset = JSON.stringify(filterSettings) !== JSON.stringify(DEFAULT_FILTER_SETTINGS) ||
-                          JSON.stringify(sortState) !== JSON.stringify(DEFAULT_SORT_STATE) ||
-                          excludedCompanyIds.size > 0 ||
-                          currentPage !== DEFAULT_PAGE;
+                           JSON.stringify(sortState) !== JSON.stringify(DEFAULT_SORT_STATE) ||
+                           excludedCompanyIds.size > 0 ||
+                           currentPage !== DEFAULT_PAGE;
         if (needsReset) {
             setFilterSettings(DEFAULT_FILTER_SETTINGS);
             setSortState(DEFAULT_SORT_STATE);
             setExcludedCompanyIds(EMPTY_SET);
+            // setCurrentPage(DEFAULT_PAGE); // This will be handled by the useEffect due to filterSettings change
         } else {
             console.log("[FilterContext] Filters already default, reset skipped.");
         }
@@ -326,9 +357,10 @@ export const FilterProvider: React.FC<{ children: ReactNode }> = ({ children }) 
             setPageSizeState(size);
         }
     }, [pageSize]);
-    const handleSetCurrentUserTier = useCallback((tier: ColumnTier) => {
-        setCurrentUserTierState(tier);
-    }, []);
+    // Remove setCurrentUserTierState as tier is now from SubscriptionProvider
+    // const handleSetCurrentUserTier = useCallback((tier: ColumnTier) => {
+    //     setCurrentUserTierState(tier);
+    // }, []);
     const handleSetCurrentCurrency = useCallback((currency: Currency) => {
         if (currency !== currentCurrency) {
             setCurrentCurrencyState(currency);
@@ -340,7 +372,7 @@ export const FilterProvider: React.FC<{ children: ReactNode }> = ({ children }) 
 
     // --- CONTEXT VALUE ---
     const value = useMemo<FilterContextType>(() => ({
-        currentUserTier,
+        currentUserTier, // Directly use the tier from useSubscription
         currentCurrency,
         filterSettings,
         metricFullRanges,
@@ -353,9 +385,9 @@ export const FilterProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         loadingPaginated,
         loadingRanges,
         loadingFilteredSet,
-        loading,
+        loading, // Use the combined loading state
         error,
-        setCurrentUserTier: handleSetCurrentUserTier,
+        // setCurrentUserTier: handleSetCurrentUserTier, // Remove this
         setCurrentCurrency: handleSetCurrentCurrency,
         setDevelopmentStatusFilter: handleSetDevelopmentStatus,
         setMetricRange: handleSetMetricRange,
@@ -370,7 +402,7 @@ export const FilterProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         setPageSize: handleSetPageSize,
         fetchCompaniesByIds,
     }), [
-        currentUserTier,
+        currentUserTier, // Add currentUserTier from useSubscription
         currentCurrency,
         filterSettings,
         metricFullRanges,
@@ -382,9 +414,8 @@ export const FilterProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         loadingPaginated,
         loadingRanges,
         loadingFilteredSet,
-        loading,
+        loading, // Use combined loading
         error,
-        handleSetCurrentUserTier,
         handleSetCurrentCurrency,
         handleSetDevelopmentStatus,
         handleSetMetricRange,
