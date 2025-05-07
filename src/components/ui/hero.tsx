@@ -163,12 +163,13 @@ export function Hero({ className }: HeroProps) {
 
         {/* --- Image Stack Section --- */}
         <div className="mt-20 sm:mt-24 md:mt-28 lg:mt-32 xl:mt-36 flex justify-center items-center pb-10"> {/* Increased top margin, added padding-bottom */}
-          <div className="relative w-full sm:w-3/4 md:w-2/3 lg:w-[55%] xl:w-1/2"> {/* Adjusted width for better fit */}
+          {/* Adjusted width for the image stack container to make it ~20% larger */}
+          <div className="relative w-full sm:w-4/5 md:w-3/4 lg:w-2/3 xl:w-3/5">
             {/* CompJPG.jpg - Bottom Image */}
             <img
               src={compImageUrl}
               alt="Mining Companies Dashboard Preview"
-              className="relative z-10 w-full rounded-xl shadow-2xl aspect-[16/10] object-cover transform transition-all duration-300 hover:scale-[1.03]" // Changed aspect, shadow, hover
+              className="relative z-10 w-full rounded-xl shadow-2xl aspect-[16/10] object-cover transform transition-all duration-300 hover:scale-[1.03] border-[6px] border-slate-800" // Added border
               onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = placeholderErrorUrl(800, 500, 'Companies Dashboard Preview'); }}
             />
             {/* ScatterJPG.jpg - Top Image, offset */}
@@ -176,11 +177,12 @@ export function Hero({ className }: HeroProps) {
               src={scatterImageUrl}
               alt="Mining Scatter Chart Analysis Preview"
               className={cn(
-                "absolute z-20 w-full rounded-xl shadow-2xl aspect-[16/10] object-cover", // Changed aspect, shadow
-                "transform transition-all duration-300 hover:scale-[1.03]", // Changed hover
+                "absolute z-20 w-full rounded-xl shadow-2xl aspect-[16/10] object-cover",
+                "transform transition-all duration-300 hover:scale-[1.03]",
                 "top-0 left-0",
-                "translate-x-[25%] -translate-y-[25%]", // Increased offset to 25%
-                "hover:translate-x-[28%] hover:-translate-y-[28%] hover:z-30" // Adjusted hover offset
+                "translate-x-[25%] -translate-y-[25%]", // Offset remains 25%
+                "hover:translate-x-[28%] hover:-translate-y-[28%] hover:z-30",
+                "border-[6px] border-slate-800" // Added border
               )}
               onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = placeholderErrorUrl(800, 500, 'Scatter Chart Preview'); }}
             />
@@ -189,8 +191,6 @@ export function Hero({ className }: HeroProps) {
       </div>
 
       {/* Bottom Wave - ensure it's behind the image stack */}
-      {/* This div creates a gradient from the main page background to transparent, if the main page bg is set */}
-      {/* If the page background is handled by the image and noise layers, this might not be needed or could be adjusted */}
       <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-navy-900 via-navy-900/70 to-transparent -z-5"> {/* Adjusted z-index and gradient */}
       </div>
     </div>
