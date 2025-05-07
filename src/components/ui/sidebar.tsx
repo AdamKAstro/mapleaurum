@@ -1,3 +1,4 @@
+//src/components/ui/sidebar.tsx
 import React, { useState } from 'react';
 import { NavLink } from 'react-router-dom';
 import { Home, Table2, LineChart, Filter, Crown, ChevronLeft, ChevronRight, Calculator, HelpCircle, BookOpen, Target, Gauge, ScatterChart as Scatter, Award } from 'lucide-react';

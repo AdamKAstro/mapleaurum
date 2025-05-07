@@ -1,0 +1,39 @@
+Review and finish
+Destination
+•
+1 of 2
+mapleWebhooks
+View destination
+https://mapleaurum.com/webhook
+Description
+-
+Events from
+Your account
+API version
+2025-03-31.basil
+Payload style
+Snapshot
+Listening to
+12 events
+Signing secret
+Use this secret to verify that events come from Stripe. You can always view or roll this secret from the destination details page.
+whsec_noqofO5m6sv1ler8BhTBFcvat0mtODQK
+Destination
+•
+2 of 2
+maplewebhooks
+View destination
+https://mapleaurum.com/webhook
+Description
+-
+Events from
+Your account
+API version
+Unversioned
+Payload style
+Thin
+Listening to
+11 events
+Signing secret
+Use this secret to verify that events come from Stripe. You can always view or roll this secret from the destination details page.
+whsec_T2PlPzOUDDhezavc6HV7ufHJJeFS7f7U

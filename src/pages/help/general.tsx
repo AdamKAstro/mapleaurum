@@ -1,9 +1,10 @@
-//src/pages/help/general.tsx
+// src/pages/help/general.tsx
 import React from 'react';
+import { Link } from 'react-router-dom'; // Import Link
 import { PageContainer } from '../../components/ui/page-container';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
-import { HelpCircle, Database, Clock, Mail, Calculator } from 'lucide-react';
-import { Helmet } from 'react-helmet'; // Add this import
+import { HelpCircle, Database, Clock, Mail, Calculator, KeyRound } from 'lucide-react'; // Added KeyRound
+import { Helmet } from 'react-helmet';
 
 const faqs = [
     {
@@ -31,6 +32,22 @@ const faqs = [
         answer: "MapleAurum uses standard industry formulas to calculate metrics like Price-to-Book (P/B), EV/Resource oz, and Enterprise Value (EV) based on market cap, shares outstanding, cash, debt, and resource estimates. These analytics support informed gold investing decisions in Canada.",
         icon: Calculator
     },
+    // --- NEW FAQ ITEM FOR ACCOUNT ISSUES ---
+    {
+        question: "I'm having trouble logging in or forgot my password. What should I do?",
+        answer: ( // Using a JSX element for the answer to include a Link
+            <>
+                If you're experiencing issues logging in, please ensure you are using the correct email address and password.
+                If you've forgotten your password, you can reset it by visiting our {' '}
+                <Link to="/forgot-password" className="text-cyan-400 hover:text-cyan-300 underline underline-offset-2">
+                    Forgot Password page
+                </Link>
+                . For other account-related issues, please contact support.
+            </>
+        ),
+        icon: KeyRound // Icon for password/account issues
+    },
+    // --- END NEW FAQ ITEM ---
     {
         question: "How can I report a data issue or get support for MapleAurum?",
         answer: "For data issues or platform assistance, contact our support team at support@mapleaurum.com. Please include the company name and details of the issue to help us improve our financial data services for Canadian precious metals.",
@@ -54,7 +71,7 @@ export function HelpGeneralPage() {
                 />
                 <meta
                     name="keywords"
-                    content="Canadian precious metals, gold investing Canada, financial data mining, MapleAurum FAQ, precious metals analytics"
+                    content="Canadian precious metals, gold investing Canada, financial data mining, MapleAurum FAQ, precious metals analytics, account help, reset password"
                 />
             </Helmet>
             <div className="relative isolate">
@@ -75,7 +92,12 @@ export function HelpGeneralPage() {
                                     </CardTitle>
                                 </CardHeader>
                                 <CardContent>
-                                    <p className="text-sm text-gray-300">{faq.answer}</p>
+                                    {/* Check if answer is a string or JSX element */}
+                                    {typeof faq.answer === 'string' ? (
+                                        <p className="text-sm text-gray-300">{faq.answer}</p>
+                                    ) : (
+                                        <div className="text-sm text-gray-300">{faq.answer}</div>
+                                    )}
                                 </CardContent>
                             </Card>
                         );

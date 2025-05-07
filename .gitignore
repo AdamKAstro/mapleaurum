@@ -7,10 +7,16 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
+# Build output
 node_modules
 dist
 dist-ssr
+
+# Local files
 *.local
+.env
+webhooksStripe01.txt # If you want to ignore this
+create_checkout.js   # If you want to ignore this
 
 # Editor directories and files
 .vscode/*
@@ -22,9 +28,3 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
-.env
-webhooksStripe01.txt
-.env
-.env
-create_checkout.js
-create_checkout.js

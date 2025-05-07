@@ -2,19 +2,19 @@
 import React, { useState, FormEvent, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../contexts/auth-context';
-import { Button } from '../../components/ui/button'; // Assuming you have these components
+import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '../../components/ui/card';
 import { Typography } from '../../components/ui/typography';
-import { Alert, AlertDescription, AlertTitle } from '../../components/ui/alert'; // Assuming Alert component
-import { AlertCircle, LogIn } from 'lucide-react'; // Icons
+import { Alert, AlertDescription, AlertTitle } from '../../components/ui/alert';
+import { AlertCircle, LogIn } from 'lucide-react';
 
 export function LoginPage() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    const { signIn, session, isLoading: isAuthLoading } = useAuth(); // Use session to redirect if already logged in
+    const { signIn, session, isLoading: isAuthLoading } = useAuth();
     const navigate = useNavigate();
 
     // Redirect if user is already logged in
@@ -34,29 +34,34 @@ export function LoginPage() {
         if (signInError) {
             setError(signInError.message || 'An unknown error occurred during sign in.');
         } else {
-            // Login was successful, onAuthStateChange listener in AuthProvider
-            // will update the session state. We can navigate away.
-            // Optional: Show a success message briefly before navigating
-             navigate('/companies'); // Navigate to a relevant page after login
+            navigate('/companies'); // Navigate to a relevant page after login
         }
 
         setLoading(false);
     };
 
-    // Don't render the form if already logged in (during redirect phase)
-    if (session || isAuthLoading) {
+    // Don't render the form if already logged in (during redirect phase) or auth is loading
+    if (isAuthLoading) { // Check isAuthLoading first
         return (
-             <div className="flex items-center justify-center h-screen">
+            <div className="flex items-center justify-center h-screen">
                 <Typography variant="h3" className="text-white">Loading...</Typography>
-             </div>
-         ); // Or a proper loading spinner
+            </div>
+        );
     }
+    if (session) { // Then check session, to prevent flicker if session is already available
+         return (
+            <div className="flex items-center justify-center h-screen">
+                <Typography variant="h3" className="text-white">Redirecting...</Typography>
+            </div>
+        );
+    }
+
 
     return (
         <div className="flex items-center justify-center min-h-screen bg-gradient-to-b from-navy-900 via-navy-800 to-navy-900 p-4">
-             {/* Optional: Add background image/noise like other pages if desired */}
-             {/* <div className="absolute inset-0 bg-cover bg-center bg-no-repeat bg-fixed -z-10 opacity-[0.03]" style={{ backgroundImage: "url('/Background2.jpg')" }} aria-hidden="true" /> */}
-             {/* <div className="absolute inset-0 bg-noise opacity-[0.07] -z-10" aria-hidden="true" /> */}
+            {/* Optional: Add background image/noise like other pages if desired */}
+            {/* <div className="absolute inset-0 bg-cover bg-center bg-no-repeat bg-fixed -z-10 opacity-[0.03]" style={{ backgroundImage: "url('/Background2.jpg')" }} aria-hidden="true" /> */}
+            {/* <div className="absolute inset-0 bg-noise opacity-[0.07] -z-10" aria-hidden="true" /> */}
 
             <Card className="w-full max-w-md bg-navy-700/60 border-navy-600/50 text-white backdrop-blur-sm shadow-xl">
                 <CardHeader className="text-center">
@@ -111,19 +116,20 @@ export function LoginPage() {
                         </Button>
                     </form>
                 </CardContent>
-                 <CardFooter className="flex flex-col items-center text-sm text-gray-400 pt-4">
-                     {/* Optional: Add links for Sign Up or Password Reset if you implement them */}
+                 <CardFooter className="flex flex-col items-center text-sm text-gray-400 pt-4 space-y-2"> {/* Added space-y-2 for better spacing */}
+                     {/* Optional: Add Sign Up link */}
                      {/* <p>
                         Don't have an account?{' '}
                         <Link to="/signup" className="font-medium text-cyan-400 hover:text-cyan-300">
                             Sign Up
                         </Link>
                     </p> */}
-                     {/* <p className="mt-2">
-                        <Link to="/forgot-password" className="font-medium text-cyan-400 hover:text-cyan-300">
+                    {/* --- UNCOMMENTED FORGOT PASSWORD LINK --- */}
+                    <p>
+                        <Link to="/forgot-password" className="font-medium text-cyan-400 hover:text-cyan-300 underline underline-offset-2">
                             Forgot Password?
                         </Link>
-                    </p> */}
+                    </p>
                 </CardFooter>
             </Card>
         </div>
