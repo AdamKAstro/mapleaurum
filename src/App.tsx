@@ -4,19 +4,21 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { Helmet } from 'react-helmet';
 
 // Providers
-import { AuthProvider } from './contexts/auth-context'; // <-- Import AuthProvider
+import { AuthProvider } from './contexts/auth-context';
 import { SubscriptionProvider } from './contexts/subscription-context';
 import { CurrencyProvider } from './contexts/currency-context';
 import { ThemeProvider } from './contexts/theme-context';
-import { FilterProvider } from './contexts/filter-context'; // Make sure this uses useAuth if needed
+import { FilterProvider } from './contexts/filter-context';
 
 // Layout Components
-import { Header } from './components/ui/header'; // This will need to use useAuth
+import { Header } from './components/ui/header';
 import { Sidebar } from './components/ui/sidebar';
 import ErrorBoundary from './components/ErrorBoundary';
 
 // Page Components
-import { LoginPage } from './pages/login'; // <-- Import LoginPage (assuming location)
+import { LoginPage } from './pages/login';
+import { ForgotPasswordPage } from './pages/forgot-password'; // <-- Import Forgot Password Page
+import { ResetPasswordPage } from './pages/reset-password'; // <-- Import Reset Password Page
 import { CompaniesPage } from './pages/companies';
 import { SubscribePage } from './pages/subscribe';
 import { SuccessPage } from './pages/success';
@@ -35,6 +37,7 @@ import { HelpTiersPage } from './pages/help/tiers';
 import { HelpGeneralPage } from './pages/help/general';
 
 // Debug Component (Optional - Renders only in dev)
+// Import it only if the file exists and you intend to use it
 import { DebugTierSelector } from './components/ui/DebugTierSelector';
 
 function NotFoundPage() {
@@ -62,7 +65,7 @@ function App() {
         "publisher": {
             "@type": "Organization",
             "name": "MapleAurum",
-            "email": "support@mapleaurum.com"
+            "email": "support@mapleaurum.com" // Make sure this email exists
         },
         "potentialAction": {
             "@type": "SearchAction",
@@ -71,10 +74,12 @@ function App() {
         }
     };
 
+    // Check if DebugTierSelector exists and if in development mode
+    const showDebugSelector = process.env.NODE_ENV === 'development' && typeof DebugTierSelector !== 'undefined';
+
     return (
         <Router>
             <ThemeProvider>
-                {/* Wrap with AuthProvider */}
                 <AuthProvider>
                     <SubscriptionProvider>
                         <CurrencyProvider>
@@ -84,28 +89,29 @@ function App() {
                                         <script type="application/ld+json">{JSON.stringify(jsonLd)}</script>
                                     </Helmet>
                                     <div className="flex flex-col min-h-screen">
-                                        {/* Header will need to be updated to use useAuth */}
                                         <Header />
                                         <div className="flex flex-1 overflow-hidden">
                                             <Sidebar />
                                             <main className="flex-1 overflow-y-auto bg-navy-900/50 relative isolate">
-                                                <div
-                                                    className="absolute inset-0 bg-cover bg-center bg-fixed -z-10 opacity-[0.03]"
-                                                    style={{ backgroundImage: `url('/Background2.jpg')` }}
-                                                    aria-hidden="true"
-                                                />
+                                                {/* Backgrounds */}
+                                                <div className="absolute inset-0 bg-cover bg-center bg-fixed -z-10 opacity-[0.03]" style={{ backgroundImage: `url('/Background2.jpg')` }} aria-hidden="true" />
                                                 <div className="absolute inset-0 bg-noise opacity-[0.07] -z-10" aria-hidden="true" />
+
                                                 <ErrorBoundary fallback={<div>Error loading this page section.</div>}>
                                                     <Routes>
-                                                        {/* Publicly Accessible Routes */}
+                                                        {/* Core Pages */}
                                                         <Route path="/" element={<Hero />} />
-                                                        <Route path="/login" element={<LoginPage />} /> {/* <-- Add Login Route */}
+                                                        <Route path="/login" element={<LoginPage />} />
+                                                        <Route path="/forgot-password" element={<ForgotPasswordPage />} /> {/* <-- Added */}
+                                                        <Route path="/reset-password" element={<ResetPasswordPage />} /> {/* <-- Added */}
                                                         <Route path="/companies" element={<CompaniesPage />} />
                                                         <Route path="/scatter-chart" element={<ScatterChartPage />} />
                                                         <Route path="/subscribe" element={<SubscribePage />} />
                                                         <Route path="/subscribe/success" element={<SuccessPage />} />
                                                         <Route path="/filter" element={<FilterPage />} />
                                                         <Route path="/scoring" element={<ScoringPage />} />
+
+                                                        {/* Help Pages */}
                                                         <Route path="/help" element={<HelpLandingPage />} />
                                                         <Route path="/help/metrics" element={<HelpMetricsPage />} />
                                                         <Route path="/help/filters" element={<HelpFiltersPage />} />
@@ -114,16 +120,15 @@ function App() {
                                                         <Route path="/help/tiers" element={<HelpTiersPage />} />
                                                         <Route path="/help/general" element={<HelpGeneralPage />} />
 
-                                                        {/* Add other routes as needed */}
-
+                                                        {/* Catch All */}
                                                         <Route path="*" element={<NotFoundPage />} />
                                                     </Routes>
                                                 </ErrorBoundary>
                                             </main>
                                         </div>
                                     </div>
-									{/* Add the Debug Selector Here - it will only render in dev */}
-									<DebugTierSelector />
+                                    {/* Optional Debug Tier Selector - Render only if component exists and in dev mode */}
+                                    <DebugTierSelector />
                                 </ErrorBoundary>
                             </FilterProvider>
                         </CurrencyProvider>
