@@ -1,6 +1,5 @@
 // src/lib/stripe.ts
 import { supabase } from './supabaseClient';
-// Removed: import type { Database } from './database.types';
 
 // Define the expected shape using basic types
 type SubscriptionStatusData = {
@@ -30,9 +29,10 @@ export async function createCheckoutSession(
   mode: 'subscription' | 'payment',
   successUrl: string,
   cancelUrl: string
-): Promise<string> {
+): Promise<string> { // Return type is string (the URL)
   console.log('[createCheckoutSession] Attempting to create session...');
   try {
+    // 1. Get current session for auth token
     const { data: { session }, error: sessionError } = await supabase.auth.getSession();
     if (sessionError) {
       console.error('[createCheckoutSession] Session retrieval error:', sessionError);
@@ -44,6 +44,7 @@ export async function createCheckoutSession(
     }
     console.log('[createCheckoutSession] Session retrieved successfully.');
 
+    // 2. Prepare payload for Edge Function
     const bodyPayload = {
         price_id: priceId,
         mode,
@@ -52,34 +53,43 @@ export async function createCheckoutSession(
     };
     console.log('[createCheckoutSession] Invoking stripe-checkout Edge Function with body:', bodyPayload);
 
+    // 3. Invoke the Edge Function
+    // --- CHANGED: Pass bodyPayload object directly ---
     const { data, error: invokeError } = await supabase.functions.invoke('stripe-checkout', {
-      method: 'POST',
+      method: 'POST', // Explicitly set method
       headers: {
-        'Content-Type': 'application/json',
+        // 'Content-Type': 'application/json', // Let the client set this based on the body type
         Authorization: `Bearer ${session.access_token}`,
       },
-      body: JSON.stringify(bodyPayload),
+      body: bodyPayload, // Pass the object directly
     });
+    // --- END CHANGE ---
 
+    // 4. Handle Edge Function errors
     if (invokeError) {
       console.error('[createCheckoutSession] Edge Function invocation error:', invokeError);
       let details = invokeError.message;
-      // Supabase FunctionError often has more details in context
       if (invokeError instanceof Error && 'context' in invokeError && typeof invokeError.context === 'object' && invokeError.context !== null && 'message' in invokeError.context) {
           details = `${invokeError.message} - ${invokeError.context.message}`;
+      }
+      // Check specifically for 400 errors which might indicate validation failure inside the function
+      if (details.toLowerCase().includes('non-2xx status code') && invokeError.context?.status === 400) {
+          details += " (Check Edge Function logs for validation errors on received data)";
       }
       throw new Error(`Subscription service error: ${details}`);
     }
 
+    // 5. Handle missing URL in response
     if (!data?.url) {
       console.error('[createCheckoutSession] No checkout URL in Edge Function response:', data);
       throw new Error('Subscription service did not return a checkout URL.');
     }
 
+    // 6. Return the checkout URL
     console.log('[createCheckoutSession] Success, received checkout URL.');
     return data.url;
 
-  } catch (error: unknown) {
+  } catch (error: unknown) { // Catch unknown type
     console.error('[createCheckoutSession] Unexpected error:', error);
     if (error instanceof Error) {
         throw new Error(error.message || 'Failed to create checkout session due to an unexpected error.');
@@ -92,7 +102,6 @@ export async function createCheckoutSession(
 export async function getSubscriptionStatus(): Promise<SubscriptionStatusData> {
   try {
     console.log('[getSubscriptionStatus] Fetching subscription status from view...');
-    // Select the specific columns needed by SubscriptionProvider
     const { data, error } = await supabase
       .from('stripe_user_subscriptions') // Querying the view
       .select(`
@@ -101,7 +110,7 @@ export async function getSubscriptionStatus(): Promise<SubscriptionStatusData> {
         subscription_status,
         price_id
       `) // Selecting only essential columns for tier check
-      .maybeSingle();
+      .maybeSingle(); // Expect 0 or 1 row due to RLS/view logic
 
     if (error) {
       console.error('[getSubscriptionStatus] Database query error:', error);
@@ -109,7 +118,6 @@ export async function getSubscriptionStatus(): Promise<SubscriptionStatusData> {
     }
 
     console.log('[getSubscriptionStatus] Raw subscription status data:', data);
-    // No specific casting needed now, but ensure the shape matches SubscriptionStatusData
     return data as SubscriptionStatusData;
 
   } catch (error: unknown) {
