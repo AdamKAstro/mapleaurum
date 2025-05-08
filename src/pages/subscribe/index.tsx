@@ -8,7 +8,7 @@ import { PageContainer } from '../../components/ui/page-container';
 import { useAuth } from '../../contexts/auth-context';
 import { useSubscription } from '../../contexts/subscription-context';
 import type { SubscriptionTier } from '../../lib/types';
-import { useNavigate, useLocation, Link } from 'react-router-dom';
+import { useLocation, Link } from 'react-router-dom';
 import { createCheckoutSession } from '../../lib/stripe';
 import { Alert, AlertDescription, AlertTitle } from '../../components/ui/alert';
 import { Switch } from '../../components/ui/switch';
@@ -118,7 +118,6 @@ export function SubscribePage() {
   const auth = useAuth();
   const { session, user, isLoading: isAuthLoading } = auth;
   const { getEffectiveTier, isLoading: isSubLoading } = useSubscription();
-  const navigate = useNavigate();
   const location = useLocation();
   const [loadingPriceId, setLoadingPriceId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -203,8 +202,8 @@ export function SubscribePage() {
 
     setIsAutoCheckoutTriggered(true);
     setIsAutoCheckoutLoading(false);
-    navigate('/subscribe', { replace: true });
-  }, [session, user, isAuthLoading, isSubLoading, location, navigate, currentUserTier]);
+    window.location.href = '/subscribe'; // Use window.location.href for post-checkout redirect
+  }, [session, user, isAuthLoading, isSubLoading, location]);
 
   // Function to handle clicks on "Get Plan" / "Upgrade" / "Switch" buttons
   const handleSubscribe = async (priceId: string | null, planName: string) => {
@@ -423,9 +422,7 @@ export function SubscribePage() {
                           console.log('[SubscribePage Button onClick] No session/user. Redirecting to auth.');
                           const authUrl = `/auth?signup=true&plan=${plan.name}&interval=${billingInterval}`;
                           console.log(`[SubscribePage Button onClick] Navigating to: ${authUrl}`);
-                          navigate(authUrl, {
-                            state: { from: `/subscribe?plan=${plan.name}&interval=${billingInterval}` },
-                          });
+                          window.location.href = authUrl; // Use window.location.href instead of navigate
                         } else if (currentPriceId) {
                           handleSubscribe(currentPriceId, plan.name);
                         } else if (!isFree) {
