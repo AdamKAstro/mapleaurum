@@ -1,14 +1,14 @@
 // src/pages/subscribe/index.tsx
 import React, { useState, useMemo } from 'react';
-import { Check, Crown, Star, Loader2, AlertCircle, Lock } from 'lucide-react'; // Added Lock
+import { Check, Crown, Star, Loader2, AlertCircle, Lock } from 'lucide-react';
 import { Button } from '../../components/ui/button';
 import { Typography } from '../../components/ui/typography';
 import { cn } from '../../lib/utils';
 import { PageContainer } from '../../components/ui/page-container';
 import { useAuth } from '../../contexts/auth-context';
-import { useSubscription } from '../../contexts/subscription-context'; // Import useSubscription
-import { getTierLabel } from '../../lib/tier-utils'; // Import tier label helper
-import type { SubscriptionTier } from '../../lib/types'; // Import SubscriptionTier type
+import { useSubscription } from '../../contexts/subscription-context';
+import { getTierLabel } from '../../lib/tier-utils';
+import type { SubscriptionTier } from '../../lib/types';
 import { useNavigate } from 'react-router-dom';
 import { createCheckoutSession } from '../../lib/stripe';
 import { Alert, AlertDescription, AlertTitle } from '../../components/ui/alert';
@@ -105,13 +105,13 @@ const plansData: PlanDetail[] = [
 export function SubscribePage() {
     const backgroundImageUrl = '/Background2.jpg';
     const { session, user } = useAuth();
-    const { getEffectiveTier, isLoading: isSubLoading } = useSubscription(); // Get subscription tier
+    const { getEffectiveTier, isLoading: isSubLoading } = useSubscription();
     const navigate = useNavigate();
-    const [isLoading, setIsLoading] = useState<string | null>(null); // Store price_id of loading plan
+    const [isLoading, setIsLoading] = useState<string | null>(null);
     const [error, setError] = useState<string | null>(null);
     const [billingInterval, setBillingInterval] = useState<'monthly' | 'yearly'>('monthly');
 
-    const currentUserTier = useMemo(() => getEffectiveTier(), [getEffectiveTier]); // Memoize current tier
+    const currentUserTier = useMemo(() => getEffectiveTier(), [getEffectiveTier]);
 
     const handleSubscribe = async (priceId: string | null, planName: string) => {
         if (!priceId) return;
@@ -127,22 +127,17 @@ export function SubscribePage() {
         try {
             const successUrl = `${window.location.origin}/subscribe/success?session_id={CHECKOUT_SESSION_ID}`;
             const cancelUrl = `${window.location.origin}/subscribe`;
-
-            // --- Updated Call with Error Handling ---
             console.log(`[SubscribePage] Calling createCheckoutSession for priceId: ${priceId}`);
             const checkoutUrl = await createCheckoutSession(priceId, 'subscription', successUrl, cancelUrl);
             console.log(`[SubscribePage] createCheckoutSession returned URL: ${checkoutUrl}`);
-            // --- End Updated Call ---
 
             if (checkoutUrl) {
                 window.location.href = checkoutUrl;
             } else {
-                // This case might occur if the function resolves but returns no URL
                 throw new Error('Could not retrieve checkout session URL.');
             }
         } catch (err: any) {
             console.error('[SubscribePage] Subscription Error:', err);
-            // Check if the error is specifically about the Edge Function invocation
             if (err.message && (err.message.toLowerCase().includes('edge function') || err.message.toLowerCase().includes('failed to fetch'))) {
                  setError(`Failed to connect to the subscription service. Please ensure you are connected to the internet and try again. If the problem persists, contact support. (Details: ${err.message})`);
             } else {
@@ -150,7 +145,6 @@ export function SubscribePage() {
             }
             setIsLoading(null);
         }
-        // Don't reset loading on success because of redirect
     };
 
     return (
@@ -221,10 +215,9 @@ export function SubscribePage() {
 
                         if (isCurrentPlan) buttonText = "Current Plan";
                         else if (isUpgrade) buttonText = `Upgrade to ${plan.name}`;
-                        else if (isDowngrade) buttonText = `Downgrade to ${plan.name}`; // Or just disable
+                        else if (isDowngrade) buttonText = `Downgrade to ${plan.name}`;
 
-                        // Determine button disabled state
-                        const isDisabled = isFree || isCurrentPlan || isPlanLoading || isDowngrade; // Disable free, current, loading, and downgrades
+                        const isDisabled = isFree || isCurrentPlan || isPlanLoading || isDowngrade;
 
                         return (
                             <div
@@ -234,12 +227,28 @@ export function SubscribePage() {
                                     plan.is_popular ? 'shadow-cyan-900/20 shadow-lg' : 'shadow-md shadow-navy-900/10'
                                 )}
                             >
-                                {plan.is_popular && ( /* Popular Badge */ )}
-                                {billingInterval === 'yearly' && intervalDetails?.savePercent && ( /* Savings Badge */ )}
+                                {/* --- FIXED BADGE RENDERING --- */}
+                                {plan.is_popular && (
+                                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 transform z-10">
+                                        <span className="inline-flex items-center rounded-full bg-gradient-to-r from-teal-500 to-cyan-600 px-3 py-0.5 text-xs font-semibold text-white shadow-sm">
+                                            Most Popular
+                                        </span>
+                                    </div>
+                                )}
+                                {billingInterval === 'yearly' && intervalDetails?.savePercent && (
+                                    <div className={cn(
+                                        "absolute z-10 px-2.5 py-0.5 rounded-full text-xs font-semibold text-white",
+                                        plan.is_popular ? "-top-7 right-2" : "-top-3 right-2", // Adjust position based on popularity tag
+                                        "bg-gradient-to-r from-emerald-500 to-green-600"
+                                    )}>
+                                        Save {intervalDetails.savePercent}%
+                                    </div>
+                                )}
+                                {/* --- END FIXED BADGE RENDERING --- */}
 
                                 <div
                                     className={cn(
-                                        'relative flex flex-col h-full rounded-xl border p-6 w-full',
+                                        'relative flex flex-col h-full rounded-xl border p-6 w-full pt-8', // Added pt-8 to make space for badges if they overlap top border
                                         plan.is_popular ? 'bg-navy-700/50 border-cyan-700/50' : 'bg-navy-800/60 border-navy-700/50',
                                         'backdrop-blur-sm'
                                     )}
@@ -270,15 +279,13 @@ export function SubscribePage() {
                                         disabled={isDisabled}
                                         size="lg"
                                         variant={isCurrentPlan || isFree ? 'secondary' : plan.is_popular ? 'primary' : 'outline'}
-                                        onClick={() => !isFree && handleSubscribe(currentPriceId, plan.name)} // Only allow clicks for non-free
+                                        onClick={() => !isFree && handleSubscribe(currentPriceId, plan.name)}
                                         className={cn(
                                             'mt-8 w-full font-semibold flex items-center justify-center',
-                                            // Specific styles based on state
-                                            isCurrentPlan && 'bg-gray-600/50 border-gray-500 text-gray-300 cursor-default', // Style for current plan
+                                            isCurrentPlan && 'bg-gray-600/50 border-gray-500 text-gray-300 cursor-default',
                                             !isCurrentPlan && !isFree && plan.is_popular && 'bg-gradient-to-r from-teal-500 to-cyan-600 hover:from-teal-600 hover:to-cyan-700 text-white',
                                             !isCurrentPlan && !isFree && !plan.is_popular && 'border-cyan-700/50 text-cyan-300 hover:bg-cyan-900/20 hover:border-cyan-600',
-                                            // General disabled/loading styles
-                                            isDisabled && !isPlanLoading && 'opacity-60 cursor-not-allowed', // General disabled style (covers free, current, downgrade)
+                                            isDisabled && !isPlanLoading && 'opacity-60 cursor-not-allowed',
                                             isPlanLoading && 'opacity-75 cursor-wait'
                                         )}
                                     >
@@ -288,9 +295,7 @@ export function SubscribePage() {
                                                 Processing...
                                             </>
                                         ) : (
-                                             // Add lock icon for downgrades if desired
-                                            // isDowngrade ? <><Lock className="mr-2 h-4 w-4" /> {buttonText}</> : buttonText
-                                            buttonText // Currently just disabling downgrades
+                                            buttonText
                                         )}
                                     </Button>
                                 </div>
