@@ -321,7 +321,7 @@ export function SubscribePage() {
                                             {isPlanLoading ? (
                                                 <>
                                                     <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                                                    Processing...
+                                                    Free Plan
                                                 </>
                                             ) : (
                                                 buttonText // Display the determined button text
