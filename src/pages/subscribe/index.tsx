@@ -1,16 +1,19 @@
 // src/pages/subscribe/index.tsx
-import React, { useState } from 'react';
-import { Check, Crown, Star, Loader2, AlertCircle } from 'lucide-react';
+import React, { useState, useMemo } from 'react';
+import { Check, Crown, Star, Loader2, AlertCircle, Lock } from 'lucide-react'; // Added Lock
 import { Button } from '../../components/ui/button';
 import { Typography } from '../../components/ui/typography';
 import { cn } from '../../lib/utils';
 import { PageContainer } from '../../components/ui/page-container';
 import { useAuth } from '../../contexts/auth-context';
+import { useSubscription } from '../../contexts/subscription-context'; // Import useSubscription
+import { getTierLabel } from '../../lib/tier-utils'; // Import tier label helper
+import type { SubscriptionTier } from '../../lib/types'; // Import SubscriptionTier type
 import { useNavigate } from 'react-router-dom';
 import { createCheckoutSession } from '../../lib/stripe';
 import { Alert, AlertDescription, AlertTitle } from '../../components/ui/alert';
-import { Switch } from '../../components/ui/switch'; // Assuming you have a Switch component
-import { Label } from '../../components/ui/label'; // Assuming you have a Label component
+import { Switch } from '../../components/ui/switch';
+import { Label } from '../../components/ui/label';
 
 // --- Define Price IDs from your CSV ---
 const PRO_MONTHLY_PRICE_ID = 'price_1RMJ31Ast4LlpL7pauoVPwpm';
@@ -19,12 +22,25 @@ const PREMIUM_MONTHLY_PRICE_ID = 'price_1RMJ3pAst4LlpL7pXTO1bVli';
 const PREMIUM_YEARLY_PRICE_ID = 'price_1RMIDFAst4LlpL7p8UInqh9P';
 // --- End Price IDs ---
 
-// --- Define Plan Data Structure ---
+// Map plan names to SubscriptionTier type for comparison
+const planNameToTier: Record<string, SubscriptionTier> = {
+    "Free": "free",
+    "Pro": "medium",
+    "Premium": "premium",
+};
+
+// Map SubscriptionTier to a level for comparison
+const tierLevel: Record<SubscriptionTier, number> = {
+    "free": 0,
+    "medium": 1,
+    "premium": 2,
+};
+
 interface PlanIntervalDetail {
     priceId: string;
-    priceString: string; // e.g., "$40" or "$420"
-    priceSuffix: string; // e.g., "/month" or "/year"
-    savePercent?: number; // Optional: Calculate savings for yearly
+    priceString: string;
+    priceSuffix: string;
+    savePercent?: number;
 }
 
 interface PlanDetail {
@@ -32,38 +48,31 @@ interface PlanDetail {
     description: string;
     is_popular: boolean;
     features: string[];
-    monthly: PlanIntervalDetail | null; // Use null for Free plan
-    yearly: PlanIntervalDetail | null; // Use null for Free plan
+    monthly: PlanIntervalDetail | null;
+    yearly: PlanIntervalDetail | null;
     icon?: React.ElementType;
     color?: string;
 }
 
-// Calculate yearly savings percentage (example)
 const calculateSavings = (monthlyPrice: number, yearlyPrice: number): number | undefined => {
     if (!monthlyPrice || !yearlyPrice || monthlyPrice <= 0 || yearlyPrice <= 0) return undefined;
     const totalMonthlyCost = monthlyPrice * 12;
-    if (totalMonthlyCost <= yearlyPrice) return undefined; // No savings or yearly is more expensive
+    if (totalMonthlyCost <= yearlyPrice) return undefined;
     const savings = ((totalMonthlyCost - yearlyPrice) / totalMonthlyCost) * 100;
     return Math.round(savings);
 };
 
-const yearlyProSavings = calculateSavings(40, 420); // (480 - 420) / 480 = 12.5% -> 13%
-const yearlyPremiumSavings = calculateSavings(90, 960); // (1080 - 960) / 1080 = 11.1% -> 11%
-
+const yearlyProSavings = calculateSavings(40, 420);
+const yearlyPremiumSavings = calculateSavings(90, 960);
 
 const plansData: PlanDetail[] = [
     {
         name: "Free",
         description: "Basic access to company data",
         is_popular: false,
-        features: [
-            "Basic company information",
-            "Limited financial metrics",
-            "Public company profiles",
-            "Daily updates"
-        ],
-        monthly: { priceId: '', priceString: "$0", priceSuffix: "" }, // Placeholder for display logic
-        yearly: null, // Free plan doesn't have yearly option typically
+        features: ["Basic company information", "Limited financial metrics", "Public company profiles", "Daily updates"],
+        monthly: { priceId: '', priceString: "$0", priceSuffix: "" },
+        yearly: null,
         icon: undefined,
         color: 'gray',
     },
@@ -71,12 +80,7 @@ const plansData: PlanDetail[] = [
         name: "Pro",
         description: "Advanced analytics and insights",
         is_popular: true,
-        features: [
-            "Financial metrics",
-            "Resource estimates",
-            "Production data",
-            "Custom watchlists (coming)"
-        ],
+        features: ["Financial metrics", "Resource estimates", "Production data", "Custom watchlists (coming)"],
         monthly: { priceId: PRO_MONTHLY_PRICE_ID, priceString: "$40", priceSuffix: "/month" },
         yearly: { priceId: PRO_YEARLY_PRICE_ID, priceString: "$420", priceSuffix: "/year", savePercent: yearlyProSavings },
         icon: Star,
@@ -87,10 +91,9 @@ const plansData: PlanDetail[] = [
         description: "Complete access and premium features",
         is_popular: false,
         features: [
-            "All Pro features", "Priority support", "Basic company information",
-            "Public company profiles", "Advanced financial metrics", "Resource estimates",
-            "Production data", "Custom watchlists (coming)", "Real-time alerts (coming)",
-            "API access (coming)", "Cost metrics", "Valuation models"
+            "All Pro features", "Priority support", "Basic company information", "Public company profiles",
+            "Advanced financial metrics", "Resource estimates", "Production data", "Custom watchlists (coming)",
+            "Real-time alerts (coming)", "API access (coming)", "Cost metrics", "Valuation models"
         ],
         monthly: { priceId: PREMIUM_MONTHLY_PRICE_ID, priceString: "$90", priceSuffix: "/month" },
         yearly: { priceId: PREMIUM_YEARLY_PRICE_ID, priceString: "$960", priceSuffix: "/year", savePercent: yearlyPremiumSavings },
@@ -102,10 +105,13 @@ const plansData: PlanDetail[] = [
 export function SubscribePage() {
     const backgroundImageUrl = '/Background2.jpg';
     const { session, user } = useAuth();
+    const { getEffectiveTier, isLoading: isSubLoading } = useSubscription(); // Get subscription tier
     const navigate = useNavigate();
     const [isLoading, setIsLoading] = useState<string | null>(null); // Store price_id of loading plan
     const [error, setError] = useState<string | null>(null);
-    const [billingInterval, setBillingInterval] = useState<'monthly' | 'yearly'>('monthly'); // State for toggle
+    const [billingInterval, setBillingInterval] = useState<'monthly' | 'yearly'>('monthly');
+
+    const currentUserTier = useMemo(() => getEffectiveTier(), [getEffectiveTier]); // Memoize current tier
 
     const handleSubscribe = async (priceId: string | null, planName: string) => {
         if (!priceId) return;
@@ -121,14 +127,30 @@ export function SubscribePage() {
         try {
             const successUrl = `${window.location.origin}/subscribe/success?session_id={CHECKOUT_SESSION_ID}`;
             const cancelUrl = `${window.location.origin}/subscribe`;
+
+            // --- Updated Call with Error Handling ---
+            console.log(`[SubscribePage] Calling createCheckoutSession for priceId: ${priceId}`);
             const checkoutUrl = await createCheckoutSession(priceId, 'subscription', successUrl, cancelUrl);
-            if (checkoutUrl) window.location.href = checkoutUrl;
-            else throw new Error('Could not create checkout session.');
+            console.log(`[SubscribePage] createCheckoutSession returned URL: ${checkoutUrl}`);
+            // --- End Updated Call ---
+
+            if (checkoutUrl) {
+                window.location.href = checkoutUrl;
+            } else {
+                // This case might occur if the function resolves but returns no URL
+                throw new Error('Could not retrieve checkout session URL.');
+            }
         } catch (err: any) {
-            console.error('Subscription Error:', err);
-            setError(err.message || 'Failed to initiate subscription. Please try again.');
+            console.error('[SubscribePage] Subscription Error:', err);
+            // Check if the error is specifically about the Edge Function invocation
+            if (err.message && (err.message.toLowerCase().includes('edge function') || err.message.toLowerCase().includes('failed to fetch'))) {
+                 setError(`Failed to connect to the subscription service. Please ensure you are connected to the internet and try again. If the problem persists, contact support. (Details: ${err.message})`);
+            } else {
+                setError(err.message || 'Failed to initiate subscription. Please try again.');
+            }
             setIsLoading(null);
         }
+        // Don't reset loading on success because of redirect
     };
 
     return (
@@ -141,7 +163,6 @@ export function SubscribePage() {
             <div className="absolute inset-0 bg-noise opacity-30 -z-10" aria-hidden="true" />
 
             <div className="relative z-0 pt-8 pb-12">
-                {/* --- Header Text --- */}
                 <div className="text-center mb-10 md:mb-12">
                     <Typography variant="h2" className="text-surface-white text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight">
                         Choose Your Plan
@@ -151,7 +172,6 @@ export function SubscribePage() {
                     </Typography>
                 </div>
 
-                {/* --- Monthly/Yearly Toggle --- */}
                 <div className="flex items-center justify-center space-x-4 mb-10 md:mb-12 text-sm font-medium text-surface-white/80">
                     <Label htmlFor="billing-toggle" className={cn(billingInterval === 'monthly' && 'text-surface-white font-semibold')}>
                         Monthly
@@ -164,15 +184,13 @@ export function SubscribePage() {
                     />
                     <Label htmlFor="billing-toggle" className={cn(billingInterval === 'yearly' && 'text-surface-white font-semibold')}>
                         Yearly
-                        {/* Optional: Display average savings if calculated */}
                         {(yearlyProSavings || yearlyPremiumSavings) && (
                            <span className="ml-2 text-xs text-accent-teal">(Save up to {Math.max(yearlyProSavings ?? 0, yearlyPremiumSavings ?? 0)}%)</span>
                         )}
                     </Label>
                 </div>
 
-                 {/* Global Error Alert */}
-                {error && (
+                 {error && (
                     <div className="max-w-5xl mx-auto mb-8 px-4">
                         <Alert variant="destructive">
                             <AlertCircle className="h-4 w-4" />
@@ -182,44 +200,42 @@ export function SubscribePage() {
                     </div>
                 )}
 
-                {/* --- Plan Cards --- */}
                 <div className="grid grid-cols-1 gap-6 sm:gap-8 lg:grid-cols-3 max-w-5xl mx-auto px-4">
                     {plansData.map((plan) => {
                         const Icon = plan.icon;
                         const intervalDetails = billingInterval === 'yearly' && plan.yearly ? plan.yearly : plan.monthly;
-                        // Free plan handling - always disabled, shows $0
+                        const planTier = planNameToTier[plan.name] ?? 'free';
+                        const isCurrentPlan = !isSubLoading && planTier === currentUserTier;
+                        const isUpgrade = !isSubLoading && tierLevel[planTier] > tierLevel[currentUserTier];
+                        const isDowngrade = !isSubLoading && tierLevel[planTier] < tierLevel[currentUserTier];
                         const isFree = plan.name === "Free";
+
                         const currentPrice = isFree ? "$0" : intervalDetails?.priceString ?? '';
                         const currentSuffix = isFree ? '' : intervalDetails?.priceSuffix ?? '';
                         const currentPriceId = isFree ? null : intervalDetails?.priceId ?? null;
                         const isPlanLoading = isLoading === currentPriceId;
-                        const buttonText = isFree ? "Current Plan" : `Get ${plan.name} ${billingInterval === 'yearly' ? 'Yearly' : 'Monthly'}`;
+
+                        let buttonText = `Get ${plan.name}`;
+                        if (billingInterval === 'yearly') buttonText += ' Yearly';
+                        else if (!isFree) buttonText += ' Monthly';
+
+                        if (isCurrentPlan) buttonText = "Current Plan";
+                        else if (isUpgrade) buttonText = `Upgrade to ${plan.name}`;
+                        else if (isDowngrade) buttonText = `Downgrade to ${plan.name}`; // Or just disable
+
+                        // Determine button disabled state
+                        const isDisabled = isFree || isCurrentPlan || isPlanLoading || isDowngrade; // Disable free, current, loading, and downgrades
 
                         return (
                             <div
-                                key={plan.name + billingInterval} // Key needs to change with interval for proper re-render
+                                key={plan.name + billingInterval}
                                 className={cn(
                                     'relative transform transition-all duration-300 hover:scale-[1.015] flex',
                                     plan.is_popular ? 'shadow-cyan-900/20 shadow-lg' : 'shadow-md shadow-navy-900/10'
                                 )}
                             >
-                                {plan.is_popular && (
-                                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 transform z-10">
-                                        <span className="inline-flex items-center rounded-full bg-gradient-to-r from-teal-500 to-cyan-600 px-3 py-0.5 text-xs font-semibold text-white shadow-sm">
-                                            Most Popular
-                                        </span>
-                                    </div>
-                                )}
-                                {/* Savings Badge for Yearly */}
-                                {billingInterval === 'yearly' && intervalDetails?.savePercent && (
-                                    <div className={cn(
-                                        "absolute z-10 px-2.5 py-0.5 rounded-full text-xs font-semibold text-white",
-                                        plan.is_popular ? "-top-7 right-2" : "-top-3 right-2", // Adjust position based on popularity tag
-                                        "bg-gradient-to-r from-emerald-500 to-green-600"
-                                    )}>
-                                        Save {intervalDetails.savePercent}%
-                                    </div>
-                                )}
+                                {plan.is_popular && ( /* Popular Badge */ )}
+                                {billingInterval === 'yearly' && intervalDetails?.savePercent && ( /* Savings Badge */ )}
 
                                 <div
                                     className={cn(
@@ -230,19 +246,13 @@ export function SubscribePage() {
                                 >
                                     {/* Plan Header */}
                                     <div className="flex items-center gap-3 mb-4">
-                                        {Icon && (
-                                            <Icon className={cn('h-7 w-7', plan.color === 'accent-yellow' ? 'text-accent-yellow' : 'text-accent-teal')} />
-                                        )}
-                                        <h3 className={cn('text-lg font-semibold', plan.is_popular ? 'text-cyan-300' : 'text-white')}>
-                                            {plan.name}
-                                        </h3>
+                                        {Icon && (<Icon className={cn('h-7 w-7', plan.color === 'accent-yellow' ? 'text-accent-yellow' : 'text-accent-teal')} />)}
+                                        <h3 className={cn('text-lg font-semibold', plan.is_popular ? 'text-cyan-300' : 'text-white')}>{plan.name}</h3>
                                     </div>
                                     {/* Price */}
                                     <div className="mt-2 flex items-baseline gap-x-1">
                                         <span className="text-3xl font-bold tracking-tight text-white">{currentPrice}</span>
-                                        {currentSuffix && (
-                                            <span className="text-sm font-semibold leading-6 text-gray-400">{currentSuffix}</span>
-                                        )}
+                                        {currentSuffix && (<span className="text-sm font-semibold leading-6 text-gray-400">{currentSuffix}</span>)}
                                     </div>
                                     {/* Description */}
                                     <p className="mt-4 text-sm leading-6 text-gray-300">{plan.description}</p>
@@ -257,15 +267,18 @@ export function SubscribePage() {
                                     </ul>
                                     {/* Subscribe Button */}
                                     <Button
-                                        disabled={isFree || isPlanLoading}
+                                        disabled={isDisabled}
                                         size="lg"
-                                        variant={isFree ? 'secondary' : plan.is_popular ? 'primary' : 'outline'}
-                                        onClick={() => handleSubscribe(currentPriceId, plan.name)}
+                                        variant={isCurrentPlan || isFree ? 'secondary' : plan.is_popular ? 'primary' : 'outline'}
+                                        onClick={() => !isFree && handleSubscribe(currentPriceId, plan.name)} // Only allow clicks for non-free
                                         className={cn(
                                             'mt-8 w-full font-semibold flex items-center justify-center',
-                                            plan.is_popular && !isFree && 'bg-gradient-to-r from-teal-500 to-cyan-600 hover:from-teal-600 hover:to-cyan-700 text-white',
-                                            !plan.is_popular && !isFree && 'border-cyan-700/50 text-cyan-300 hover:bg-cyan-900/20 hover:border-cyan-600',
-                                            isFree && 'opacity-60 cursor-not-allowed',
+                                            // Specific styles based on state
+                                            isCurrentPlan && 'bg-gray-600/50 border-gray-500 text-gray-300 cursor-default', // Style for current plan
+                                            !isCurrentPlan && !isFree && plan.is_popular && 'bg-gradient-to-r from-teal-500 to-cyan-600 hover:from-teal-600 hover:to-cyan-700 text-white',
+                                            !isCurrentPlan && !isFree && !plan.is_popular && 'border-cyan-700/50 text-cyan-300 hover:bg-cyan-900/20 hover:border-cyan-600',
+                                            // General disabled/loading styles
+                                            isDisabled && !isPlanLoading && 'opacity-60 cursor-not-allowed', // General disabled style (covers free, current, downgrade)
                                             isPlanLoading && 'opacity-75 cursor-wait'
                                         )}
                                     >
@@ -275,7 +288,9 @@ export function SubscribePage() {
                                                 Processing...
                                             </>
                                         ) : (
-                                            buttonText
+                                             // Add lock icon for downgrades if desired
+                                            // isDowngrade ? <><Lock className="mr-2 h-4 w-4" /> {buttonText}</> : buttonText
+                                            buttonText // Currently just disabling downgrades
                                         )}
                                     </Button>
                                 </div>
@@ -287,4 +302,3 @@ export function SubscribePage() {
         </PageContainer>
     );
 }
-
