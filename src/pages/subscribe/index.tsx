@@ -123,13 +123,18 @@ export function SubscribePage() {
 
     // Determine the user's current tier, considering loading states
     const currentUserTier = useMemo(() => {
-        if (isSubLoading || isAuthLoading) return undefined; // Undefined if loading
-        return getEffectiveTier();
+        // Return undefined if either auth or subscription status is still loading
+        if (isSubLoading || isAuthLoading) {
+             console.log(`[SubscribePage currentUserTier] Undefined because: isSubLoading=${isSubLoading}, isAuthLoading=${isAuthLoading}`);
+             return undefined;
+        }
+        const tier = getEffectiveTier();
+         console.log(`[SubscribePage currentUserTier] Determined tier: ${tier}`);
+        return tier;
     }, [getEffectiveTier, isSubLoading, isAuthLoading]);
 
     // Function to handle clicks on "Get Plan" / "Upgrade" / "Switch" buttons
     const handleSubscribe = async (priceId: string | null, planName: string) => {
-        // This function is now mostly focused on the logic *after* auth check
         if (!priceId) {
             console.warn('[SubscribePage handleSubscribe] Called with null priceId.');
             return;
@@ -137,12 +142,14 @@ export function SubscribePage() {
         setError(null);
         setLoadingPriceId(priceId); // Set loading state for the clicked button
 
+        // We rely on the button's disabled state to prevent calls when not authenticated
+        // The check inside onClick is the primary guard now.
+
         try {
             const successUrl = `${window.location.origin}/subscribe/success?session_id={CHECKOUT_SESSION_ID}`;
             const cancelUrl = `${window.location.origin}/subscribe`;
 
             console.log(`[SubscribePage handleSubscribe] Calling createCheckoutSession with priceId: ${priceId}`);
-            // Call the function that invokes the Supabase Edge Function
             const checkoutUrl = await createCheckoutSession(priceId, 'subscription', successUrl, cancelUrl);
             console.log(`[SubscribePage handleSubscribe] createCheckoutSession returned URL: ${checkoutUrl}`);
 
@@ -212,6 +219,7 @@ export function SubscribePage() {
                         const Icon = plan.icon;
                         const intervalDetails = billingInterval === 'yearly' && plan.yearly ? plan.yearly : plan.monthly;
                         const planTier = planNameToTier[plan.name] ?? 'free';
+                        // Determine plan states relative to user's current tier (handle undefined during loading)
                         const isCurrentPlan = currentUserTier !== undefined && planTier === currentUserTier;
                         const isUpgrade = currentUserTier !== undefined && tierLevel[planTier] > tierLevel[currentUserTier];
                         const isDowngrade = currentUserTier !== undefined && tierLevel[planTier] < tierLevel[currentUserTier];
@@ -222,17 +230,26 @@ export function SubscribePage() {
                         const currentPriceId = isFree ? null : intervalDetails?.priceId ?? null;
                         const isPlanLoading = loadingPriceId === currentPriceId;
 
-                        let buttonText = `Get ${plan.name}`;
-                        if (!isFree) {
-                            buttonText += billingInterval === 'yearly' ? ' Yearly' : ' Monthly';
+                        // Determine button text dynamically
+                        let buttonText: string;
+                        if (isFree) {
+                            buttonText = "Free Plan";
+                        } else if (isCurrentPlan) {
+                            buttonText = "Current Plan";
+                        } else if (isUpgrade) {
+                            buttonText = `Upgrade to ${plan.name}`;
+                        } else if (isDowngrade) {
+                            buttonText = `Switch to ${plan.name}`;
+                        } else { // Default if tier is loading or unknown
+                            buttonText = `Get ${plan.name}`;
+                            if (!isFree) {
+                                buttonText += billingInterval === 'yearly' ? ' Yearly' : ' Monthly';
+                            }
                         }
-                        if (isFree) buttonText = "Free Plan"; // Specific text for free plan
-                        else if (isCurrentPlan) buttonText = "Current Plan";
-                        else if (isUpgrade) buttonText = `Upgrade to ${plan.name}`;
-                        else if (isDowngrade) buttonText = `Switch to ${plan.name}`;
 
-                        // Disable Free plan, Current plan, or if THIS button is loading
-                        const isDisabled = isFree || isCurrentPlan || isPlanLoading;
+                        // Determine if the button should be disabled
+                        // Disable Free plan, Current plan, if THIS button is loading, OR if auth/sub status is still loading
+                        const isDisabled = isFree || isCurrentPlan || isPlanLoading || isAuthLoading || isSubLoading;
 
                         return (
                             <div key={plan.name + billingInterval} className={cn('relative transform transition-all duration-300 hover:scale-[1.015] flex', plan.is_popular ? 'shadow-cyan-900/20 shadow-lg' : 'shadow-md shadow-navy-900/10')}>
@@ -249,62 +266,53 @@ export function SubscribePage() {
 
                                     {/* Action Button Area */}
                                     <div className="mt-8">
-                                        {/* --- UPDATED: Explicitly render disabled button for Free Plan --- */}
-                                        {isFree ? (
-                                            <Button
-                                                disabled={true}
-                                                size="lg"
-                                                variant={'secondary'} // Use secondary for disabled free plan
-                                                className={cn('w-full font-semibold flex items-center justify-center opacity-60 cursor-not-allowed')}
-                                            >
-                                                Free Plan {/* Explicit Text */}
-                                            </Button>
-                                        ) : (
-                                            // --- Button for Pro/Premium Plans ---
-                                            <Button
-                                                disabled={isDisabled}
-                                                size="lg"
-                                                variant={isCurrentPlan ? 'secondary' : plan.is_popular ? 'primary' : 'outline'}
-                                                // --- UPDATED onClick to check auth state directly ---
-                                                onClick={() => {
-                                                    // Log state right before calling the handler
-                                                    const clickSession = auth.session;
-                                                    const clickUser = auth.user;
-                                                    const clickAuthLoading = auth.isLoading;
-                                                    console.log(`[SubscribePage Button onClick] Auth State: session=${!!clickSession}, user=${!!clickUser}, isAuthLoading=${clickAuthLoading}`);
+                                        <Button
+                                            disabled={isDisabled}
+                                            size="lg"
+                                            variant={isCurrentPlan || isFree ? 'secondary' : plan.is_popular ? 'primary' : 'outline'}
+                                            // Check auth state directly in onClick before calling handler
+                                            onClick={() => {
+                                                const clickSession = auth.session;
+                                                const clickUser = auth.user;
+                                                const clickAuthLoading = auth.isLoading;
+                                                console.log(`[SubscribePage Button onClick] Auth State: session=${!!clickSession}, user=${!!clickUser}, isAuthLoading=${clickAuthLoading}`);
 
-                                                    // Perform the check again right here
-                                                    if (clickAuthLoading) {
-                                                        setError("Authentication status is still loading, please wait.");
-                                                    } else if (!clickSession || !clickUser) {
-                                                        console.log('[SubscribePage Button onClick] No session/user. Redirecting.');
-                                                        navigate('/login', { state: { from: `/subscribe?plan=${plan.name}&interval=${billingInterval}` } });
-                                                    } else {
-                                                        // Only call handleSubscribe if authenticated and not loading
-                                                        handleSubscribe(currentPriceId, plan.name);
-                                                    }
-                                                }}
-                                                className={cn(
-                                                    'w-full font-semibold flex items-center justify-center',
-                                                    isCurrentPlan && 'bg-gray-600/50 border-gray-500 text-gray-300 cursor-default',
-                                                    !isCurrentPlan && plan.is_popular && 'bg-gradient-to-r from-teal-500 to-cyan-600 hover:from-teal-600 hover:to-cyan-700 text-white',
-                                                    !isCurrentPlan && !plan.is_popular && 'border-cyan-700/50 text-cyan-300 hover:bg-cyan-900/20 hover:border-cyan-600',
-                                                    isDisabled && !isPlanLoading && 'opacity-60 cursor-not-allowed',
-                                                    isPlanLoading && 'opacity-75 cursor-wait'
-                                                )}
-                                                aria-label={buttonText}
-                                            >
-                                                {/* Button Content: Loader or Text */}
-                                                {isPlanLoading ? (
-                                                    <>
-                                                        <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                                                        Processing...
-                                                    </>
-                                                ) : (
-                                                    buttonText // Display the determined button text
-                                                )}
-                                            </Button>
-                                        )}
+                                                if (clickAuthLoading) {
+                                                    setError("Authentication status is still loading, please wait.");
+                                                } else if (!clickSession || !clickUser) {
+                                                    console.log('[SubscribePage Button onClick] No session/user. Redirecting.');
+                                                    navigate('/login', { state: { from: `/subscribe?plan=${plan.name}&interval=${billingInterval}` } });
+                                                } else if (currentPriceId) { // Ensure priceId exists before calling
+                                                    handleSubscribe(currentPriceId, plan.name);
+                                                } else if (!isFree) {
+                                                    // Handle cases where priceId might be missing for non-free plans (shouldn't happen with current data)
+                                                    console.error(`[SubscribePage Button onClick] Missing priceId for non-free plan: ${plan.name}`);
+                                                    setError(`Configuration error for ${plan.name} plan.`);
+                                                }
+                                            }}
+                                            className={cn(
+                                                'w-full font-semibold flex items-center justify-center',
+                                                // Conditional styles based on plan state
+                                                isCurrentPlan && 'bg-gray-600/50 border-gray-500 text-gray-300 cursor-default',
+                                                !isCurrentPlan && !isFree && plan.is_popular && 'bg-gradient-to-r from-teal-500 to-cyan-600 hover:from-teal-600 hover:to-cyan-700 text-white',
+                                                !isCurrentPlan && !isFree && !plan.is_popular && 'border-cyan-700/50 text-cyan-300 hover:bg-cyan-900/20 hover:border-cyan-600',
+                                                // General disabled/loading styles
+                                                isDisabled && !isPlanLoading && 'opacity-60 cursor-not-allowed',
+                                                isPlanLoading && 'opacity-75 cursor-wait',
+                                                isFree && 'opacity-60 cursor-not-allowed' // Ensure free is always styled as disabled
+                                            )}
+                                            aria-label={buttonText}
+                                        >
+                                            {/* Button Content: Loader or Text */}
+                                            {isPlanLoading ? (
+                                                <>
+                                                    <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                                                    Processing...
+                                                </>
+                                            ) : (
+                                                buttonText // Display the determined button text
+                                            )}
+                                        </Button>
                                     </div>
                                 </div>
                             </div>
