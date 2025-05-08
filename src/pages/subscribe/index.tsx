@@ -16,7 +16,6 @@ import { Switch } from '../../components/ui/switch'; // Import Switch component
 import { Label } from '../../components/ui/label'; // Import Label component
 
 // --- Define Actual Stripe Price IDs ---
-// Replace these with your real Price IDs from your Stripe Dashboard
 const PRO_MONTHLY_PRICE_ID = 'price_1RMJ31Ast4LlpL7pauoVPwpm';
 const PRO_YEARLY_PRICE_ID = 'price_1RMIBuAst4LlpL7pf1EFTmlk';
 const PREMIUM_MONTHLY_PRICE_ID = 'price_1RMJ3pAst4LlpL7pXTO1bVli';
@@ -40,20 +39,20 @@ const tierLevel: Record<SubscriptionTier, number> = {
 // --- Define Plan Data Structures ---
 interface PlanIntervalDetail {
     priceId: string;
-    priceString: string; // Formatted price (e.g., "$40")
-    priceSuffix: string; // Billing period (e.g., "/month")
-    savePercent?: number; // Optional savings percentage for yearly plans
+    priceString: string;
+    priceSuffix: string;
+    savePercent?: number;
 }
 
 interface PlanDetail {
-    name: string; // "Free", "Pro", "Premium"
+    name: string;
     description: string;
     is_popular: boolean;
     features: string[];
-    monthly: PlanIntervalDetail | null; // Details for monthly option
-    yearly: PlanIntervalDetail | null; // Details for yearly option
-    icon?: React.ElementType; // Icon component (e.g., Star, Crown)
-    color?: string; // Accent color class
+    monthly: PlanIntervalDetail | null;
+    yearly: PlanIntervalDetail | null;
+    icon?: React.ElementType;
+    color?: string;
 }
 
 // Helper function to calculate approximate yearly savings
@@ -65,9 +64,8 @@ const calculateSavings = (monthlyPrice: number, yearlyPrice: number): number | u
     return Math.round(savings);
 };
 
-// Calculate savings based on your actual prices (adjust numbers if needed)
-const yearlyProSavings = calculateSavings(40, 420); // $40/mo vs $420/yr
-const yearlyPremiumSavings = calculateSavings(90, 960); // $90/mo vs $960/yr
+const yearlyProSavings = calculateSavings(40, 420);
+const yearlyPremiumSavings = calculateSavings(90, 960);
 
 // Define the plan data using the interfaces and price IDs
 const plansData: PlanDetail[] = [
@@ -76,8 +74,8 @@ const plansData: PlanDetail[] = [
         description: "Basic access to company data",
         is_popular: false,
         features: ["Basic company information", "Limited financial metrics", "Public company profiles", "Daily updates"],
-        monthly: { priceId: '', priceString: "$0", priceSuffix: "" }, // No real price ID needed for free
-        yearly: null, // No yearly option for free
+        monthly: { priceId: '', priceString: "$0", priceSuffix: "" },
+        yearly: null,
         icon: undefined,
         color: 'gray',
     },
@@ -131,40 +129,17 @@ export function SubscribePage() {
 
     // Function to handle clicks on "Get Plan" / "Upgrade" / "Switch" buttons
     const handleSubscribe = async (priceId: string | null, planName: string) => {
+        // This function is now mostly focused on the logic *after* auth check
         if (!priceId) {
-            console.warn('[SubscribePage handleSubscribe] Clicked button with no priceId (likely Free plan). Doing nothing.');
-            return; // Ignore clicks without a valid priceId
-        }
-        setError(null); // Clear previous errors
-
-        // --- Get CURRENT auth state DIRECTLY from context object at the time of click ---
-        const currentSessionOnClick = auth.session;
-        const currentUserOnClick = auth.user;
-        const currentAuthLoadingOnClick = auth.isLoading;
-        console.log(`[SubscribePage handleSubscribe] Click Auth State (Direct Check): session=${!!currentSessionOnClick}, user=${!!currentUserOnClick}, isAuthLoading=${currentAuthLoadingOnClick}`);
-        // ---
-
-        // Prevent action if auth state is still initializing
-        if (currentAuthLoadingOnClick) {
-            console.warn('[SubscribePage handleSubscribe] Auth is still loading, preventing action.');
-            setError("Authentication status is still loading, please wait a moment and try again.");
+            console.warn('[SubscribePage handleSubscribe] Called with null priceId.');
             return;
         }
-
-        // Redirect to login if user is not authenticated
-        if (!currentSessionOnClick || !currentUserOnClick) {
-            console.log('[SubscribePage handleSubscribe] No active session/user found on click (Direct Check). Redirecting to login.');
-            // Pass intended destination in state for potential redirect back after login
-            navigate('/login', { state: { from: `/subscribe?plan=${planName}&interval=${billingInterval}` } });
-            return;
-        }
-
+        setError(null);
         setLoadingPriceId(priceId); // Set loading state for the clicked button
 
         try {
-            // Define URLs for Stripe Checkout redirection
-            const successUrl = `${window.location.origin}/subscribe/success?session_id={CHECKOUT_SESSION_ID}`; // Stripe replaces the placeholder
-            const cancelUrl = `${window.location.origin}/subscribe`; // Back to this page on cancel
+            const successUrl = `${window.location.origin}/subscribe/success?session_id={CHECKOUT_SESSION_ID}`;
+            const cancelUrl = `${window.location.origin}/subscribe`;
 
             console.log(`[SubscribePage handleSubscribe] Calling createCheckoutSession with priceId: ${priceId}`);
             // Call the function that invokes the Supabase Edge Function
@@ -174,19 +149,16 @@ export function SubscribePage() {
             if (checkoutUrl) {
                 window.location.href = checkoutUrl; // Redirect user to Stripe Checkout page
             } else {
-                // Handle case where the function succeeded but didn't return a URL
                 throw new Error('Could not retrieve checkout session URL.');
             }
-            // No need to reset loading state on success because the page redirects
         } catch (err: any) {
             console.error('[SubscribePage handleSubscribe] Subscription Error:', err);
             let displayError = 'Failed to initiate subscription. Please try again.';
-            // Provide more specific feedback for common Edge Function errors
             if (err.message) {
-                 if (err.message.toLowerCase().includes('edge function') || err.message.toLowerCase().includes('failed to fetch')) {
-                    displayError = `Failed to connect to the subscription service (Edge Function). Please check your internet connection and try again. If the problem persists, check function logs or contact support. (Details: ${err.message})`;
+                 if (err.message.toLowerCase().includes('edge function') || err.message.toLowerCase().includes('failed to fetch') || err.message.toLowerCase().includes('non-2xx status code')) {
+                    displayError = `Failed to connect to the subscription service (Edge Function). Please check function logs or contact support. (Details: ${err.message})`;
                  } else {
-                    displayError = err.message; // Show other specific errors
+                    displayError = err.message;
                  }
             }
             setError(displayError);
@@ -237,24 +209,19 @@ export function SubscribePage() {
                 {/* Plan Cards Grid */}
                 <div className="grid grid-cols-1 gap-6 sm:gap-8 lg:grid-cols-3 max-w-5xl mx-auto px-4">
                     {plansData.map((plan) => {
-                        // Determine details based on selected interval
+                        const Icon = plan.icon;
                         const intervalDetails = billingInterval === 'yearly' && plan.yearly ? plan.yearly : plan.monthly;
-                        // Map plan name to tier type ('free', 'medium', 'premium')
                         const planTier = planNameToTier[plan.name] ?? 'free';
-                        // Check plan states relative to user's current tier (only if tier is loaded)
                         const isCurrentPlan = currentUserTier !== undefined && planTier === currentUserTier;
                         const isUpgrade = currentUserTier !== undefined && tierLevel[planTier] > tierLevel[currentUserTier];
                         const isDowngrade = currentUserTier !== undefined && tierLevel[planTier] < tierLevel[currentUserTier];
                         const isFree = plan.name === "Free";
 
-                        // Get dynamic price details
                         const currentPrice = isFree ? "$0" : intervalDetails?.priceString ?? '';
                         const currentSuffix = isFree ? '' : intervalDetails?.priceSuffix ?? '';
                         const currentPriceId = isFree ? null : intervalDetails?.priceId ?? null;
-                        // Check if the button for *this specific priceId* is loading
                         const isPlanLoading = loadingPriceId === currentPriceId;
 
-                        // Determine button text dynamically
                         let buttonText = `Get ${plan.name}`;
                         if (!isFree) {
                             buttonText += billingInterval === 'yearly' ? ' Yearly' : ' Monthly';
@@ -262,73 +229,82 @@ export function SubscribePage() {
                         if (isFree) buttonText = "Free Plan"; // Specific text for free plan
                         else if (isCurrentPlan) buttonText = "Current Plan";
                         else if (isUpgrade) buttonText = `Upgrade to ${plan.name}`;
-                        else if (isDowngrade) buttonText = `Switch to ${plan.name}`; // Text for downgrade option
+                        else if (isDowngrade) buttonText = `Switch to ${plan.name}`;
 
-                        // Determine if the button should be disabled
-                        const isDisabled = isFree || isCurrentPlan || isPlanLoading; // Disable free, current, or loading buttons
+                        // Disable Free plan, Current plan, or if THIS button is loading
+                        const isDisabled = isFree || isCurrentPlan || isPlanLoading;
 
                         return (
-                            // Outer div for card layout and effects
                             <div key={plan.name + billingInterval} className={cn('relative transform transition-all duration-300 hover:scale-[1.015] flex', plan.is_popular ? 'shadow-cyan-900/20 shadow-lg' : 'shadow-md shadow-navy-900/10')}>
-                                {/* Popular Badge */}
+                                {/* Badges */}
                                 {plan.is_popular && ( <div className="absolute -top-3 left-1/2 -translate-x-1/2 transform z-10"><span className="inline-flex items-center rounded-full bg-gradient-to-r from-teal-500 to-cyan-600 px-3 py-0.5 text-xs font-semibold text-white shadow-sm">Most Popular</span></div> )}
-                                {/* Savings Badge */}
                                 {billingInterval === 'yearly' && intervalDetails?.savePercent && ( <div className={cn("absolute z-10 px-2.5 py-0.5 rounded-full text-xs font-semibold text-white", plan.is_popular ? "-top-7 right-2" : "-top-3 right-2", "bg-gradient-to-r from-emerald-500 to-green-600")}>Save {intervalDetails.savePercent}%</div> )}
 
-                                {/* Main Card Content Container */}
                                 <div className={cn('relative flex flex-col h-full rounded-xl border p-6 w-full pt-8', plan.is_popular ? 'bg-navy-700/50 border-cyan-700/50' : 'bg-navy-800/60 border-navy-700/50', 'backdrop-blur-sm')}>
-                                    {/* Plan Header */}
-                                    <div className="flex items-center gap-3 mb-4">
-                                        {plan.icon && (<plan.icon className={cn('h-7 w-7', plan.color === 'accent-yellow' ? 'text-accent-yellow' : 'text-accent-teal')} />)}
-                                        <h3 className={cn('text-lg font-semibold', plan.is_popular ? 'text-cyan-300' : 'text-white')}>{plan.name}</h3>
-                                    </div>
-                                    {/* Price Display */}
-                                    <div className="mt-2 flex items-baseline gap-x-1">
-                                        <span className="text-3xl font-bold tracking-tight text-white">{currentPrice}</span>
-                                        {currentSuffix && (<span className="text-sm font-semibold leading-6 text-gray-400">{currentSuffix}</span>)}
-                                    </div>
-                                    {/* Description */}
-                                    <p className="mt-4 text-sm leading-6 text-gray-300">{plan.description}</p>
-                                    {/* Features List */}
-                                    <ul role="list" className="mt-6 space-y-3 text-sm leading-6 text-gray-200 flex-grow">
-                                        {plan.features.map((feature) => (
-                                            <li key={feature} className="flex gap-x-3">
-                                                {feature.startsWith('All ') ? (<span className="w-5 h-6"></span>) : (<Check className="h-6 w-5 flex-none text-teal-400" aria-hidden="true" />)}
-                                                <span className={cn(feature.startsWith('All ') ? 'font-medium text-gray-400 -ml-5' : '')}>{feature}</span>
-                                            </li>
-                                        ))}
-                                    </ul>
+                                    {/* Plan Header, Price, Description, Features... */}
+                                     <div className="flex items-center gap-3 mb-4"> {Icon && (<Icon className={cn('h-7 w-7', plan.color === 'accent-yellow' ? 'text-accent-yellow' : 'text-accent-teal')} />)} <h3 className={cn('text-lg font-semibold', plan.is_popular ? 'text-cyan-300' : 'text-white')}>{plan.name}</h3> </div>
+                                     <div className="mt-2 flex items-baseline gap-x-1"> <span className="text-3xl font-bold tracking-tight text-white">{currentPrice}</span> {currentSuffix && (<span className="text-sm font-semibold leading-6 text-gray-400">{currentSuffix}</span>)} </div>
+                                     <p className="mt-4 text-sm leading-6 text-gray-300">{plan.description}</p>
+                                     <ul role="list" className="mt-6 space-y-3 text-sm leading-6 text-gray-200 flex-grow"> {plan.features.map((feature) => ( <li key={feature} className="flex gap-x-3"> {feature.startsWith('All ') ? (<span className="w-5 h-6"></span>) : (<Check className="h-6 w-5 flex-none text-teal-400" aria-hidden="true" />)} <span className={cn(feature.startsWith('All ') ? 'font-medium text-gray-400 -ml-5' : '')}>{feature}</span> </li> ))} </ul>
 
                                     {/* Action Button Area */}
                                     <div className="mt-8">
-                                        <Button
-                                            disabled={isDisabled}
-                                            size="lg"
-                                            variant={isCurrentPlan || isFree ? 'secondary' : plan.is_popular ? 'primary' : 'outline'}
-                                            // Use the updated handleSubscribe function
-                                            onClick={() => handleSubscribe(currentPriceId, plan.name)}
-                                            className={cn(
-                                                'w-full font-semibold flex items-center justify-center', // Base button styles
-                                                // Conditional styles for different states
-                                                isCurrentPlan && 'bg-gray-600/50 border-gray-500 text-gray-300 cursor-default',
-                                                !isCurrentPlan && !isFree && plan.is_popular && 'bg-gradient-to-r from-teal-500 to-cyan-600 hover:from-teal-600 hover:to-cyan-700 text-white',
-                                                !isCurrentPlan && !isFree && !plan.is_popular && 'border-cyan-700/50 text-cyan-300 hover:bg-cyan-900/20 hover:border-cyan-600',
-                                                // General disabled/loading styles
-                                                isDisabled && !isPlanLoading && 'opacity-60 cursor-not-allowed', // Covers free, current, downgrade (if logic added)
-                                                isPlanLoading && 'opacity-75 cursor-wait'
-                                            )}
-                                            aria-label={buttonText} // Add aria-label for accessibility
-                                        >
-                                            {/* Button Content: Loader or Text */}
-                                            {isPlanLoading ? (
-                                                <>
-                                                    <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                                                    Free
-                                                </>
-                                            ) : (
-                                                buttonText // Display the determined button text
-                                            )}
-                                        </Button>
+                                        {/* --- UPDATED: Explicitly render disabled button for Free Plan --- */}
+                                        {isFree ? (
+                                            <Button
+                                                disabled={true}
+                                                size="lg"
+                                                variant={'secondary'} // Use secondary for disabled free plan
+                                                className={cn('w-full font-semibold flex items-center justify-center opacity-60 cursor-not-allowed')}
+                                            >
+                                                Free Plan {/* Explicit Text */}
+                                            </Button>
+                                        ) : (
+                                            // --- Button for Pro/Premium Plans ---
+                                            <Button
+                                                disabled={isDisabled}
+                                                size="lg"
+                                                variant={isCurrentPlan ? 'secondary' : plan.is_popular ? 'primary' : 'outline'}
+                                                // --- UPDATED onClick to check auth state directly ---
+                                                onClick={() => {
+                                                    // Log state right before calling the handler
+                                                    const clickSession = auth.session;
+                                                    const clickUser = auth.user;
+                                                    const clickAuthLoading = auth.isLoading;
+                                                    console.log(`[SubscribePage Button onClick] Auth State: session=${!!clickSession}, user=${!!clickUser}, isAuthLoading=${clickAuthLoading}`);
+
+                                                    // Perform the check again right here
+                                                    if (clickAuthLoading) {
+                                                        setError("Authentication status is still loading, please wait.");
+                                                    } else if (!clickSession || !clickUser) {
+                                                        console.log('[SubscribePage Button onClick] No session/user. Redirecting.');
+                                                        navigate('/login', { state: { from: `/subscribe?plan=${plan.name}&interval=${billingInterval}` } });
+                                                    } else {
+                                                        // Only call handleSubscribe if authenticated and not loading
+                                                        handleSubscribe(currentPriceId, plan.name);
+                                                    }
+                                                }}
+                                                className={cn(
+                                                    'w-full font-semibold flex items-center justify-center',
+                                                    isCurrentPlan && 'bg-gray-600/50 border-gray-500 text-gray-300 cursor-default',
+                                                    !isCurrentPlan && plan.is_popular && 'bg-gradient-to-r from-teal-500 to-cyan-600 hover:from-teal-600 hover:to-cyan-700 text-white',
+                                                    !isCurrentPlan && !plan.is_popular && 'border-cyan-700/50 text-cyan-300 hover:bg-cyan-900/20 hover:border-cyan-600',
+                                                    isDisabled && !isPlanLoading && 'opacity-60 cursor-not-allowed',
+                                                    isPlanLoading && 'opacity-75 cursor-wait'
+                                                )}
+                                                aria-label={buttonText}
+                                            >
+                                                {/* Button Content: Loader or Text */}
+                                                {isPlanLoading ? (
+                                                    <>
+                                                        <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                                                        Processing...
+                                                    </>
+                                                ) : (
+                                                    buttonText // Display the determined button text
+                                                )}
+                                            </Button>
+                                        )}
                                     </div>
                                 </div>
                             </div>
