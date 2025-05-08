@@ -421,7 +421,9 @@ export function SubscribePage() {
                           setError('Authentication status is still loading, please wait.');
                         } else if (!clickSession || !clickUser) {
                           console.log('[SubscribePage Button onClick] No session/user. Redirecting to auth.');
-                          navigate(`/auth?signup=true&plan=${plan.name}&interval=${billingInterval}`, {
+                          const authUrl = `/auth?signup=true&plan=${plan.name}&interval=${billingInterval}`;
+                          console.log(`[SubscribePage Button onClick] Navigating to: ${authUrl}`);
+                          navigate(authUrl, {
                             state: { from: `/subscribe?plan=${plan.name}&interval=${billingInterval}` },
                           });
                         } else if (currentPriceId) {
