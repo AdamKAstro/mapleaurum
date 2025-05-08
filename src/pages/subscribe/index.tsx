@@ -17,10 +17,10 @@ import { Label } from '../../components/ui/label'; // Import Label component
 
 // --- Define Actual Stripe Price IDs ---
 // Replace these with your real Price IDs from your Stripe Dashboard
-const PRO_MONTHLY_PRICE_ID = 'price_1RMJ31Ast4LlpL7pauoVPwpm'; // Example: Replace with your Pro Monthly ID
-const PRO_YEARLY_PRICE_ID = 'price_1RMIBuAst4LlpL7pf1EFTmlk'; // Example: Replace with your Pro Yearly ID
-const PREMIUM_MONTHLY_PRICE_ID = 'price_1RMJ3pAst4LlpL7pXTO1bVli'; // Example: Replace with your Premium Monthly ID
-const PREMIUM_YEARLY_PRICE_ID = 'price_1RMIDFAst4LlpL7p8UInqh9P'; // Example: Replace with your Premium Yearly ID
+const PRO_MONTHLY_PRICE_ID = 'price_1RMJ31Ast4LlpL7pauoVPwpm';
+const PRO_YEARLY_PRICE_ID = 'price_1RMIBuAst4LlpL7pf1EFTmlk';
+const PREMIUM_MONTHLY_PRICE_ID = 'price_1RMJ3pAst4LlpL7pXTO1bVli';
+const PREMIUM_YEARLY_PRICE_ID = 'price_1RMIDFAst4LlpL7p8UInqh9P';
 // --- End Price IDs ---
 
 // Map plan names to SubscriptionTier type for comparison
@@ -111,6 +111,7 @@ const plansData: PlanDetail[] = [
 export function SubscribePage() {
     const backgroundImageUrl = '/Background2.jpg';
     const auth = useAuth(); // Get the entire auth context object
+    const { session, user, isLoading: isAuthLoading } = auth; // Destructure state from context
     const { getEffectiveTier, isLoading: isSubLoading } = useSubscription(); // Get subscription context
     const navigate = useNavigate();
     const [loadingPriceId, setLoadingPriceId] = useState<string | null>(null); // Track which button is loading
@@ -119,40 +120,40 @@ export function SubscribePage() {
 
     // Log auth state changes for debugging
     useEffect(() => {
-        console.log(`[SubscribePage Effect] Auth State Update: session=${!!auth.session}, user=${!!auth.user}, isAuthLoading=${auth.isLoading}`);
-    }, [auth.session, auth.user, auth.isLoading]);
+        console.log(`[SubscribePage Effect] Auth State Update: session=${!!session}, user=${!!user}, isAuthLoading=${isAuthLoading}`);
+    }, [session, user, isAuthLoading]); // Depend on destructured state
 
     // Determine the user's current tier, considering loading states
     const currentUserTier = useMemo(() => {
-        if (isSubLoading || auth.isLoading) return undefined; // Undefined if loading
+        if (isSubLoading || isAuthLoading) return undefined; // Undefined if loading
         return getEffectiveTier();
-    }, [getEffectiveTier, isSubLoading, auth.isLoading]);
+    }, [getEffectiveTier, isSubLoading, isAuthLoading]);
 
     // Function to handle clicks on "Get Plan" / "Upgrade" / "Switch" buttons
     const handleSubscribe = async (priceId: string | null, planName: string) => {
         if (!priceId) {
-            console.warn("[SubscribePage handleSubscribe] Clicked button with no priceId (likely Free plan). Doing nothing.");
+            console.warn('[SubscribePage handleSubscribe] Clicked button with no priceId (likely Free plan). Doing nothing.');
             return; // Ignore clicks without a valid priceId
         }
         setError(null); // Clear previous errors
 
         // --- Get CURRENT auth state DIRECTLY from context object at the time of click ---
-        const currentSession = auth.session;
-        const currentUser = auth.user;
-        const currentAuthLoading = auth.isLoading;
-        console.log(`[SubscribePage handleSubscribe] Click Auth State: session=${!!currentSession}, user=${!!currentUser}, isAuthLoading=${currentAuthLoading}`);
-        // --- End current auth state check ---
+        const currentSessionOnClick = auth.session;
+        const currentUserOnClick = auth.user;
+        const currentAuthLoadingOnClick = auth.isLoading;
+        console.log(`[SubscribePage handleSubscribe] Click Auth State (Direct Check): session=${!!currentSessionOnClick}, user=${!!currentUserOnClick}, isAuthLoading=${currentAuthLoadingOnClick}`);
+        // ---
 
         // Prevent action if auth state is still initializing
-        if (currentAuthLoading) {
+        if (currentAuthLoadingOnClick) {
             console.warn('[SubscribePage handleSubscribe] Auth is still loading, preventing action.');
             setError("Authentication status is still loading, please wait a moment and try again.");
             return;
         }
 
         // Redirect to login if user is not authenticated
-        if (!currentSession || !currentUser) {
-            console.log('[SubscribePage handleSubscribe] No active session/user found on click. Redirecting to login.');
+        if (!currentSessionOnClick || !currentUserOnClick) {
+            console.log('[SubscribePage handleSubscribe] No active session/user found on click (Direct Check). Redirecting to login.');
             // Pass intended destination in state for potential redirect back after login
             navigate('/login', { state: { from: `/subscribe?plan=${planName}&interval=${billingInterval}` } });
             return;
@@ -299,11 +300,12 @@ export function SubscribePage() {
                                     </ul>
 
                                     {/* Action Button Area */}
-                                    <div className="mt-8"> {/* Wrapper div for button */}
+                                    <div className="mt-8">
                                         <Button
                                             disabled={isDisabled}
                                             size="lg"
                                             variant={isCurrentPlan || isFree ? 'secondary' : plan.is_popular ? 'primary' : 'outline'}
+                                            // Use the updated handleSubscribe function
                                             onClick={() => handleSubscribe(currentPriceId, plan.name)}
                                             className={cn(
                                                 'w-full font-semibold flex items-center justify-center', // Base button styles
@@ -321,7 +323,7 @@ export function SubscribePage() {
                                             {isPlanLoading ? (
                                                 <>
                                                     <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                                                    Free Plan
+                                                    Free
                                                 </>
                                             ) : (
                                                 buttonText // Display the determined button text
