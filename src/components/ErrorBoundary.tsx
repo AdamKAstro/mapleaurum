@@ -1,6 +1,5 @@
 // src/components/ErrorBoundary.tsx
 import React, { Component, ErrorInfo, ReactNode } from 'react';
-import * as Sentry from '@sentry/react'; // Optional: for Sentry integration
 import { Button } from './ui/button'; // Adjust path to your Button component
 import { Typography } from './ui/typography'; // Adjust path to your Typography component
 
@@ -29,18 +28,12 @@ class ErrorBoundary extends Component<Props, State> {
 
   public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     // Log to console
-    console.error('[ErrorBoundary] Uncaught error:', error, errorInfo);
+    console.error('[ErrorBoundary] Uncaught error:', {
+      message: error.message,
+      stack: error.stack,
+      componentStack: errorInfo.componentStack,
+    });
     this.setState({ errorInfo });
-
-    // Optional: Log to Sentry
-    if (process.env.NODE_ENV === 'production') {
-      Sentry.captureException(error, {
-        extra: {
-          errorInfo,
-          componentStack: errorInfo.componentStack,
-        },
-      });
-    }
   }
 
   public render() {
