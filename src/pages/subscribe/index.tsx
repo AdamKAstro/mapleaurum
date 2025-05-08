@@ -9,7 +9,7 @@ import { useAuth } from '../../contexts/auth-context'; // Import useAuth hook
 import { useSubscription } from '../../contexts/subscription-context'; // Import useSubscription hook
 import { getTierLabel } from '../../lib/tier-utils'; // Import tier label helper
 import type { SubscriptionTier } from '../../lib/types'; // Import SubscriptionTier type
-import { useNavigate, useLocation } from 'react-router-dom'; // Import useNavigate and useLocation
+import { useNavigate, useLocation, Link } from 'react-router-dom'; // <-- Import Link
 import { createCheckoutSession } from '../../lib/stripe'; // Import function to call Stripe checkout edge function
 import { Alert, AlertDescription, AlertTitle } from '../../components/ui/alert'; // Import Alert component
 import { Switch } from '../../components/ui/switch'; // Import Switch component
@@ -39,20 +39,20 @@ const tierLevel: Record<SubscriptionTier, number> = {
 // --- Define Plan Data Structures ---
 interface PlanIntervalDetail {
     priceId: string;
-    priceString: string;
-    priceSuffix: string;
-    savePercent?: number;
+    priceString: string; // Formatted price (e.g., "$40")
+    priceSuffix: string; // Billing period (e.g., "/month")
+    savePercent?: number; // Optional savings percentage for yearly plans
 }
 
 interface PlanDetail {
-    name: string;
+    name: string; // "Free", "Pro", "Premium"
     description: string;
     is_popular: boolean;
     features: string[];
-    monthly: PlanIntervalDetail | null;
-    yearly: PlanIntervalDetail | null;
-    icon?: React.ElementType;
-    color?: string;
+    monthly: PlanIntervalDetail | null; // Details for monthly option
+    yearly: PlanIntervalDetail | null; // Details for yearly option
+    icon?: React.ElementType; // Icon component (e.g., Star, Crown)
+    color?: string; // Accent color class
 }
 
 // Helper function to calculate approximate yearly savings
@@ -64,8 +64,9 @@ const calculateSavings = (monthlyPrice: number, yearlyPrice: number): number | u
     return Math.round(savings);
 };
 
-const yearlyProSavings = calculateSavings(40, 420);
-const yearlyPremiumSavings = calculateSavings(90, 960);
+// Calculate savings based on your actual prices (adjust numbers if needed)
+const yearlyProSavings = calculateSavings(40, 420); // $40/mo vs $420/yr
+const yearlyPremiumSavings = calculateSavings(90, 960); // $90/mo vs $960/yr
 
 // Define the plan data using the interfaces and price IDs
 const plansData: PlanDetail[] = [
@@ -74,8 +75,8 @@ const plansData: PlanDetail[] = [
         description: "Basic access to company data",
         is_popular: false,
         features: ["Basic company information", "Limited financial metrics", "Public company profiles", "Daily updates"],
-        monthly: { priceId: '', priceString: "$0", priceSuffix: "" },
-        yearly: null,
+        monthly: { priceId: '', priceString: "$0", priceSuffix: "" }, // No real price ID needed for free
+        yearly: null, // No yearly option for free
         icon: undefined,
         color: 'gray',
     },
@@ -126,6 +127,7 @@ export function SubscribePage() {
 
     // Determine the user's current tier, considering loading states
     const currentUserTier = useMemo(() => {
+        // Return undefined if either auth or subscription status is still loading
         if (isSubLoading || isAuthLoading) {
              console.log(`[SubscribePage currentUserTier] Undefined because: isSubLoading=${isSubLoading}, isAuthLoading=${isAuthLoading}`);
              return undefined;
@@ -137,25 +139,44 @@ export function SubscribePage() {
 
     // useEffect to handle auto-checkout after login/signup redirect
     useEffect(() => {
-        if (isAutoCheckoutTriggered || isAuthLoading || isSubLoading || !session || !user) return;
+        // Conditions to run this effect:
+        // 1. Not already triggered
+        // 2. Auth and Subscription are NOT loading
+        // 3. User IS authenticated (session and user exist)
+        if (isAutoCheckoutTriggered || isAuthLoading || isSubLoading || !session || !user) {
+            return;
+        }
 
+        // Check if we arrived here with state indicating a redirect from login/signup
         const fromState = (location.state as { from?: string })?.from;
-        if (!fromState || !fromState.startsWith('/subscribe')) return;
+        if (!fromState || !fromState.startsWith('/subscribe')) {
+            // Not a redirect from login/signup intended for this page
+            return;
+        }
 
+        // Parse the plan and interval from the 'from' state
         const stateParams = new URLSearchParams(fromState.split('?')[1] || '');
         const targetPlanName = stateParams.get('plan');
-        const targetInterval = (stateParams.get('interval') as 'monthly' | 'yearly' | null) || 'monthly';
+        const targetInterval = (stateParams.get('interval') as 'monthly' | 'yearly' | null) || 'monthly'; // Default to monthly
 
         console.log(`[SubscribePage AutoCheckout] Detected redirect state. Plan: ${targetPlanName}, Interval: ${targetInterval}`);
-        if (!targetPlanName) return;
+
+        if (!targetPlanName) {
+            console.warn('[SubscribePage AutoCheckout] No plan specified in redirect state.');
+            return;
+        }
 
         const planDetails = plansData.find(p => p.name === targetPlanName);
-        if (!planDetails || planDetails.name === "Free") return;
+        if (!planDetails || planDetails.name === "Free") {
+            console.warn('[SubscribePage AutoCheckout] Invalid or Free plan specified in redirect state.');
+            return; // Don't checkout for free or invalid plan
+        }
 
+        // Check if user is already on this tier
         const targetTier = planNameToTier[targetPlanName];
         if (currentUserTier === targetTier) {
             console.log('[SubscribePage AutoCheckout] User is already on the target tier.');
-            navigate(location.pathname, { replace: true, state: {} });
+            navigate(location.pathname, { replace: true, state: {} }); // Clear state
             return;
         }
 
@@ -165,19 +186,27 @@ export function SubscribePage() {
         if (!priceIdToCheckout) {
             console.error(`[SubscribePage AutoCheckout] Could not find priceId for ${targetPlanName} - ${targetInterval}`);
             setError(`Configuration error for ${targetPlanName} plan.`);
-            navigate(location.pathname, { replace: true, state: {} });
+            navigate(location.pathname, { replace: true, state: {} }); // Clear state
             return;
         }
 
+        // Prevent this effect from running again
         setIsAutoCheckoutTriggered(true);
-        setIsAutoCheckoutLoading(true);
+        setIsAutoCheckoutLoading(true); // Show loading indicator
+
         console.log(`[SubscribePage AutoCheckout] Initiating auto-checkout for priceId: ${priceIdToCheckout}`);
+        // Call handleSubscribe directly
         handleSubscribe(priceIdToCheckout, targetPlanName);
+        // Note: handleSubscribe will set its own loading state (loadingPriceId) and handle errors.
+        // We keep isAutoCheckoutLoading for a general page indicator if needed.
+
+        // Clear the location state after initiating
         navigate(location.pathname, { replace: true, state: {} });
 
     // Add handleSubscribe to dependency array if it's memoized (using useCallback)
     // If not memoized, this could cause infinite loops if handleSubscribe itself causes state changes that re-trigger this effect
     // For now, assuming handleSubscribe is stable or doesn't cause re-renders that affect this effect's dependencies.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [session, user, isAuthLoading, isSubLoading, location, navigate, currentUserTier, isAutoCheckoutTriggered /*, handleSubscribe */]);
 
 
@@ -190,7 +219,7 @@ export function SubscribePage() {
         setError(null);
         setLoadingPriceId(priceId); // Set loading state for the clicked button
 
-        // Auth check happens in onClick handler
+        // Auth check happens in onClick handler now
 
         try {
             const successUrl = `${window.location.origin}/subscribe/success?session_id={CHECKOUT_SESSION_ID}`;
@@ -275,6 +304,7 @@ export function SubscribePage() {
                         const Icon = plan.icon;
                         const intervalDetails = billingInterval === 'yearly' && plan.yearly ? plan.yearly : plan.monthly;
                         const planTier = planNameToTier[plan.name] ?? 'free';
+                        // Determine plan states relative to user's current tier (handle undefined during loading)
                         const isCurrentPlan = currentUserTier !== undefined && planTier === currentUserTier;
                         const isUpgrade = currentUserTier !== undefined && tierLevel[planTier] > tierLevel[currentUserTier];
                         const isDowngrade = currentUserTier !== undefined && tierLevel[planTier] < tierLevel[currentUserTier];
@@ -283,6 +313,7 @@ export function SubscribePage() {
                         const currentPrice = isFree ? "$0" : intervalDetails?.priceString ?? '';
                         const currentSuffix = isFree ? '' : intervalDetails?.priceSuffix ?? '';
                         const currentPriceId = isFree ? null : intervalDetails?.priceId ?? null;
+                        // Check if the button for *this specific priceId* is loading
                         const isPlanLoading = loadingPriceId === currentPriceId;
 
                         // Determine button text dynamically
@@ -302,6 +333,7 @@ export function SubscribePage() {
                         }
 
                         // Determine if the button should be disabled
+                        // Disable Free plan, Current plan, if THIS button is loading, OR if auth/sub status is still loading, OR if auto-checkout is happening
                         const isDisabled = isFree || isCurrentPlan || isPlanLoading || isAuthLoading || isSubLoading || isAutoCheckoutLoading;
 
                         return (
@@ -361,7 +393,7 @@ export function SubscribePage() {
                                             aria-label={buttonText}
                                         >
                                             {/* Button Content: Loader or Text */}
-                                            {/* --- UPDATED: Ensure Free plan never shows loader --- */}
+                                            {/* Show loader ONLY if this specific plan is loading AND it's not the free plan */}
                                             {isPlanLoading && !isFree ? (
                                                 <>
                                                     <Loader2 className="mr-2 h-5 w-5 animate-spin" />
