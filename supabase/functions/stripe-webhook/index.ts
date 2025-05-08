@@ -1,201 +1,264 @@
 import 'jsr:@supabase/functions-js/edge-runtime.d.ts';
 import Stripe from 'npm:stripe@17.7.0';
-import { createClient } from 'npm:@supabase/supabase-js@2.49.1';
+import { createClient, SupabaseClient, User } from 'npm:@supabase/supabase-js@2.49.1';
 
-// --- Environment Variables ---
-const stripeSecret = Deno.env.get('STRIPE_SECRET_KEY');
-const stripeWebhookSecret = Deno.env.get('STRIPE_WEBHOOK_SECRET');
-const supabaseUrl = Deno.env.get('SUPABASE_URL');
-const supabaseServiceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
-
-if (!stripeSecret || !stripeWebhookSecret || !supabaseUrl || !supabaseServiceRoleKey) {
-  throw new Error('Missing required environment variables: STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET, SUPABASE_URL, or SUPABASE_SERVICE_ROLE_KEY');
+// Define expected request body structure
+interface CheckoutRequestBody {
+  price_id: string;
+  success_url: string;
+  cancel_url: string;
+  mode: 'subscription' | 'payment';
 }
 
-// --- Initialize Clients ---
-const stripe = new Stripe(stripeSecret, {
+// Define expected response structure
+interface CheckoutSuccessResponse {
+  sessionId: string;
+  url: string | null;
+}
+
+interface ErrorResponse {
+  error: string;
+}
+
+// --- Environment Variable Validation ---
+const supabaseUrl = Deno.env.get('SUPABASE_URL');
+const supabaseServiceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+const stripeSecretKey = Deno.env.get('STRIPE_SECRET_KEY');
+const frontendUrl = Deno.env.get('FRONTEND_URL') ?? 'https://mapleaurum.com';
+
+if (!supabaseUrl) throw new Error("Missing environment variable: SUPABASE_URL");
+if (!supabaseServiceRoleKey) throw new Error("Missing environment variable: SUPABASE_SERVICE_ROLE_KEY");
+if (!stripeSecretKey) throw new Error("Missing environment variable: STRIPE_SECRET_KEY");
+// --- End Environment Variable Validation ---
+
+
+// Initialize Supabase client with Service Role Key
+const supabaseAdmin: SupabaseClient = createClient(supabaseUrl, supabaseServiceRoleKey);
+
+// Initialize Stripe client
+const stripe = new Stripe(stripeSecretKey, {
   apiVersion: '2024-06-20',
+  typescript: true,
   appInfo: {
-    name: 'MapleAurum Subscription Webhook',
+    name: 'MapleAurum Stripe Integration',
     version: '1.0.0',
   },
 });
 
-const supabase = createClient(supabaseUrl, supabaseServiceRoleKey);
-
-// --- CORS Helper ---
+// Helper function to create responses with specific CORS headers
 function createCorsResponse(body: object | null, status = 200): Response {
+  const allowedOrigin = frontendUrl;
   const headers = {
-    'Access-Control-Allow-Origin': Deno.env.get('FRONTEND_URL') || 'https://mapleaurum.com',
+    'Access-Control-Allow-Origin': allowedOrigin,
     'Access-Control-Allow-Methods': 'POST, OPTIONS',
-    'Access-Control-Allow-Headers': 'content-type, stripe-signature',
-    'Content-Type': 'application/json',
+    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
     'Vary': 'Origin',
   };
-
   if (status === 204) {
     return new Response(null, { status, headers });
   }
-
-  return new Response(JSON.stringify(body), { status, headers });
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { ...headers, 'Content-Type': 'application/json' },
+  });
 }
 
-// --- Main Webhook Handler ---
-Deno.serve(async (req) => {
+// Helper for parameter validation
+type ExpectedType = 'string' | { values: string[] };
+type Expectations<T> = { [K in keyof T]: ExpectedType };
+
+function validateParameters<T extends Record<string, any>>(values: T, expected: Expectations<T>): string | undefined {
+    for (const parameter in expected) {
+        const expectation = expected[parameter];
+        const value = values[parameter];
+        if (typeof expectation === 'string') {
+            if (value == null) return `Missing required parameter: ${parameter}`;
+            if (typeof value !== 'string' || value.trim() === '') return `Expected parameter ${parameter} to be a non-empty string, got: ${JSON.stringify(value)}`;
+        } else {
+             if (!expectation.values.includes(value)) return `Expected parameter ${parameter} to be one of: ${expectation.values.join(', ')}. Got: ${value}`;
+        }
+    }
+    return undefined;
+}
+
+// --- Main Edge Function Logic ---
+Deno.serve(async (req: Request) => {
+  console.log(`[stripe-checkout] Received request: ${req.method} ${req.url}`); // Log incoming request
+
+  // 1. Handle CORS Preflight Request
+  if (req.method === 'OPTIONS') {
+    console.info("[stripe-checkout] Handling OPTIONS preflight request");
+    return createCorsResponse({}, 204);
+  }
+
+  // 2. Check Request Method
+  if (req.method !== 'POST') {
+     console.warn(`[stripe-checkout] Received non-POST request: ${req.method}`);
+    return createCorsResponse({ error: 'Method Not Allowed' }, 405);
+  }
+
+  // --- ADDED: Log raw body before parsing ---
+  let rawBody: string | null = null;
   try {
-    // Handle CORS preflight
-    if (req.method === 'OPTIONS') {
-      console.info('Handling OPTIONS preflight request');
-      return createCorsResponse(null, 204);
+      rawBody = await req.text(); // Read body as text first
+      console.log("[stripe-checkout] Raw request body:", rawBody);
+  } catch (bodyReadError) {
+      console.error("[stripe-checkout] Failed to read request body:", bodyReadError);
+      return createCorsResponse({ error: 'Failed to read request body.' }, 500);
+  }
+  // --- END ADDED LOG ---
+
+  // 3. Parse and Validate Request Body
+  let requestBody: CheckoutRequestBody;
+  try {
+    if (!rawBody) throw new Error("Request body is empty.");
+    requestBody = JSON.parse(rawBody); // Parse the raw body text
+    console.info("[stripe-checkout] Parsed request body:", requestBody);
+  } catch (parseError) {
+    console.error("[stripe-checkout] Failed to parse request body:", parseError, "Raw body was:", rawBody);
+    return createCorsResponse({ error: 'Invalid request body: Could not parse JSON.' }, 400);
+  }
+
+  const validationError = validateParameters<CheckoutRequestBody>(requestBody, {
+    price_id: 'string',
+    success_url: 'string',
+    cancel_url: 'string',
+    mode: { values: ['payment', 'subscription'] },
+  });
+
+  if (validationError) {
+    console.warn("[stripe-checkout] Request body validation failed:", validationError);
+    return createCorsResponse({ error: `Invalid input: ${validationError}` }, 400); // Return 400 for validation errors
+  }
+  // --- END VALIDATION ---
+
+  const { price_id, success_url, cancel_url, mode } = requestBody;
+
+  try {
+    // 4. Authenticate Supabase User
+    console.info("[stripe-checkout] Authenticating user...");
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        console.warn("[stripe-checkout] Missing or invalid Authorization header");
+        return createCorsResponse({ error: 'Missing or invalid Authorization header' }, 401);
+    }
+    const token = authHeader.replace('Bearer ', '');
+
+    // Use supabaseAdmin (Service Role) client to validate the user token
+    const { data: { user }, error: getUserError } = await supabaseAdmin.auth.getUser(token);
+
+    if (getUserError) {
+      console.error("[stripe-checkout] Supabase auth error:", getUserError);
+      return createCorsResponse({ error: `Authentication failed: ${getUserError.message}` }, 401);
+    }
+    if (!user) {
+       console.warn("[stripe-checkout] User not found for provided token.");
+      return createCorsResponse({ error: 'User not found' }, 404);
+    }
+    console.info(`[stripe-checkout] User ${user.id} authenticated successfully.`);
+
+    // 5. Get or Create Stripe Customer and DB Records
+    // ... (rest of the customer/subscription lookup/create logic remains the same) ...
+    let customerId: string;
+    console.info(`[stripe-checkout] Looking up customer for user ${user.id}...`);
+    const { data: customerData, error: getCustomerError } = await supabaseAdmin
+      .from('stripe_customers')
+      .select('customer_id')
+      .eq('user_id', user.id)
+      .is('deleted_at', null)
+      .maybeSingle();
+
+    if (getCustomerError) {
+      console.error(`[stripe-checkout] Database error fetching customer for user ${user.id}:`, getCustomerError);
+      return createCorsResponse({ error: 'Database error fetching customer information.' }, 500);
     }
 
-    if (req.method !== 'POST') {
-      console.warn(`Received non-POST request: ${req.method}`);
-      return createCorsResponse({ error: 'Method Not Allowed' }, 405);
+    if (!customerData?.customer_id) {
+      console.info(`[stripe-checkout] No existing Stripe customer found for user ${user.id}. Creating new one...`);
+      const newStripeCustomer = await stripe.customers.create({
+        email: user.email,
+        metadata: { userId: user.id },
+        name: user.email,
+      });
+      customerId = newStripeCustomer.id;
+      console.info(`[stripe-checkout] Created new Stripe customer ${customerId} for user ${user.id}.`);
+      const { error: insertCustomerError } = await supabaseAdmin
+        .from('stripe_customers')
+        .insert({ user_id: user.id, customer_id: customerId });
+      if (insertCustomerError) {
+        console.error(`[stripe-checkout] Failed to insert customer mapping for user ${user.id}, customer ${customerId}:`, insertCustomerError);
+        try { await stripe.customers.del(customerId); console.warn(`[stripe-checkout] Cleaned up Stripe customer ${customerId}.`); }
+        catch (delErr) { console.error(`[stripe-checkout] Failed cleanup for Stripe customer ${customerId}:`, delErr); }
+        return createCorsResponse({ error: 'Database error creating customer mapping.' }, 500);
+      }
+      console.info(`[stripe-checkout] Successfully inserted customer mapping for user ${user.id}.`);
+      if (mode === 'subscription') {
+        console.info(`[stripe-checkout] Creating placeholder subscription record for new customer ${customerId}...`);
+        const { error: insertSubError } = await supabaseAdmin
+          .from('stripe_subscriptions')
+          .insert({ customer_id: customerId, status: 'incomplete' });
+        if (insertSubError) {
+          console.error(`[stripe-checkout] Failed to insert placeholder subscription for customer ${customerId}:`, insertSubError);
+          return createCorsResponse({ error: 'Database error creating initial subscription record.' }, 500);
+        }
+         console.info(`[stripe-checkout] Successfully inserted placeholder subscription record for customer ${customerId}.`);
+      }
+    } else {
+      customerId = customerData.customer_id;
+      console.info(`[stripe-checkout] Found existing Stripe customer ${customerId} for user ${user.id}.`);
+      if (mode === 'subscription') {
+         const { data: subData, error: getSubError } = await supabaseAdmin
+            .from('stripe_subscriptions')
+            .select('status')
+            .eq('customer_id', customerId)
+            .is('deleted_at', null)
+            .maybeSingle();
+         if (getSubError) {
+             console.error(`[stripe-checkout] Database error fetching subscription for customer ${customerId}:`, getSubError);
+             return createCorsResponse({ error: 'Database error fetching subscription information.' }, 500);
+         }
+         if (!subData) {
+             console.info(`[stripe-checkout] No existing subscription record found for existing customer ${customerId}. Creating placeholder...`);
+             const { error: insertSubError } = await supabaseAdmin
+                .from('stripe_subscriptions')
+                .insert({ customer_id: customerId, status: 'incomplete' });
+             if (insertSubError) {
+                 console.error(`[stripe-checkout] Failed to insert placeholder subscription for existing customer ${customerId}:`, insertSubError);
+                 return createCorsResponse({ error: 'Database error creating subscription record for existing customer.' }, 500);
+             }
+              console.info(`[stripe-checkout] Successfully inserted placeholder subscription record for existing customer ${customerId}.`);
+         }
+      }
     }
+    // ... (end of customer/subscription lookup/create logic) ...
 
-    // Get and verify signature
-    const signature = req.headers.get('stripe-signature');
-    if (!signature) {
-      console.error('No stripe-signature header provided');
-      return createCorsResponse({ error: 'No signature provided' }, 400);
-    }
 
-    // Get raw body
-    const body = await req.text();
+    // 6. Create Stripe Checkout Session
+    console.info(`[stripe-checkout] Creating Stripe Checkout session for customer ${customerId}, price ${price_id}, mode ${mode}...`);
+    const stripeSessionCreateParams: Stripe.Checkout.SessionCreateParams = {
+        customer: customerId,
+        payment_method_types: ['card'],
+        line_items: [{ price: price_id, quantity: 1 }],
+        mode: mode,
+        success_url: success_url,
+        cancel_url: cancel_url,
+        metadata: { supabaseUserId: user.id },
+    };
 
-    // Verify webhook signature
-    let event: Stripe.Event;
-    try {
-      event = await stripe.webhooks.constructEventAsync(body, signature, stripeWebhookSecret);
-      console.info(`Received Stripe event: ${event.type} (ID: ${event.id})`);
-    } catch (error: any) {
-      console.error(`Webhook signature verification failed: ${error.message}`);
-      return createCorsResponse({ error: `Webhook signature verification failed: ${error.message}` }, 400);
-    }
+    const stripeSession: Stripe.Checkout.Session = await stripe.checkout.sessions.create(stripeSessionCreateParams);
+    console.info(`[stripe-checkout] Successfully created Stripe Checkout session ${stripeSession.id} for customer ${customerId}.`);
 
-    // Process event asynchronously
-    EdgeRuntime.waitUntil(handleEvent(event));
+    // 7. Return Success Response
+    const responseBody: CheckoutSuccessResponse = {
+        sessionId: stripeSession.id,
+        url: stripeSession.url,
+    };
+    return createCorsResponse(responseBody, 200);
 
-    return createCorsResponse({ received: true }, 200);
-  } catch (error: any) {
-    console.error('Error processing webhook:', error);
-    return createCorsResponse({ error: `Internal server error: ${error.message}` }, 500);
+  } catch (error: unknown) {
+    // 8. Handle Unexpected Errors
+    console.error("[stripe-checkout] Unhandled error in checkout function:", error);
+    const errorMessage = error instanceof Error ? error.message : "An unexpected internal server error occurred.";
+    return createCorsResponse({ error: `Internal Server Error: ${errorMessage}` }, 500);
   }
 });
-
-// --- Event Handler ---
-async function handleEvent(event: Stripe.Event) {
-  const stripeData = event?.data?.object ?? {};
-
-  if (!stripeData || !('customer' in stripeData)) {
-    console.warn(`No customer data in event: ${event.type}`);
-    return;
-  }
-
-  const { customer: customerId } = stripeData as Stripe.Checkout.Session;
-
-  if (!customerId || typeof customerId !== 'string') {
-    console.error(`Invalid customer ID in event: ${event.type}`);
-    return;
-  }
-
-  // Handle subscription-related events
-  switch (event.type) {
-    case 'checkout.session.completed': {
-      const session = stripeData as Stripe.Checkout.Session;
-      if (session.mode !== 'subscription') {
-        console.info(`Ignoring non-subscription checkout session: ${session.id}`);
-        return;
-      }
-
-      console.info(`Processing subscription checkout session for customer: ${customerId}`);
-      await syncCustomerFromStripe(customerId);
-      // Analytics tracking (pseudo-code, implement with your analytics provider)
-      // analytics.track('Subscription Checkout Completed', { customerId, subscriptionId: session.subscription });
-      break;
-    }
-
-    case 'customer.subscription.created':
-    case 'customer.subscription.updated':
-    case 'customer.subscription.deleted': {
-      console.info(`Processing subscription event: ${event.type} for customer: ${customerId}`);
-      await syncCustomerFromStripe(customerId);
-      break;
-    }
-
-    default:
-      console.info(`Unhandled event type: ${event.type}`);
-  }
-}
-
-// --- Sync Subscription Data ---
-async function syncCustomerFromStripe(customerId: string) {
-  try {
-    // Fetch latest subscription data from Stripe
-    const subscriptions = await stripe.subscriptions.list({
-      customer: customerId,
-      limit: 1,
-      status: 'all',
-      expand: ['data.default_payment_method'],
-    });
-
-    if (subscriptions.data.length === 0) {
-      console.info(`No subscriptions found for customer: ${customerId}`);
-      const { error } = await supabase
-        .from('stripe_subscriptions')
-        .upsert(
-          {
-            customer_id: customerId,
-            subscription_status: 'not_started',
-            updated_at: new Date().toISOString(),
-          },
-          { onConflict: 'customer_id' }
-        );
-
-      if (error) {
-        console.error(`Error updating subscription status to not_started: ${error.message}`);
-        throw new Error('Failed to update subscription status in database');
-      }
-      return;
-    }
-
-    // Process the latest subscription
-    const subscription = subscriptions.data[0];
-    const { error } = await supabase
-      .from('stripe_subscriptions')
-      .upsert(
-        {
-          customer_id: customerId,
-          subscription_id: subscription.id,
-          price_id: subscription.items.data[0]?.price.id || null,
-          subscription_status: subscription.status,
-          current_period_start: new Date(subscription.current_period_start * 1000).toISOString(),
-          current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
-          cancel_at_period_end: subscription.cancel_at_period_end,
-          payment_method_brand:
-            subscription.default_payment_method &&
-            typeof subscription.default_payment_method !== 'string'
-              ? subscription.default_payment_method.card?.brand ?? null
-              : null,
-          payment_method_last4:
-            subscription.default_payment_method &&
-            typeof subscription.default_payment_method !== 'string'
-              ? subscription.default_payment_method.card?.last4 ?? null
-              : null,
-          updated_at: new Date().toISOString(),
-        },
-        { onConflict: 'customer_id' }
-      );
-
-    if (error) {
-      console.error(`Error syncing subscription for customer ${customerId}: ${error.message}`);
-      throw new Error('Failed to sync subscription in database');
-    }
-
-    console.info(`Successfully synced subscription ${subscription.id} for customer: ${customerId}`);
-  } catch (error: any) {
-    console.error(`Failed to sync subscription for customer ${customerId}: ${error.message}`);
-    throw error;
-  }
-}
