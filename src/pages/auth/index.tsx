@@ -1,6 +1,4 @@
-//src/pages/auth/index.tsx
-
-
+// src/pages/auth/index.tsx
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from '../../lib/supabaseClient';
@@ -15,7 +13,7 @@ export function AuthPage() {
     const [password, setPassword] = useState('');
     const [error, setError] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
-    const [isSignup, setIsSignup] = useState(true); // Default to signup
+    const [isSignup, setIsSignup] = useState(true);
     const navigate = useNavigate();
     const location = useLocation();
 
@@ -36,7 +34,7 @@ export function AuthPage() {
         setLoading(true);
 
         try {
-            const from = (location.state as { from?: string })?.from || location.search || '/subscribe';
+            const from = (location.state as { from?: string })?.from || `/subscribe?${searchParams.toString()}` || '/subscribe';
             if (isSignup) {
                 const { data, error } = await supabase.auth.signUp({
                     email,
