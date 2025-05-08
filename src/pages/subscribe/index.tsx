@@ -421,10 +421,9 @@ export function SubscribePage() {
                           setError('Authentication status is still loading, please wait.');
                         } else if (!clickSession || !clickUser) {
                           console.log('[SubscribePage Button onClick] No session/user. Redirecting to auth.');
-                          navigate('/auth', {
+                          // Combine path and query parameters in the 'to' string
+                          navigate(`/auth?signup=true&plan=${plan.name}&interval=${billingInterval}`, {
                             state: { from: `/subscribe?plan=${plan.name}&interval=${billingInterval}` },
-                            // Use search as a string
-                            search: `?signup=true&plan=${plan.name}&interval=${billingInterval}`,
                           });
                         } else if (currentPriceId) {
                           handleSubscribe(currentPriceId, plan.name);
@@ -459,20 +458,16 @@ export function SubscribePage() {
                     {!session && !user && !isFree && (
                       <Typography variant="caption" className="mt-2 text-center text-gray-400 text-xs">
                         <Link
-                          to="/auth"
+                          to={`/auth?signup=true&plan=${plan.name}&interval=${billingInterval}`}
                           state={{ from: `/subscribe?plan=${plan.name}&interval=${billingInterval}` }}
-                          // Use search as a string
-                          search={`?signup=true&plan=${plan.name}&interval=${billingInterval}`}
                           className="text-cyan-400 hover:underline"
                         >
                           Sign up
                         </Link>{' '}
                         or{' '}
                         <Link
-                          to="/auth"
+                          to={`/auth?plan=${plan.name}&interval=${billingInterval}`}
                           state={{ from: `/subscribe?plan=${plan.name}&interval=${billingInterval}` }}
-                          // No signup param for login
-                          search={`?plan=${plan.name}&interval=${billingInterval}`}
                           className="text-cyan-400 hover:underline"
                         >
                           log in
