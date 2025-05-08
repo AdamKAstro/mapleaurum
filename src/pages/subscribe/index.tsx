@@ -1,5 +1,5 @@
 // src/pages/subscribe/index.tsx
-import React, { useState, useMemo, useEffect } from 'react'; // Added useEffect
+import React, { useState, useMemo, useEffect } from 'react';
 import { Check, Crown, Star, Loader2, AlertCircle, Lock } from 'lucide-react';
 import { Button } from '../../components/ui/button';
 import { Typography } from '../../components/ui/typography';
@@ -104,15 +104,14 @@ const plansData: PlanDetail[] = [
 
 export function SubscribePage() {
     const backgroundImageUrl = '/Background2.jpg';
-    const auth = useAuth(); // Get the whole auth context object
-    const { session, user, isLoading: isAuthLoading } = auth; // Destructure after getting the object
+    const auth = useAuth();
+    const { session, user, isLoading: isAuthLoading } = auth;
     const { getEffectiveTier, isLoading: isSubLoading } = useSubscription();
     const navigate = useNavigate();
     const [loadingPriceId, setLoadingPriceId] = useState<string | null>(null);
     const [error, setError] = useState<string | null>(null);
     const [billingInterval, setBillingInterval] = useState<'monthly' | 'yearly'>('monthly');
 
-    // Log auth state whenever it changes
     useEffect(() => {
         console.log(`[SubscribePage Effect] Auth State Update: session=${!!session}, user=${!!user}, isAuthLoading=${isAuthLoading}`);
     }, [session, user, isAuthLoading]);
@@ -126,12 +125,10 @@ export function SubscribePage() {
         if (!priceId) return;
         setError(null);
 
-        // --- Get CURRENT auth state directly from context ---
-        const currentAuth = auth; // Use the context object captured in the component scope
+        const currentAuth = auth;
         const currentSession = currentAuth.session;
         const currentUser = currentAuth.user;
         console.log(`[SubscribePage handleSubscribe] Click Auth State: session=${!!currentSession}, user=${!!currentUser}, isAuthLoading=${currentAuth.isLoading}`);
-        // --- End current auth state check ---
 
         if (!currentSession || !currentUser) {
             console.log('[SubscribePage handleSubscribe] No active session/user found on click. Redirecting to login.');
@@ -224,11 +221,12 @@ export function SubscribePage() {
                         if (!isFree) {
                             buttonText += billingInterval === 'yearly' ? ' Yearly' : ' Monthly';
                         }
-                        if (isCurrentPlan) buttonText = "Current Plan";
+                        // --- UPDATED: Set button text for Free plan ---
+                        if (isFree) buttonText = "Free Plan";
+                        else if (isCurrentPlan) buttonText = "Current Plan";
                         else if (isUpgrade) buttonText = `Upgrade to ${plan.name}`;
                         else if (isDowngrade) buttonText = `Switch to ${plan.name}`;
 
-                        // --- UPDATED: Disable Free, Current, Loading ---
                         const isDisabled = isFree || isCurrentPlan || isPlanLoading;
 
                         return (
@@ -245,8 +243,17 @@ export function SubscribePage() {
                                      <ul role="list" className="mt-6 space-y-3 text-sm leading-6 text-gray-200 flex-grow"> {plan.features.map((feature) => ( <li key={feature} className="flex gap-x-3"> {feature.startsWith('All ') ? (<span className="w-5 h-6"></span>) : (<Check className="h-6 w-5 flex-none text-teal-400" aria-hidden="true" />)} <span className={cn(feature.startsWith('All ') ? 'font-medium text-gray-400 -ml-5' : '')}>{feature}</span> </li> ))} </ul>
 
                                     {/* Subscribe Button */}
-                                    {/* --- UPDATED: Render nothing for Free plan button area --- */}
-                                    {!isFree && (
+                                    {/* --- UPDATED: Render specific button for Free plan --- */}
+                                    {isFree ? (
+                                         <Button
+                                            disabled={true}
+                                            size="lg"
+                                            variant={'secondary'} // Use secondary variant for disabled free plan
+                                            className={cn('mt-8 w-full font-semibold flex items-center justify-center opacity-60 cursor-not-allowed')}
+                                        >
+                                            Free Plan {/* Changed text */}
+                                        </Button>
+                                    ) : (
                                         <Button
                                             disabled={isDisabled}
                                             size="lg"
@@ -257,7 +264,7 @@ export function SubscribePage() {
                                                 isCurrentPlan && 'bg-gray-600/50 border-gray-500 text-gray-300 cursor-default',
                                                 !isCurrentPlan && plan.is_popular && 'bg-gradient-to-r from-teal-500 to-cyan-600 hover:from-teal-600 hover:to-cyan-700 text-white',
                                                 !isCurrentPlan && !plan.is_popular && 'border-cyan-700/50 text-cyan-300 hover:bg-cyan-900/20 hover:border-cyan-600',
-                                                isDisabled && !isPlanLoading && 'opacity-60 cursor-not-allowed',
+                                                isDisabled && !isPlanLoading && 'opacity-60 cursor-not-allowed', // Keep general disabled style if needed
                                                 isPlanLoading && 'opacity-75 cursor-wait'
                                             )}
                                         >
@@ -269,17 +276,6 @@ export function SubscribePage() {
                                             ) : (
                                                 buttonText
                                             )}
-                                        </Button>
-                                    )}
-                                     {/* --- If Free plan, render placeholder or disabled text --- */}
-                                    {isFree && (
-                                         <Button
-                                            disabled={true}
-                                            size="lg"
-                                            variant={'secondary'} // Consistent disabled look
-                                            className={cn('mt-8 w-full font-semibold flex items-center justify-center opacity-60 cursor-not-allowed')}
-                                        >
-                                            Current Plan
                                         </Button>
                                     )}
                                 </div>

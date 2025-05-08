@@ -1,0 +1,5 @@
+Price ID,Product ID,Product Name,Product Statement Descriptor,Product Tax Code,Description,Created (UTC),Amount,Currency,Interval,Interval Count,Usage Type,Aggregate Usage,Billing Scheme,Trial Period Days,Tax Behavior
+price_1RMJ3pAst4LlpL7pXTO1bVli,prod_SGqlW5EEAcLNGS,Maple Aurum Premium. 1 Month.,,txcd_10103000,Maple Aurum Premium. 1 Month subscription. Complete access and premium features.,8/05/2025 1:15,90,cad,month,1,licensed,,per_unit,,unspecified
+price_1RMJ31Ast4LlpL7pauoVPwpm,prod_SGqkK9JYKNcDmf,Maple Aurum Pro. 1 Month.,,txcd_10103000,Maple Aurum Pro. 1 Month Subscription. Advanced analytics and insights.,8/05/2025 1:14,40,cad,month,1,licensed,,per_unit,,unspecified
+price_1RMIDFAst4LlpL7p8UInqh9P,prod_SGpteFSO6PUolU,Maple Aurum Premium Yr,,txcd_10103000,Maple Aurum Premium. Yearly. Complete access and premium features,8/05/2025 0:21,960,cad,year,1,licensed,,per_unit,,unspecified
+price_1RMIBuAst4LlpL7pf1EFTmlk,prod_SGprylvQ0HgAaV,Maple Aurum Pro Yr,,txcd_10103000,Maple Aurum Pro. Yearly. Advanced analytics and insights,8/05/2025 0:19,420,cad,year,1,licensed,,per_unit,,unspecified
