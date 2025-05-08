@@ -19,6 +19,7 @@ interface CheckoutSuccessResponse {
 
 interface ErrorResponse {
   error: string;
+  statusCode: number;
 }
 
 // --- Environment Variable Validation ---
@@ -87,7 +88,7 @@ Deno.serve(async (req: Request) => {
   // 2. Check Request Method
   if (req.method !== 'POST') {
     console.warn(`[stripe-checkout] Received non-POST request: ${req.method}`);
-    return createCorsResponse({ error: 'Method Not Allowed' }, 405);
+    return createCorsResponse({ error: 'Method Not Allowed', statusCode: 405 }, 405);
   }
 
   // 3. Parse and Validate Request Body
@@ -97,7 +98,7 @@ Deno.serve(async (req: Request) => {
     console.log('[stripe-checkout] Raw request body:', rawBody);
   } catch (bodyReadError) {
     console.error('[stripe-checkout] Failed to read request body:', bodyReadError);
-    return createCorsResponse({ error: 'Failed to read request body.' }, 500);
+    return createCorsResponse({ error: 'Failed to read request body.', statusCode: 500 }, 500);
   }
 
   let requestBody: CheckoutRequestBody;
@@ -107,7 +108,7 @@ Deno.serve(async (req: Request) => {
     console.info('[stripe-checkout] Parsed request body:', requestBody);
   } catch (parseError) {
     console.error('[stripe-checkout] Failed to parse request body:', parseError, 'Raw body was:', rawBody);
-    return createCorsResponse({ error: 'Invalid request body: Could not parse JSON.' }, 400);
+    return createCorsResponse({ error: 'Invalid request body: Could not parse JSON.', statusCode: 400 }, 400);
   }
 
   const validationError = validateParameters<CheckoutRequestBody>(requestBody, {
@@ -119,7 +120,7 @@ Deno.serve(async (req: Request) => {
 
   if (validationError) {
     console.warn('[stripe-checkout] Request body validation failed:', validationError);
-    return createCorsResponse({ error: `Invalid input: ${validationError}` }, 400);
+    return createCorsResponse({ error: `Invalid input: ${validationError}`, statusCode: 400 }, 400);
   }
 
   const { price_id, success_url, cancel_url, mode } = requestBody;
@@ -130,22 +131,32 @@ Deno.serve(async (req: Request) => {
     const authHeader = req.headers.get('Authorization');
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
       console.warn('[stripe-checkout] Missing or invalid Authorization header');
-      return createCorsResponse({ error: 'Missing or invalid Authorization header' }, 401);
+      return createCorsResponse({ error: 'Missing or invalid Authorization header', statusCode: 401 }, 401);
     }
     const token = authHeader.replace('Bearer ', '');
 
     const { data: { user }, error: getUserError } = await supabaseAdmin.auth.getUser(token);
     if (getUserError) {
       console.error('[stripe-checkout] Supabase auth error:', getUserError);
-      return createCorsResponse({ error: `Authentication failed: ${getUserError.message}` }, 401);
+      return createCorsResponse({ error: `Authentication failed: ${getUserError.message}`, statusCode: 401 }, 401);
     }
     if (!user) {
       console.warn('[stripe-checkout] User not found for provided token.');
-      return createCorsResponse({ error: 'User not found' }, 404);
+      return createCorsResponse({ error: 'User not found', statusCode: 404 }, 404);
     }
     console.info(`[stripe-checkout] User ${user.id} authenticated successfully.`);
 
-    // 5. Get or Create Stripe Customer
+    // 5. Validate Price ID
+    console.info(`[stripe-checkout] Validating price ID ${price_id}...`);
+    try {
+      await stripe.prices.retrieve(price_id);
+      console.info(`[stripe-checkout] Price ID ${price_id} is valid.`);
+    } catch (stripeError: any) {
+      console.error(`[stripe-checkout] Invalid price ID ${price_id}:`, stripeError);
+      return createCorsResponse({ error: `Invalid price ID: ${stripeError.message}`, statusCode: 400 }, 400);
+    }
+
+    // 6. Get or Create Stripe Customer
     let customerId: string;
     console.info(`[stripe-checkout] Looking up customer for user ${user.id}...`);
     const { data: customerData, error: getCustomerError } = await supabaseAdmin
@@ -157,7 +168,7 @@ Deno.serve(async (req: Request) => {
 
     if (getCustomerError) {
       console.error(`[stripe-checkout] Database error fetching customer for user ${user.id}:`, getCustomerError);
-      return createCorsResponse({ error: 'Database error fetching customer information.' }, 500);
+      return createCorsResponse({ error: 'Database error fetching customer information.', statusCode: 500 }, 500);
     }
 
     if (customerData?.customer_id) {
@@ -189,12 +200,12 @@ Deno.serve(async (req: Request) => {
             } catch (delErr) {
               console.error(`[stripe-checkout] Failed cleanup for Stripe customer ${customerId}:`, delErr);
             }
-            return createCorsResponse({ error: 'Database error updating customer mapping.' }, 500);
+            return createCorsResponse({ error: 'Database error updating customer mapping.', statusCode: 500 }, 500);
           }
           console.info(`[stripe-checkout] Successfully updated customer mapping to new customer ${customerId} for user ${user.id}.`);
         } else {
           console.error(`[stripe-checkout] Stripe error verifying customer ${customerData.customer_id}:`, stripeError);
-          return createCorsResponse({ error: `Stripe error: ${stripeError.message}` }, 500);
+          return createCorsResponse({ error: `Stripe error: ${stripeError.message}`, statusCode: 500 }, 500);
         }
       }
     } else {
@@ -217,12 +228,12 @@ Deno.serve(async (req: Request) => {
         } catch (delErr) {
           console.error(`[stripe-checkout] Failed cleanup for Stripe customer ${customerId}:`, delErr);
         }
-        return createCorsResponse({ error: 'Database error creating customer mapping.' }, 500);
+        return createCorsResponse({ error: 'Database error creating customer mapping.', statusCode: 500 }, 500);
       }
       console.info(`[stripe-checkout] Successfully inserted customer mapping for user ${user.id}.`);
     }
 
-    // 6. Handle Subscription Placeholder
+    // 7. Handle Subscription Placeholder
     if (mode === 'subscription') {
       console.info(`[stripe-checkout] Checking subscription record for customer ${customerId}...`);
       const { data: subData, error: getSubError } = await supabaseAdmin
@@ -233,7 +244,7 @@ Deno.serve(async (req: Request) => {
         .maybeSingle();
       if (getSubError) {
         console.error(`[stripe-checkout] Database error fetching subscription for customer ${customerId}:`, getSubError);
-        return createCorsResponse({ error: 'Database error fetching subscription information.' }, 500);
+        return createCorsResponse({ error: 'Database error fetching subscription information.', statusCode: 500 }, 500);
       }
       if (!subData) {
         console.info(`[stripe-checkout] No existing subscription record found for customer ${customerId}. Creating placeholder...`);
@@ -247,13 +258,13 @@ Deno.serve(async (req: Request) => {
           });
         if (insertSubError) {
           console.error(`[stripe-checkout] Failed to insert placeholder subscription for customer ${customerId}:`, insertSubError);
-          return createCorsResponse({ error: 'Database error creating subscription record.' }, 500);
+          return createCorsResponse({ error: 'Database error creating subscription record.', statusCode: 500 }, 500);
         }
         console.info(`[stripe-checkout] Successfully inserted placeholder subscription record for customer ${customerId}.`);
       }
     }
 
-    // 7. Create Stripe Checkout Session
+    // 8. Create Stripe Checkout Session
     console.info(`[stripe-checkout] Creating Stripe Checkout session for customer ${customerId}, price ${price_id}, mode ${mode}...`);
     const stripeSessionCreateParams: Stripe.Checkout.SessionCreateParams = {
       customer: customerId,
@@ -268,7 +279,7 @@ Deno.serve(async (req: Request) => {
     const stripeSession: Stripe.Checkout.Session = await stripe.checkout.sessions.create(stripeSessionCreateParams);
     console.info(`[stripe-checkout] Successfully created Stripe Checkout session ${stripeSession.id} for customer ${customerId}.`);
 
-    // 8. Return Success Response
+    // 9. Return Success Response
     const responseBody: CheckoutSuccessResponse = {
       sessionId: stripeSession.id,
       url: stripeSession.url,
@@ -277,6 +288,6 @@ Deno.serve(async (req: Request) => {
   } catch (error: unknown) {
     console.error('[stripe-checkout] Unhandled error in checkout function:', error);
     const errorMessage = error instanceof Error ? error.message : 'An unexpected internal server error occurred.';
-    return createCorsResponse({ error: `Internal Server Error: ${errorMessage}` }, 500);
+    return createCorsResponse({ error: `Internal Server Error: ${errorMessage}`, statusCode: 500 }, 500);
   }
 });
