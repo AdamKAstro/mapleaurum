@@ -27,9 +27,9 @@ const supabaseServiceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
 const stripeSecretKey = Deno.env.get('STRIPE_SECRET_KEY');
 const frontendUrl = Deno.env.get('FRONTEND_URL') ?? 'https://mapleaurum.com';
 
-if (!supabaseUrl) throw new Error("Missing environment variable: SUPABASE_URL");
-if (!supabaseServiceRoleKey) throw new Error("Missing environment variable: SUPABASE_SERVICE_ROLE_KEY");
-if (!stripeSecretKey) throw new Error("Missing environment variable: STRIPE_SECRET_KEY");
+if (!supabaseUrl) throw new Error('Missing environment variable: SUPABASE_URL');
+if (!supabaseServiceRoleKey) throw new Error('Missing environment variable: SUPABASE_SERVICE_ROLE_KEY');
+if (!stripeSecretKey) throw new Error('Missing environment variable: STRIPE_SECRET_KEY');
 
 // --- Initialize Clients ---
 const supabaseAdmin: SupabaseClient = createClient(supabaseUrl, supabaseServiceRoleKey);
@@ -44,20 +44,17 @@ const stripe = new Stripe(stripeSecretKey, {
 
 // --- Helper Functions ---
 function createCorsResponse(body: object | null, status = 200): Response {
-  const allowedOrigin = frontendUrl;
   const headers = {
-    'Access-Control-Allow-Origin': allowedOrigin,
+    'Access-Control-Allow-Origin': frontendUrl,
     'Access-Control-Allow-Methods': 'POST, OPTIONS',
     'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+    'Content-Type': 'application/json',
     'Vary': 'Origin',
   };
   if (status === 204) {
     return new Response(null, { status, headers });
   }
-  return new Response(JSON.stringify(body), {
-    status,
-    headers: { ...headers, 'Content-Type': 'application/json' },
-  });
+  return new Response(JSON.stringify(body), { status, headers });
 }
 
 type ExpectedType = 'string' | { values: string[] };
@@ -83,7 +80,7 @@ Deno.serve(async (req: Request) => {
 
   // 1. Handle CORS Preflight Request
   if (req.method === 'OPTIONS') {
-    console.info("[stripe-checkout] Handling OPTIONS preflight request");
+    console.info('[stripe-checkout] Handling OPTIONS preflight request');
     return createCorsResponse({}, 204);
   }
 
@@ -97,19 +94,19 @@ Deno.serve(async (req: Request) => {
   let rawBody: string | null = null;
   try {
     rawBody = await req.text();
-    console.log("[stripe-checkout] Raw request body:", rawBody);
+    console.log('[stripe-checkout] Raw request body:', rawBody);
   } catch (bodyReadError) {
-    console.error("[stripe-checkout] Failed to read request body:", bodyReadError);
+    console.error('[stripe-checkout] Failed to read request body:', bodyReadError);
     return createCorsResponse({ error: 'Failed to read request body.' }, 500);
   }
 
   let requestBody: CheckoutRequestBody;
   try {
-    if (!rawBody) throw new Error("Request body is empty.");
+    if (!rawBody) throw new Error('Request body is empty.');
     requestBody = JSON.parse(rawBody);
-    console.info("[stripe-checkout] Parsed request body:", requestBody);
+    console.info('[stripe-checkout] Parsed request body:', requestBody);
   } catch (parseError) {
-    console.error("[stripe-checkout] Failed to parse request body:", parseError, "Raw body was:", rawBody);
+    console.error('[stripe-checkout] Failed to parse request body:', parseError, 'Raw body was:', rawBody);
     return createCorsResponse({ error: 'Invalid request body: Could not parse JSON.' }, 400);
   }
 
@@ -121,7 +118,7 @@ Deno.serve(async (req: Request) => {
   });
 
   if (validationError) {
-    console.warn("[stripe-checkout] Request body validation failed:", validationError);
+    console.warn('[stripe-checkout] Request body validation failed:', validationError);
     return createCorsResponse({ error: `Invalid input: ${validationError}` }, 400);
   }
 
@@ -129,21 +126,21 @@ Deno.serve(async (req: Request) => {
 
   try {
     // 4. Authenticate Supabase User
-    console.info("[stripe-checkout] Authenticating user...");
+    console.info('[stripe-checkout] Authenticating user...');
     const authHeader = req.headers.get('Authorization');
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      console.warn("[stripe-checkout] Missing or invalid Authorization header");
+      console.warn('[stripe-checkout] Missing or invalid Authorization header');
       return createCorsResponse({ error: 'Missing or invalid Authorization header' }, 401);
     }
     const token = authHeader.replace('Bearer ', '');
 
     const { data: { user }, error: getUserError } = await supabaseAdmin.auth.getUser(token);
     if (getUserError) {
-      console.error("[stripe-checkout] Supabase auth error:", getUserError);
+      console.error('[stripe-checkout] Supabase auth error:', getUserError);
       return createCorsResponse({ error: `Authentication failed: ${getUserError.message}` }, 401);
     }
     if (!user) {
-      console.warn("[stripe-checkout] User not found for provided token.");
+      console.warn('[stripe-checkout] User not found for provided token.');
       return createCorsResponse({ error: 'User not found' }, 404);
     }
     console.info(`[stripe-checkout] User ${user.id} authenticated successfully.`);
@@ -186,8 +183,12 @@ Deno.serve(async (req: Request) => {
             .eq('user_id', user.id);
           if (updateCustomerError) {
             console.error(`[stripe-checkout] Failed to update customer mapping for user ${user.id}, customer ${customerId}:`, updateCustomerError);
-            try { await stripe.customers.del(customerId); console.warn(`[stripe-checkout] Cleaned up Stripe customer ${customerId}.`); }
-            catch (delErr) { console.error(`[stripe-checkout] Failed cleanup for Stripe customer ${customerId}:`, delErr); }
+            try {
+              await stripe.customers.del(customerId);
+              console.warn(`[stripe-checkout] Cleaned up Stripe customer ${customerId}.`);
+            } catch (delErr) {
+              console.error(`[stripe-checkout] Failed cleanup for Stripe customer ${customerId}:`, delErr);
+            }
             return createCorsResponse({ error: 'Database error updating customer mapping.' }, 500);
           }
           console.info(`[stripe-checkout] Successfully updated customer mapping to new customer ${customerId} for user ${user.id}.`);
@@ -207,11 +208,15 @@ Deno.serve(async (req: Request) => {
       console.info(`[stripe-checkout] Created new Stripe customer ${customerId} for user ${user.id}.`);
       const { error: insertCustomerError } = await supabaseAdmin
         .from('stripe_customers')
-        .insert({ user_id: user.id, customer_id: customerId, created_at: new Date().toISOString() });
+        .insert({ user_id: user.id, customer_id: customerId, created_at: new Date().toISOString(), updated_at: new Date().toISOString() });
       if (insertCustomerError) {
         console.error(`[stripe-checkout] Failed to insert customer mapping for user ${user.id}, customer ${customerId}:`, insertCustomerError);
-        try { await stripe.customers.del(customerId); console.warn(`[stripe-checkout] Cleaned up Stripe customer ${customerId}.`); }
-        catch (delErr) { console.error(`[stripe-checkout] Failed cleanup for Stripe customer ${customerId}:`, delErr); }
+        try {
+          await stripe.customers.del(customerId);
+          console.warn(`[stripe-checkout] Cleaned up Stripe customer ${customerId}.`);
+        } catch (delErr) {
+          console.error(`[stripe-checkout] Failed cleanup for Stripe customer ${customerId}:`, delErr);
+        }
         return createCorsResponse({ error: 'Database error creating customer mapping.' }, 500);
       }
       console.info(`[stripe-checkout] Successfully inserted customer mapping for user ${user.id}.`);
@@ -222,7 +227,7 @@ Deno.serve(async (req: Request) => {
       console.info(`[stripe-checkout] Checking subscription record for customer ${customerId}...`);
       const { data: subData, error: getSubError } = await supabaseAdmin
         .from('stripe_subscriptions')
-        .select('status')
+        .select('subscription_status')
         .eq('customer_id', customerId)
         .is('deleted_at', null)
         .maybeSingle();
@@ -234,7 +239,12 @@ Deno.serve(async (req: Request) => {
         console.info(`[stripe-checkout] No existing subscription record found for customer ${customerId}. Creating placeholder...`);
         const { error: insertSubError } = await supabaseAdmin
           .from('stripe_subscriptions')
-          .insert({ customer_id: customerId, subscription_status: 'incomplete', created_at: new Date().toISOString() });
+          .insert({
+            customer_id: customerId,
+            subscription_status: 'incomplete',
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          });
         if (insertSubError) {
           console.error(`[stripe-checkout] Failed to insert placeholder subscription for customer ${customerId}:`, insertSubError);
           return createCorsResponse({ error: 'Database error creating subscription record.' }, 500);
@@ -264,10 +274,9 @@ Deno.serve(async (req: Request) => {
       url: stripeSession.url,
     };
     return createCorsResponse(responseBody, 200);
-
   } catch (error: unknown) {
-    console.error("[stripe-checkout] Unhandled error in checkout function:", error);
-    const errorMessage = error instanceof Error ? error.message : "An unexpected internal server error occurred.";
+    console.error('[stripe-checkout] Unhandled error in checkout function:', error);
+    const errorMessage = error instanceof Error ? error.message : 'An unexpected internal server error occurred.';
     return createCorsResponse({ error: `Internal Server Error: ${errorMessage}` }, 500);
   }
 });

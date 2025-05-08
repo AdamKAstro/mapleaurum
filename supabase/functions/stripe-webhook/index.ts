@@ -211,7 +211,7 @@ async function syncCustomerFromStripe(customerId: string) {
               ? subscription.default_payment_method.card?.last4 ?? null
               : null,
           updated_at: new Date().toISOString(),
-          created_at: new Date().toISOString(), // Set on insert, preserved on update
+          created_at: new Date().toISOString(),
         },
         { onConflict: 'customer_id' }
       );
