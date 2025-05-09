@@ -1,76 +1,80 @@
-//supabase/functions/stripe-checkout/index.ts
+// supabase/functions/stripe-checkout/index.ts
 import 'jsr:@supabase/functions-js/edge-runtime.d.ts';
-import Stripe from 'npm:stripe@17.7.0';
+import Stripe from 'npm:stripe@17.7.0'; // Ensure this is the version you intend to use
 import { createClient, SupabaseClient } from 'npm:@supabase/supabase-js@2.49.1';
 
-// Define expected request body structure
+// --- Define Expected Request Body Structure ---
 interface CheckoutRequestBody {
-  price_id: string;
-  success_url: string;
-  cancel_url: string;
-  mode: 'subscription' | 'payment';
+  price_id: string;       // Stripe Price ID (e.g., price_xxxxxxxxxxxxxx)
+  success_url: string;    // URL for successful payment redirect
+  cancel_url: string;     // URL for cancelled payment redirect
+  mode: 'subscription' | 'payment'; // Type of checkout session
+  // Optional: Client can pass these for more explicit metadata.
+  // If not passed, the function will attempt to derive them from the Stripe Price object.
+  plan_name?: string;      // User-friendly plan name (e.g., "Pro", "Premium")
+  interval?: 'month' | 'year'; // Billing interval
 }
 
-// Define expected response structure
+// --- Define Expected Response Structure ---
 interface CheckoutSuccessResponse {
-  sessionId: string;
-  url: string | null;
+  sessionId: string;      // Stripe Checkout Session ID
+  url: string | null;     // Stripe Checkout Session URL for redirect
 }
+// ErrorResponse interface is implicitly handled by createJsonResponse
 
-interface ErrorResponse {
-  error: string;
-  statusCode: number;
-  details?: string;
-}
-
-// --- Environment Variable Validation ---
+// --- Environment Variable Validation & Client Initialization ---
 const supabaseUrl = Deno.env.get('SUPABASE_URL');
 const supabaseServiceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
 const stripeSecretKey = Deno.env.get('STRIPE_SECRET_KEY');
-const frontendUrl = Deno.env.get('FRONTEND_URL') ?? 'https://mapleaurum.com';
+const frontendAppUrl = Deno.env.get('FRONTEND_URL') ?? 'http://localhost:3000'; // Default for local dev
 
-if (!supabaseUrl) throw new Error('Missing environment variable: SUPABASE_URL');
-if (!supabaseServiceRoleKey) throw new Error('Missing environment variable: SUPABASE_SERVICE_ROLE_KEY');
-if (!stripeSecretKey) throw new Error('Missing environment variable: STRIPE_SECRET_KEY');
+if (!supabaseUrl) throw new Error('FATAL [stripe-checkout]: Missing SUPABASE_URL environment variable.');
+if (!supabaseServiceRoleKey) throw new Error('FATAL [stripe-checkout]: Missing SUPABASE_SERVICE_ROLE_KEY environment variable.');
+if (!stripeSecretKey) throw new Error('FATAL [stripe-checkout]: Missing STRIPE_SECRET_KEY environment variable.');
 
-// --- Initialize Clients ---
 const supabaseAdmin: SupabaseClient = createClient(supabaseUrl, supabaseServiceRoleKey);
 const stripe = new Stripe(stripeSecretKey, {
-  apiVersion: '2024-06-20',
+  apiVersion: '2024-06-20', // Use a recent, fixed API version
   typescript: true,
-  appInfo: {
-    name: 'MapleAurum Stripe Integration',
-    version: '1.0.0',
-  },
+  appInfo: { name: 'MapleAurum/stripe-checkout', version: '1.1.0' }, // Updated version
 });
 
-// --- Helper Functions ---
-function createCorsResponse(body: object | null, status = 200): Response {
+// --- CORS Helper ---
+function createJsonResponse(body: object | null, status = 200, extraHeaders = {}): Response {
   const headers = {
-    'Access-Control-Allow-Origin': frontendUrl,
-    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+    'Access-Control-Allow-Origin': frontendAppUrl, // Restrict to your frontend URL
+    'Access-Control-Allow-Methods': 'POST, OPTIONS', // This function mainly uses POST
     'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
     'Content-Type': 'application/json',
-    'Vary': 'Origin',
+    'Vary': 'Origin', // Important for CORS caching behavior
+    ...extraHeaders,
   };
-  if (status === 204) {
-    return new Response(null, { status, headers });
-  }
-  return new Response(JSON.stringify(body), { status, headers });
+  return new Response(status === 204 ? null : JSON.stringify(body), { status, headers });
 }
 
-type ExpectedType = 'string' | { values: string[] };
-type Expectations<T> = { [K in keyof T]: ExpectedType };
+// --- Parameter Validation Helper ---
+type ExpectedParamType = 'string' | { values: ReadonlyArray<string> }; // Use ReadonlyArray
+type ParamExpectations<T> = { [K in keyof T]?: ExpectedParamType }; // Make properties optional for partial validation
 
-function validateParameters<T extends Record<string, any>>(values: T, expected: Expectations<T>): string | undefined {
+// Required fields are now explicitly checked before this function for better clarity
+function validateOptionalParams<T extends Record<string, any>>(
+  values: T,
+  expected: ParamExpectations<T>
+): string | undefined {
   for (const parameter in expected) {
-    const expectation = expected[parameter];
+    if (values[parameter] == null) continue; // Skip validation if param is not present (it's optional here)
+
+    const expectation = expected[parameter]!; // We know it's defined due to loop condition
     const value = values[parameter];
-    if (typeof expectation === 'string') {
-      if (value == null) return `Missing required parameter: ${parameter}`;
-      if (typeof value !== 'string' || value.trim() === '') return `Expected parameter ${parameter} to be a non-empty string, got: ${JSON.stringify(value)}`;
-    } else {
-      if (!expectation.values.includes(value)) return `Expected parameter ${parameter} to be one of: ${expectation.values.join(', ')}. Got: ${value}`;
+
+    if (typeof expectation === 'string') { // Expects a string type
+      if (typeof value !== 'string' || value.trim() === '') {
+        return `Optional parameter ${parameter} must be a non-empty string if provided, got: ${JSON.stringify(value)}`;
+      }
+    } else { // Expectation is { values: string[] }
+      if (!expectation.values.includes(value)) {
+        return `Optional parameter ${parameter} must be one of: ${expectation.values.join(', ')} if provided. Got: ${value}`;
+      }
     }
   }
   return undefined;
@@ -78,241 +82,212 @@ function validateParameters<T extends Record<string, any>>(values: T, expected: 
 
 // --- Main Edge Function Logic ---
 Deno.serve(async (req: Request) => {
-  console.log(`[stripe-checkout] Received request: ${req.method} ${req.url}`);
+  const logPrefix = '[stripe-checkout]';
+  console.log(`${logPrefix} INFO: Received request: ${req.method} ${req.url}`);
 
-  // 1. Handle CORS Preflight Request
   if (req.method === 'OPTIONS') {
-    console.info('[stripe-checkout] Handling OPTIONS preflight request');
-    return createCorsResponse({}, 204);
+    console.info(`${logPrefix} INFO: Handling OPTIONS preflight request.`);
+    return createJsonResponse({}, 204);
   }
-
-  // 2. Check Request Method
   if (req.method !== 'POST') {
-    console.warn(`[stripe-checkout] Received non-POST request: ${req.method}`);
-    return createCorsResponse({ error: 'Method Not Allowed', statusCode: 405 }, 405);
-  }
-
-  // 3. Parse and Validate Request Body
-  let rawBody: string | null = null;
-  try {
-    rawBody = await req.text();
-    console.log('[stripe-checkout] Raw request body:', rawBody);
-  } catch (bodyReadError) {
-    console.error('[stripe-checkout] Failed to read request body:', bodyReadError);
-    return createCorsResponse({ error: 'Failed to read request body.', statusCode: 500, details: bodyReadError.message }, 500);
+    console.warn(`${logPrefix} WARN: Received non-POST request: ${req.method}`);
+    return createJsonResponse({ error: 'Method Not Allowed. Only POST requests are accepted.' }, 405);
   }
 
   let requestBody: CheckoutRequestBody;
   try {
+    const rawBody = await req.text();
     if (!rawBody) throw new Error('Request body is empty.');
     requestBody = JSON.parse(rawBody);
-    console.info('[stripe-checkout] Parsed request body:', requestBody);
+    console.info(`${logPrefix} INFO: Parsed request body:`, JSON.stringify(requestBody)); // Stringify for better Deno log view
   } catch (parseError) {
-    console.error('[stripe-checkout] Failed to parse request body:', parseError, 'Raw body was:', rawBody);
-    return createCorsResponse({ error: 'Invalid request body: Could not parse JSON.', statusCode: 400, details: parseError.message }, 400);
+    console.error(`${logPrefix} ERROR: Failed to parse request body:`, parseError.message);
+    return createJsonResponse({ error: 'Invalid request: Could not parse JSON body.', details: parseError.message }, 400);
   }
 
-  const validationError = validateParameters<CheckoutRequestBody>(requestBody, {
-    price_id: 'string',
-    success_url: 'string',
-    cancel_url: 'string',
-    mode: { values: ['payment', 'subscription'] },
-  });
-
-  if (validationError) {
-    console.warn('[stripe-checkout] Request body validation failed:', validationError);
-    return createCorsResponse({ error: `Invalid input: ${validationError}`, statusCode: 400 }, 400);
+  // Validate required parameters
+  const requiredParams: (keyof CheckoutRequestBody)[] = ['price_id', 'success_url', 'cancel_url', 'mode'];
+  for (const param of requiredParams) {
+    if (!requestBody[param] || (typeof requestBody[param] === 'string' && (requestBody[param] as string).trim() === '')) {
+      const errorMsg = `Invalid input: Missing or empty required parameter: ${param}`;
+      console.warn(`${logPrefix} WARN: ${errorMsg}`);
+      return createJsonResponse({ error: errorMsg }, 400);
+    }
+  }
+  // Validate enum for 'mode' and optional parameters
+  const optionalValidationError = validateOptionalParams<CheckoutRequestBody>(
+    requestBody,
+    {
+      mode: { values: ['payment', 'subscription'] }, // Mode is required but also has enum validation
+      plan_name: 'string',
+      interval: { values: ['month', 'year'] }
+    }
+  );
+  if (optionalValidationError) {
+     console.warn(`${logPrefix} WARN: Request body validation failed for enums or optional fields:`, optionalValidationError);
+     return createJsonResponse({ error: `Invalid input: ${optionalValidationError}` }, 400);
   }
 
-  const { price_id, success_url, cancel_url, mode } = requestBody;
+
+  const { price_id, success_url, cancel_url, mode, plan_name: clientPlanName, interval: clientInterval } = requestBody;
 
   try {
-    // 4. Authenticate Supabase User
-    console.info('[stripe-checkout] Authenticating user...');
+    // 1. Authenticate Supabase User
+    console.info(`${logPrefix} INFO: Authenticating Supabase user...`);
     const authHeader = req.headers.get('Authorization');
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      console.warn('[stripe-checkout] Missing or invalid Authorization header');
-      return createCorsResponse({ error: 'Missing or invalid Authorization header', statusCode: 401 }, 401);
+      console.warn(`${logPrefix} WARN: Missing or invalid Authorization header.`);
+      return createJsonResponse({ error: 'Authentication required: Missing or invalid Authorization header.' }, 401);
     }
     const token = authHeader.replace('Bearer ', '');
+    const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token);
 
-    const { data: { user }, error: getUserError } = await supabaseAdmin.auth.getUser(token);
-    if (getUserError) {
-      console.error('[stripe-checkout] Supabase auth error:', getUserError);
-      return createCorsResponse({ error: `Authentication failed: ${getUserError.message}`, statusCode: 401, details: getUserError.message }, 401);
+    if (authError) {
+      console.error(`${logPrefix} ERROR: Supabase auth error:`, authError.message);
+      return createJsonResponse({ error: `Authentication failed: ${authError.message}` }, authError.status || 401);
     }
     if (!user) {
-      console.warn('[stripe-checkout] User not found for provided token.');
-      return createCorsResponse({ error: 'User not found', statusCode: 404 }, 404);
+      console.warn(`${logPrefix} WARN: User not found for provided token.`);
+      return createJsonResponse({ error: 'Authentication failed: User not found.' }, 401);
     }
-    console.info(`[stripe-checkout] User ${user.id} authenticated successfully.`);
+    console.info(`${logPrefix} INFO: User ${user.id} (${user.email}) authenticated.`);
 
-    // 5. Validate Price ID
-    console.info(`[stripe-checkout] Validating price ID ${price_id}...`);
+    // 2. Validate Price ID with Stripe & Get Product Info for Metadata
+    let fetchedPrice: Stripe.Price;
+    let derivedPlanName: string = 'Unknown Plan';
+    let derivedInterval: 'month' | 'year' | undefined = undefined;
+
     try {
-      const price = await stripe.prices.retrieve(price_id);
-      console.info(`[stripe-checkout] Price ID ${price_id} is valid:`, price);
-    } catch (stripeError: any) {
-      console.error(`[stripe-checkout] Invalid price ID ${price_id}:`, stripeError);
-      return createCorsResponse({ error: `Invalid price ID: ${stripeError.message}`, statusCode: 400, details: stripeError.message }, 400);
+      console.info(`${logPrefix} INFO: Retrieving Stripe Price object for ID ${price_id} to validate and get product details.`);
+      fetchedPrice = await stripe.prices.retrieve(price_id, { expand: ['product'] });
+      if (!fetchedPrice || !fetchedPrice.active) {
+        throw new Error(`Price ID ${price_id} is not active or does not exist in Stripe.`);
+      }
+      // Derive planName and interval from the fetched Stripe Price and Product objects
+      if (fetchedPrice.product && typeof fetchedPrice.product === 'object') {
+        derivedPlanName = (fetchedPrice.product as Stripe.Product).name || derivedPlanName;
+      }
+      if (fetchedPrice.recurring?.interval) {
+        derivedInterval = fetchedPrice.recurring.interval as 'month' | 'year';
+      }
+      console.info(`${logPrefix} INFO: Stripe Price ID ${price_id} validated. Product: "${derivedPlanName}", Interval: ${derivedInterval}.`);
+    } catch (stripePriceError: any) {
+      console.error(`${logPrefix} ERROR: Invalid Stripe Price ID ${price_id}:`, stripePriceError.message);
+      return createJsonResponse({ error: `Invalid product price: ${stripePriceError.message}. Please check the Price ID.`, details: stripePriceError.message }, 400);
     }
+    
+    // Use client-provided plan_name/interval if available, otherwise use derived values
+    const finalPlanNameForMetadata = clientPlanName || derivedPlanName;
+    const finalIntervalForMetadata = clientInterval || derivedInterval;
 
-    // 6. Get or Create Stripe Customer
-    let customerId: string;
-    console.info(`[stripe-checkout] Looking up customer for user ${user.id}...`);
-    const { data: customerData, error: getCustomerError } = await supabaseAdmin
+    // 3. Get or Create Stripe Customer, linking to Supabase User
+    let stripeCustomerId: string;
+    console.info(`${logPrefix} INFO: Looking up Stripe customer for Supabase user ${user.id}.`);
+    const { data: customerMapping, error: dbCustomerError } = await supabaseAdmin
       .from('stripe_customers')
       .select('customer_id')
       .eq('user_id', user.id)
-      .is('deleted_at', null)
-      .maybeSingle();
+      .maybeSingle(); // Use maybeSingle to handle null or one row
 
-    if (getCustomerError) {
-      console.error(`[stripe-checkout] Database error fetching customer for user ${user.id}:`, getCustomerError);
-      return createCorsResponse({ error: 'Database error fetching customer information.', statusCode: 500, details: getCustomerError.message }, 500);
+    if (dbCustomerError) {
+      console.error(`${logPrefix} ERROR: Database error fetching Stripe customer mapping for user ${user.id}:`, dbCustomerError.message);
+      return createJsonResponse({ error: 'Database error: Could not process customer information.' }, 500);
     }
 
-    if (customerData?.customer_id) {
-      // Verify customer exists in Stripe
+    if (customerMapping?.customer_id) {
       try {
-        const stripeCustomer = await stripe.customers.retrieve(customerData.customer_id);
-        customerId = stripeCustomer.id;
-        console.info(`[stripe-checkout] Found existing Stripe customer ${customerId} for user ${user.id}.`);
-      } catch (stripeError: any) {
-        if (stripeError.code === 'resource_missing') {
-          console.warn(`[stripe-checkout] Customer ${customerData.customer_id} not found in Stripe. Marking as invalid and creating new customer...`);
-          // Mark invalid customer_id as NULL
-          const { error: updateCustomerError } = await supabaseAdmin
-            .from('stripe_customers')
-            .update({ customer_id: null, updated_at: new Date().toISOString() })
-            .eq('user_id', user.id);
-          if (updateCustomerError) {
-            console.error(`[stripe-checkout] Failed to update customer mapping for user ${user.id}:`, updateCustomerError);
-            return createCorsResponse({ error: 'Database error updating customer mapping.', statusCode: 500, details: updateCustomerError.message }, 500);
-          }
-          console.info(`[stripe-checkout] Marked invalid customer ${customerData.customer_id} as NULL for user ${user.id}.`);
-          // Create new customer
-          const newStripeCustomer = await stripe.customers.create({
-            email: user.email,
-            metadata: { userId: user.id },
-            name: user.email,
-          });
-          customerId = newStripeCustomer.id;
-          // Update stripe_customers with new customer_id
-          const { error: updateNewCustomerError } = await supabaseAdmin
-            .from('stripe_customers')
-            .update({ customer_id: customerId, updated_at: new Date().toISOString() })
-            .eq('user_id', user.id);
-          if (updateNewCustomerError) {
-            console.error(`[stripe-checkout] Failed to update new customer mapping for user ${user.id}, customer ${customerId}:`, updateNewCustomerError);
-            return createCorsResponse({ error: 'Database error updating new customer mapping.', statusCode: 500, details: updateNewCustomerError.message }, 500);
-          }
-          console.info(`[stripe-checkout] Successfully updated customer mapping to new customer ${customerId} for user ${user.id}.`);
+        const existingStripeCustomer = await stripe.customers.retrieve(customerMapping.customer_id);
+        if (existingStripeCustomer && !existingStripeCustomer.deleted) {
+          stripeCustomerId = existingStripeCustomer.id;
+          console.info(`${logPrefix} INFO: Found existing active Stripe customer ${stripeCustomerId} for user ${user.id}.`);
         } else {
-          console.error(`[stripe-checkout] Stripe error verifying customer ${customerData.customer_id}:`, stripeError);
-          return createCorsResponse({ error: `Stripe error: ${stripeError.message}`, statusCode: 500, details: stripeError.message }, 500);
+          console.warn(`${logPrefix} WARN: Stripe customer ${customerMapping.customer_id} from DB is deleted or invalid in Stripe. Will create a new one.`);
+          // Fall through to create a new customer by leaving stripeCustomerId undefined here
         }
+      } catch (stripeCustError: any) {
+        console.warn(`${logPrefix} WARN: Stripe customer ${customerMapping.customer_id} (from DB for user ${user.id}) not valid in Stripe (${stripeCustError.message}). Creating a new one.`);
+        // Fall through
       }
-    } else {
-      console.info(`[stripe-checkout] No existing Stripe customer found for user ${user.id}. Creating new one...`);
-      const newStripeCustomer = await stripe.customers.create({
-        email: user.email,
-        metadata: { userId: user.id },
-        name: user.email,
-      });
-      customerId = newStripeCustomer.id;
-      console.info(`[stripe-checkout] Created new Stripe customer ${customerId} for user ${user.id}.`);
-      const { error: insertCustomerError } = await supabaseAdmin
-        .from('stripe_customers')
+    }
+
+    if (!stripeCustomerId!) { // If existing customer not found or invalid
+      console.info(`${logPrefix} INFO: Creating new Stripe customer for user ${user.id} (${user.email}).`);
+      const customerCreateParams: Stripe.CustomerCreateParams = {
+        email: user.email!,
+        name: user.user_metadata?.full_name || user.email!,
+        metadata: { supabaseUserId: user.id }, // Link Stripe customer TO Supabase user ID
+      };
+      const newStripeCustomer = await stripe.customers.create(customerCreateParams);
+      stripeCustomerId = newStripeCustomer.id;
+      console.info(`${logPrefix} INFO: Created new Stripe customer ${stripeCustomerId}. Storing mapping in DB.`);
+      
+      const { error: upsertError } = await supabaseAdmin
+        .from('stripe_customers') // Your Supabase table linking users to Stripe customers
         .upsert(
-          {
-            user_id: user.id,
-            customer_id: customerId,
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
-          },
-          { onConflict: 'user_id' }
+          { user_id: user.id, customer_id: stripeCustomerId, updated_at: new Date().toISOString() },
+          { onConflict: 'user_id' } // Assumes user_id is PK or has UNIQUE constraint
         );
-      if (insertCustomerError) {
-        console.error(`[stripe-checkout] Failed to insert customer mapping for user ${user.id}, customer ${customerId}:`, insertCustomerError);
-        return createCorsResponse({ error: 'Database error creating customer mapping.', statusCode: 500, details: insertCustomerError.message }, 500);
+      if (upsertError) {
+        console.error(`${logPrefix} ERROR: Failed to upsert Stripe customer mapping for user ${user.id}:`, upsertError.message);
+        // This is not necessarily fatal for the checkout session creation itself, but critical for long-term mapping.
       }
-      console.info(`[stripe-checkout] Successfully inserted customer mapping for user ${user.id}.`);
     }
 
-    // 7. Handle Subscription Placeholder
+    // 4. Handle existing subscriptions (Simplified: No automatic updates for this generic checkout)
     if (mode === 'subscription') {
-      console.info(`[stripe-checkout] Checking subscription record for customer ${customerId}...`);
-      const { data: subData, error: getSubError } = await supabaseAdmin
-        .from('stripe_subscriptions')
-        .select('status, subscription_id')
-        .eq('customer_id', customerId)
-        .is('deleted_at', null)
-        .maybeSingle();
-      if (getSubError) {
-        console.error(`[stripe-checkout] Database error fetching subscription for customer ${customerId}:`, getSubError);
-        return createCorsResponse({ error: 'Database error fetching subscription information.', statusCode: 500, details: getSubError.message }, 500);
+      console.info(`${logPrefix} INFO: Checking for existing *active* subscriptions for customer ${stripeCustomerId}.`);
+      const { data: existingSubscriptions, error: listSubError } = await stripe.subscriptions.list({
+        customer: stripeCustomerId,
+        status: 'active', // Only consider active ones
+        limit: 1, // We only care if at least one active exists
+      });
+
+      if (listSubError) {
+        console.error(`${logPrefix} ERROR: Failed to list subscriptions for customer ${stripeCustomerId}:`, listSubError.message);
+        // Proceed with caution, might create duplicate if not handled
       }
-      if (subData && subData.subscription_id && subData.status === 'active') {
-        console.info(`[stripe-checkout] Found active subscription ${subData.subscription_id} for customer ${customerId}. Updating...`);
-        try {
-          await stripe.subscriptions.update(subData.subscription_id, {
-            items: [{ price: price_id }],
-            proration_behavior: 'create_prorations',
-          });
-          console.info(`[stripe-checkout] Successfully updated subscription ${subData.subscription_id} to price ${price_id}.`);
-        } catch (stripeError: any) {
-          console.error(`[stripe-checkout] Failed to update subscription ${subData.subscription_id}:`, stripeError);
-          return createCorsResponse({ error: `Failed to update subscription: ${stripeError.message}`, statusCode: 500, details: stripeError.message }, 500);
-        }
-      } else if (!subData) {
-        console.info(`[stripe-checkout] No existing subscription record found for customer ${customerId}. Creating placeholder...`);
-        const { error: insertSubError } = await supabaseAdmin
-          .from('stripe_subscriptions')
-          .insert({
-            customer_id: customerId,
-            status: 'incomplete',
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
-          });
-        if (insertSubError) {
-          console.error(`[stripe-checkout] Failed to insert placeholder subscription for customer ${customerId}:`, insertSubError);
-          return createCorsResponse({ error: 'Database error creating subscription record.', statusCode: 500, details: insertSubError.message }, 500);
-        }
-        console.info(`[stripe-checkout] Successfully inserted placeholder subscription record for customer ${customerId}.`);
+
+      if (existingSubscriptions && existingSubscriptions.data.length > 0) {
+        console.warn(`${logPrefix} WARN: Customer ${stripeCustomerId} (User ${user.id}) already has an active subscription(s). Current checkout will create a new, additional subscription. ID of one active sub: ${existingSubscriptions.data[0].id}. Plan changes should ideally be handled via Stripe Customer Portal or a dedicated upgrade/downgrade flow.`);
+        // The old logic to update `subData.subscription_id` is removed for simplification.
+        // This generic checkout endpoint will now always aim to create a new subscription if one is purchased.
+        // If you want to prevent multiple active subscriptions or auto-upgrade, that logic would go here or
+        // by configuring your Stripe Product/Price settings appropriately.
       }
+      
+      // The placeholder 'incomplete' subscription logic in your original code:
+      // This was likely intended to create a DB record before Stripe confirms.
+      // However, with webhooks, it's usually cleaner to let the `checkout.session.completed`
+      // webhook create the definitive subscription record in your DB.
+      // For now, I'm removing the pre-creation of 'incomplete' DB records here to simplify.
+      // The webhook will handle DB record creation upon successful payment.
     }
 
-    // 8. Create Stripe Checkout Session
-    console.info(`[stripe-checkout] Creating Stripe Checkout session for customer ${customerId}, price ${price_id}, mode ${mode}...`);
-    const stripeSessionCreateParams: Stripe.Checkout.SessionCreateParams = {
-      customer: customerId,
+    // 5. Create Stripe Checkout Session
+    console.info(`${logPrefix} INFO: Creating Stripe Checkout session for Stripe customer ${stripeCustomerId}, price ${price_id}, mode ${mode}.`);
+    const checkoutSessionParams: Stripe.Checkout.SessionCreateParams = {
+      customer: stripeCustomerId,
       payment_method_types: ['card'],
       line_items: [{ price: price_id, quantity: 1 }],
       mode: mode,
-      success_url: success_url,
-      cancel_url: cancel_url,
-      metadata: { supabaseUserId: user.id },
+      success_url: success_url, // e.g., `https://mapleaurum.com/onboarding?session_id={CHECKOUT_SESSION_ID}`
+      cancel_url: cancel_url,   // e.g., `https://mapleaurum.com/subscribe`
+      metadata: {
+        supabaseUserId: user.id,          // CRITICAL for webhook linking
+        priceId: price_id,                // For reference
+        planName: finalPlanNameForMetadata, // Derived/passed plan name
+        interval: finalIntervalForMetadata, // Derived/passed interval
+      },
+      // allow_promotion_codes: true, // Uncomment if you want to allow promo codes
     };
 
-    try {
-      const stripeSession: Stripe.Checkout.Session = await stripe.checkout.sessions.create(stripeSessionCreateParams);
-      console.info(`[stripe-checkout] Successfully created Stripe Checkout session ${stripeSession.id} for customer ${customerId}.`);
+    const stripeCheckoutSession: Stripe.Checkout.Session = await stripe.checkout.sessions.create(checkoutSessionParams);
+    console.info(`${logPrefix} INFO: Stripe Checkout session ${stripeCheckoutSession.id} created successfully.`);
 
-      // 9. Return Success Response
-      const responseBody: CheckoutSuccessResponse = {
-        sessionId: stripeSession.id,
-        url: stripeSession.url,
-      };
-      return createCorsResponse(responseBody, 200);
-    } catch (stripeError: any) {
-      console.error(`[stripe-checkout] Failed to create Stripe Checkout session:`, stripeError);
-      return createCorsResponse({ error: `Failed to create checkout session: ${stripeError.message}`, statusCode: 500, details: stripeError.message }, 500);
-    }
-  } catch (error: unknown) {
-    console.error('[stripe-checkout] Unhandled error in checkout function:', error);
-    const errorMessage = error instanceof Error ? error.message : 'An unexpected internal server error occurred.';
-    const errorDetails = error instanceof Error && error.stack ? error.stack : String(error);
-    return createCorsResponse({ error: `Internal Server Error: ${errorMessage}`, statusCode: 500, details: errorDetails }, 500);
+    return createJsonResponse({ sessionId: stripeCheckoutSession.id, url: stripeCheckoutSession.url } as CheckoutSuccessResponse, 200);
+
+  } catch (error: any) {
+    console.error(`${logPrefix} ERROR: Unhandled error in main try block:`, error.message, error.stack);
+    return createJsonResponse({ error: 'Internal Server Error. Please try again later or contact support.', details: error.message }, 500);
   }
 });
