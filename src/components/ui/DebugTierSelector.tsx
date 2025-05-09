@@ -1,84 +1,90 @@
-// src/components/ui/DebugTierSelector.tsx (New File)
+// src/components/ui/DebugTierSelector.tsx
 import React from 'react';
 import { useSubscription } from '../../contexts/subscription-context';
-import { Button } from './button'; // Assuming you have a Button component
-import type { SubscriptionTier } from '../../lib/types';
+import { Button } from './button'; 
+import { Label } from './label'; 
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./select";
+import type { SubscriptionTier } from '../../lib/types'; // Ensure 'pro' is part of this
 
 export function DebugTierSelector() {
-  const { setDebugTier, getEffectiveTier, isDebugActive, getActualTier } = useSubscription();
+  const {
+    setDebugTierOverride,
+    currentUserSubscriptionTier, // This IS the effective tier (actual or debug)
+    actualTierFromDB,
+    debugTierOverrideActive,
+    isLoading: isSubscriptionLoading, // Renamed for clarity
+  } = useSubscription();
 
   // --- IMPORTANT: Only render this component in development ---
-  if (process.env.NODE_ENV !== 'development') {
+  if (import.meta.env.MODE !== 'development') {
+  // if (process.env.NODE_ENV !== 'development') { // Use this if not using Vite
     return null;
   }
 
-  const currentEffectiveTier = getEffectiveTier();
-  const currentActualTier = getActualTier();
-  const debugActive = isDebugActive();
-
-  const handleSetTier = (tier: SubscriptionTier | null) => {
-    setDebugTier(tier);
+  const handleTierChange = (value: string) => {
+    if (value === "null" || value === "" || value === "actual") { // "actual" to represent clearing override
+      setDebugTierOverride(null);
+    } else {
+      setDebugTierOverride(value as SubscriptionTier);
+    }
   };
 
+  // The value for the Select component should be the debug override if active, or a specific value indicating "actual"
+  const selectValue = debugTierOverrideActive ? currentUserSubscriptionTier : "actual";
+
   return (
-    <div
-      style={{
-        position: 'fixed',
-        bottom: '10px',
-        right: '10px',
-        backgroundColor: 'rgba(0, 0, 50, 0.8)',
-        padding: '10px',
-        borderRadius: '8px',
-        zIndex: 1000, // Ensure it's on top
-        border: '1px solid rgba(100, 120, 200, 0.7)',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '8px',
-        fontSize: '12px',
-        color: 'white',
-        boxShadow: '0 4px 15px rgba(0,0,0,0.4)'
-      }}
-    >
-      <h4 style={{ margin: 0, paddingBottom: '4px', borderBottom: '1px solid #445', textAlign: 'center', fontWeight: '600' }}>
-        Debug Tier Control
-      </h4>
-      <div style={{ display: 'flex', gap: '5px', justifyContent: 'center' }}>
-        <Button
-          size="sm"
-          variant={currentEffectiveTier === 'free' && debugActive ? 'primary' : 'outline'}
-          onClick={() => handleSetTier('free')}
-          className={currentEffectiveTier === 'free' && debugActive ? 'ring-2 ring-offset-1 ring-cyan-400' : ''}
+    <div className="fixed bottom-4 right-4 bg-slate-800 p-3 rounded-lg shadow-2xl z-[100] border border-yellow-500/50 text-xs text-slate-200 w-64">
+      <Label htmlFor="debug-tier-select" className="block text-xs font-semibold text-yellow-400 mb-2 text-center">
+        DEBUG TIER CONTROL
+      </Label>
+      <div className="space-y-2">
+        <Select
+          value={selectValue}
+          onValueChange={handleTierChange}
+          disabled={isSubscriptionLoading}
         >
-          Force Free
-        </Button>
-        <Button
-          size="sm"
-           variant={currentEffectiveTier === 'medium' && debugActive ? 'primary' : 'outline'}
-          onClick={() => handleSetTier('medium')}
-           className={currentEffectiveTier === 'medium' && debugActive ? 'ring-2 ring-offset-1 ring-cyan-400' : ''}
-        >
-          Force Pro
-        </Button>
-        <Button
-          size="sm"
-          variant={currentEffectiveTier === 'premium' && debugActive ? 'primary' : 'outline'}
-          onClick={() => handleSetTier('premium')}
-           className={currentEffectiveTier === 'premium' && debugActive ? 'ring-2 ring-offset-1 ring-cyan-400' : ''}
-        >
-          Force Premium
-        </Button>
+          <SelectTrigger id="debug-tier-select" className="w-full bg-slate-700 border-slate-600 text-slate-100 h-8 text-xs">
+            <SelectValue placeholder="Select Tier to Simulate" />
+          </SelectTrigger>
+          <SelectContent className="bg-slate-700 border-slate-600 text-slate-100">
+            <SelectItem value="actual" className="text-slate-400 focus:bg-slate-600 text-xs">
+              Use Actual Tier ({actualTierFromDB})
+            </SelectItem>
+            {(['free', 'pro', 'premium'] as SubscriptionTier[]).map((tierOption) => (
+              <SelectItem key={tierOption} value={tierOption} className="focus:bg-slate-600 text-xs">
+                Simulate: {tierOption.charAt(0).toUpperCase() + tierOption.slice(1)}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
+        {debugTierOverrideActive && (
+          <Button
+            variant="outline"
+            size="xs" // Assuming you have or can create an "xs" size
+            onClick={() => setDebugTierOverride(null)}
+            className="w-full text-yellow-400 border-yellow-500/70 hover:bg-yellow-500/10 h-8 text-xs"
+          >
+            Clear Override (Use Actual)
+          </Button>
+        )}
       </div>
-       <Button
-          size="sm"
-          variant={!debugActive ? 'secondary' : 'destructive'} // Use destructive or similar for clearing
-          onClick={() => handleSetTier(null)}
-          disabled={!debugActive} // Disable if not debugging
-        >
-           {debugActive ? 'Clear Override' : 'Using Real Tier'}
-        </Button>
-      <div style={{ marginTop: '5px', paddingTop: '5px', borderTop: '1px solid #445', textAlign: 'center', opacity: 0.8 }}>
-        Effective: <b style={{ textTransform: 'capitalize'}}>{currentEffectiveTier}</b> <br/>
-        (Actual: <span style={{ textTransform: 'capitalize'}}>{currentActualTier}</span>)
+      
+      {isSubscriptionLoading && <p className="text-xs text-slate-400 mt-2 animate-pulse">Subscription loading...</p>}
+      
+      <div className="mt-2 pt-2 border-t border-slate-700 space-y-1">
+        <p className="flex justify-between">
+          <span>Effective Tier:</span>
+          <span className="font-semibold text-white capitalize">{currentUserSubscriptionTier}</span>
+        </p>
+        <p className="flex justify-between text-slate-400">
+          <span>Actual DB Tier:</span>
+          <span className="font-semibold text-slate-300 capitalize">{actualTierFromDB}</span>
+        </p>
+        <p className="flex justify-between text-yellow-400">
+          <span>Override Active:</span>
+          <span className="font-semibold">{debugTierOverrideActive ? 'Yes' : 'No'}</span>
+        </p>
       </div>
     </div>
   );
