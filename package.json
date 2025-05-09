@@ -45,6 +45,7 @@
     "@types/react-dom": "^18.3.0",
     "@vitejs/plugin-react": "^4.3.1",
     "autoprefixer": "^10.4.18",
+    "cross-env": "^7.0.3",
     "eslint": "^9.9.1",
     "eslint-plugin-react-hooks": "^5.1.0-rc.0",
     "eslint-plugin-react-refresh": "^0.4.11",
@@ -55,9 +56,14 @@
     "tailwindcss": "^3.4.1",
     "typescript": "^5.5.3",
     "typescript-eslint": "^8.3.0",
-    "vite": "^5.4.2"
+    "vite": "^5.4.2",
+    "vite-plugin-preload": "^0.2.2"
   },
   "engines": {
     "node": ">=18.0.0"
+  },
+  "alias": {
+    "react": "react/cjs/react.development.js",
+    "react-dom": "react-dom/cjs/react-dom.development.js"
   }
 }

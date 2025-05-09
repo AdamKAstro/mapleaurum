@@ -27,4 +27,4 @@ create_checkout.js   # If you want to ignore this
 *.ntvs*
 *.njsproj
 *.sln
-*.sw?
+*.sw?src/Test_Users.txt

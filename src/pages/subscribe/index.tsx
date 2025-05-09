@@ -1,223 +1,169 @@
 //src/pages/subscribe/index.tsx
-
-import React, { useState, useMemo, useEffect } from 'react';
-import { Check, Crown, Star, Loader2, AlertCircle, Lock } from 'lucide-react';
+import React, { useState } from 'react';
+import { Star, Crown, Check } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '../../components/ui/button';
 import { Typography } from '../../components/ui/typography';
 import { PageContainer } from '../../components/ui/page-container';
-import { Alert, AlertDescription, AlertTitle } from '../../components/ui/alert';
-import { Switch } from '../../components/ui/switch';
 import { Label } from '../../components/ui/label';
-import { cn } from '../../lib/utils';
+import { Switch } from '../../components/ui/switch';
 import { useAuth } from '../../contexts/auth-context';
-import { useSubscription } from '../../contexts/subscription-context';
-import { useLocation } from 'react-router-dom';
-import { createCheckoutSession } from '../../lib/stripe';
-import { SubscriptionTier } from '../lib/types';
+import { cn } from '../../lib/utils';
+import { SubscriptionTier } from '../../lib/types';
 
-interface PlanIntervalDetail {
-  priceId: string;
-  priceString: string;
-  priceSuffix: string;
-  savePercent?: number;
-}
-
-interface PlanDetail {
+interface PricingTier {
   name: string;
+  price: string;
   description: string;
   is_popular: boolean;
   features: string[];
-  monthly: PlanIntervalDetail | null;
-  yearly: PlanIntervalDetail | null;
-  icon: React.ElementType | null;
-  color?: string;
 }
 
-const PRO_MONTHLY_PRICE_ID = 'price_1RMJ31Ast4LlpL7pauoVPwpm';
-const PRO_YEARLY_PRICE_ID = 'price_1RMIBuAst4LlpL7pf1EFTmlk';
-const PREMIUM_MONTHLY_PRICE_ID = 'price_1RMJ3pAst4LlpL7pXTO1bVli';
-const PREMIUM_YEARLY_PRICE_ID = 'price_1RMIDFAst4LlpL7p8UInqh9P';
+interface Plan {
+  name: string;
+  price: string;
+  period?: string;
+  description: string;
+  features: string[];
+  icon: React.ComponentType | null;
+  color: string;
+  popular: boolean;
+  buttonText: string;
+  buttonVariant: 'primary' | 'outline' | 'secondary';
+  disabled: boolean;
+  buyButtonIdMonthly?: string;
+  buyButtonIdYearly?: string;
+  tier: SubscriptionTier;
+}
 
-const calculateSavings = (monthlyPrice: number, yearlyPrice: number): number | undefined => {
-  if (!monthlyPrice || !yearlyPrice || monthlyPrice <= 0 || yearlyPrice <= 0) return undefined;
-  const totalMonthlyCost = monthlyPrice * 12;
-  if (totalMonthlyCost <= yearlyPrice) return undefined;
-  const savings = ((totalMonthlyCost - yearlyPrice) / totalMonthlyCost) * 100;
-  return Math.round(savings);
-};
-
-const yearlyProSavings = calculateSavings(40, 420);
-const yearlyPremiumSavings = calculateSavings(90, 960);
-
-const plansData: PlanDetail[] = [
+const pricingTiers: PricingTier[] = [
   {
     name: 'Free',
+    price: '$0',
     description: 'Basic access to company data',
     is_popular: false,
-    features: ['Basic company information', 'Limited financial metrics', 'Public company profiles', 'Daily updates'],
-    monthly: { priceId: '', priceString: '$0', priceSuffix: '' },
-    yearly: null,
-    icon: null,
-    color: 'gray',
+    features: [
+      'Basic company information',
+      'Limited financial metrics',
+      'Public company profiles',
+      'Daily updates',
+    ],
   },
   {
     name: 'Pro',
+    price: '$40/month',
     description: 'Advanced analytics and insights',
     is_popular: true,
-    features: ['Financial metrics', 'Resource estimates', 'Production data', 'Custom watchlists (coming)'],
-    monthly: { priceId: PRO_MONTHLY_PRICE_ID, priceString: '$40', priceSuffix: '/month' },
-    yearly: { priceId: PRO_YEARLY_PRICE_ID, priceString: '$420', priceSuffix: '/year', savePercent: yearlyProSavings },
-    icon: Star,
-    color: 'accent-teal',
+    features: [
+      'Financial metrics',
+      'Resource estimates',
+      'Production data',
+      'Custom watchlists (coming)',
+    ],
   },
   {
     name: 'Premium',
+    price: '$40/month',
     description: 'Complete access and premium features',
     is_popular: false,
     features: [
       'All Pro features',
       'Priority support',
+      'Basic company information',
+      'Public company profiles',
       'Advanced financial metrics',
       'Resource estimates',
       'Production data',
       'Custom watchlists (coming)',
       'Real-time alerts (coming)',
       'API access (coming)',
+      'Cost metrics',
+      'Valuation models',
     ],
-    monthly: { priceId: PREMIUM_MONTHLY_PRICE_ID, priceString: '$90', priceSuffix: '/month' },
-    yearly: { priceId: PREMIUM_YEARLY_PRICE_ID, priceString: '$960', priceSuffix: '/year', savePercent: yearlyPremiumSavings },
-    icon: Crown,
-    color: 'accent-yellow',
   },
 ];
 
-const planNameToTier: Record<string, SubscriptionTier> = {
-  Free: 'free',
-  Pro: 'medium',
-  Premium: 'premium',
+const splitPricePeriod = (priceString: string): [string, string | undefined] => {
+  if (priceString.includes('/')) {
+    const parts = priceString.split('/');
+    return [parts[0], `/${parts[1]}`];
+  }
+  return [priceString, undefined];
 };
 
-const tierLevel: Record<SubscriptionTier, number> = {
-  free: 0,
-  medium: 1,
-  premium: 2,
-};
+const plans: Plan[] = [
+  {
+    name: pricingTiers[0].name,
+    price: splitPricePeriod(pricingTiers[0].price)[0],
+    period: splitPricePeriod(pricingTiers[0].price)[1],
+    description: pricingTiers[0].description,
+    features: pricingTiers[0].features,
+    icon: null,
+    color: 'gray',
+    popular: pricingTiers[0].is_popular,
+    buttonText: 'Current Plan',
+    buttonVariant: 'outline',
+    disabled: true,
+    tier: 'free',
+  },
+  {
+    name: pricingTiers[1].name,
+    price: '$40',
+    period: '/month',
+    description: pricingTiers[1].description,
+    features: pricingTiers[1].features,
+    icon: Star,
+    color: 'accent-teal',
+    popular: pricingTiers[1].is_popular,
+    buttonText: 'Start Pro Trial',
+    buttonVariant: 'primary',
+    disabled: false,
+    buyButtonIdMonthly: 'buy_btn_1RMi8CAst4LlpL7phSTE6zb2',
+    buyButtonIdYearly: 'buy_btn_1RMiCHAst4LlpL7psqG9PSg1',
+    tier: 'pro',
+  },
+  {
+    name: pricingTiers[2].name,
+    price: '$40',
+    period: '/month',
+    description: pricingTiers[2].description,
+    features: pricingTiers[2].features,
+    icon: Crown,
+    color: 'accent-yellow',
+    popular: pricingTiers[2].is_popular,
+    buttonText: 'Start Premium Trial',
+    buttonVariant: 'primary',
+    disabled: false,
+    buyButtonIdMonthly: 'buy_btn_1RMiAYAst4LlpL7p3EmJcw7q',
+    buyButtonIdYearly: 'buy_btn_1RMiBSAst4LlpL7pAoueiu4V',
+    tier: 'premium',
+  },
+];
 
 export function SubscribePage() {
-  const { session, user, isLoading: isAuthLoading } = useAuth();
-  const { getEffectiveTier, isLoading: isSubLoading } = useSubscription();
-  const location = useLocation();
-  const [loadingPriceId, setLoadingPriceId] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [billingInterval, setBillingInterval] = useState<'monthly' | 'yearly'>('monthly');
-  const [isAutoCheckoutTriggered, setIsAutoCheckoutTriggered] = useState(false);
+  const { session, user, isLoading: isAuthLoading, currentUserTier } = useAuth();
+  const [isYearly, setIsYearly] = useState(false);
+  const navigate = useNavigate();
+  const backgroundImageUrl = '/Background2.jpg';
+  const stripePublishableKey = 'pk_live_51RJVXdAst4LlpL7p6PwW4fSy6xd4odAXMtaL59TcauHIIdRPgMPazyV3BYCMpJ0Bi5YUTNJuMA4aLK11gM9ZEOBz00rDGfp32u';
 
-  const currentUserTier = useMemo(() => {
-    if (isSubLoading || isAuthLoading) {
-      console.log('[SubscribePage] Tier undefined due to loading:', { isSubLoading, isAuthLoading });
-      return undefined;
-    }
-    const tier = getEffectiveTier();
-    console.log('[SubscribePage] Current tier:', tier);
-    return tier;
-  }, [getEffectiveTier, isSubLoading, isAuthLoading]);
+  const isButtonDisabled = (plan: Plan) => {
+    if (isAuthLoading) return true;
+    if (!currentUserTier) return plan.name === 'Free';
+    if (currentUserTier === 'premium') return true;
+    if (currentUserTier === 'pro') return plan.tier !== 'premium';
+    return plan.tier === 'free' || plan.tier === currentUserTier;
+  };
 
-  useEffect(() => {
-    console.log('[SubscribePage] State:', {
-      loadingPriceId,
-      error,
-      billingInterval,
-      isAutoCheckoutTriggered,
-      session: !!session,
-      user: !!user,
-      isAuthLoading,
-      currentUserTier,
-    });
-  }, [loadingPriceId, error, billingInterval, isAutoCheckoutTriggered, session, user, isAuthLoading, currentUserTier]);
-
-  useEffect(() => {
-    if (isAutoCheckoutTriggered || isAuthLoading || isSubLoading || !session || !user) {
-      console.log('[SubscribePage] Auto-checkout skipped:', {
-        isAutoCheckoutTriggered,
-        isAuthLoading,
-        isSubLoading,
-        session: !!session,
-        user: !!user,
-      });
-      return;
-    }
-
-    const searchParams = new URLSearchParams(location.search);
-    const planName = searchParams.get('plan');
-    const interval = searchParams.get('interval') as 'monthly' | 'yearly' | null;
-
-    if (!planName || !plansData.some((plan) => plan.name === planName)) {
-      console.log('[SubscribePage] No valid plan in query params:', planName);
-      return;
-    }
-
-    const targetInterval = interval === 'yearly' ? 'yearly' : 'monthly';
-    const plan = plansData.find((p) => p.name === planName);
-    if (!plan) {
-      console.error('[SubscribePage] Plan not found:', planName);
-      setError('Selected plan is not available.');
-      return;
-    }
-
-    const intervalDetails = targetInterval === 'yearly' && plan.yearly ? plan.yearly : plan.monthly;
-    const priceId = intervalDetails?.priceId;
-
-    if (!priceId) {
-      console.error('[SubscribePage] No priceId for plan:', planName, targetInterval);
-      setError('Selected plan configuration is not available.');
-      return;
-    }
-
-    if (currentUserTier && planNameToTier[planName] === currentUserTier) {
-      console.log('[SubscribePage] Plan is current tier:', planName, currentUserTier);
-      return;
-    }
-
-    setBillingInterval(targetInterval);
-    console.log('[SubscribePage] Initiating auto-checkout:', { planName, targetInterval, priceId });
-    handleSubscribe(priceId, planName);
-    setIsAutoCheckoutTriggered(true);
-  }, [session, user, isAuthLoading, isSubLoading, location, currentUserTier, isAutoCheckoutTriggered]);
-
-  const handleSubscribe = async (priceId: string | null, planName: string) => {
-    if (!priceId) {
-      console.warn('[SubscribePage] handleSubscribe called with null priceId for plan:', planName);
-      setError('Invalid plan configuration.');
-      return;
-    }
-    if (isAuthLoading) {
-      console.warn('[SubscribePage] Auth loading, cannot subscribe:', planName);
-      setError('Authentication is still loading, please wait.');
-      return;
-    }
+  const handleAuthRedirect = (planName: string, yearly: boolean) => {
+    if (isAuthLoading) return;
     if (!session || !user) {
-      console.warn('[SubscribePage] No session/user, redirecting to auth for plan:', planName);
-      window.location.href = `/auth?signup=true&plan=${planName}&interval=${billingInterval}`;
-      return;
-    }
-    setError(null);
-    setLoadingPriceId(priceId);
-    try {
-      console.log('[SubscribePage] Creating checkout session for priceId:', priceId);
-      const successUrl = `${window.location.origin}/onboarding?session_id={CHECKOUT_SESSION_ID}`;
-      const cancelUrl = `${window.location.origin}/subscribe`;
-      const checkoutUrl = await createCheckoutSession(priceId, 'subscription', successUrl, cancelUrl);
-      console.log('[SubscribePage] Redirecting to checkout URL:', checkoutUrl);
-      window.location.href = checkoutUrl;
-    } catch (err: any) {
-      console.error('[SubscribePage] handleSubscribe error:', err);
-      const displayError = err.message.includes('not authenticated')
-        ? 'Please log in to subscribe.'
-        : err.message.includes('Invalid price ID')
-        ? 'Invalid subscription plan. Please contact support.'
-        : 'Failed to initiate subscription. Please try again.';
-      setError(displayError);
-      setLoadingPriceId(null);
+      const query = new URLSearchParams({
+        signup: 'true',
+        plan: planName,
+        interval: yearly ? 'yearly' : 'monthly',
+      }).toString();
+      navigate(`/auth?${query}`);
     }
   };
 
@@ -227,133 +173,77 @@ export function SubscribePage() {
       description="Choose the plan that best fits your mining analytics needs."
       className="relative min-h-screen w-full overflow-hidden bg-gradient-to-b from-navy-400 via-navy-300 to-navy-400"
     >
+      <script async src="https://js.stripe.com/v3/buy-button.js"></script>
       <div
         className="absolute inset-0 bg-cover bg-center opacity-50 -z-10"
-        style={{ backgroundImage: `url('/Background2.jpg')` }}
+        style={{ backgroundImage: `url('${backgroundImageUrl}')` }}
         aria-hidden="true"
       />
       <div className="absolute inset-0 bg-noise opacity-30 -z-10" aria-hidden="true" />
-
       <div className="relative z-0 pt-8 pb-12">
-        <div className="text-center mb-10">
-          <Typography variant="h2" className="text-surface-white text-3xl font-bold tracking-tight">
-            Choose Your Plan
-          </Typography>
-          <Typography variant="body" className="mt-3 max-w-2xl mx-auto text-surface-white/70 text-base">
-            Unlock powerful analytics for Canadian miners with MapleAurum.
-          </Typography>
-        </div>
-
-        <div className="flex items-center justify-center space-x-4 mb-10 text-sm font-medium text-surface-white/80">
-          <Label htmlFor="billing-toggle" className={cn('cursor-pointer', billingInterval === 'monthly' && 'text-surface-white font-semibold')}>
-            Monthly
-          </Label>
-          <Switch
-            id="billing-toggle"
-            checked={billingInterval === 'yearly'}
-            onCheckedChange={(checked) => setBillingInterval(checked ? 'yearly' : 'monthly')}
-            aria-label="Toggle billing interval"
-          />
-          <Label htmlFor="billing-toggle" className={cn('cursor-pointer', billingInterval === 'yearly' && 'text-surface-white font-semibold')}>
-            Yearly
-            {(yearlyProSavings || yearlyPremiumSavings) && (
-              <span className="ml-2 text-xs text-accent-teal">
-                (Save up to {Math.max(yearlyProSavings || 0, yearlyPremiumSavings || 0)}%)
-              </span>
-            )}
-          </Label>
-        </div>
-
-        {error && (
-          <div className="max-w-5xl mx-auto mb-8 px-4">
-            <Alert variant="destructive">
-              <AlertCircle className="h-4 w-4" />
-              <AlertTitle>Subscription Error</AlertTitle>
-              <AlertDescription>{error}</AlertDescription>
-            </Alert>
+        <div className="flex justify-center mb-6">
+          <div className="flex items-center space-x-2">
+            <Label>Monthly</Label>
+            <Switch checked={isYearly} onCheckedChange={setIsYearly} />
+            <Label>Yearly (Save 10%)</Label>
           </div>
-        )}
-
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3 max-w-5xl mx-auto px-4">
-          {plansData.map((plan) => {
+        </div>
+        <div className="grid grid-cols-1 gap-6 sm:gap-8 lg:grid-cols-3 max-w-5xl mx-auto">
+          {plans.map((plan) => {
             const Icon = plan.icon;
-            const intervalDetails = billingInterval === 'yearly' && plan.yearly ? plan.yearly : plan.monthly;
-            const planTier = planNameToTier[plan.name] ?? 'free';
-            const isCurrentPlan = currentUserTier !== undefined && planTier === currentUserTier;
-            const isUpgrade = currentUserTier !== undefined && tierLevel[planTier] > tierLevel[currentUserTier];
-            const isDowngrade = currentUserTier !== undefined && tierLevel[planTier] < tierLevel[currentUserTier];
-            const isFree = plan.name === 'Free';
-            const currentPrice = isFree ? '$0' : intervalDetails?.priceString ?? '';
-            const currentSuffix = isFree ? '' : intervalDetails?.priceSuffix ?? '';
-            const currentPriceId = isFree ? null : intervalDetails?.priceId ?? null;
-            const isPlanLoading = loadingPriceId === currentPriceId;
-
-            let buttonText: string;
-            if (isFree) {
-              buttonText = 'Free Plan';
-            } else if (isCurrentPlan) {
-              buttonText = 'Current Plan';
-            } else if (!session || !user) {
-              buttonText = `Get ${plan.name}${billingInterval === 'yearly' ? ' Yearly' : ' Monthly'}`;
-            } else if (isUpgrade) {
-              buttonText = `Upgrade to ${plan.name}`;
-            } else if (isDowngrade) {
-              buttonText = `Switch to ${plan.name}`;
-            } else {
-              buttonText = `Get ${plan.name}${billingInterval === 'yearly' ? ' Yearly' : ' Monthly'}`;
-            }
-
-            const isDisabled = isFree || isCurrentPlan || isPlanLoading || isAuthLoading || isSubLoading || loadingPriceId !== null;
-
+            const price = isYearly
+              ? plan.name === 'Pro'
+                ? '$420'
+                : plan.name === 'Premium'
+                ? '$960'
+                : plan.price
+              : plan.price;
+            const buyButtonId = isYearly ? plan.buyButtonIdYearly : plan.buyButtonIdMonthly;
             return (
               <div
-                key={plan.name + billingInterval}
+                key={plan.name}
                 className={cn(
-                  'relative transform transition-all duration-300 hover:scale-[1.015]',
-                  plan.is_popular ? 'shadow-cyan-900/20 shadow-lg' : 'shadow-md shadow-navy-900/10'
+                  'relative transform transition-all duration-300 hover:scale-[1.015] flex',
+                  plan.popular ? 'shadow-cyan-900/20 shadow-lg' : 'shadow-md shadow-navy-900/10'
                 )}
               >
-                {plan.is_popular && (
+                {plan.popular && (
                   <div className="absolute -top-3 left-1/2 -translate-x-1/2 transform z-10">
                     <span className="inline-flex items-center rounded-full bg-gradient-to-r from-teal-500 to-cyan-600 px-3 py-0.5 text-xs font-semibold text-white shadow-sm">
                       Most Popular
                     </span>
                   </div>
                 )}
-                {billingInterval === 'yearly' && intervalDetails?.savePercent && (
-                  <div
-                    className={cn(
-                      'absolute z-10 px-2.5 py-0.5 rounded-full text-xs font-semibold text-white',
-                      plan.is_popular ? '-top-7 right-2' : '-top-3 right-2',
-                      'bg-gradient-to-r from-emerald-500 to-green-600'
-                    )}
-                  >
-                    Save {intervalDetails.savePercent}%
-                  </div>
-                )}
-
                 <div
                   className={cn(
-                    'flex flex-col h-full rounded-xl border p-6 backdrop-blur-sm',
-                    plan.is_popular ? 'bg-navy-700/50 border-cyan-700/50' : 'bg-navy-800/60 border-navy-700/50'
+                    'relative flex flex-col h-full rounded-xl border p-6 w-full',
+                    plan.popular ? 'bg-navy-700/50 border-cyan-700/50' : 'bg-navy-800/60 border-navy-700/50',
+                    'backdrop-blur-sm'
                   )}
                 >
                   <div className="flex items-center gap-3 mb-4">
-                    {Icon ? (
-                      <Icon className={cn('h-7 w-7', plan.color === 'accent-yellow' ? 'text-accent-yellow' : 'text-accent-teal')} />
-                    ) : null}
-                    <Typography variant="h3" className="text-lg font-semibold text-white">
+                    {Icon && (
+                      <Icon
+                        className={cn(
+                          'h-7 w-7',
+                          plan.color === 'accent-yellow' ? 'text-accent-yellow' : 'text-accent-teal'
+                        )}
+                      />
+                    )}
+                    <h3 className={cn('text-lg font-semibold', plan.popular ? 'text-cyan-300' : 'text-white')}>
                       {plan.name}
-                    </Typography>
+                    </h3>
                   </div>
                   <div className="mt-2 flex items-baseline gap-x-1">
-                    <span className="text-3xl font-bold text-white">{currentPrice}</span>
-                    {currentSuffix && <span className="text-sm font-semibold text-gray-400">{currentSuffix}</span>}
+                    <span className="text-3xl font-bold tracking-tight text-white">{price}</span>
+                    {plan.period && (
+                      <span className="text-sm font-semibold leading-6 text-gray-400">
+                        {isYearly ? '/year' : plan.period}
+                      </span>
+                    )}
                   </div>
-                  <Typography variant="body" className="mt-4 text-sm text-gray-300">
-                    {plan.description}
-                  </Typography>
-                  <ul role="list" className="mt-6 space-y-3 text-sm text-gray-200 flex-grow">
+                  <p className="mt-4 text-sm leading-6 text-gray-300">{plan.description}</p>
+                  <ul role="list" className="mt-6 space-y-3 text-sm leading-6 text-gray-200 flex-grow">
                     {plan.features.map((feature) => (
                       <li key={feature} className="flex gap-x-3">
                         {feature.startsWith('All ') ? (
@@ -361,41 +251,40 @@ export function SubscribePage() {
                         ) : (
                           <Check className="h-6 w-5 flex-none text-teal-400" aria-hidden="true" />
                         )}
-                        <span className={cn(feature.startsWith('All ') ? 'font-medium text-gray-400 -ml-5' : '')}>{feature}</span>
+                        <span className={cn(feature.startsWith('All ') ? 'font-medium text-gray-400 -ml-5' : '')}>
+                          {feature}
+                        </span>
                       </li>
                     ))}
                   </ul>
-                  <Button
-                    disabled={isDisabled}
-                    size="lg"
-                    variant={isCurrentPlan || isFree ? 'secondary' : plan.is_popular ? 'primary' : 'outline'}
-                    onClick={() => handleSubscribe(currentPriceId, plan.name)}
-                    className={cn(
-                      'mt-8 w-full font-semibold flex items-center justify-center',
-                      isCurrentPlan && 'bg-gray-600/50 border-gray-500 text-gray-300 cursor-default',
-                      !isCurrentPlan && !isFree && plan.is_popular && 'bg-gradient-to-r from-teal-500 to-cyan-600 text-white',
-                      !isCurrentPlan && !isFree && !plan.is_popular && 'border-cyan-700/50 text-cyan-300',
-                      isDisabled && !isPlanLoading && 'opacity-60 cursor-not-allowed',
-                      isPlanLoading && 'opacity-75 cursor-wait'
-                    )}
-                    aria-label={buttonText}
-                  >
-                    {isPlanLoading ? (
-                      <>
-                        <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                        Processing...
-                      </>
-                    ) : (
-                      <>
-                        {!session && !user && !isFree && <Lock className="h-4 w-4 mr-2" />}
-                        {buttonText}
-                      </>
-                    )}
-                  </Button>
-                  {!session && !user && !isFree && (
-                    <Typography variant="caption" className="mt-2 text-center text-gray-400 text-xs">
-                      Sign up or log in to subscribe
-                    </Typography>
+                  {plan.name !== 'Free' && buyButtonId ? (
+                    <div className="mt-8">
+                      {!session && !isAuthLoading ? (
+                        <Button
+                          onClick={() => handleAuthRedirect(plan.name, isYearly)}
+                          className="w-full mb-2 bg-gradient-to-r from-teal-500 to-cyan-600 hover:from-teal-600 hover:to-cyan-700 text-white"
+                        >
+                          Sign Up to Subscribe
+                        </Button>
+                      ) : null}
+                      <stripe-buy-button
+                        buy-button-id={buyButtonId}
+                        publishable-key={stripePublishableKey}
+                        disabled={isButtonDisabled(plan)}
+                      ></stripe-buy-button>
+                    </div>
+                  ) : (
+                    <Button
+                      disabled={isButtonDisabled(plan)}
+                      size="lg"
+                      variant={isButtonDisabled(plan) ? 'secondary' : 'outline'}
+                      className={cn(
+                        'mt-8 w-full font-semibold',
+                        isButtonDisabled(plan) && 'opacity-60 cursor-not-allowed'
+                      )}
+                    >
+                      {plan.buttonText}
+                    </Button>
                   )}
                 </div>
               </div>
