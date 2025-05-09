@@ -3,26 +3,18 @@ import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/auth-context';
 import { useSubscription } from '../../contexts/subscription-context';
-import { CurrencySelector } from '../../components/currency-selector'; // Verify this path
-import { Button } from './button';
-import { LogIn, LogOut, Loader2, ShieldCheck, Star, Gem, UserCircle, Settings, FileText, HelpCircle, Crown } from 'lucide-react'; // Gem was used for Premium badge, Crown for Upgrade item
-// REMOVED: import { MapleLeaf } from './MapleLeaf';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "./dropdown-menu";
+import { CurrencySelector } from '../../components/currency-selector'; // Verify this path is correct
+import { Button } from './button'; // Assuming this exists in the same folder
+import { LogIn, LogOut, Loader2, ShieldCheck, Star, Gem, UserCircle } from 'lucide-react'; // Gem for premium badge
 import type { SubscriptionTier } from '../../lib/types';
 
+// TierBadge component (kept as it was used in your older version and is self-contained here)
 const TierBadge: React.FC<{ tier: SubscriptionTier; isLoading?: boolean }> = ({ tier, isLoading }) => {
   if (isLoading) {
     return (
       <span className="inline-flex items-center rounded-md border border-gray-600 bg-gray-700/50 px-2 py-0.5 text-xs font-medium text-gray-400">
         <Loader2 className="mr-1 h-3 w-3 animate-spin" />
-        Loading Tier...
+        Tier
       </span>
     );
   }
@@ -32,7 +24,7 @@ const TierBadge: React.FC<{ tier: SubscriptionTier; isLoading?: boolean }> = ({ 
       case 'free': return 'Free';
       case 'pro': return 'Pro';
       case 'premium': return 'Premium';
-      default: return 'Unknown';
+      default: return 'User'; // Fallback
     }
   };
 
@@ -44,7 +36,7 @@ const TierBadge: React.FC<{ tier: SubscriptionTier; isLoading?: boolean }> = ({ 
     IconComponent = Star;
     colorClasses = "bg-teal-500/10 text-teal-300 border-teal-700/50";
   } else if (tier === 'premium') {
-    IconComponent = Gem; // Using Gem for Premium badge consistency
+    IconComponent = Gem; // Using Gem for Premium badge
     colorClasses = "bg-yellow-500/10 text-yellow-300 border-yellow-700/50";
   }
 
@@ -55,7 +47,6 @@ const TierBadge: React.FC<{ tier: SubscriptionTier; isLoading?: boolean }> = ({ 
     </span>
   );
 };
-
 
 export function Header() {
   const { user, signOut, isLoading: isAuthLoading } = useAuth();
@@ -69,8 +60,9 @@ export function Header() {
     setIsLoggingOut(false);
     if (error) {
       console.error("Logout failed:", error.message);
+      // You might want to show a toast notification to the user here
     } else {
-      navigate('/');
+      navigate('/'); // Redirect to homepage or login page after logout
     }
   };
 
@@ -79,14 +71,15 @@ export function Header() {
   return (
     <header className="sticky top-0 z-40 w-full border-b border-navy-300/20 bg-navy-500/95 backdrop-blur supports-[backdrop-filter]:bg-navy-500/60">
       <div className="container flex h-16 items-center justify-between mx-auto px-4 sm:px-6 lg:px-8 max-w-screen-2xl">
+        {/* Logo Section */}
         <div className="mr-4 flex">
           <Link className="mr-6 flex items-center gap-2" to="/">
-            {/* FIXED: Using img tag for your logo */}
             <img src="/new-logo.png" alt="Maple Aurum Logo" className="h-8 w-8 object-contain" />
             <span className="font-bold text-xl text-surface-white hidden sm:inline-block">MapleAurum</span>
           </Link>
         </div>
 
+        {/* Navigation Links */}
         <nav className="hidden md:flex items-center space-x-4 lg:space-x-6">
           <Link to="/companies" className="text-sm font-medium text-gray-300 hover:text-white transition-colors">Companies</Link>
           <Link to="/screener" className="text-sm font-medium text-gray-300 hover:text-white transition-colors">Screener</Link>
@@ -95,66 +88,49 @@ export function Header() {
           )}
         </nav>
 
+        {/* Right Side Items */}
         <div className="flex items-center gap-3 md:gap-4">
-          <CurrencySelector />
+          <CurrencySelector /> {/* Assuming this component path is correct and it exists */}
 
-          <div className="flex items-center">
+          {/* Auth Section - Simplified */}
+          <div className="flex items-center gap-2 sm:gap-3">
             {isAuthLoading ? (
               <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
             ) : user ? (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="relative h-9 w-9 rounded-full hover:bg-navy-400/50 p-0">
-                    <UserCircle className="h-7 w-7 text-gray-300 hover:text-white" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent className="w-60 bg-navy-600 border-navy-500 text-gray-200 shadow-xl" align="end" forceMount>
-                  <DropdownMenuLabel className="font-normal pb-1">
-                    <div className="flex flex-col space-y-1 p-1">
-                      <p className="text-sm font-medium leading-none text-white truncate">
-                        {user.user_metadata?.full_name || user.email?.split('@')[0] || 'Account'}
-                      </p>
-                      <p className="text-xs leading-none text-gray-400 truncate">
-                        {user.email}
-                      </p>
-                    </div>
-                  </DropdownMenuLabel>
-                  <DropdownMenuSeparator className="bg-navy-500/50 my-1" />
-                  <div className="px-2 py-1.5">
+              <>
+                {!isSubLoading && (
+                  <Link to="/account/billing" title="View Account & Billing">
                     <TierBadge tier={currentEffectiveTier} isLoading={isSubLoading} />
-                  </div>
-                  <DropdownMenuSeparator className="bg-navy-500/50 my-1" />
-                  <DropdownMenuItem onClick={() => navigate('/account/profile')} className="hover:bg-navy-500 focus:bg-navy-500 cursor-pointer text-sm py-2">
-                    <UserCircle className="mr-2 h-4 w-4 opacity-80" />
-                    <span>Profile</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => navigate('/account/billing')} className="hover:bg-navy-500 focus:bg-navy-500 cursor-pointer text-sm py-2">
-                      <FileText className="mr-2 h-4 w-4 opacity-80" />
-                      <span>Billing & Subscription</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => navigate('/account/settings')} className="hover:bg-navy-500 focus:bg-navy-500 cursor-pointer text-sm py-2">
-                    <Settings className="mr-2 h-4 w-4 opacity-80" />
-                    <span>Settings</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator className="bg-navy-500/50 my-1" />
-                  <DropdownMenuItem onClick={() => navigate('/subscribe')} className="hover:bg-navy-500 focus:bg-navy-500 cursor-pointer text-sm py-2">
-                      <Crown className="mr-2 h-4 w-4 opacity-80 text-yellow-400" />
-                      <span>View Plans / Upgrade</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => navigate('/help-center')} className="hover:bg-navy-500 focus:bg-navy-500 cursor-pointer text-sm py-2">
-                      <HelpCircle className="mr-2 h-4 w-4 opacity-80" />
-                      <span>Help Center</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator className="bg-navy-500/50 my-1" />
-                  <DropdownMenuItem onClick={handleLogout} disabled={isLoggingOut} className="hover:bg-red-700/80 focus:bg-red-700/80 text-red-300 focus:text-white cursor-pointer text-sm py-2">
-                    <LogOut className="mr-2 h-4 w-4" />
-                    <span>{isLoggingOut ? 'Logging out...' : 'Log out'}</span>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+                  </Link>
+                )}
+                {isSubLoading && !isAuthLoading && ( // Show a placeholder if sub is loading but auth is done
+                    <span className="inline-flex items-center rounded-md border border-gray-600 bg-gray-700/50 px-2 py-0.5 text-xs font-medium text-gray-400">
+                        <Loader2 className="mr-1 h-3 w-3 animate-spin" /> User
+                    </span>
+                )}
+
+                {/* User Profile Icon/Link (Simple version) */}
+                <Link to="/account/profile" className="flex items-center gap-2 text-sm text-gray-300 hover:text-white" title={user.email || "User Account"}>
+                    <UserCircle className="h-6 w-6" />
+                    <span className="hidden sm:inline">
+                        {user.user_metadata?.full_name?.split(' ')[0] || user.email?.split('@')[0]}
+                    </span>
+                </Link>
+                
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleLogout}
+                  disabled={isLoggingOut}
+                  className="border-navy-400 hover:bg-navy-600/50 hover:border-navy-300/50 text-gray-300 hover:text-white"
+                >
+                  {isLoggingOut ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> : <LogOut className="mr-1.5 h-4 w-4" />}
+                  <span className="hidden sm:inline">Logout</span>
+                </Button>
+              </>
             ) : (
               <Button
-                onClick={() => navigate('/auth')}
+                onClick={() => navigate('/auth')} // Navigate to your combined login/signup page
                 variant="outline"
                 size="sm"
                 className="border-cyan-700/50 text-cyan-300 hover:bg-cyan-900/20 hover:border-cyan-600 hover:text-cyan-200"
