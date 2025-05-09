@@ -4,6 +4,7 @@ import type { ClassValue } from 'clsx';
 // --- Base Types ---
 export type Theme = 'default' | 'ocean' | 'sunset';
 export type ColumnTier = 'free' | 'medium' | 'premium';
+export type SubscriptionTier = 'free' | 'medium' | 'premium';
 export type Currency = 'USD' | 'CAD' | 'AUD' | 'EUR' | 'GBP';
 export type CompanyStatus = 'Producer' | 'Developer' | 'Explorer' | 'Royalty' | 'Other';
 
