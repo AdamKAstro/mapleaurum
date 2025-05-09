@@ -57,7 +57,7 @@
     "typescript": "^5.5.3",
     "typescript-eslint": "^8.3.0",
     "vite": "^5.4.2",
-    "vite-plugin-preload": "^0.2.2"
+    "vite-plugin-preload": "^0.4.2"
   },
   "engines": {
     "node": ">=18.0.0"
