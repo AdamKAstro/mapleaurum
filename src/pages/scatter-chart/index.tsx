@@ -17,14 +17,14 @@ import { useCurrency } from '../../contexts/currency-context';
 import { cn, getNestedValue, isValidNumber } from '../../lib/utils';
 import { getMetricByKey, getAccessibleMetrics, MetricConfig } from '../../lib/metric-types'; // Assuming this path is correct
 import { normalizeValues, formatValueWrapper } from './chartUtils'; // Removed exportChartCode, downloadJson if not used directly on this page for now
-import type { Company, ColumnTier, Currency } from '../../lib/types'; // Removed MetricFormat as it's used in chartUtils
+import type { Company, ColumnTier, Currency } from '../../lib/types'; 
 
 // UI Components
 import { Button } from '../../components/ui/button';
-import { MetricSelector } from '../../components/metric-selector'; // Assuming this path is correct
+import { MetricSelector } from '../../components/metric-selector'; 
 import { LoadingIndicator } from '../../components/ui/loading-indicator';
 import { PageContainer } from '../../components/ui/page-container';
-import { FeatureAccess } from '../../components/ui/feature-access'; // Assuming this path is correct
+import { FeatureAccess } from '../../components/ui/feature-access'; 
 
 // Register Chart.js plugins
 ChartJS.register( LinearScale, LogarithmicScale, PointElement, Tooltip, Legend, zoomPlugin, gradient, ChartDataLabels );
@@ -53,11 +53,11 @@ export function ScatterChartPage() {
     const [isChartDataLoading, setIsChartDataLoading] = useState<boolean>(false);
 
     const [xMetric, setXMetric] = useState('financials.market_cap_value');
-    const [yMetric, setYMetric] = useState('financials.market_cap_value'); // Default Y, consider a different default
-    const [zMetric, setZMetric] = useState('financials.market_cap_value'); // Default Z, consider a different default
+    const [yMetric, setYMetric] = useState('financials.market_cap_value');
+    const [zMetric, setZMetric] = useState('financials.market_cap_value');
     const [xScale, setXScale] = useState<'linear' | 'log'>('log');
     const [yScale, setYScale] = useState<'linear' | 'log'>('log');
-    const [zScale, setZScale] = useState<'linear' | 'log'>('linear'); // Usually linear for bubble size
+    const [zScale, setZScale] = useState<'linear' | 'log'>('linear');
 
     const chartRef = useRef<ChartJS<'scatter', (number | ScatterDataPoint | null)[], unknown> | null>(null);
     const containerRef = useRef<HTMLDivElement>(null);
@@ -92,22 +92,21 @@ export function ScatterChartPage() {
             }
         };
         fetchDataForChart();
-        return () => { isMounted = false; console.log("[ScatterChart] Cleanup fetch data effect."); };
-    }, [filteredCompanyIds, loadingFilteredSet, fetchCompaniesByIds]); // chartCompanyData removed from dep array to avoid loop
+        return () => { isMounted = false; }; // Simplified cleanup log
+    }, [filteredCompanyIds, loadingFilteredSet, fetchCompaniesByIds]);
 
     const accessibleMetrics = useMemo(() => getAccessibleMetrics(currentUserTier), [currentUserTier]);
     const xMetricConfig = useMemo(() => getMetricByKey(xMetric), [xMetric]);
     const yMetricConfig = useMemo(() => getMetricByKey(yMetric), [yMetric]);
     const zMetricConfig = useMemo(() => getMetricByKey(zMetric), [zMetric]);
 
-    // **** ADDED DIAGNOSTIC LOG ****
+    // Diagnostic Log (keep this to monitor tier and metric states)
     useEffect(() => {
         console.log("[ScatterChart DEBUG] Tier or Metric Change Detected:");
         console.log("  currentUserTier:", currentUserTier);
-        console.log("  xMetric:", xMetric, "Config Tier:", xMetricConfig?.tier, "Accessible:", xMetricConfig ? getAccessibleMetrics(currentUserTier).some(m => m.key === xMetricConfig.key) : 'N/A');
-        console.log("  yMetric:", yMetric, "Config Tier:", yMetricConfig?.tier, "Accessible:", yMetricConfig ? getAccessibleMetrics(currentUserTier).some(m => m.key === yMetricConfig.key) : 'N/A');
-        console.log("  zMetric:", zMetric, "Config Tier:", zMetricConfig?.tier, "Accessible:", zMetricConfig ? getAccessibleMetrics(currentUserTier).some(m => m.key === zMetricConfig.key) : 'N/A');
-        console.log("  Accessible Metrics for current tier:", accessibleMetrics.map(m => ({key: m.key, tier: m.tier})));
+        console.log("  xMetric:", xMetric, "Config Tier:", xMetricConfig?.tier, "Accessible via getAccessibleMetrics:", xMetricConfig ? accessibleMetrics.some(m => m.key === xMetricConfig.key) : 'N/A');
+        console.log("  yMetric:", yMetric, "Config Tier:", yMetricConfig?.tier, "Accessible via getAccessibleMetrics:", yMetricConfig ? accessibleMetrics.some(m => m.key === yMetricConfig.key) : 'N/A');
+        console.log("  zMetric:", zMetric, "Config Tier:", zMetricConfig?.tier, "Accessible via getAccessibleMetrics:", zMetricConfig ? accessibleMetrics.some(m => m.key === zMetricConfig.key) : 'N/A');
     }, [currentUserTier, xMetric, yMetric, zMetric, xMetricConfig, yMetricConfig, zMetricConfig, accessibleMetrics]);
 
 
@@ -134,10 +133,10 @@ export function ScatterChartPage() {
                 isValidNumber(p.x) && isValidNumber(p.y) && isValidNumber(p.z) &&
                 (xScale !== 'log' || (typeof p.x === 'number' && p.x > 0)) &&
                 (yScale !== 'log' || (typeof p.y === 'number' && p.y > 0)) &&
-                (zScale !== 'log' || (typeof p.z === 'number' && p.z > 0)) // zScale also checked for log positivity
+                (zScale !== 'log' || (typeof p.z === 'number' && p.z > 0))
             );
 
-        if (points.length === 0) return [];
+        if (points.length === 0) { console.log("[ScatterChart] No valid points after filtering."); return []; }
         const zValues = points.map(p => p.z as number);
         const normalizedZ = normalizeValues(zValues, zScale);
 
@@ -219,16 +218,16 @@ export function ScatterChartPage() {
     const handleZoomOut = useCallback(() => { chartRef.current?.zoom(0.8); }, []);
     const handleResetZoom = useCallback(() => { chartRef.current?.resetZoom(); }, []);
 
-    const pageActions = (<></>); // Placeholder for future actions if any
+    const pageActions = (<></>);
     const isLoading = loadingFilteredSet || isChartDataLoading;
-    const descriptionText = isLoading ? "Loading chart data..." : contextError ? "Error loading chart data" : `Comparing ${totalCount ?? 0} companies based on filters`;
+    const descriptionText = isLoading ? "Loading chart data..." : contextError ? "Error loading chart data" : `Comparing ${totalCount - excludedCompanyIds.size ?? 0} companies based on filters`; // Corrected to use effective count
 
     const getChartMessage = () => {
         if (isLoading) return "Loading chart data...";
         if (contextError) return `Error: ${contextError}`;
         if (!filteredCompanyIds || filteredCompanyIds.length === 0) return "No companies match the current filters.";
-        if (!chartCompanyData.length && !isChartDataLoading) return "Could not load company details for the chart.";
-        if (chartDatasets.length === 0 && !isChartDataLoading) return "No valid data points for the selected metrics/scales. (Check exclusions or try linear scale)";
+        if (!isChartDataLoading && chartCompanyData.length === 0 && filteredCompanyIds.length > 0) return "Could not load company details for the chart.";
+        if (!isChartDataLoading && chartDatasets.length === 0 && chartCompanyData.length > 0) return "No valid data points for the selected metrics/scales. (Check exclusions or try linear scale)";
         return null;
     };
     const chartMessage = getChartMessage();
@@ -240,19 +239,19 @@ export function ScatterChartPage() {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-start bg-navy-400/10 p-4 rounded-lg flex-shrink-0">
                     <FeatureAccess requiredTier={xMetricConfig?.tier ?? 'free'} currentTier={currentUserTier}>
                         <div className="space-y-2">
-                            <MetricSelector label="X Axis" selectedMetric={xMetric} onMetricChange={setXMetric} metrics={accessibleMetrics} currentTier={currentUserTier}/>
+                            <MetricSelector label="X Axis" selectedMetric={xMetric} onMetricChange={setXMetric} /* metrics={accessibleMetrics} // Not needed if MetricSelector uses allMetricsFromTypes */ currentTier={currentUserTier}/>
                             <ScaleToggle scale={xScale} onChange={setXScale} label="X Scale"/>
                         </div>
                     </FeatureAccess>
                     <FeatureAccess requiredTier={yMetricConfig?.tier ?? 'free'} currentTier={currentUserTier}>
                         <div className="space-y-2">
-                            <MetricSelector label="Y Axis" selectedMetric={yMetric} onMetricChange={setYMetric} metrics={accessibleMetrics} currentTier={currentUserTier}/>
+                            <MetricSelector label="Y Axis" selectedMetric={yMetric} onMetricChange={setYMetric} /* metrics={accessibleMetrics} */ currentTier={currentUserTier}/>
                             <ScaleToggle scale={yScale} onChange={setYScale} label="Y Scale"/>
                         </div>
                     </FeatureAccess>
                     <FeatureAccess requiredTier={zMetricConfig?.tier ?? 'free'} currentTier={currentUserTier}>
                         <div className="space-y-2">
-                            <MetricSelector label="Bubble Size" selectedMetric={zMetric} onMetricChange={setZMetric} metrics={accessibleMetrics} currentTier={currentUserTier}/>
+                            <MetricSelector label="Bubble Size" selectedMetric={zMetric} onMetricChange={setZMetric} /* metrics={accessibleMetrics} */ currentTier={currentUserTier}/>
                             <ScaleToggle scale={zScale} onChange={setZScale} label="Size Scale"/>
                         </div>
                     </FeatureAccess>
