@@ -14,7 +14,7 @@ import { SubscriptionTier } from '../../lib/types';
 import { supabase } from '../../lib/supabaseClient';
 
 const FRONTEND_URL = import.meta.env.VITE_FRONTEND_URL || 'http://localhost:3000';
-const STRIPE_PUBLISHABLE_KEY = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY; // Ensure this is set
+const STRIPE_PUBLISHABLE_KEY = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY;
 
 interface PlanDisplayData {
   name: string;
@@ -38,7 +38,7 @@ const plansData: PlanDisplayData[] = [
   {
     name: 'Free',
     priceMonthlyDisplay: '$0', priceYearlyDisplay: '$0', periodMonthly: '', periodYearly: '',
-    description: 'Basic access to company data. Sign up to get started.', // Updated description
+    description: 'Basic access to company data. All users start here.', // Updated description
     features: ['Basic company information', 'Limited financial metrics', 'Public company profiles', 'Daily updates'],
     icon: null, color: 'gray', popular: false, tier: 'free',
     priceIdMonthly: '', priceIdYearly: '', buyButtonIdMonthly: '', buyButtonIdYearly: '',
@@ -92,7 +92,7 @@ export function SubscribePage() {
       navigate('/auth?signup=true');
       return;
     }
-    if (plan.tier === 'free') return; // Should not happen if button is disabled
+    if (plan.tier === 'free') return;
 
     const priceIdToUse = isYearly ? plan.priceIdYearly : plan.priceIdMonthly;
     if (!priceIdToUse) {
@@ -131,14 +131,11 @@ export function SubscribePage() {
       console.error('[SubscribePage] Error during handlePaymentForLoggedInUser:', error.message, error);
       alert(`An error occurred: ${error.message}. Please try again or contact support.`);
     } finally {
-      setIsProcessing(null); // Reset processing state
+      setIsProcessing(null);
     }
   };
 
   const isLoadingOverall = isAuthLoading || isSubscriptionLoading;
-
-  console.log(`[SubscribePage] Rendering. AuthLoading: ${isAuthLoading}, SubLoading: ${isSubscriptionLoading}, CurrentUserTier: ${currentUserSubscriptionTier}`);
-
 
   return (
     <PageContainer
@@ -173,57 +170,54 @@ export function SubscribePage() {
             
             const uniqueProcessingKey = plan.name + (isYearly ? 'Yearly' : 'Monthly');
             const isButtonProcessing = isProcessing === uniqueProcessingKey;
-            const isCurrentPlanActive = currentUserSubscriptionTier === plan.tier;
+            // Use currentUserSubscriptionTier from context, ensure it's 'free' if no subscription
+            const actualUserTier = currentUserSubscriptionTier || 'free';
+            const isCurrentPlanActive = actualUserTier === plan.tier;
 
             let buttonText: string;
-            let isButtonDisabled: boolean = isLoadingOverall || isButtonProcessing; // Base disabled state
+            let isButtonDisabled: boolean = isLoadingOverall || isButtonProcessing;
             let actionHandler: (() => void) | null = null;
             let showStripeBuyButtonForGuest = false;
+            let isStaticButton = false; // Flag for non-interactive buttons
 
             if (plan.tier === 'free') {
+              isStaticButton = true; // Free plan button is always static
+              isButtonDisabled = true; // Always disabled
+              actionHandler = null;    // No action
               if (session) { // Logged in user
-                if (isCurrentPlanActive) {
+                if (actualUserTier === 'free') {
                   buttonText = 'Current Plan';
-                  isButtonDisabled = true;
                 } else { // Logged in, but on a paid plan
-                  buttonText = 'N/A (On Paid Plan)';
-                  isButtonDisabled = true;
+                  buttonText = 'N/A (Access Included)';
                 }
               } else { // Guest user
-                buttonText = 'Get Started'; // Changed text
-                isButtonDisabled = isLoadingOverall; // Only disable if app is generally loading
-                actionHandler = () => {
-                  console.log("[SubscribePage] Guest navigating to signup.");
-                  navigate('/auth?signup=true'); // Generic signup, free is default
-                };
+                buttonText = 'Free Access'; // Informational for guests
               }
             } else { // Paid plans ('pro', 'premium')
               if (session && user) { // Logged-in user
                 if (isCurrentPlanActive) {
                   buttonText = 'Current Plan';
                   isButtonDisabled = true;
-                } else if (currentUserSubscriptionTier === 'free' ||
-                           (currentUserSubscriptionTier === 'pro' && plan.tier === 'premium')) {
-                  buttonText = currentUserSubscriptionTier === 'free' ? `Get ${plan.name}` : `Upgrade to ${plan.name}`;
-                  if (!isButtonProcessing) isButtonDisabled = isLoadingOverall; // Don't override processing disable
+                } else if (actualUserTier === 'free' ||
+                           (actualUserTier === 'pro' && plan.tier === 'premium')) {
+                  buttonText = actualUserTier === 'free' ? `Get ${plan.name}` : `Upgrade to ${plan.name}`;
+                  if (!isButtonProcessing) isButtonDisabled = isLoadingOverall;
                   actionHandler = () => handlePaymentForLoggedInUser(plan);
-                  console.log(`[SubscribePage] Button state for ${plan.name}: Text='${buttonText}', Action: Prepare Stripe, Disabled=${isButtonDisabled}, CurrentTier=${currentUserSubscriptionTier}`);
-                } else { // Downgrade or other (e.g. Premium looking at Pro)
+                } else { 
                   buttonText = 'Manage Subscription';
-                  isButtonDisabled = true; // For now, disable downgrade buttons, direct to portal if exists
-                  // actionHandler = () => navigateToCustomerPortal();
-                  console.log(`[SubscribePage] Button state for ${plan.name}: Text='${buttonText}', Action: None/Portal, Disabled=${isButtonDisabled} (Manage/Downgrade), CurrentTier=${currentUserSubscriptionTier}`);
+                  isButtonDisabled = true;
                 }
               } else { // Guest user for paid plans
-                buttonText = `Choose ${plan.name}`; // This text might not show if Stripe buy button renders
+                buttonText = `Choose ${plan.name}`;
                 showStripeBuyButtonForGuest = true;
-                console.log(`[SubscribePage] Button state for ${plan.name}: Guest user, showing Stripe Buy Button.`);
+                // For guests, Stripe button handles its own loading/disabled state mostly
+                isButtonDisabled = isLoadingOverall || !!isProcessing; // Still respect overall loading
               }
             }
             
-            if (isButtonProcessing) {
+            if (isButtonProcessing && !isStaticButton) { // Processing text only for non-static buttons
               buttonText = 'Processing...';
-              isButtonDisabled = true; // Ensure button is disabled while processing
+              isButtonDisabled = true;
             }
 
             return (
@@ -254,29 +248,21 @@ export function SubscribePage() {
                         publishable-key={STRIPE_PUBLISHABLE_KEY}
                       >
                       </stripe-buy-button>
-                    ) : (actionHandler || (plan.tier === 'free' && !session && !isButtonDisabled)) ? ( // Show custom button if there's an action or it's the free plan button for guests (and not disabled by loading)
+                    ) : (
                       <Button
-                        onClick={actionHandler || undefined}
+                        onClick={isStaticButton ? undefined : actionHandler || undefined}
                         disabled={isButtonDisabled}
                         size="lg"
-                        variant={isCurrentPlanActive || (isButtonDisabled && plan.tier !== 'free' && !isButtonProcessing) ? 'secondary' : (plan.popular ? 'primary' : 'outline')}
+                        variant={isCurrentPlanActive || isStaticButton || (isButtonDisabled && !isButtonProcessing) ? 'secondary' : (plan.popular ? 'primary' : 'outline')}
                         className={cn(
                           'w-full font-semibold',
-                          isButtonDisabled && 'opacity-60 cursor-not-allowed',
-                          plan.popular && !isCurrentPlanActive && !isButtonDisabled && 'bg-gradient-to-r from-teal-500 to-cyan-600 hover:from-teal-600 hover:to-cyan-700 text-white'
+                          (isButtonDisabled || isStaticButton) && 'opacity-60 cursor-not-allowed',
+                           plan.popular && !isCurrentPlanActive && !isButtonDisabled && !isStaticButton && 'bg-gradient-to-r from-teal-500 to-cyan-600 hover:from-teal-600 hover:to-cyan-700 text-white'
                         )}
+                        // For static buttons, ensure no pointer events if truly non-interactive beyond styling
+                        style={isStaticButton ? { pointerEvents: 'none' } : {}}
                       >
-                        {isButtonProcessing && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                        {buttonText}
-                      </Button>
-                    ) : ( // Catch-all for other states, typically disabled buttons for logged-in users (Current Plan, Manage Sub)
-                      <Button
-                        disabled
-                        size="lg"
-                        variant="secondary"
-                        className="w-full font-semibold opacity-60 cursor-not-allowed"
-                      >
-                        {isButtonProcessing && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                        {isButtonProcessing && !isStaticButton && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                         {buttonText}
                       </Button>
                     )}
