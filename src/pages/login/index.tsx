@@ -1,137 +1,206 @@
 // src/pages/login/index.tsx
-import React, { useState, FormEvent, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
-import { useAuth } from '../../contexts/auth-context';
+import React, { useState, useEffect, FormEvent } from 'react';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
+import { supabase } from '../../lib/supabaseClient';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '../../components/ui/card';
 import { Typography } from '../../components/ui/typography';
 import { Alert, AlertDescription, AlertTitle } from '../../components/ui/alert';
-import { AlertCircle, LogIn } from 'lucide-react';
+import { Mail, Lock, Loader2, UserPlus, LogIn as LogInIcon, AlertCircle, CheckCircle } from 'lucide-react'; // Renamed LogIn to LogInIcon
 
 export function LoginPage() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
-    const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    const { signIn, session, isLoading: isAuthLoading } = useAuth();
+    const [message, setMessage] = useState<string | null>(null);
+    const [loading, setLoading] = useState(false);
+    const [isSignupMode, setIsSignupMode] = useState(false); // Default to Login mode
+
     const navigate = useNavigate();
+    const location = useLocation();
 
-    // Redirect if user is already logged in
     useEffect(() => {
-        if (session) {
-            navigate('/companies'); // Or '/' or a dashboard page
-        }
-    }, [session, navigate]);
+        const searchParams = new URLSearchParams(location.search);
+        const actionParam = searchParams.get('action');
+        const emailParam = searchParams.get('email');
+        const messageParam = searchParams.get('message');
+        const planParam = searchParams.get('plan_name'); // From onboarding after Stripe
 
-    const handleLogin = async (e: FormEvent<HTMLFormElement>) => {
+        setIsSignupMode(actionParam === 'signup');
+
+        if (emailParam) {
+            setEmail(decodeURIComponent(emailParam));
+        }
+        if (messageParam === 'confirm_email') {
+            setMessage("Thank you for confirming your email! Please log in to continue.");
+            setIsSignupMode(false); // Switch to login view
+        }
+        if (messageParam === 'password_reset_success') {
+            setMessage("Password successfully reset. Please log in with your new password.");
+            setIsSignupMode(false); // Switch to login view
+        }
+        if (planParam && actionParam === 'signup') {
+            // Could add a message like "Sign up to access your new {planParam} plan!"
+            // For now, pre-filling email is the main action.
+        }
+
+    }, [location.search]);
+
+    const pageTitle = isSignupMode ? 'Create Your MapleAurum Account' : 'Welcome Back to MapleAurum';
+    const pageDescription = isSignupMode 
+        ? 'Join to access financial data and analytics for Canadian precious metals companies.' 
+        : 'Log in to continue your journey with us.';
+
+    const handleSubmit = async (e: FormEvent) => {
         e.preventDefault();
-        setLoading(true);
         setError(null);
+        setMessage(null);
+        setLoading(true);
 
-        const { error: signInError } = await signIn({ email, password });
-
-        if (signInError) {
-            setError(signInError.message || 'An unknown error occurred during sign in.');
-        } else {
-            navigate('/companies'); // Navigate to a relevant page after login
+        const fromState = (location.state as { from?: {pathname: string, search: string} })?.from;
+        let redirectToPath = fromState?.pathname ? (fromState.pathname + (fromState.search || '')) : '/companies';
+        
+        // If coming from onboarding after payment and now signing up, redirect to companies after signup
+        const searchParams = new URLSearchParams(location.search);
+        if (searchParams.get('plan_name') && isSignupMode) {
+            redirectToPath = '/companies';
         }
 
-        setLoading(false);
+
+        try {
+            if (isSignupMode) {
+                const { data, error: signUpError } = await supabase.auth.signUp({
+                    email,
+                    password,
+                    options: {
+                        emailRedirectTo: `${window.location.origin}/login?message=confirm_email`,
+                    },
+                });
+                if (signUpError) throw signUpError;
+                if (data.user && !data.user.email_confirmed_at) {
+                    setMessage('Sign up successful! Please check your email to confirm your account. Once confirmed, you can log in.');
+                    setEmail(''); 
+                    setPassword('');
+                } else if (data.user && data.session) { 
+                    console.log('[LoginPage] User signed up and auto-confirmed:', data.user.id);
+                    navigate(redirectToPath); 
+                } else {
+                    setMessage('Sign up successful! Please check your email to confirm your account.');
+                }
+            } else { // Login mode
+                const { data, error: signInError } = await supabase.auth.signInWithPassword({
+                    email,
+                    password,
+                });
+                if (signInError) throw signInError;
+                if (data.user && data.session) {
+                    console.log('[LoginPage] User logged in successfully:', data.user.id);
+                    navigate(redirectToPath); 
+                } else {
+                     setError("Login failed. Please check your credentials.");
+                }
+            }
+        } catch (err: any) {
+            console.error('[LoginPage] Auth error:', err);
+            setError(err.message || `Failed to ${isSignupMode ? 'sign up' : 'log in'}. Please try again.`);
+        } finally {
+            setLoading(false);
+        }
     };
 
-    // Don't render the form if already logged in (during redirect phase) or auth is loading
-    if (isAuthLoading) { // Check isAuthLoading first
-        return (
-            <div className="flex items-center justify-center h-screen">
-                <Typography variant="h3" className="text-white">Loading...</Typography>
-            </div>
-        );
-    }
-    if (session) { // Then check session, to prevent flicker if session is already available
-         return (
-            <div className="flex items-center justify-center h-screen">
-                <Typography variant="h3" className="text-white">Redirecting...</Typography>
-            </div>
-        );
-    }
-
-
     return (
-        <div className="flex items-center justify-center min-h-screen bg-gradient-to-b from-navy-900 via-navy-800 to-navy-900 p-4">
-            {/* Optional: Add background image/noise like other pages if desired */}
-            {/* <div className="absolute inset-0 bg-cover bg-center bg-no-repeat bg-fixed -z-10 opacity-[0.03]" style={{ backgroundImage: "url('/Background2.jpg')" }} aria-hidden="true" /> */}
-            {/* <div className="absolute inset-0 bg-noise opacity-[0.07] -z-10" aria-hidden="true" /> */}
+        <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-b from-navy-900 via-navy-800 to-navy-900 p-4 text-white">
+            <div className="absolute inset-0 bg-cover bg-center opacity-[0.02] -z-10" style={{ backgroundImage: `url('/Background2.jpg')` }} aria-hidden="true" />
+            <div className="absolute inset-0 bg-noise opacity-[0.05] -z-10" aria-hidden="true" />
 
-            <Card className="w-full max-w-md bg-navy-700/60 border-navy-600/50 text-white backdrop-blur-sm shadow-xl">
-                <CardHeader className="text-center">
-                    <CardTitle className="text-2xl font-bold text-cyan-300">Welcome Back</CardTitle>
-                    <CardDescription className="text-gray-300">Sign in to access your Maple Aurum account.</CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <form onSubmit={handleLogin} className="space-y-4">
-                         {error && (
-                             <Alert variant="destructive">
-                                <AlertCircle className="h-4 w-4" />
-                                <AlertTitle>Login Failed</AlertTitle>
-                                <AlertDescription>{error}</AlertDescription>
-                            </Alert>
-                         )}
+            <div className="w-full max-w-md text-center mb-8">
+                <Typography variant="h1" className="text-3xl sm:text-4xl font-bold tracking-tight text-cyan-300">
+                    {pageTitle}
+                </Typography>
+                <Typography variant="body" className="mt-2 text-gray-300 text-base sm:text-lg">
+                    {pageDescription}
+                </Typography>
+            </div>
+
+            <div className="w-full max-w-md bg-navy-700/60 border border-navy-600/50 backdrop-blur-sm shadow-xl p-6 sm:p-8 rounded-lg">
+                {error && (
+                    <Alert variant="destructive" className="mb-6">
+                        <AlertCircle className="h-4 w-4" />
+                        <AlertTitle>Authentication Error</AlertTitle>
+                        <AlertDescription>{error}</AlertDescription>
+                    </Alert>
+                )}
+                {message && (
+                    <Alert variant={message.includes("check your email") ? "default" : "success"} className="mb-6 bg-opacity-80">
+                        {message.includes("check your email") ? <Mail className="h-4 w-4" /> : <CheckCircle className="h-4 w-4" />}
+                        <AlertTitle>{message.includes("check your email") ? "Confirmation Required" : (message.includes("Password successfully reset") ? "Success" : "Action Needed")}</AlertTitle>
+                        <AlertDescription>{message}</AlertDescription>
+                    </Alert>
+                )}
+
+                {!(message && message.includes('check your email') && !message.includes('Please log in')) && (
+                    <form onSubmit={handleSubmit} className="space-y-6">
                         <div className="space-y-1">
-                            <label htmlFor="email" className="text-sm font-medium text-gray-300">Email</label>
-                            <Input
-                                id="email"
-                                type="email"
-                                placeholder="you@example.com"
-                                value={email}
-                                onChange={(e) => setEmail(e.target.value)}
-                                required
-                                className="bg-navy-600/80 border-navy-500 placeholder-gray-400 focus:ring-cyan-500 focus:border-cyan-500"
-                                disabled={loading}
-                            />
+                            <label htmlFor="email-login" className="text-sm font-medium text-gray-300 sr-only">Email</label>
+                            <div className="relative">
+                                <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
+                                <Input
+                                    id="email-login" type="email" value={email}
+                                    onChange={(e) => setEmail(e.target.value)}
+                                    placeholder="you@example.com" required disabled={loading}
+                                    className="pl-10 bg-navy-600/80 border-navy-500 placeholder-gray-400 text-white focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
+                                />
+                            </div>
                         </div>
                         <div className="space-y-1">
-                             <label htmlFor="password" className="text-sm font-medium text-gray-300">Password</label>
-                            <Input
-                                id="password"
-                                type="password"
-                                placeholder="••••••••"
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                                required
-                                className="bg-navy-600/80 border-navy-500 placeholder-gray-400 focus:ring-cyan-500 focus:border-cyan-500"
-                                disabled={loading}
-                            />
+                            <label htmlFor="password-login" className="text-sm font-medium text-gray-300 sr-only">Password</label>
+                            <div className="relative">
+                                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
+                                <Input
+                                    id="password-login" type="password" value={password}
+                                    onChange={(e) => setPassword(e.target.value)}
+                                    placeholder="••••••••" required disabled={loading}
+                                    className="pl-10 bg-navy-600/80 border-navy-500 placeholder-gray-400 text-white focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
+                                />
+                            </div>
                         </div>
+                        
+                        {!isSignupMode && (
+                            <div className="text-right text-sm">
+                                <Link to="/forgot-password" className="font-medium text-cyan-400 hover:text-cyan-300 hover:underline">
+                                    Forgot password?
+                                </Link>
+                            </div>
+                        )}
+
                         <Button
-                            type="submit"
-                            className="w-full bg-gradient-to-r from-cyan-600 to-teal-600 hover:from-cyan-700 hover:to-teal-700 disabled:opacity-70"
-                            disabled={loading}
+                            type="submit" disabled={loading}
+                            className="w-full bg-gradient-to-r from-cyan-600 to-teal-600 hover:from-cyan-700 hover:to-teal-700 text-white py-2.5 flex items-center justify-center"
                         >
-                            {loading ? 'Signing In...' : (
-                                <>
-                                <LogIn className="mr-2 h-4 w-4" /> Sign In
-                                </>
-                            )}
+                            {loading && <Loader2 className="mr-2 h-5 w-5 animate-spin" />}
+                            {loading ? 'Processing...' : (isSignupMode ? 'Create Account' : 'Log In')}
                         </Button>
                     </form>
-                </CardContent>
-                 <CardFooter className="flex flex-col items-center text-sm text-gray-400 pt-4 space-y-2"> {/* Added space-y-2 for better spacing */}
-                     {/* Optional: Add Sign Up link */}
-                     {/* <p>
-                        Don't have an account?{' '}
-                        <Link to="/signup" className="font-medium text-cyan-400 hover:text-cyan-300">
-                            Sign Up
-                        </Link>
-                    </p> */}
-                    {/* --- UNCOMMENTED FORGOT PASSWORD LINK --- */}
-                    <p>
-                        <Link to="/forgot-password" className="font-medium text-cyan-400 hover:text-cyan-300 underline underline-offset-2">
-                            Forgot Password?
-                        </Link>
-                    </p>
-                </CardFooter>
-            </Card>
+                )}
+                
+                <div className="mt-6 text-center text-sm">
+                     {isSignupMode ? (
+                        <Typography variant="body" className="text-gray-400">
+                            Already have an account?{' '}
+                            <button onClick={() => {setIsSignupMode(false); setError(null); setMessage(null);}} className="font-medium text-cyan-400 hover:text-cyan-300 hover:underline">
+                                Log In
+                            </button>
+                        </Typography>
+                    ) : (
+                        <Typography variant="body" className="text-gray-400">
+                            Don't have an account?{' '}
+                            <Link to="/subscribe" className="font-medium text-cyan-400 hover:text-cyan-300 hover:underline">
+                                Choose a Plan & Sign Up
+                            </Link>
+                        </Typography>
+                    )}
+                </div>
+            </div>
         </div>
     );
 }
