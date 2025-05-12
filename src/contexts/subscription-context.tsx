@@ -1,89 +1,123 @@
 // src/contexts/subscription-context.tsx
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '../lib/supabaseClient';
-import type { SubscriptionTier } from '../lib/types'; // Should be 'free' | 'pro' | 'premium'
+import type { SubscriptionTier } from '../lib/types';
 import { useAuth } from './auth-context';
 
-// --- Stripe Price IDs (ensure these are correct and ideally from environment variables for production) ---
 const PRO_MONTHLY_PRICE_ID = import.meta.env.VITE_STRIPE_PRO_MONTHLY_PRICE_ID || 'price_1RMJ31Ast4LlpL7pauoVPwpm';
 const PRO_YEARLY_PRICE_ID = import.meta.env.VITE_STRIPE_PRO_YEARLY_PRICE_ID || 'price_1RMIBuAst4LlpL7pf1EFTmlk';
 const PREMIUM_MONTHLY_PRICE_ID = import.meta.env.VITE_STRIPE_PREMIUM_MONTHLY_PRICE_ID || 'price_1RMJ3pAst4LlpL7pXTO1bVli';
 const PREMIUM_YEARLY_PRICE_ID = import.meta.env.VITE_STRIPE_PREMIUM_YEARLY_PRICE_ID || 'price_1RMIDFAst4LlpL7p8UInqh9P';
-// --- End Price IDs ---
 
 interface SubscriptionContextType {
-  currentUserSubscriptionTier: SubscriptionTier; // This is the EFFECTIVE tier (actual or debug override)
-  actualTierFromDB: SubscriptionTier;          // The true tier fetched from DB, ignoring debug override
+  currentUserSubscriptionTier: SubscriptionTier;
+  actualTierFromDB: SubscriptionTier;
   isLoading: boolean;
   error: string | null;
   refreshSubscriptionStatus: () => Promise<void>;
-  // Debugging features
-  setDebugTierOverride: (tier: SubscriptionTier | null) => void; // null to clear override
+  setDebugTierOverride: (tier: SubscriptionTier | null) => void;
   debugTierOverrideActive: boolean;
 }
 
 const SubscriptionContext = createContext<SubscriptionContextType | undefined>(undefined);
-const SUBSCRIPTION_CHECK_INTERVAL = 5 * 60 * 1000; // 5 minutes
-const DB_FETCH_TIMEOUT = 10 * 1000; // 10 seconds for DB queries
+const SUBSCRIPTION_CHECK_INTERVAL = 5 * 60 * 1000;
+const DB_FETCH_TIMEOUT = 10 * 1000;
 
 async function getSubscriptionStatusFromDB(userId: string): Promise<SubscriptionTier> {
-  if (!userId) return 'free'; // Default to free if no user ID
+  if (!userId) {
+    console.log('[SubscriptionProvider] No userId provided, returning "free".');
+    return 'free';
+  }
 
-  console.log(`[SubscriptionProvider] Fetching DB subscription status for user: ${userId}`);
+  console.log(`[SubscriptionProvider] Fetching subscription status for user: ${userId}`);
   let queryTimeoutId: NodeJS.Timeout | null = null;
 
-  const queryPromise = supabase
-    .from('stripe_subscriptions') // YOUR TABLE NAME FOR USER SUBSCRIPTIONS
-    .select('subscription_status, price_id')
-    .eq('user_id', userId) // Assumes your webhook correctly links/updates this user_id
-    .in('subscription_status', ['active', 'trialing'])
-    .is('deleted_at', null) // Ensure soft-deleted subscriptions are not considered active
-    .order('created_at', { ascending: false })
-    .limit(1)
-    .maybeSingle();
-
   try {
-    const result = await Promise.race([
-      queryPromise,
+    // Step 1: Get customer_id from stripe_customers table
+    console.log(`[SubscriptionProvider] Fetching customer_id for user_id: ${userId}`);
+    const customerPromise = supabase
+      .from('stripe_customers')
+      .select('customer_id')
+      .eq('user_id', userId)
+      .is('deleted_at', null) // Ensure customer record is not deleted
+      .maybeSingle();
+
+    const customerResult = await Promise.race([
+      customerPromise,
       new Promise((_, reject) => {
         queryTimeoutId = setTimeout(() => {
-          reject(new Error('Supabase query timed out for getSubscriptionStatusFromDB'));
+          reject(new Error('Supabase query timed out fetching customer_id'));
         }, DB_FETCH_TIMEOUT);
       }),
-    ]) as { data: any; error: any }; // Cast needed because Promise.race loses specific type info
+    ]) as { data: { customer_id: string } | null; error: any };
 
     if (queryTimeoutId) clearTimeout(queryTimeoutId);
+    queryTimeoutId = null; // Reset for next potential timeout
 
-    const { data, error } = result;
-
-    if (error) {
-      console.error('[SubscriptionProvider] Supabase DB Error fetching subscription:', error.message);
-      // Don't throw, just return 'free' and let the provider handle error state
+    if (customerResult.error) {
+      console.error('[SubscriptionProvider] Supabase DB Error fetching customer_id:', customerResult.error.message);
       return 'free';
     }
 
-    if (data && data.price_id && (data.subscription_status === 'active' || data.subscription_status === 'trialing')) {
-      console.log(`[SubscriptionProvider] DB Data for user ${userId}:`, data);
-      switch (data.price_id) {
+    if (!customerResult.data || !customerResult.data.customer_id) {
+      console.log(`[SubscriptionProvider] No Stripe customer_id found for user_id: ${userId}. Defaulting to 'free'.`);
+      return 'free';
+    }
+
+    const customerId = customerResult.data.customer_id;
+    console.log(`[SubscriptionProvider] Found customer_id: ${customerId}. Fetching subscription details.`);
+
+    // Step 2: Get subscription status using customer_id
+    const subscriptionPromise = supabase
+      .from('stripe_subscriptions')
+      .select('status, price_id') // Corrected column name to 'status'
+      .eq('customer_id', customerId) // Query by customer_id
+      .in('status', ['active', 'trialing']) // Use the correct 'status' column
+      .is('deleted_at', null)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    const subscriptionResult = await Promise.race([
+      subscriptionPromise,
+      new Promise((_, reject) => {
+        queryTimeoutId = setTimeout(() => {
+          reject(new Error('Supabase query timed out fetching subscription status'));
+        }, DB_FETCH_TIMEOUT);
+      }),
+    ]) as { data: { status: string; price_id: string } | null; error: any };
+
+    if (queryTimeoutId) clearTimeout(queryTimeoutId);
+
+    if (subscriptionResult.error) {
+      console.error('[SubscriptionProvider] Supabase DB Error fetching subscription status:', subscriptionResult.error.message);
+      return 'free';
+    }
+
+    if (subscriptionResult.data && subscriptionResult.data.price_id && (subscriptionResult.data.status === 'active' || subscriptionResult.data.status === 'trialing')) {
+      const { price_id, status } = subscriptionResult.data;
+      console.log(`[SubscriptionProvider] DB Subscription Data for customer ${customerId}: status=${status}, price_id=${price_id}`);
+      switch (price_id) {
         case PRO_MONTHLY_PRICE_ID:
         case PRO_YEARLY_PRICE_ID:
-          console.log(`[SubscriptionProvider] Mapped Price ID ${data.price_id} to 'pro' tier.`);
+          console.log(`[SubscriptionProvider] Mapped Price ID ${price_id} to 'pro' tier.`);
           return 'pro';
         case PREMIUM_MONTHLY_PRICE_ID:
         case PREMIUM_YEARLY_PRICE_ID:
-          console.log(`[SubscriptionProvider] Mapped Price ID ${data.price_id} to 'premium' tier.`);
+          console.log(`[SubscriptionProvider] Mapped Price ID ${price_id} to 'premium' tier.`);
           return 'premium';
         default:
-          console.warn(`[SubscriptionProvider] Active DB subscription for user ${userId} found with UNRECOGNIZED Price ID: "${data.price_id}". Defaulting tier to free.`);
+          console.warn(`[SubscriptionProvider] Active/trialing subscription for customer ${customerId} found with UNRECOGNIZED Price ID: "${price_id}". Defaulting tier to free.`);
           return 'free';
       }
     }
-    console.log(`[SubscriptionProvider] No active/trialing subscription with recognized price_id found in DB for user ${userId}. Defaulting to 'free'.`);
+    console.log(`[SubscriptionProvider] No active/trialing subscription with recognized price_id found in DB for customer ${customerId} (user ${userId}). Defaulting to 'free'.`);
     return 'free';
+
   } catch (err: any) {
     if (queryTimeoutId) clearTimeout(queryTimeoutId);
     console.error('[SubscriptionProvider] Error or timeout in getSubscriptionStatusFromDB:', err.message);
-    return 'free'; // Fallback on any error including timeout
+    return 'free';
   }
 }
 
@@ -91,61 +125,64 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
   const { user, session, isLoading: isAuthLoading } = useAuth();
   const [actualTierFromDB, setActualTierFromDB] = useState<SubscriptionTier>('free');
   const [debugTierUserOverride, setDebugTierUserOverride] = useState<SubscriptionTier | null>(null);
-  const [isLoading, setIsLoading] = useState(true); // True until initial check completes
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const intervalRef = useRef<number | null>(null);
 
   const checkSubscriptionStatus = useCallback(async (isInitialLoad = false) => {
     if (isAuthLoading && isInitialLoad) {
       console.log('[SubscriptionProvider] Auth is loading, delaying initial subscription check.');
-      setIsLoading(true); // Ensure loading is true if auth is still loading
+      setIsLoading(true);
       return;
     }
 
-    if (!session || !user) {
-      console.log('[SubscriptionProvider] No session/user, setting actualTierFromDB to free.');
+    if (!session || !user || !user.id) { // Added check for user.id
+      console.log('[SubscriptionProvider] No session/user/userId, setting actualTierFromDB to free.');
       setActualTierFromDB('free');
-      if (isInitialLoad) setIsLoading(false);
+      if (isInitialLoad) setIsLoading(false); // Only set initial loading to false
       setError(null);
       return;
     }
 
-    console.log('[SubscriptionProvider] User session active. Checking subscription status from DB.');
-    if (!isLoading) setIsLoading(true); // Set loading true for this specific DB fetch, unless it's already true from initial load
-    setError(null); // Clear previous errors
+    console.log(`[SubscriptionProvider] User session active (User ID: ${user.id}). Checking subscription status from DB.`);
+    // Set loading to true for this specific fetch operation
+    // Avoid setting setIsLoading(true) if !isInitialLoad to prevent full page loader on background refresh
+    if (isInitialLoad) {
+        setIsLoading(true);
+    }
+    setError(null);
 
     try {
       const tierFromDB = await getSubscriptionStatusFromDB(user.id);
       setActualTierFromDB(tierFromDB);
-      if (tierFromDB === 'free' && error === 'Supabase query timed out for getSubscriptionStatusFromDB') {
-         // If the timeout specifically caused a 'free' tier, set an error message.
-         setError('Failed to fetch subscription status due to a timeout. Displaying free tier data.');
+      console.log(`[SubscriptionProvider] Tier from DB for user ${user.id}: ${tierFromDB}`);
+      if (tierFromDB === 'free' && (error?.includes('timed out') || error?.includes('does not exist'))) {
+         setError('Failed to accurately fetch subscription status. Displaying free tier data as a fallback.');
       }
-    } catch (err: any) { // Should be caught by getSubscriptionStatusFromDB, but as a fallback
+    } catch (err: any) {
       console.error('[SubscriptionProvider] Error in checkSubscriptionStatus during DB fetch:', err.message);
       setError(err.message || 'Failed to check subscription status from DB.');
-      if (isInitialLoad) setActualTierFromDB('free'); // Fallback on error during initial load
+      if (isInitialLoad) setActualTierFromDB('free');
     } finally {
-      // Only set isLoading to false if it's the initial load completing.
-      // Subsequent refreshes might not affect the global "initial" loading state.
       if (isInitialLoad) setIsLoading(false);
-      else setIsLoading(false); // For manual refresh or interval, ensure loading is reset
+      // For non-initial loads (manual refresh, interval), isLoading is not the primary concern for the overall provider state.
+      // Individual components might show their own loading for refresh.
     }
-  }, [session, user, isAuthLoading, error, isLoading]); // Added isLoading to dependencies to avoid stale closure
+  }, [session, user, isAuthLoading, error]); // Removed isLoading from here to prevent loop, error to prevent loop on setTier->setError
 
   useEffect(() => {
     let isMounted = true;
-    if (!isAuthLoading) { // Only proceed if auth has loaded (or attempted to load)
+    if (!isAuthLoading) {
       console.log('[SubscriptionProvider] Auth loading complete or not active. Initializing subscription check.');
-      checkSubscriptionStatus(true); // Pass true for initial load
+      checkSubscriptionStatus(true);
 
       if (intervalRef.current) clearInterval(intervalRef.current);
-      if (session && user) { // Only set interval if user is logged in
+      if (session && user) {
         console.log('[SubscriptionProvider] Setting up periodic subscription check interval.');
         intervalRef.current = window.setInterval(() => {
           if (isMounted && document.visibilityState === 'visible') {
             console.log('[SubscriptionProvider] Periodic interval check triggered.');
-            checkSubscriptionStatus(false); // Not initial load
+            checkSubscriptionStatus(false);
           }
         }, SUBSCRIPTION_CHECK_INTERVAL);
       }
@@ -161,27 +198,30 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
         clearInterval(intervalRef.current);
       }
     };
-  }, [checkSubscriptionStatus, isAuthLoading, session, user]); // isAuthLoading, session, user trigger re-evaluation
+  }, [checkSubscriptionStatus, isAuthLoading, session, user]);
 
   const refreshSubscriptionStatus = useCallback(async () => {
     console.log('[SubscriptionProvider] Manual refreshSubscriptionStatus triggered.');
     if (isAuthLoading) {
         console.log('[SubscriptionProvider] Auth still loading, refresh will run after auth.');
-        setIsLoading(true); // Show loading if auth is in progress
+        setIsLoading(true); // Indicate loading if auth isn't done
         return;
     }
-    if (!user) { // If no user even after auth check, set to free
+    if (!user || !user.id) {
+      console.log('[SubscriptionProvider] No user for manual refresh, setting to free.');
       setActualTierFromDB('free');
-      setIsLoading(false); // No active fetch, so not loading
+      setIsLoading(false);
       return;
     }
-    // setIsLoading(true); // Set loading before the async call
-    await checkSubscriptionStatus(false); // Treat as a non-initial load, this will handle its own isLoading
+    // For a manual refresh, it's good to indicate some loading activity.
+    // Setting the main `isLoading` might be too broad if only a small part needs refresh indication.
+    // For now, we rely on `checkSubscriptionStatus` to manage its internal perception of loading for initial vs subsequent.
+    // A dedicated `isRefreshing` state could be added if finer-grained UI feedback is needed.
+    await checkSubscriptionStatus(false); // Treat as a non-initial, explicit refresh
   }, [checkSubscriptionStatus, user, isAuthLoading]);
 
   const setDebugTierOverride = useCallback((tier: SubscriptionTier | null) => {
-    // Ensure this only works in development for safety
-    if (import.meta.env.MODE === 'development') { // Vite uses import.meta.env.MODE
+    if (import.meta.env.MODE === 'development') {
       console.warn(`[SubscriptionProvider] DEBUG TIER OVERRIDE set to: ${tier === null ? 'None (use actual)' : tier}`);
       setDebugTierUserOverride(tier);
     } else {
@@ -191,11 +231,7 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
 
   const effectiveTierToUse = debugTierUserOverride !== null ? debugTierUserOverride : actualTierFromDB;
   const isDebugCurrentlyActive = debugTierUserOverride !== null;
-
-  // isLoading should be true if either auth is loading OR subscription is actively being checked/re-checked initially.
-  // For subsequent refreshes, individual components might show their own spinners.
-  // The main `isLoading` state here primarily reflects the initial setup.
-  const combinedIsLoading = isAuthLoading || isLoading;
+  const combinedIsLoading = isAuthLoading || isLoading; // isLoading reflects the initial fetch state.
 
   const value: SubscriptionContextType = {
     currentUserSubscriptionTier: effectiveTierToUse,
