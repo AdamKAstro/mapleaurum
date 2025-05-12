@@ -1,10 +1,13 @@
-//src/lib/types.ts
+// src/lib/types.ts
 import type { ClassValue } from 'clsx';
 
 // --- Base Types ---
 export type Theme = 'default' | 'ocean' | 'sunset';
-export type ColumnTier = 'free' | 'medium' | 'premium';
-export type SubscriptionTier = 'free' | 'medium' | 'premium';
+
+// UPDATED and ALIGNED: ColumnTier and SubscriptionTier now both use 'pro'
+export type ColumnTier = 'free' | 'pro' | 'premium';
+export type SubscriptionTier = 'free' | 'pro' | 'premium';
+
 export type Currency = 'USD' | 'CAD' | 'AUD' | 'EUR' | 'GBP';
 export type CompanyStatus = 'Producer' | 'Developer' | 'Explorer' | 'Royalty' | 'Other';
 
@@ -166,7 +169,7 @@ export interface ColumnDef {
   description?: string;
   preferredValues?: string;
   access?: {
-    tier: ColumnTier;
+    tier: ColumnTier; // Stays ColumnTier, which is now updated to 'free' | 'pro' | 'premium'
     description: string;
   };
   width?: number | string;
@@ -190,7 +193,7 @@ export interface SortState {
   direction: 'asc' | 'desc';
 }
 
-export interface FilterState {
+export interface FilterState { // This seems like an older or alternative filter structure. Review if still needed.
   searchTerm: string | null;
   status: CompanyStatus[] | null;
   market_cap_valueRange?: [number | null, number | null] | null;
@@ -198,17 +201,26 @@ export interface FilterState {
   [key: string]: any;
 }
 
+export interface FilterSettings {
+  developmentStatus: CompanyStatus[];
+  metricRanges: { [db_column: string]: [number | null, number | null] };
+  searchTerm: string;
+}
+
 // --- Types for Scatter Chart ---
-export type MetricFormat = 'number' | 'currency' | 'percent' | 'moz' | 'koz';
+export type MetricFormat = 'number' | 'currency' | 'percent' | 'moz' | 'koz' | 'ratio' | 'years'; // Added ratio and years based on metric-types
 
 export interface MetricConfig {
   key: string;
   label: string;
-  path: string;
-  format?: MetricFormat;
-  higherIsBetter?: boolean;
+  db_column: string;
+  nested_path: string;
+  unit: string;
+  higherIsBetter: boolean;
+  category: string; // Consider using MetricCategory type from metric-types.ts if defined elsewhere
+  tier: ColumnTier; // Stays ColumnTier, which is now updated to 'free' | 'pro' | 'premium'
+  format: MetricFormat;
   description?: string;
-  tier: ColumnTier;
 }
 
 export interface ToleranceSettings {
