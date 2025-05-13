@@ -51,7 +51,7 @@ export function AdminSendEmailPage() {
         }
 
         console.log('[AdminSendEmailPage] User data:', user); // Debug user object
-        const adminCheck = user.email === 'adamkiil79@gmail.com'; // Updated to reliable email
+        const adminCheck = user.email === 'adamkiil@outlook.com'; 
         setIsAdmin(adminCheck);
         if (!adminCheck) {
           console.log('[AdminSendEmailPage] User is not admin:', user.email);

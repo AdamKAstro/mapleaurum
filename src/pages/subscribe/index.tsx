@@ -13,12 +13,11 @@ import { useSubscription } from '../../contexts/subscription-context';
 import { cn } from '../../lib/utils';
 import { SubscriptionTier } from '../../lib/types';
 import { supabase } from '../../lib/supabaseClient';
-import mail from '@sendgrid/mail'; // Correct import
+import mail from '@sendgrid/mail';
 
 const FRONTEND_URL = import.meta.env.VITE_FRONTEND_URL || 'http://localhost:3000';
 const STRIPE_PUBLISHABLE_KEY = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY;
 
-// Initialize SendGrid
 mail.setApiKey(import.meta.env.VITE_SENDGRID_API_KEY);
 
 interface PlanDisplayData {
@@ -120,7 +119,7 @@ export function SubscribePage() {
   const backgroundImageUrl = '/Background2.jpg';
 
   // Check if user is admin
-  const isAdmin = user?.email === 'adamkiil@outlook.com';
+  const isAdmin = user?.email === 'adamkiil@outlook.com'; // Updated to reliable email
 
   useEffect(() => {
     if (!isAuthLoading && session) {
@@ -236,7 +235,6 @@ export function SubscribePage() {
       <div className="absolute inset-0 bg-cover bg-center opacity-50 -z-10" style={{ backgroundImage: `url('${backgroundImageUrl}')` }} aria-hidden="true" />
       <div className="absolute inset-0 bg-noise opacity-30 -z-10" aria-hidden="true" />
       <div className="relative z-0 pt-8 pb-12">
-        {/* Billing Cycle Switch */}
         <div className="flex justify-center mb-6">
           <div className="flex items-center space-x-2 p-1 bg-navy-900/30 rounded-lg backdrop-blur-sm">
             <Label htmlFor="billing-cycle-switch" className="px-2 text-white">Monthly</Label>
@@ -245,7 +243,6 @@ export function SubscribePage() {
           </div>
         </div>
 
-        {/* Admin Test Email Section */}
         {isAdmin && (
           <div className="max-w-md mx-auto mb-8 p-6 bg-navy-700/60 border border-navy-600/50 rounded-lg backdrop-blur-sm">
             <Typography variant="h3" className="text-xl font-bold text-cyan-300 mb-4">
@@ -311,7 +308,6 @@ export function SubscribePage() {
           </div>
         )}
 
-        {/* Subscription Plans */}
         <div className="grid grid-cols-1 gap-6 sm:gap-8 lg:grid-cols-3 max-w-5xl mx-auto">
           {plansData.map((plan) => {
             const Icon = plan.icon;
