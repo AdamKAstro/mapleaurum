@@ -78,7 +78,11 @@ export function AdminSendEmailPage() {
     try {
       const { data: sessionData } = await supabase.auth.getSession();
       const token = sessionData.session?.access_token;
+      if (!token) {
+        throw new Error('No authentication token available');
+      }
 
+      console.log('[AdminSendEmailPage] Sending email with token:', token);
       const response = await fetch('https://dvagrllvivewyxolrhsh.supabase.co/functions/v1/send-email', {
         method: 'POST',
         headers: {
@@ -92,11 +96,14 @@ export function AdminSendEmailPage() {
         }),
       });
 
-      const result = await response.json();
+      console.log('[AdminSendEmailPage] Fetch response:', response);
       if (!response.ok) {
-        throw new Error(result.error || 'Failed to send email');
+        const errorData = await response.json();
+        console.error('[AdminSendEmailPage] Fetch error response:', errorData);
+        throw new Error(errorData.error || `Failed to send email: ${response.statusText}`);
       }
 
+      const result = await response.json();
       setStatus('Email sent successfully!');
       setEmail('');
       setSubject('Test Email from MapleAurum');

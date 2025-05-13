@@ -115,7 +115,6 @@ export function SubscribePage() {
   const navigate = useNavigate();
   const backgroundImageUrl = '/Background2.jpg';
 
-  // Check if user is admin
   const isAdmin = user?.email === 'adamkiil@outlook.com' || user?.email === 'adamkiil79@gmail.com';
 
   useEffect(() => {
@@ -194,7 +193,11 @@ export function SubscribePage() {
     try {
       const { data: sessionData } = await supabase.auth.getSession();
       const token = sessionData.session?.access_token;
+      if (!token) {
+        throw new Error('No authentication token available');
+      }
 
+      console.log('[SubscribePage] Sending email with token:', token);
       const response = await fetch('https://dvagrllvivewyxolrhsh.supabase.co/functions/v1/send-email', {
         method: 'POST',
         headers: {
@@ -208,11 +211,14 @@ export function SubscribePage() {
         }),
       });
 
-      const result = await response.json();
+      console.log('[SubscribePage] Fetch response:', response);
       if (!response.ok) {
-        throw new Error(result.error || 'Failed to send email');
+        const errorData = await response.json();
+        console.error('[SubscribePage] Fetch error response:', errorData);
+        throw new Error(errorData.error || `Failed to send email: ${response.statusText}`);
       }
 
+      const result = await response.json();
       setEmailStatus('Test email sent successfully!');
       setTestEmail('');
       setTestSubject('Test Email from MapleAurum');
