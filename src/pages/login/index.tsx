@@ -27,16 +27,13 @@ export function LoginPage() {
         const messageParam = searchParams.get('message');
         const planParam = searchParams.get('plan_name');
 
-        // Determine mode based on query parameters
         const shouldBeSignupMode = signupParam === 'true' || actionParam === 'signup';
         setIsSignupMode(shouldBeSignupMode);
 
-        // Pre-fill email if provided
         if (emailParam) {
             setEmail(decodeURIComponent(emailParam));
         }
 
-        // Handle special messages
         if (messageParam === 'confirm_email') {
             setMessage('Thank you for confirming your email! Please log in to continue.');
             setIsSignupMode(false);
@@ -59,7 +56,6 @@ export function LoginPage() {
         setMessage(null);
         setLoading(true);
 
-        // Determine redirect path
         const fromState = (location.state as { from?: { pathname: string; search: string } })?.from;
         let redirectToPath = fromState?.pathname
             ? `${fromState.pathname}${fromState.search || ''}`
@@ -68,7 +64,7 @@ export function LoginPage() {
         const searchParams = new URLSearchParams(location.search);
         const planName = searchParams.get('plan_name');
         if (planName && isSignupMode) {
-            redirectToPath = '/subscribe'; // Return to subscription page after sign-up
+            redirectToPath = '/subscribe';
         }
 
         try {
@@ -90,11 +86,20 @@ export function LoginPage() {
                     setMessage('Sign up successful! Please check your email to confirm your account. Once confirmed, you can log in.');
                     setEmail('');
                     setPassword('');
+                    // Redirect to /subscribe even if confirmation is required
+                    setTimeout(() => {
+                        console.log('[LoginPage] Redirecting to:', redirectToPath, 'after sign-up confirmation message.');
+                        navigate(redirectToPath, { replace: true });
+                    }, 2000); // Small delay to show the message
                 } else if (data.user && data.session) {
                     console.log('[LoginPage] User signed up and auto-confirmed:', data.user.id);
                     navigate(redirectToPath, { replace: true });
                 } else {
                     setMessage('Sign up successful! Please check your email to confirm your account.');
+                    setTimeout(() => {
+                        console.log('[LoginPage] Redirecting to:', redirectToPath, 'after sign-up confirmation message (fallback).');
+                        navigate(redirectToPath, { replace: true });
+                    }, 2000);
                 }
             } else {
                 const { data, error: signInError } = await supabase.auth.signInWithPassword({
