@@ -120,7 +120,7 @@ export function SubscribePage() {
   const backgroundImageUrl = '/Background2.jpg';
 
   // Check if user is admin
-  const isAdmin = user?.email === 'adamkiil79@gmail.com';
+  const isAdmin = user?.email === 'adamkiil@outlook.com';
 
   useEffect(() => {
     if (!isAuthLoading && session) {
