@@ -1,20 +1,26 @@
 // src/pages/subscribe/index.tsx
-import React, { useState, useEffect } from 'react';
-import { Star, Crown, Check, Loader2 } from 'lucide-react';
+import React, { useState, useEffect, FormEvent } from 'react';
+import { Star, Crown, Check, Loader2, Mail } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '../../components/ui/button';
 import { Typography } from '../../components/ui/typography';
 import { PageContainer } from '../../components/ui/page-container';
 import { Label } from '../../components/ui/label';
 import { Switch } from '../../components/ui/switch';
+import { Input } from '../../components/ui/input';
 import { useAuth } from '../../contexts/auth-context';
 import { useSubscription } from '../../contexts/subscription-context';
 import { cn } from '../../lib/utils';
 import { SubscriptionTier } from '../../lib/types';
 import { supabase } from '../../lib/supabaseClient';
+import { Client as SendGridClient } from '@sendgrid/mail';
 
 const FRONTEND_URL = import.meta.env.VITE_FRONTEND_URL || 'http://localhost:3000';
 const STRIPE_PUBLISHABLE_KEY = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY;
+
+// Initialize SendGrid client
+const sgMail = new SendGridClient();
+sgMail.setApiKey(import.meta.env.VITE_SENDGRID_API_KEY);
 
 interface PlanDisplayData {
   name: string;
@@ -37,18 +43,33 @@ interface PlanDisplayData {
 const plansData: PlanDisplayData[] = [
   {
     name: 'Free',
-    priceMonthlyDisplay: '$0', priceYearlyDisplay: '$0', periodMonthly: '', periodYearly: '',
-    description: 'Basic access to company data. All users start here.', // Updated description
+    priceMonthlyDisplay: '$0',
+    priceYearlyDisplay: '$0',
+    periodMonthly: '',
+    periodYearly: '',
+    description: 'Basic access to company data. All users start here.',
     features: ['Basic company information', 'Limited financial metrics', 'Public company profiles', 'Daily updates'],
-    icon: null, color: 'gray', popular: false, tier: 'free',
-    priceIdMonthly: '', priceIdYearly: '', buyButtonIdMonthly: '', buyButtonIdYearly: '',
+    icon: null,
+    color: 'gray',
+    popular: false,
+    tier: 'free',
+    priceIdMonthly: '',
+    priceIdYearly: '',
+    buyButtonIdMonthly: '',
+    buyButtonIdYearly: '',
   },
   {
     name: 'Pro',
-    priceMonthlyDisplay: '$40', priceYearlyDisplay: '$420', periodMonthly: '/month', periodYearly: '/year',
+    priceMonthlyDisplay: '$40',
+    priceYearlyDisplay: '$420',
+    periodMonthly: '/month',
+    periodYearly: '/year',
     description: 'Advanced analytics and insights',
     features: ['Financial metrics', 'Resource estimates', 'Production data', 'Custom watchlists (coming)'],
-    icon: Star, color: 'accent-teal', popular: true, tier: 'pro',
+    icon: Star,
+    color: 'accent-teal',
+    popular: true,
+    tier: 'pro',
     priceIdMonthly: import.meta.env.VITE_STRIPE_PRO_MONTHLY_PRICE_ID || 'price_1RMJ31Ast4LlpL7pauoVPwpm',
     priceIdYearly: import.meta.env.VITE_STRIPE_PRO_YEARLY_PRICE_ID || 'price_1RMIBuAst4LlpL7pf1EFTmlk',
     buyButtonIdMonthly: import.meta.env.VITE_STRIPE_PRO_MONTHLY_BUY_BUTTON_ID || 'buy_btn_1RMiAYAst4LlpL7p3EmJcw7q',
@@ -56,14 +77,29 @@ const plansData: PlanDisplayData[] = [
   },
   {
     name: 'Premium',
-    priceMonthlyDisplay: '$90', priceYearlyDisplay: '$960', periodMonthly: '/month', periodYearly: '/year',
+    priceMonthlyDisplay: '$90',
+    priceYearlyDisplay: '$960',
+    periodMonthly: '/month',
+    periodYearly: '/year',
     description: 'Complete access and premium features',
     features: [
-      'All Pro features', 'Priority support', 'Basic company information', 'Public company profiles',
-      'Advanced financial metrics', 'Resource estimates', 'Production data', 'Custom watchlists (coming)',
-      'Real-time alerts (coming)', 'API access (coming)', 'Cost metrics', 'Valuation models',
+      'All Pro features',
+      'Priority support',
+      'Basic company information',
+      'Public company profiles',
+      'Advanced financial metrics',
+      'Resource estimates',
+      'Production data',
+      'Custom watchlists (coming)',
+      'Real-time alerts (coming)',
+      'API access (coming)',
+      'Cost metrics',
+      'Valuation models',
     ],
-    icon: Crown, color: 'accent-yellow', popular: false, tier: 'premium',
+    icon: Crown,
+    color: 'accent-yellow',
+    popular: false,
+    tier: 'premium',
     priceIdMonthly: import.meta.env.VITE_STRIPE_PREMIUM_MONTHLY_PRICE_ID || 'price_1RMJ3pAst4LlpL7pXTO1bVli',
     priceIdYearly: import.meta.env.VITE_STRIPE_PREMIUM_YEARLY_PRICE_ID || 'price_1RMIDFAst4LlpL7p8UInqh9P',
     buyButtonIdMonthly: import.meta.env.VITE_STRIPE_PREMIUM_MONTHLY_BUY_BUTTON_ID || 'buy_btn_1RMi24Ast4LlpL7p77zMG5SG',
@@ -76,34 +112,45 @@ export function SubscribePage() {
   const { currentUserSubscriptionTier, isLoading: isSubscriptionLoading, refreshSubscriptionStatus } = useSubscription();
   const [isYearly, setIsYearly] = useState(false);
   const [isProcessing, setIsProcessing] = useState<string | null>(null);
+  const [testEmail, setTestEmail] = useState('');
+  const [testSubject, setTestSubject] = useState('Test Email from MapleAurum');
+  const [testMessage, setTestMessage] = useState('This is a test email sent from the MapleAurum Subscribe page.');
+  const [emailStatus, setEmailStatus] = useState<string | null>(null);
+  const [isEmailSending, setIsEmailSending] = useState(false);
   const navigate = useNavigate();
   const backgroundImageUrl = '/Background2.jpg';
 
+  // Check if user is admin
+  const isAdmin = user?.email === 'adamkiil@outlook.com';
+
   useEffect(() => {
     if (!isAuthLoading && session) {
-      console.log("[SubscribePage] Session active, attempting to refresh subscription status.");
+      console.log('[SubscribePage] Session active, refreshing subscription status.');
       refreshSubscriptionStatus();
     }
   }, [session, isAuthLoading, refreshSubscriptionStatus]);
 
   const handlePaymentForLoggedInUser = async (plan: PlanDisplayData) => {
     if (!user || !session) {
-      console.error("[SubscribePage] Attempted subscription by non-logged-in user through protected handler.");
+      console.error('[SubscribePage] Attempted subscription by non-logged-in user.');
       navigate('/auth?signup=true');
       return;
     }
-    if (plan.tier === 'free') return;
+    if (plan.tier === 'free') {
+      console.log('[SubscribePage] Free plan selected, no action needed.');
+      return;
+    }
 
     const priceIdToUse = isYearly ? plan.priceIdYearly : plan.priceIdMonthly;
     if (!priceIdToUse) {
-      console.error(`[SubscribePage] Stripe Price ID is missing for ${plan.name} (${isYearly ? 'Yearly' : 'Monthly'}).`);
-      alert("Sorry, this plan is currently unavailable. Please contact support.");
+      console.error(`[SubscribePage] Stripe Price ID missing for ${plan.name} (${isYearly ? 'Yearly' : 'Monthly'}).`);
+      alert('Sorry, this plan is currently unavailable. Please contact support.');
       return;
     }
 
     const processingKey = plan.name + (isYearly ? 'Yearly' : 'Monthly');
     setIsProcessing(processingKey);
-    console.log(`[SubscribePage] User ${user.id} attempting to subscribe/upgrade to ${plan.tier} (${isYearly ? 'Yearly' : 'Monthly'}). Price ID: ${priceIdToUse}`);
+    console.log(`[SubscribePage] User ${user.id} subscribing to ${plan.tier} (${isYearly ? 'Yearly' : 'Monthly'}). Price ID: ${priceIdToUse}`);
 
     try {
       const { data, error: functionError } = await supabase.functions.invoke('stripe-checkout', {
@@ -121,17 +168,52 @@ export function SubscribePage() {
       }
 
       if (data && data.url) {
-        console.log("[SubscribePage] Received checkout URL, redirecting:", data.url);
+        console.log('[SubscribePage] Redirecting to checkout URL:', data.url);
         window.location.href = data.url;
       } else {
-        console.error('[SubscribePage] Failed to get Stripe Checkout session URL. Response:', data);
+        console.error('[SubscribePage] No valid checkout URL. Response:', data);
         throw new Error('Could not retrieve a valid checkout session. Please try again.');
       }
     } catch (error: any) {
-      console.error('[SubscribePage] Error during handlePaymentForLoggedInUser:', error.message, error);
-      alert(`An error occurred: ${error.message}. Please try again or contact support.`);
+      console.error('[SubscribePage] Error in handlePaymentForLoggedInUser:', error.message, error);
+      alert(`Error: ${error.message}. Please try again or contact support.`);
     } finally {
       setIsProcessing(null);
+    }
+  };
+
+  const handleSendTestEmail = async (e: FormEvent) => {
+    e.preventDefault();
+    if (!isAdmin) {
+      setEmailStatus('Unauthorized: Admin access required.');
+      return;
+    }
+    if (!testEmail) {
+      setEmailStatus('Please enter a recipient email.');
+      return;
+    }
+
+    setIsEmailSending(true);
+    setEmailStatus(null);
+
+    try {
+      const msg = {
+        to: testEmail,
+        from: 'support@mapleaurum.com',
+        subject: testSubject,
+        text: testMessage,
+        html: `<p>${testMessage}</p>`,
+      };
+      await sgMail.send(msg);
+      setEmailStatus('Test email sent successfully!');
+      setTestEmail('');
+      setTestSubject('Test Email from MapleAurum');
+      setTestMessage('This is a test email sent from the MapleAurum Subscribe page.');
+    } catch (error: any) {
+      console.error('[SubscribePage] Error sending test email:', error.message);
+      setEmailStatus(`Error: ${error.message}`);
+    } finally {
+      setIsEmailSending(false);
     }
   };
 
@@ -155,6 +237,7 @@ export function SubscribePage() {
       <div className="absolute inset-0 bg-cover bg-center opacity-50 -z-10" style={{ backgroundImage: `url('${backgroundImageUrl}')` }} aria-hidden="true" />
       <div className="absolute inset-0 bg-noise opacity-30 -z-10" aria-hidden="true" />
       <div className="relative z-0 pt-8 pb-12">
+        {/* Billing Cycle Switch */}
         <div className="flex justify-center mb-6">
           <div className="flex items-center space-x-2 p-1 bg-navy-900/30 rounded-lg backdrop-blur-sm">
             <Label htmlFor="billing-cycle-switch" className="px-2 text-white">Monthly</Label>
@@ -162,15 +245,81 @@ export function SubscribePage() {
             <Label htmlFor="billing-cycle-switch" className="px-2 text-white">Yearly (Save up to 16%)</Label>
           </div>
         </div>
+
+        {/* Admin Test Email Section */}
+        {isAdmin && (
+          <div className="max-w-md mx-auto mb-8 p-6 bg-navy-700/60 border border-navy-600/50 rounded-lg backdrop-blur-sm">
+            <Typography variant="h3" className="text-xl font-bold text-cyan-300 mb-4">
+              Admin: Send Test Email
+            </Typography>
+            {emailStatus && (
+              <Typography
+                variant="body"
+                className={`mb-4 ${emailStatus.includes('Error') || emailStatus.includes('Unauthorized') ? 'text-red-500' : 'text-green-500'}`}
+              >
+                {emailStatus}
+              </Typography>
+            )}
+            <form onSubmit={handleSendTestEmail} className="space-y-4">
+              <div>
+                <Label htmlFor="test-email" className="text-gray-300">Recipient Email</Label>
+                <Input
+                  id="test-email"
+                  type="email"
+                  value={testEmail}
+                  onChange={(e) => setTestEmail(e.target.value)}
+                  placeholder="e.g., sendgridtesting@gmail.com"
+                  required
+                  disabled={isEmailSending}
+                  className="bg-navy-600/80 border-navy-500 text-white"
+                />
+              </div>
+              <div>
+                <Label htmlFor="test-subject" className="text-gray-300">Subject</Label>
+                <Input
+                  id="test-subject"
+                  type="text"
+                  value={testSubject}
+                  onChange={(e) => setTestSubject(e.target.value)}
+                  placeholder="Test Email from MapleAurum"
+                  required
+                  disabled={isEmailSending}
+                  className="bg-navy-600/80 border-navy-500 text-white"
+                />
+              </div>
+              <div>
+                <Label htmlFor="test-message" className="text-gray-300">Message</Label>
+                <Input
+                  id="test-message"
+                  type="text"
+                  value={testMessage}
+                  onChange={(e) => setTestMessage(e.target.value)}
+                  placeholder="This is a test email."
+                  required
+                  disabled={isEmailSending}
+                  className="bg-navy-600/80 border-navy-500 text-white"
+                />
+              </div>
+              <Button
+                type="submit"
+                disabled={isEmailSending}
+                className="w-full bg-gradient-to-r from-cyan-600 to-teal-600 hover:from-cyan-700 hover:to-teal-700"
+              >
+                {isEmailSending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Mail className="mr-2 h-4 w-4" />}
+                {isEmailSending ? 'Sending...' : 'Send Test Email'}
+              </Button>
+            </form>
+          </div>
+        )}
+
+        {/* Subscription Plans */}
         <div className="grid grid-cols-1 gap-6 sm:gap-8 lg:grid-cols-3 max-w-5xl mx-auto">
           {plansData.map((plan) => {
             const Icon = plan.icon;
             const displayPrice = isYearly ? plan.priceYearlyDisplay : plan.priceMonthlyDisplay;
             const displayPeriod = isYearly ? plan.periodYearly : plan.periodMonthly;
-            
             const uniqueProcessingKey = plan.name + (isYearly ? 'Yearly' : 'Monthly');
             const isButtonProcessing = isProcessing === uniqueProcessingKey;
-            // Use currentUserSubscriptionTier from context, ensure it's 'free' if no subscription
             const actualUserTier = currentUserSubscriptionTier || 'free';
             const isCurrentPlanActive = actualUserTier === plan.tier;
 
@@ -178,66 +327,92 @@ export function SubscribePage() {
             let isButtonDisabled: boolean = isLoadingOverall || isButtonProcessing;
             let actionHandler: (() => void) | null = null;
             let showStripeBuyButtonForGuest = false;
-            let isStaticButton = false; // Flag for non-interactive buttons
+            let isStaticButton = false;
 
             if (plan.tier === 'free') {
-              isStaticButton = true; // Free plan button is always static
-              isButtonDisabled = true; // Always disabled
-              actionHandler = null;    // No action
-              if (session) { // Logged in user
-                if (actualUserTier === 'free') {
-                  buttonText = 'Current Plan';
-                } else { // Logged in, but on a paid plan
-                  buttonText = 'N/A (Access Included)';
-                }
-              } else { // Guest user
-                buttonText = 'Free Access'; // Informational for guests
+              isStaticButton = true;
+              isButtonDisabled = true;
+              actionHandler = null;
+              if (session) {
+                buttonText = actualUserTier === 'free' ? 'Current Plan' : 'N/A (Access Included)';
+              } else {
+                buttonText = 'Free Access';
               }
-            } else { // Paid plans ('pro', 'premium')
-              if (session && user) { // Logged-in user
+            } else {
+              if (session && user) {
                 if (isCurrentPlanActive) {
                   buttonText = 'Current Plan';
                   isButtonDisabled = true;
-                } else if (actualUserTier === 'free' ||
-                           (actualUserTier === 'pro' && plan.tier === 'premium')) {
+                } else if (actualUserTier === 'free' || (actualUserTier === 'pro' && plan.tier === 'premium')) {
                   buttonText = actualUserTier === 'free' ? `Get ${plan.name}` : `Upgrade to ${plan.name}`;
                   if (!isButtonProcessing) isButtonDisabled = isLoadingOverall;
                   actionHandler = () => handlePaymentForLoggedInUser(plan);
-                } else { 
+                } else {
                   buttonText = 'Manage Subscription';
                   isButtonDisabled = true;
                 }
-              } else { // Guest user for paid plans
+              } else {
                 buttonText = `Choose ${plan.name}`;
                 showStripeBuyButtonForGuest = true;
-                // For guests, Stripe button handles its own loading/disabled state mostly
-                isButtonDisabled = isLoadingOverall || !!isProcessing; // Still respect overall loading
+                isButtonDisabled = isLoadingOverall || !!isProcessing;
               }
             }
-            
-            if (isButtonProcessing && !isStaticButton) { // Processing text only for non-static buttons
+
+            if (isButtonProcessing && !isStaticButton) {
               buttonText = 'Processing...';
               isButtonDisabled = true;
             }
 
             return (
-              <div key={uniqueProcessingKey} className={cn('relative transform transition-all duration-300 hover:scale-[1.015] flex', plan.popular ? 'shadow-cyan-900/20 shadow-lg' : 'shadow-md shadow-navy-900/10')}>
-                {plan.popular && <div className="absolute -top-3 left-1/2 -translate-x-1/2 transform z-10"><span className="inline-flex items-center rounded-full bg-gradient-to-r from-teal-500 to-cyan-600 px-3 py-0.5 text-xs font-semibold text-white shadow-sm">Most Popular</span></div>}
-                <div className={cn('relative flex flex-col h-full rounded-xl border p-6 w-full', plan.popular ? 'bg-navy-700/50 border-cyan-700/50' : 'bg-navy-800/60 border-navy-700/50', 'backdrop-blur-sm')}>
+              <div
+                key={uniqueProcessingKey}
+                className={cn(
+                  'relative transform transition-all duration-300 hover:scale-[1.015] flex',
+                  plan.popular ? 'shadow-cyan-900/20 shadow-lg' : 'shadow-md shadow-navy-900/10'
+                )}
+              >
+                {plan.popular && (
+                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 transform z-10">
+                    <span className="inline-flex items-center rounded-full bg-gradient-to-r from-teal-500 to-cyan-600 px-3 py-0.5 text-xs font-semibold text-white shadow-sm">
+                      Most Popular
+                    </span>
+                  </div>
+                )}
+                <div
+                  className={cn(
+                    'relative flex flex-col h-full rounded-xl border p-6 w-full',
+                    plan.popular ? 'bg-navy-700/50 border-cyan-700/50' : 'bg-navy-800/60 border-navy-700/50',
+                    'backdrop-blur-sm'
+                  )}
+                >
                   <div className="flex items-center gap-3 mb-4">
-                    {Icon && <Icon className={cn('h-7 w-7', plan.color === 'accent-yellow' ? 'text-accent-yellow' : 'text-accent-teal')} />}
-                    <h3 className={cn('text-lg font-semibold', plan.popular ? 'text-cyan-300' : 'text-white')}>{plan.name}</h3>
+                    {Icon && (
+                      <Icon
+                        className={cn('h-7 w-7', plan.color === 'accent-yellow' ? 'text-accent-yellow' : 'text-accent-teal')}
+                      />
+                    )}
+                    <h3 className={cn('text-lg font-semibold', plan.popular ? 'text-cyan-300' : 'text-white')}>
+                      {plan.name}
+                    </h3>
                   </div>
                   <div className="mt-2 flex items-baseline gap-x-1">
                     <span className="text-3xl font-bold tracking-tight text-white">{displayPrice}</span>
-                    {displayPeriod && <span className="text-sm font-semibold leading-6 text-gray-400">{displayPeriod}</span>}
+                    {displayPeriod && (
+                      <span className="text-sm font-semibold leading-6 text-gray-400">{displayPeriod}</span>
+                    )}
                   </div>
                   <p className="mt-4 text-sm leading-6 text-gray-300 flex-shrink-0">{plan.description}</p>
                   <ul role="list" className="mt-6 space-y-3 text-sm leading-6 text-gray-200 flex-grow">
                     {plan.features.map((feature) => (
                       <li key={feature} className="flex gap-x-3">
-                        {feature.startsWith('All ') ? <span className="w-5 h-6"></span> : <Check className="h-6 w-5 flex-none text-teal-400" aria-hidden="true" />}
-                        <span className={cn(feature.startsWith('All ') ? 'font-medium text-gray-400 -ml-5' : '')}>{feature}</span>
+                        {feature.startsWith('All ') ? (
+                          <span className="w-5 h-6"></span>
+                        ) : (
+                          <Check className="h-6 w-5 flex-none text-teal-400" aria-hidden="true" />
+                        )}
+                        <span className={cn(feature.startsWith('All ') ? 'font-medium text-gray-400 -ml-5' : '')}>
+                          {feature}
+                        </span>
                       </li>
                     ))}
                   </ul>
@@ -246,20 +421,28 @@ export function SubscribePage() {
                       <stripe-buy-button
                         buy-button-id={isYearly ? plan.buyButtonIdYearly : plan.buyButtonIdMonthly}
                         publishable-key={STRIPE_PUBLISHABLE_KEY}
-                      >
-                      </stripe-buy-button>
+                      />
                     ) : (
                       <Button
                         onClick={isStaticButton ? undefined : actionHandler || undefined}
                         disabled={isButtonDisabled}
                         size="lg"
-                        variant={isCurrentPlanActive || isStaticButton || (isButtonDisabled && !isButtonProcessing) ? 'secondary' : (plan.popular ? 'primary' : 'outline')}
+                        variant={
+                          isCurrentPlanActive || isStaticButton || (isButtonDisabled && !isButtonProcessing)
+                            ? 'secondary'
+                            : plan.popular
+                            ? 'primary'
+                            : 'outline'
+                        }
                         className={cn(
                           'w-full font-semibold',
                           (isButtonDisabled || isStaticButton) && 'opacity-60 cursor-not-allowed',
-                           plan.popular && !isCurrentPlanActive && !isButtonDisabled && !isStaticButton && 'bg-gradient-to-r from-teal-500 to-cyan-600 hover:from-teal-600 hover:to-cyan-700 text-white'
+                          plan.popular &&
+                            !isCurrentPlanActive &&
+                            !isButtonDisabled &&
+                            !isStaticButton &&
+                            'bg-gradient-to-r from-teal-500 to-cyan-600 hover:from-teal-600 hover:to-cyan-700 text-white'
                         )}
-                        // For static buttons, ensure no pointer events if truly non-interactive beyond styling
                         style={isStaticButton ? { pointerEvents: 'none' } : {}}
                       >
                         {isButtonProcessing && !isStaticButton && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
