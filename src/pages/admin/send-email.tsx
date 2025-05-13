@@ -6,9 +6,6 @@ import { Input } from '../../components/ui/input';
 import { supabase } from '../../lib/supabaseClient';
 import { PageContainer } from '../../components/ui/page-container';
 import { Typography } from '../../components/ui/typography';
-import mail from '@sendgrid/mail';
-
-mail.setApiKey(import.meta.env.VITE_SENDGRID_API_KEY);
 
 export function AdminSendEmailPage() {
   const [email, setEmail] = useState('');
@@ -23,7 +20,6 @@ export function AdminSendEmailPage() {
   useEffect(() => {
     const checkAdmin = async () => {
       try {
-        // Refresh session to ensure user data is up-to-date
         const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
         if (sessionError) {
           console.error('[AdminSendEmailPage] Session error:', sessionError.message);
@@ -50,8 +46,8 @@ export function AdminSendEmailPage() {
           return;
         }
 
-        console.log('[AdminSendEmailPage] User data:', user); // Debug user object
-        const adminCheck = user.email === 'adamkiil@outlook.com'; 
+        console.log('[AdminSendEmailPage] User data:', user);
+        const adminCheck = user.email === 'adamkiil@outlook.com' || user.email === 'adamkiil79@gmail.com';
         setIsAdmin(adminCheck);
         if (!adminCheck) {
           console.log('[AdminSendEmailPage] User is not admin:', user.email);
@@ -80,14 +76,27 @@ export function AdminSendEmailPage() {
     setStatus(null);
 
     try {
-      const msg = {
-        to: email,
-        from: 'support@mapleaurum.com',
-        subject,
-        text: message,
-        html: `<p>${message}</p>`,
-      };
-      await mail.send(msg);
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData.session?.access_token;
+
+      const response = await fetch('https://dvagrllvivewyxolrhsh.supabase.co/functions/v1/send-email', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          to: email,
+          subject,
+          message,
+        }),
+      });
+
+      const result = await response.json();
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to send email');
+      }
+
       setStatus('Email sent successfully!');
       setEmail('');
       setSubject('Test Email from MapleAurum');

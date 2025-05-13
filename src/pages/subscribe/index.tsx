@@ -13,12 +13,9 @@ import { useSubscription } from '../../contexts/subscription-context';
 import { cn } from '../../lib/utils';
 import { SubscriptionTier } from '../../lib/types';
 import { supabase } from '../../lib/supabaseClient';
-import mail from '@sendgrid/mail';
 
 const FRONTEND_URL = import.meta.env.VITE_FRONTEND_URL || 'http://localhost:3000';
 const STRIPE_PUBLISHABLE_KEY = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY;
-
-mail.setApiKey(import.meta.env.VITE_SENDGRID_API_KEY);
 
 interface PlanDisplayData {
   name: string;
@@ -119,7 +116,7 @@ export function SubscribePage() {
   const backgroundImageUrl = '/Background2.jpg';
 
   // Check if user is admin
-  const isAdmin = user?.email === 'adamkiil@outlook.com'; // Updated to reliable email
+  const isAdmin = user?.email === 'adamkiil@outlook.com' || user?.email === 'adamkiil79@gmail.com';
 
   useEffect(() => {
     if (!isAuthLoading && session) {
@@ -195,14 +192,27 @@ export function SubscribePage() {
     setEmailStatus(null);
 
     try {
-      const msg = {
-        to: testEmail,
-        from: 'support@mapleaurum.com',
-        subject: testSubject,
-        text: testMessage,
-        html: `<p>${testMessage}</p>`,
-      };
-      await mail.send(msg);
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData.session?.access_token;
+
+      const response = await fetch('https://dvagrllvivewyxolrhsh.supabase.co/functions/v1/send-email', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          to: testEmail,
+          subject: testSubject,
+          message: testMessage,
+        }),
+      });
+
+      const result = await response.json();
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to send email');
+      }
+
       setEmailStatus('Test email sent successfully!');
       setTestEmail('');
       setTestSubject('Test Email from MapleAurum');

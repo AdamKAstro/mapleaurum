@@ -12,3 +12,8 @@
   from = "/*"
   to = "/index.html"
   status = 200
+
+[[headers]]
+  for = "/assets/css/*.css"
+  [headers.values]
+    Content-Type = "text/css"
