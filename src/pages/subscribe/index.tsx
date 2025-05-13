@@ -13,14 +13,13 @@ import { useSubscription } from '../../contexts/subscription-context';
 import { cn } from '../../lib/utils';
 import { SubscriptionTier } from '../../lib/types';
 import { supabase } from '../../lib/supabaseClient';
-import { Client as SendGridClient } from '@sendgrid/mail';
+import mail from '@sendgrid/mail'; // Correct import
 
 const FRONTEND_URL = import.meta.env.VITE_FRONTEND_URL || 'http://localhost:3000';
 const STRIPE_PUBLISHABLE_KEY = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY;
 
-// Initialize SendGrid client
-const sgMail = new SendGridClient();
-sgMail.setApiKey(import.meta.env.VITE_SENDGRID_API_KEY);
+// Initialize SendGrid
+mail.setApiKey(import.meta.env.VITE_SENDGRID_API_KEY);
 
 interface PlanDisplayData {
   name: string;
@@ -121,7 +120,7 @@ export function SubscribePage() {
   const backgroundImageUrl = '/Background2.jpg';
 
   // Check if user is admin
-  const isAdmin = user?.email === 'adamkiil@outlook.com';
+  const isAdmin = user?.email === 'adamkiil79@gmail.com';
 
   useEffect(() => {
     if (!isAuthLoading && session) {
@@ -204,7 +203,7 @@ export function SubscribePage() {
         text: testMessage,
         html: `<p>${testMessage}</p>`,
       };
-      await sgMail.send(msg);
+      await mail.send(msg);
       setEmailStatus('Test email sent successfully!');
       setTestEmail('');
       setTestSubject('Test Email from MapleAurum');
