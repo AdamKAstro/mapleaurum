@@ -1,13 +1,9 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import path from 'path';
-import preload from 'vite-plugin-preload';
 
 export default defineConfig({
-  plugins: [
-    react(),
-    preload(),
-  ],
+  plugins: [react()],
   resolve: {
     alias: { '@': path.resolve(__dirname, 'src') },
   },
@@ -26,6 +22,12 @@ export default defineConfig({
           vendor: ['react', 'react-dom', 'react-router-dom'],
           lucide: ['lucide-react'],
         },
+        assetFileNames: (assetInfo) => {
+          if (assetInfo.name === 'index.css') {
+            return 'assets/css/[name][extname]';
+          }
+          return 'assets/[name][extname]';
+        },
       },
     },
   },
@@ -34,6 +36,6 @@ export default defineConfig({
   },
   css: {
     devSourcemap: true,
-    preload: true,
+    preload: false, // Disable CSS preloading
   },
 });
