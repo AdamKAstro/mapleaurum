@@ -93,7 +93,7 @@ function App() {
                   <Helmet>
                     <title>MapleAurum | Canadian Mining Analytics</title>
                     <meta name="description" content={jsonLd.description} />
-                    <link rel="preload" href="/index.css" as="style" /> {/* Preload CSS to reduce FOUC */}
+                    <link rel="preload" href="/assets/css/index.css" as="style" /> {/* Preload CSS to reduce FOUC */}
                     <script type="application/ld+json">{JSON.stringify(jsonLd)}</script>
                   </Helmet>
                   <div className="flex flex-col min-h-screen bg-navy-900">

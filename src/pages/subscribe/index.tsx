@@ -70,7 +70,7 @@ const plansData: PlanDisplayData[] = [
                   color: 'accent-yellow',
                   popular: true,
                   tier: 'premium',
-                  priceIdMonthly: 'price_1RKAGeAst4LlpL7pEjhS8E4F', // Test Price ID
+                  priceIdMonthly: 'price_1RKAGeAst4LlpL7pEjhS8E4F',
                   priceIdYearly: '',
                   buyButtonIdMonthly: '',
                   buyButtonIdYearly: '',
@@ -132,6 +132,7 @@ export function SubscribePage() {
     const { currentUserSubscriptionTier, isLoading: isSubscriptionLoading, refreshSubscriptionStatus } = useSubscription();
     const [isYearly, setIsYearly] = useState(false);
     const [isProcessing, setIsProcessing] = useState<string | null>(null);
+    const [isRedirecting, setIsRedirecting] = useState(false); // New state for redirect feedback
     const [testEmail, setTestEmail] = useState('');
     const [testSubject, setTestSubject] = useState('Test Email from MapleAurum');
     const [testMessage, setTestMessage] = useState('This is a test email sent from the MapleAurum Subscribe page.');
@@ -153,8 +154,17 @@ export function SubscribePage() {
 
     const handlePaymentForLoggedInUser = async (plan: PlanDisplayData) => {
         if (!user || !session) {
-            console.log('[SubscribePage] User not logged in. Redirecting to sign-up.');
-            navigate('/login?signup=true', { state: { from: { pathname: '/subscribe' } } });
+            console.log('[SubscribePage] User not logged in. Initiating redirect to sign-up page.');
+            setIsRedirecting(true);
+            try {
+                // Add a small delay to ensure the UI updates with the redirecting state
+                await new Promise((resolve) => setTimeout(resolve, 100));
+                navigate('/login?signup=true', { state: { from: { pathname: '/subscribe' } }, replace: true });
+                console.log('[SubscribePage] Navigation to /login?signup=true triggered.');
+            } catch (error) {
+                console.error('[SubscribePage] Navigation error:', error);
+                setIsRedirecting(false);
+            }
             return;
         }
 
@@ -283,6 +293,13 @@ export function SubscribePage() {
                 </div>
             )}
 
+            {isRedirecting && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 backdrop-blur-sm">
+                    <Loader2 className="h-12 w-12 text-white animate-spin" />
+                    <span className="ml-4 text-white text-lg">Redirecting to sign-up...</span>
+                </div>
+            )}
+
             <div
                 className="absolute inset-0 bg-cover bg-center opacity-50 -z-10"
                 style={{ backgroundImage: `url('${backgroundImageUrl}')` }}
@@ -393,7 +410,7 @@ export function SubscribePage() {
                         const isCurrentPlanActive = actualUserTier === plan.tier;
 
                         let buttonText: string;
-                        let isButtonDisabled: boolean = isLoadingOverall || isButtonProcessing;
+                        let isButtonDisabled: boolean = isLoadingOverall || isButtonProcessing || isRedirecting;
                         let actionHandler: (() => void) | null = null;
                         let showStripeBuyButtonForGuest = false;
                         let isStaticButton = false;
@@ -423,7 +440,7 @@ export function SubscribePage() {
                             } else {
                                 buttonText = `Choose ${plan.name}`;
                                 showStripeBuyButtonForGuest = true;
-                                isButtonDisabled = isLoadingOverall || !!isProcessing;
+                                isButtonDisabled = isLoadingOverall || !!isProcessing || isRedirecting;
                             }
                         }
 
