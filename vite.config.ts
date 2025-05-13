@@ -24,7 +24,7 @@ export default defineConfig({
         },
         assetFileNames: (assetInfo) => {
           if (assetInfo.name === 'index.css') {
-            return 'assets/css/[name][extname]';
+            return 'assets/css/index[extname]'; // Remove [name] to ensure consistent path
           }
           return 'assets/[name][extname]';
         },
@@ -36,6 +36,6 @@ export default defineConfig({
   },
   css: {
     devSourcemap: true,
-    preload: false, // Disable CSS preloading
+    preload: false, // Ensure preloading is disabled
   },
 });
