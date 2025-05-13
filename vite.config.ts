@@ -24,10 +24,12 @@ export default defineConfig({
         },
         assetFileNames: (assetInfo) => {
           if (assetInfo.name === 'index.css') {
-            return 'assets/css/index[extname]'; // Remove [name] to ensure consistent path
+            return 'assets/css/index[extname]'; // Force consistent CSS name
           }
-          return 'assets/[name][extname]';
+          return 'assets/[name]-[hash][extname]';
         },
+        entryFileNames: 'assets/[name]-[hash].js',
+        chunkFileNames: 'assets/[name]-[hash].js',
       },
     },
   },
@@ -36,6 +38,6 @@ export default defineConfig({
   },
   css: {
     devSourcemap: true,
-    preload: false, // Ensure preloading is disabled
+    preload: false, // Disable CSS preloading
   },
 });
