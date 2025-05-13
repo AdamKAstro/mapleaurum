@@ -17,3 +17,14 @@
   for = "/assets/css/*.css"
   [headers.values]
     Content-Type = "text/css"
+
+[[headers]]
+  for = "/index.css"
+  [headers.values]
+    Content-Type = "text/css"
+
+[[redirects]]
+  from = "/index.css"
+  to = "/assets/css/index.css"
+  status = 301
+  force = true
