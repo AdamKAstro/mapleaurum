@@ -111,7 +111,7 @@ function App() {
                           <Routes>
                             <Route path="/" element={<Hero />} />
                             <Route path="/login" element={<LoginPage />} />
-                            <Route path="/auth" element={<Navigate to="/login" replace />} />
+                            <Route path="/auth" element={<Navigate to={{ pathname: '/login', search: window.location.search }} replace />} />
                             <Route path="/forgot-password" element={<ForgotPasswordPage />} />
                             <Route path="/reset-password" element={<ResetPasswordPage />} />
                             <Route path="/subscribe" element={<SubscribePage />} />
