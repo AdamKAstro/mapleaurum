@@ -15,7 +15,10 @@ import { SubscriptionTier } from '../../lib/types';
 import { supabase } from '../../lib/supabaseClient';
 
 const FRONTEND_URL = import.meta.env.VITE_FRONTEND_URL || 'http://localhost:3000';
-const STRIPE_PUBLISHABLE_KEY = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY;
+const STRIPE_MODE = import.meta.env.VITE_STRIPE_MODE || 'live';
+const STRIPE_PUBLISHABLE_KEY = STRIPE_MODE === 'test'
+  ? import.meta.env.VITE_STRIPE_PUBLISHABLE_KEYT
+  : import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY;
 
 interface PlanDisplayData {
   name: string;
@@ -53,55 +56,78 @@ const plansData: PlanDisplayData[] = [
     buyButtonIdMonthly: '',
     buyButtonIdYearly: '',
   },
-  {
-    name: 'Pro',
-    priceMonthlyDisplay: '$40',
-    priceYearlyDisplay: '$420',
-    periodMonthly: '/month',
-    periodYearly: '/year',
-    description: 'Advanced analytics and insights',
-    features: ['Financial metrics', 'Resource estimates', 'Production data', 'Custom watchlists (coming)'],
-    icon: Star,
-    color: 'accent-teal',
-    popular: true,
-    tier: 'pro',
-    priceIdMonthly: import.meta.env.VITE_STRIPE_PRO_MONTHLY_PRICE_ID || 'price_1RMJ31Ast4LlpL7pauoVPwpm',
-    priceIdYearly: import.meta.env.VITE_STRIPE_PRO_YEARLY_PRICE_ID || 'price_1RMIBuAst4LlpL7pf1EFTmlk',
-    buyButtonIdMonthly: import.meta.env.VITE_STRIPE_PRO_MONTHLY_BUY_BUTTON_ID || 'buy_btn_1RMiAYAst4LlpL7p3EmJcw7q',
-    buyButtonIdYearly: import.meta.env.VITE_STRIPE_PRO_YEARLY_BUY_BUTTON_ID || 'buy_btn_1RMiCHAst4LlpL7psqG9PSg1',
-  },
-  {
-    name: 'Premium',
-    priceMonthlyDisplay: '$90',
-    priceYearlyDisplay: '$960',
-    periodMonthly: '/month',
-    periodYearly: '/year',
-    description: 'Complete access and premium features',
-    features: [
-      'All Pro features',
-      'Priority support',
-      'Basic company information',
-      'Public company profiles',
-      'Advanced financial metrics',
-      'Resource estimates',
-      'Production data',
-      'Custom watchlists (coming)',
-      'Real-time alerts (coming)',
-      'API access (coming)',
-      'Cost metrics',
-      'Valuation models',
-    ],
-    icon: Crown,
-    color: 'accent-yellow',
-    popular: false,
-    tier: 'premium',
-    priceIdMonthly: import.meta.env.VITE_STRIPE_PREMIUM_MONTHLY_PRICE_ID || 'price_1RMJ3pAst4LlpL7pXTO1bVli',
-    priceIdYearly: import.meta.env.VITE_STRIPE_PREMIUM_YEARLY_PRICE_ID || 'price_1RMIDFAst4LlpL7p8UInqh9P',
-    buyButtonIdMonthly: import.meta.env.VITE_STRIPE_PREMIUM_MONTHLY_BUY_BUTTON_ID || 'buy_btn_1RMi24Ast4LlpL7p77zMG5SG',
-    buyButtonIdYearly: import.meta.env.VITE_STRIPE_PREMIUM_YEARLY_BUY_BUTTON_ID || 'buy_btn_1RMiBSAst4LlpL7pAoueiu4V',
-  },
+  ...(STRIPE_MODE === 'test'
+    ? [
+        {
+          name: 'Premium Test',
+          priceMonthlyDisplay: '$90',
+          priceYearlyDisplay: '$960',
+          periodMonthly: '/month',
+          periodYearly: '/year',
+          description: 'Test plan for Premium features',
+          features: ['All features for testing'],
+          icon: Crown,
+          color: 'accent-yellow',
+          popular: true,
+          tier: 'premium',
+          priceIdMonthly: 'price_1RKAGeAst4LlpL7pEjhS8E4F', // Test Price ID
+          priceIdYearly: '', // No yearly plan for test
+          buyButtonIdMonthly: '', // No buy button for test mode
+          buyButtonIdYearly: '',
+        },
+      ]
+    : [
+        {
+          name: 'Pro',
+          priceMonthlyDisplay: '$40',
+          priceYearlyDisplay: '$420',
+          periodMonthly: '/month',
+          periodYearly: '/year',
+          description: 'Advanced analytics and insights',
+          features: ['Financial metrics', 'Resource estimates', 'Production data', 'Custom watchlists (coming)'],
+          icon: Star,
+          color: 'accent-teal',
+          popular: true,
+          tier: 'pro',
+          priceIdMonthly: import.meta.env.VITE_STRIPE_PRO_MONTHLY_PRICE_ID || 'price_1RMJ31Ast4LlpL7pauoVPwpm',
+          priceIdYearly: import.meta.env.VITE_STRIPE_PRO_YEARLY_PRICE_ID || 'price_1RMIBuAst4LlpL7pf1EFTmlk',
+          buyButtonIdMonthly: import.meta.env.VITE_STRIPE_PRO_MONTHLY_BUY_BUTTON_ID || 'buy_btn_1RMiAYAst4LlpL7p3EmJcw7q',
+          buyButtonIdYearly: import.meta.env.VITE_STRIPE_PRO_YEARLY_BUY_BUTTON_ID || 'buy_btn_1RMiCHAst4LlpL7psqG9PSg1',
+        },
+        {
+          name: 'Premium',
+          priceMonthlyDisplay: '$90',
+          priceYearlyDisplay: '$960',
+          periodMonthly: '/month',
+          periodYearly: '/year',
+          description: 'Complete access and premium features',
+          features: [
+            'All Pro features',
+            'Priority support',
+            'Basic company information',
+            'Public company profiles',
+            'Advanced financial metrics',
+            'Resource estimates',
+            'Production data',
+            'Custom watchlists (coming)',
+            'Real-time alerts (coming)',
+            'API access (coming)',
+            'Cost metrics',
+            'Valuation models',
+          ],
+          icon: Crown,
+          color: 'accent-yellow',
+          popular: false,
+          tier: 'premium',
+          priceIdMonthly: import.meta.env.VITE_STRIPE_PREMIUM_MONTHLY_PRICE_ID || 'price_1RMJ3pAst4LlpL7pXTO1bVli',
+          priceIdYearly: import.meta.env.VITE_STRIPE_PREMIUM_YEARLY_PRICE_ID || 'price_1RMIDFAst4LlpL7p8UInqh9P',
+          buyButtonIdMonthly: import.meta.env.VITE_STRIPE_PREMIUM_MONTHLY_BUY_BUTTON_ID || 'buy_btn_1RMi24Ast4LlpL7p77zMG5SG',
+          buyButtonIdYearly: import.meta.env.VITE_STRIPE_PREMIUM_YEARLY_BUY_BUTTON_ID || 'buy_btn_1RMiBSAst4LlpL7pAoueiu4V',
+        },
+      ]),
 ];
 
+// Rest of the code remains the same as in the previous response
 export function SubscribePage() {
   const { session, user, isLoading: isAuthLoading } = useAuth();
   const { currentUserSubscriptionTier, isLoading: isSubscriptionLoading, refreshSubscriptionStatus } = useSubscription();
@@ -280,7 +306,7 @@ export function SubscribePage() {
                   type="email"
                   value={testEmail}
                   onChange={(e) => setTestEmail(e.target.value)}
-                  placeholder="e.g., sendgridtesting@gmail.com"
+                  placeholder="e.g., adamkiil@yahoo.com"
                   required
                   disabled={isEmailSending}
                   className="bg-navy-600/80 border-navy-500 text-white"
