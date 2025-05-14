@@ -316,7 +316,7 @@ const ScoringPage: React.FC = () => {
     // Log changes from filter context for debugging purposes
     useEffect(() => {
         console.log(`[ScoringPage][ContextWatch] Global filteredCompanyIds updated. Count: ${filteredCompanyIds?.length ?? 'N/A'}. Sample IDs: ${filteredCompanyIds?.slice(0,3).join(', ')}`);
-        const B2GOLD_COMPANY_ID_EXAMPLE = 25; // Replace with B2Gold's actual company_id
+        const B2GOLD_COMPANY_ID_EXAMPLE = 68; // Replace with B2Gold's actual company_id
         if (filteredCompanyIds?.includes(B2GOLD_COMPANY_ID_EXAMPLE)) {
              console.log(`[ScoringPage][ContextWatch][B2GoldCheck] B2Gold (ID ${B2GOLD_COMPANY_ID_EXAMPLE}) IS IN current filteredCompanyIds from context.`);
         } else if (filteredCompanyIds) { // Check if filteredCompanyIds is not null/undefined before warning
