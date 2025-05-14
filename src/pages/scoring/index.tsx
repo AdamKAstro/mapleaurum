@@ -16,7 +16,7 @@ import { Lock, Info, ChevronsUp, ChevronsDown, AlertTriangle, ListChecks, Micros
 // Using relative paths as confirmed by your working scatter chart examples and git ls-files
 import { PageContainer } from '../../components/ui/page-container';
 import { Slider } from '../../components/ui/slider';
-import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card'; // Removed CardFooter, CardDescription as they were not used
+import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../../components/ui/tooltip';
 import { CompanyNameBadge } from '../../components/company-name-badge';
@@ -68,7 +68,7 @@ const ScoringPage: React.FC = () => {
     const [selectedDebugCompany, setSelectedDebugCompany] = useState<CompanyScore | null>(null);
     const [selectedStatusFilter, setSelectedStatusFilter] = useState<string>('all');
 
-    const B2GOLD_ID = 68;
+    const B2GOLD_ID = 68; // B2Gold Corp company_id
 
     const metricsForScoring = useMemo(() => {
         if (!currentUserTier) {
@@ -282,15 +282,31 @@ const ScoringPage: React.FC = () => {
     
     const pageDescription = overallLoading ? 'Loading data...' : contextError ? `Context Error: ${contextError}` : `${effectiveTotalCount ?? 0} companies available from global filters.`;
 
+    // Function to extract summary from debug logs
+    const getDebugSummary = (logs: string[]): string => {
+        const summaryLines = logs.filter(log => 
+            log.includes("--- Company Score Summary ---") ||
+            log.includes("Total Weighted Score Sum:") ||
+            log.includes("Final Calculated Score:")
+        );
+        if (summaryLines.length > 0) {
+            // Find the summary block and return it
+            const startIndex = logs.findIndex(log => log.includes("--- Company Score Summary ---"));
+            if (startIndex !== -1) {
+                return logs.slice(startIndex).join('\n');
+            }
+        }
+        return "Summary not found in logs.";
+    };
+
+
     return (
         <PageContainer title="Company Scoring Engine" description={pageDescription} className="relative isolate flex flex-col flex-grow">
             <div className="absolute inset-0 bg-cover bg-center bg-no-repeat bg-fixed -z-10 opacity-[0.03]" style={{ backgroundImage: "url('/Background2.jpg')" }} aria-hidden="true" />
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 flex-grow min-h-0"> {/* Main grid for layout */}
-                
-                {/* Column 1: Metric Weights & Settings */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 flex-grow min-h-0">
                 <div className="lg:col-span-1 space-y-6 flex flex-col min-h-0">
                     <Card className="bg-navy-800 border border-navy-700 shadow-lg overflow-hidden flex flex-col flex-grow">
-                        <CardHeader className="p-4 sm:p-6 flex-shrink-0"> {/* Header doesn't scroll */}
+                        <CardHeader className="p-4 sm:p-6 flex-shrink-0">
                             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
                                 <div>
                                     <CardTitle className="text-base sm:text-lg font-medium text-white">Metric Weights & Settings</CardTitle>
@@ -336,11 +352,11 @@ const ScoringPage: React.FC = () => {
                                 </div>
                             </div>
                         </CardHeader>
-                        <CardContent className="flex-grow overflow-hidden p-0"> {/* Prepare for ScrollArea */}
-                           <ScrollArea className="h-full w-full"> {/* ScrollArea takes available space */}
-                                <div className="space-y-3 p-4 sm:p-6"> {/* Inner div for padding */}
+                        <CardContent className="flex-grow overflow-hidden p-0">
+                           <ScrollArea className="h-full w-full">
+                                <div className="space-y-3 p-4 sm:p-6">
                                     {loadingRanges && <div className="text-center text-gray-400 p-3"><LoadingIndicator message="Loading Metric Ranges..." /></div>}
-                                    {!loadingRanges && Object.keys(groupedMetricsForUI).length === 0 && <p className="text-gray-400 p-3 text-center text-sm">No metric categories configured.</p>}
+                                    {!loadingRanges && Object.keys(groupedMetricsForUI).length === 0 && <p className="text-gray-400 p-3 text-center text-sm">No metric categories.</p>}
                                     {!loadingRanges && Object.entries(groupedMetricsForUI).map(([categoryKey, categoryMetricsInGroup]) => {
                                         const accessibleMetricsToDisplay = categoryMetricsInGroup.filter(metric => isFeatureAccessible(metric.tier, currentUserTier || 'free'));
                                         if (accessibleMetricsToDisplay.length === 0) return null;
@@ -356,7 +372,7 @@ const ScoringPage: React.FC = () => {
                                                                 {metric.higherIsBetter ? (<span className="text-green-400/90">↑</span>) : (<span className="text-red-400/90">↓</span>)}
                                                                 <TooltipProvider delayDuration={100}><Tooltip>
                                                                     <TooltipTrigger asChild><button type="button" aria-label={`Info for ${metric.label}`} className="cursor-help text-gray-400 hover:text-cyan-300"><Info size={12} /></button></TooltipTrigger>
-                                                                    <TooltipContent side="top" align="start" className="max-w-xs text-xs z-50 bg-navy-600 border-navy-500 shadow-lg px-2 py-1 text-gray-200"><p>{metric.description || 'No description available.'}</p></TooltipContent>
+                                                                    <TooltipContent side="top" align="start" className="max-w-xs text-xs z-50 bg-navy-600 border-navy-500 shadow-lg px-2 py-1 text-gray-200"><p>{metric.description || 'No description.'}</p></TooltipContent>
                                                                 </Tooltip></TooltipProvider>
                                                             </label>
                                                             <div className="relative pl-0.5 pr-0.5"><Slider value={[weightValue]} onValueChange={(value) => handleWeightChange(metric.db_column, value)} max={100} step={1} aria-label={`${metric.label} weight`} disabled={loadingRanges || overallLoading} /></div>
@@ -372,10 +388,9 @@ const ScoringPage: React.FC = () => {
                     </Card>
                 </div>
 
-                {/* Column 2: Ranked Companies */}
                 <div className="lg:col-span-2 space-y-4 flex flex-col min-h-0">
                     <Card className="bg-navy-800 border border-navy-700 shadow-lg flex flex-col flex-grow">
-                        <CardHeader className="p-4 sm:p-6 border-b border-navy-700 flex-shrink-0"> {/* Header doesn't scroll */}
+                        <CardHeader className="p-4 sm:p-6 border-b border-navy-700 flex-shrink-0">
                             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
                                 <CardTitle className="text-base sm:text-lg font-medium text-white">Ranked Companies</CardTitle>
                                 <Select value={selectedStatusFilter} onValueChange={setSelectedStatusFilter} disabled={overallLoading || (calculatedScores.length === 0 && !Object.values(metricWeights).some(w => w > 0))}>
@@ -387,12 +402,12 @@ const ScoringPage: React.FC = () => {
                                 </Select>
                             </div>
                         </CardHeader>
-                        <CardContent className="px-1.5 sm:px-3 md:px-4 pb-4 pt-3 flex-grow overflow-hidden"> {/* Prepare for ScrollArea */}
-                            <ScrollArea className="h-full w-full"> {/* ScrollArea takes available space */}
+                        <CardContent className="px-1.5 sm:px-3 md:px-4 pb-4 pt-3 flex-grow overflow-hidden">
+                            <ScrollArea className="h-full w-full">
                                 {(overallLoading && filteredScores.length === 0) ? (
                                     <div className="text-center text-gray-400 py-8 px-2 flex flex-col items-center justify-center h-full"><LoadingIndicator message={getEmptyStateMessage()} /></div>
                                 ) : filteredScores.length > 0 ? (
-                                    <ol className="space-y-0.5 text-gray-200 pr-1"> {/* Added pr-1 to prevent content hitting scrollbar */}
+                                    <ol className="space-y-0.5 text-gray-200 pr-1">
                                         {filteredScores.map((item, index) => (
                                             <React.Fragment key={item.companyId}>
                                                 <li className="flex justify-between items-center text-xs sm:text-sm border-b border-navy-700/30 py-2 px-1 rounded-sm hover:bg-navy-700/30 transition-colors duration-150 group">
@@ -410,16 +425,14 @@ const ScoringPage: React.FC = () => {
                                                 </li>
                                                 {showDebugForCompanyId === item.companyId && selectedDebugCompany && selectedDebugCompany.companyId === item.companyId && (
                                                     <li className="bg-navy-900/30 p-2 rounded-b-md text-xs border-x border-b border-navy-700/50">
-                                                        <h4 className="text-xs font-semibold mb-1 text-sky-300 flex items-center"><ListChecks size={14} className="mr-1.5"/>Debug Info: {selectedDebugCompany.companyName}</h4>
-                                                        {/* Scrollable div for debug content using CSS overflow (no nested ScrollArea component needed here) */}
-                                                        <div className="max-h-[200px] w-full overflow-y-auto pr-2 bg-navy-900 p-1.5 rounded-sm text-[0.7rem] leading-relaxed" style={{ scrollbarWidth: 'thin', scrollbarColor: '#6b7280 transparent' }}> {/* Basic themed scrollbar for this div */}
-                                                            <h5 className="text-[0.75rem] font-semibold mt-1 mb-0.5 text-sky-400 sticky top-0 bg-navy-900 py-0.5 z-10">Calculation Trace:</h5>
-                                                            <pre className="whitespace-pre-wrap break-all font-mono mb-2">
-                                                                {selectedDebugCompany.debugLogs.join('\n')}
+                                                        <div className="max-h-[250px] w-full overflow-y-auto pr-2 bg-navy-900 p-1.5 rounded-sm text-[0.7rem] leading-relaxed" style={{ scrollbarWidth: 'thin', scrollbarColor: 'var(--tw-color-navy-500, #47595D) transparent' }}> {/* Basic themed scrollbar for this div */}
+                                                            <h5 className="text-[0.75rem] font-semibold mt-1 mb-0.5 text-sky-400 sticky top-0 bg-navy-900 py-0.5 z-10">Calculation Summary:</h5>
+                                                            <pre className="whitespace-pre-wrap break-all font-mono mb-2 text-gray-300">
+                                                                {getDebugSummary(selectedDebugCompany.debugLogs)}
                                                             </pre>
                                                             <h5 className="text-[0.75rem] font-semibold mt-1 mb-0.5 text-sky-400 sticky top-0 bg-navy-900 py-0.5 z-10">Active Metric Breakdown:</h5>
                                                             {Object.entries(selectedDebugCompany.breakdown)
-                                                                .filter(([, comp]) => comp.isAccessible && comp.weight > 0)
+                                                                .filter(([, comp]) => comp.isAccessible && comp.weight > 0 && comp.isIncludedInScore) // Show only metrics that contributed
                                                                 .map(([metricDbCol, compDetails]) => (
                                                                 <div key={metricDbCol} className="mb-1 p-1 border-t border-navy-700/40">
                                                                     <p><strong>{compDetails.metricLabel}</strong> (Wt: {compDetails.weight}%)</p>
@@ -427,7 +440,7 @@ const ScoringPage: React.FC = () => {
                                                                     {compDetails.imputedValue !== undefined && compDetails.imputedValue !== null && <p className="ml-1">Imputed ({compDetails.imputationMethodApplied || imputationMode}): <span className="text-orange-300">{compDetails.imputedValue?.toFixed(2)}</span></p>}
                                                                     <p className="ml-1">For Norm: <span className="text-purple-400">{isValidNumber(compDetails.valueUsedForNormalization) ? compDetails.valueUsedForNormalization.toFixed(2) : String(compDetails.valueUsedForNormalization)}</span></p>
                                                                     <p className="ml-1">Norm (<span className="text-purple-300">{compDetails.normalizationMethod || 'N/A'}</span>): <span className="text-cyan-300">{compDetails.normalizedValue?.toFixed(3) ?? 'N/A'}</span></p>
-                                                                    <p className="ml-1">Weighted: <span className="text-green-300">{compDetails.weightedScore?.toFixed(3) ?? 'N/A'}</span> (Included: {compDetails.isIncludedInScore ? 'Yes' : <span className="text-red-400">No</span>})</p>
+                                                                    <p className="ml-1">Weighted: <span className="text-green-300">{compDetails.weightedScore?.toFixed(3) ?? 'N/A'}</span></p>
                                                                     {compDetails.error && <p className="ml-1 text-red-400">Note: {compDetails.error}</p>}
                                                                 </div>
                                                             ))}
@@ -448,7 +461,6 @@ const ScoringPage: React.FC = () => {
                     </Card>
                 </div>
             </div>
-            {/* Debug Modal is removed, inline display is used instead */}
         </PageContainer>
     );
 };
