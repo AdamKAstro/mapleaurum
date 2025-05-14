@@ -1,239 +1,303 @@
-//  supabase/functions/stripe-webhook/index.ts
+// supabase/functions/stripe-webhook/index.ts
 import 'jsr:@supabase/functions-js/edge-runtime.d.ts';
-import Stripe from 'npm:stripe@17.7.0';
-import { createClient } from 'npm:@supabase/supabase-js@2.49.1';
-import { Client as SendGridClient } from 'npm:@sendgrid/mail@8.1.3'; // Add SendGrid
-// --- Environment Variable Validation & Client Initialization ---
-const stripeAPISecret = Deno.env.get('STRIPE_SECRET_KEY');
-const stripeWebhookSigningSecret = Deno.env.get('STRIPE_WEBHOOK_SECRET');
+import Stripe from 'npm:stripe@17.7.0'; // Ensure this version is compatible with your needs
+import { createClient, SupabaseClient, PostgrestError } from 'npm:@supabase/supabase-js@2.49.1'; // Or your current version
+import { Client as SendGridClient, MailDataRequired } from 'npm:@sendgrid/mail@8.1.3';
+
+// --- Environment Configuration & Validation ---
+const STRIPE_MODE_ENV = Deno.env.get('STRIPE_MODE')?.toLowerCase() || 'live'; // Default to 'live' for safety
+const logPrefix = `[stripe-webhook][${STRIPE_MODE_ENV.toUpperCase()}]`;
+
+console.log(`${logPrefix} INFO: Function initializing in '${STRIPE_MODE_ENV}' mode.`);
+
+const LIVE_STRIPE_SECRET_KEY = Deno.env.get('STRIPE_SECRET_KEY');
+const TEST_STRIPE_SECRET_KEY = Deno.env.get('STRIPE_SECRET_KEYT'); // User's variable name for test key
+
+const LIVE_WEBHOOK_SECRET = Deno.env.get('STRIPE_WEBHOOK_SECRET');
+const TEST_WEBHOOK_SECRET = Deno.env.get('STRIPE_WEBHOOK_SECRET_TEST'); // User needs to ensure this is set
+
+const STRIPE_API_KEY_TO_USE = STRIPE_MODE_ENV === 'test' ? TEST_STRIPE_SECRET_KEY : LIVE_STRIPE_SECRET_KEY;
+const WEBHOOK_SIGNING_SECRET_TO_USE = STRIPE_MODE_ENV === 'test' ? TEST_WEBHOOK_SECRET : LIVE_WEBHOOK_SECRET;
+
 const supabaseAPIUrl = Deno.env.get('SUPABASE_URL');
 const supabaseServiceRoleAPIKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
-const sendgridApiKey = Deno.env.get('SENDGRID_API_KEY'); // Add SendGrid key
-if (!stripeAPISecret) throw new Error('FATAL: Missing STRIPE_SECRET_KEY environment variable.');
-if (!stripeWebhookSigningSecret) throw new Error('FATAL: Missing STRIPE_WEBHOOK_SECRET environment variable.');
-if (!supabaseAPIUrl) throw new Error('FATAL: Missing SUPABASE_URL environment variable.');
-if (!supabaseServiceRoleAPIKey) throw new Error('FATAL: Missing SUPABASE_SERVICE_ROLE_KEY environment variable.');
-if (!sendgridApiKey) throw new Error('FATAL: Missing SENDGRID_API_KEY environment variable.');
-const stripe = new Stripe(stripeAPISecret, {
-  apiVersion: '2024-06-20',
+const sendgridApiKey = Deno.env.get('SENDGRID_API_KEY');
+
+if (!STRIPE_API_KEY_TO_USE) {
+    throw new Error(`${logPrefix} FATAL: Stripe API secret key for mode '${STRIPE_MODE_ENV}' is MISSING. Ensure STRIPE_SECRET_KEY (for live) or STRIPE_SECRET_KEYT (for test) is configured.`);
+}
+if (!WEBHOOK_SIGNING_SECRET_TO_USE) {
+    throw new Error(`${logPrefix} FATAL: Stripe webhook signing secret for mode '${STRIPE_MODE_ENV}' is MISSING. Ensure STRIPE_WEBHOOK_SECRET (for live) or STRIPE_WEBHOOK_SECRET_TEST (for test) is set.`);
+}
+if (!supabaseAPIUrl) throw new Error(`${logPrefix} FATAL: Missing SUPABASE_URL env variable.`);
+if (!supabaseServiceRoleAPIKey) throw new Error(`${logPrefix} FATAL: Missing SUPABASE_SERVICE_ROLE_KEY env variable.`);
+
+if (!sendgridApiKey) {
+    console.warn(`${logPrefix} WARN: SENDGRID_API_KEY is not set. Welcome/Notification emails will not be sent.`);
+}
+
+const stripe = new Stripe(STRIPE_API_KEY_TO_USE, {
+  apiVersion: '2024-06-20', 
   typescript: true,
-  appInfo: {
-    name: 'MapleAurum/stripe-webhook',
-    version: '1.0.3'
-  }
+  appInfo: { name: 'MapleAurum/stripe-webhook', version: '1.3.1' } // Version bump for this fix
 });
-const supabaseAdmin = createClient(supabaseAPIUrl, supabaseServiceRoleAPIKey);
+
+const supabaseAdmin: SupabaseClient = createClient(supabaseAPIUrl, supabaseServiceRoleAPIKey);
+
 const sgMail = new SendGridClient();
-sgMail.setApiKey(sendgridApiKey);
-function createStandardResponse(body, status = 200) {
+if (sendgridApiKey) {
+  sgMail.setApiKey(sendgridApiKey);
+}
+
+// --- Standardized JSON Response ---
+function createStandardResponse(body: object | null, status = 200): Response {
   return new Response(status === 204 ? null : JSON.stringify(body), {
     status,
-    headers: {
-      'Content-Type': 'application/json'
-    }
+    headers: { 'Content-Type': 'application/json' }
   });
 }
-async function getSupabaseUserIdFromStripeCustomerId(stripeCustomerId) {
-  if (!stripeCustomerId) return null;
-  const { data: customerMapping, error } = await supabaseAdmin.from('stripe_customers').select('user_id').eq('customer_id', stripeCustomerId).maybeSingle();
-  if (error) {
-    console.error(`[Webhook] ERROR: DB error fetching user_id for Stripe customer ${stripeCustomerId}:`, error.message);
+
+// --- Helper: Get Supabase User ID from Stripe Customer ID ---
+async function getSupabaseUserIdFromStripeCustomerId(stripeCustomerId: string): Promise<string | null> {
+  if (!stripeCustomerId) {
+    console.warn(`${logPrefix} WARN: getSupabaseUserIdFromStripeCustomerId called with null/empty stripeCustomerId.`);
     return null;
   }
-  return customerMapping?.user_id || null;
+  console.log(`${logPrefix} INFO: Looking up Supabase user ID for Stripe Customer ID: ${stripeCustomerId}`);
+  const { data: customerMapping, error } = await supabaseAdmin
+    .from('stripe_customers')
+    .select('user_id')
+    .eq('customer_id', stripeCustomerId)
+    .maybeSingle();
+
+  if (error) {
+    console.error(`${logPrefix} ERROR: Database error fetching user_id for Stripe customer ${stripeCustomerId}:`, error.message);
+    return null;
+  }
+  if (customerMapping?.user_id) {
+    console.info(`${logPrefix} INFO: Found Supabase user ID '${customerMapping.user_id}' for Stripe Customer ID '${stripeCustomerId}'.`);
+    return customerMapping.user_id;
+  } else {
+    console.info(`${logPrefix} INFO: No Supabase user ID found in stripe_customers for Stripe Customer ID '${stripeCustomerId}'.`);
+    return null;
+  }
 }
-async function syncSubscriptionDataToSupabase(stripeCustomerId, stripeSubscriptionId, knownSupabaseUserId) {
-  console.info(`[Webhook] Syncing: StripeSubID: ${stripeSubscriptionId}, StripeCustID: ${stripeCustomerId}, KnownSupabaseUserID: ${knownSupabaseUserId}`);
+
+// --- Core Logic: Synchronize Stripe Subscription Data to Supabase DB ---
+async function syncSubscriptionDataToSupabase(
+    stripeCustomerIdFromEvent: string, 
+    stripeSubscriptionId: string, 
+    knownSupabaseUserIdFromMeta?: string | null 
+) {
+  console.info(`${logPrefix} SYNC_SUB: Initiating for StripeSubID: ${stripeSubscriptionId}, EventStripeCustID: ${stripeCustomerIdFromEvent}, KnownSupabaseUserID: ${knownSupabaseUserIdFromMeta || 'N/A'}`);
+  
   try {
     const subscription = await stripe.subscriptions.retrieve(stripeSubscriptionId, {
-      expand: [
-        'items.data.price.product',
-        'customer'
-      ]
+      expand: ['items.data.price.product', 'customer']
     });
-    if (!subscription || !subscription.customer?.id) {
-      console.warn(`[Webhook] WARN: Stripe Subscription ${stripeSubscriptionId} or its customer not found/valid during sync.`);
-      const { error: updateError } = await supabaseAdmin.from('stripe_subscriptions').update({
-        subscription_status: 'unknown_stripe_error',
-        updated_at: new Date().toISOString()
-      }).eq('subscription_id', stripeSubscriptionId);
-      if (updateError) console.error(`[Webhook] ERROR: Failed to mark sub ${stripeSubscriptionId} as unknown:`, updateError.message);
+
+    if (!subscription || !subscription.customer || typeof subscription.customer === 'string') {
+      console.warn(`${logPrefix} WARN SYNC_SUB: Stripe Subscription ${stripeSubscriptionId} or its full customer object not found/valid during sync.`);
+      await supabaseAdmin.from('stripe_subscriptions')
+        .update({ status: 'sync_error_stripe_data_missing', updated_at: new Date().toISOString() })
+        .eq('subscription_id', stripeSubscriptionId);
       return;
     }
-    const liveStripeCustomerId = subscription.customer.id;
-    if (liveStripeCustomerId !== stripeCustomerId) {
-      console.warn(`[Webhook] WARN: Mismatch! Event customer ID ${stripeCustomerId} vs Subscription's actual customer ID ${liveStripeCustomerId}. Using actual: ${liveStripeCustomerId}`);
+
+    const liveStripeCustomer = subscription.customer as Stripe.Customer;
+    const liveStripeCustomerId = liveStripeCustomer.id;
+    const stripeCustomerEmail = liveStripeCustomer.email;
+
+    if (liveStripeCustomerId !== stripeCustomerIdFromEvent) {
+      console.warn(`${logPrefix} WARN SYNC_SUB: Customer ID mismatch! Event had '${stripeCustomerIdFromEvent}', subscription object has '${liveStripeCustomerId}'. Using actual ID from subscription: '${liveStripeCustomerId}'.`);
     }
-    let supabaseUserIdToUse = knownSupabaseUserId;
+
+    let supabaseUserIdToUse = knownSupabaseUserIdFromMeta;
     if (!supabaseUserIdToUse) {
-      console.info(`[Webhook] INFO: knownSupabaseUserId not provided for sub ${subscription.id}. Attempting lookup via Stripe Customer ID ${liveStripeCustomerId}.`);
+      console.info(`${logPrefix} INFO SYNC_SUB: Known Supabase User ID missing from metadata. Looking up via Stripe Customer ID '${liveStripeCustomerId}'.`);
       supabaseUserIdToUse = await getSupabaseUserIdFromStripeCustomerId(liveStripeCustomerId);
-      if (supabaseUserIdToUse) {
-        console.info(`[Webhook] INFO: Found Supabase User ID ${supabaseUserIdToUse} from stripe_customers table for Stripe Customer ${liveStripeCustomerId}.`);
-      } else {
-        console.warn(`[Webhook] WARN: Could not find Supabase User ID for Stripe Customer ${liveStripeCustomerId} in stripe_customers table.`);
-      }
     }
-    if (supabaseUserIdToUse && subscription.customer.email) {
-      const { error: customerUpsertError } = await supabaseAdmin.from('stripe_customers').upsert({
-        user_id: supabaseUserIdToUse,
-        customer_id: liveStripeCustomerId,
-        updated_at: new Date().toISOString()
-      }, {
-        onConflict: 'user_id'
-      });
-      if (customerUpsertError) {
-        console.error(`[Webhook] ERROR: Failed to upsert stripe_customer mapping for user ${supabaseUserIdToUse}, Stripe customer ${liveStripeCustomerId}:`, customerUpsertError.message);
-      } else {
-        console.info(`[Webhook] INFO: Ensured stripe_customer mapping for user ${supabaseUserIdToUse} and Stripe customer ${liveStripeCustomerId}.`);
-      }
+    
+    if (!supabaseUserIdToUse && stripeCustomerEmail) {
+        console.info(`${logPrefix} INFO SYNC_SUB: Still no Supabase User ID. Attempting lookup by Stripe email '${stripeCustomerEmail}'.`);
+        const { data: userByEmail, error: emailLookupError } = await supabaseAdmin
+            .from('users') // Assuming your auth users table is 'users'. Adjust if 'auth.users'.
+            .select('id')
+            .eq('email', stripeCustomerEmail)
+            .single(); 
+        if (emailLookupError && emailLookupError.code !== 'PGRST116') {
+            console.error(`${logPrefix} ERROR SYNC_SUB: DB error looking up user by email '${stripeCustomerEmail}':`, emailLookupError.message);
+        } else if (userByEmail) {
+            supabaseUserIdToUse = userByEmail.id;
+            console.info(`${logPrefix} INFO SYNC_SUB: Found Supabase User ID '${supabaseUserIdToUse}' by matching email '${stripeCustomerEmail}'.`);
+        } else {
+            console.warn(`${logPrefix} WARN SYNC_SUB: No Supabase user found for email '${stripeCustomerEmail}'. Subscription may not be linked yet.`);
+        }
     }
+
+    if (supabaseUserIdToUse && liveStripeCustomerId) {
+      const { error: customerUpsertError } = await supabaseAdmin.from('stripe_customers').upsert(
+        { user_id: supabaseUserIdToUse, customer_id: liveStripeCustomerId, email: stripeCustomerEmail, updated_at: new Date().toISOString() },
+        { onConflict: 'user_id' } 
+      ).select();
+      if (customerUpsertError) console.error(`${logPrefix} ERROR SYNC_SUB: Upserting stripe_customers for user ${supabaseUserIdToUse}:`, customerUpsertError.message);
+      else console.info(`${logPrefix} INFO SYNC_SUB: Ensured stripe_customers mapping for user ${supabaseUserIdToUse}.`);
+    }
+    
     const priceData = subscription.items.data[0]?.price;
-    const subscriptionDataForDB = {
-      customer_id: liveStripeCustomerId,
+    const planNameFromMetadata = subscription.metadata?.planName || 
+                               (priceData?.product && typeof priceData.product === 'object' ? (priceData.product as Stripe.Product).name : 'Unknown Plan');
+
+    const subscriptionDataForDatabase: any = {
       subscription_id: subscription.id,
+      customer_id: liveStripeCustomerId, 
+      user_id: supabaseUserIdToUse || null, 
       price_id: priceData?.id || null,
-      subscription_status: subscription.status,
+      status: subscription.status, // Your database column name for subscription status
       current_period_start: new Date(subscription.current_period_start * 1000).toISOString(),
       current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
       cancel_at_period_end: subscription.cancel_at_period_end,
-      updated_at: new Date().toISOString()
+      canceled_at: subscription.canceled_at ? new Date(subscription.canceled_at * 1000).toISOString() : null,
+      ended_at: subscription.ended_at ? new Date(subscription.ended_at * 1000).toISOString() : null,
+      metadata: { 
+          planName: planNameFromMetadata,
+          stripePriceId: priceData?.id,
+          ...(subscription.metadata || {}) 
+      },
+      updated_at: new Date().toISOString(),
     };
-    if (supabaseUserIdToUse) {
-      subscriptionDataForDB.user_id = supabaseUserIdToUse;
+    
+    // ***** THIS IS THE CORRECTED LOG LINE *****
+    if (!subscriptionDataForDatabase.user_id) {
+        console.warn(`${logPrefix} WARN SYNC_SUB: The 'user_id' field in the database record for subscription ${subscription.id} is null. It will not be linked to a Supabase user directly in the stripe_subscriptions table.`);
     }
-    console.info(`[Webhook] INFO: Upserting subscription ${subscription.id} into DB with data:`, JSON.stringify(subscriptionDataForDB));
-    const { error: subUpsertError } = await supabaseAdmin.from('stripe_subscriptions').upsert(subscriptionDataForDB, {
-      onConflict: 'subscription_id'
-    });
+
+    console.info(`${logPrefix} INFO SYNC_SUB: Upserting subscription ${subscription.id} into DB. User: ${supabaseUserIdToUse || 'Not Linked'}.`);
+    const { error: subUpsertError } = await supabaseAdmin.from('stripe_subscriptions')
+      .upsert(subscriptionDataForDatabase, { onConflict: 'subscription_id' });
+    
     if (subUpsertError) {
-      console.error(`[Webhook] ERROR: Failed to upsert Stripe subscription ${subscription.id} (Supabase User: ${supabaseUserIdToUse || 'N/A'}) into DB:`, subUpsertError.message);
-      throw new Error(`Database error syncing subscription: ${subUpsertError.message}`);
+      console.error(`${logPrefix} ERROR SYNC_SUB: Failed to upsert Stripe subscription ${subscription.id} (User: ${supabaseUserIdToUse || 'N/A'}) into DB:`, subUpsertError.message, subUpsertError.details);
+      throw new Error(`Database error syncing subscription ${subscription.id}: ${subUpsertError.message}`);
     }
-    console.info(`[Webhook] INFO: Successfully synced Stripe subscription ${subscription.id} (Supabase User: ${supabaseUserIdToUse || 'N/A'}) to Supabase.`);
-  } catch (error) {
-    console.error(`[Webhook] ERROR: Overall error in syncSubscriptionDataToSupabase for subscription ${stripeSubscriptionId}:`, error.message, error.stack);
+    console.info(`${logPrefix} INFO SYNC_SUB: Successfully synced Stripe subscription ${subscription.id} (User: ${supabaseUserIdToUse || 'Not Linked'}).`);
+
+  } catch (error: any) {
+    console.error(`${logPrefix} ERROR SYNC_SUB: Top-level error in syncSubscriptionDataToSupabase for sub ${stripeSubscriptionId}:`, error.message, error.stack);
   }
 }
-async function handleWebhookEvent(event) {
-  const eventData = event.data.object;
-  switch(event.type){
+
+// --- Main Webhook Event Handler Logic ---
+async function handleWebhookEvent(event: Stripe.Event) {
+  const eventObject = event.data.object as any; 
+  const supabaseUserIdFromMetadata = 
+    eventObject.metadata?.supabaseUserId || 
+    (eventObject.subscription_details?.metadata?.supabaseUserId) || 
+    (eventObject.subscription_data?.metadata?.supabaseUserId) ||   
+    null;
+
+  console.log(`${logPrefix} Handling event type: ${event.type}, Event ID: ${event.id}, Supabase User from Meta: ${supabaseUserIdFromMetadata || 'N/A'}`);
+
+  switch (event.type) {
     case 'checkout.session.completed':
-      const session = eventData;
-      console.info(`[Webhook] INFO: Handling 'checkout.session.completed' for session ID: ${session.id}`);
+      const session = eventObject as Stripe.Checkout.Session;
+      console.info(`${logPrefix} Event: 'checkout.session.completed' for Session ID: ${session.id}, Mode: ${session.mode}`);
       if (session.mode === 'subscription' && session.subscription && session.customer) {
-        const supabaseUserIdFromMetadata = session.metadata?.supabaseUserId || null;
         const stripeCustomerId = typeof session.customer === 'string' ? session.customer : session.customer.id;
         const stripeSubscriptionId = typeof session.subscription === 'string' ? session.subscription : session.subscription.id;
-        if (!stripeSubscriptionId) {
-          console.error(`[Webhook] ERROR: 'checkout.session.completed' for session ${session.id} is missing subscription ID.`);
-          return;
-        }
-        console.info(`[Webhook] INFO: Checkout for subscription. Supabase User from Metadata: ${supabaseUserIdFromMetadata}, Stripe Customer: ${stripeCustomerId}, Stripe Subscription: ${stripeSubscriptionId}`);
-        // Send success email
+        
+        if (!stripeSubscriptionId) { console.error(`${logPrefix} ERROR: 'checkout.session.completed' for session ${session.id} missing critical subscription ID.`); return; }
+        
         const customerEmail = session.customer_details?.email;
-        if (customerEmail) {
+        const planName = session.metadata?.planName || 
+                         (session.subscription_details?.metadata as Stripe.SubscriptionUpdateParams.Metadata)?.planName || 
+                         'your selected plan';
+
+        if (customerEmail && sendgridApiKey) {
           try {
-            const msg = {
+            const msg: MailDataRequired = {
               to: customerEmail,
-              from: 'support@mapleaurum.com',
-              subject: 'Welcome to MapleAurum!',
-              text: `Thank you for subscribing to MapleAurum's ${session.metadata?.planName || 'plan'}! Your account is now active. Visit https://mapleaurum.com/companies to start exploring.`,
-              html: `<p>Thank you for subscribing to MapleAurum's <strong>${session.metadata?.planName || 'plan'}</strong>!</p><p>Your account is now active. Visit <a href="https://mapleaurum.com/companies">mapleaurum.com/companies</a> to start exploring.</p>`
+              from: { email: 'support@mapleaurum.com', name: 'MapleAurum Support' },
+              subject: `Welcome to MapleAurum - Your ${planName} Plan is Active!`,
+              html: `<p>Thank you for subscribing to MapleAurum's <strong>${planName}</strong>!</p><p>Your account is now active, and your premium features should be available shortly after you log in or refresh your session.</p><p>Start exploring: <a href="https://mapleaurum.com/companies">mapleaurum.com/companies</a></p><p>If you're new and need to complete your account setup (e.g., set a password if you haven't already), please visit our <a href="https://mapleaurum.com/login">login/signup page</a>. Your subscription is linked to this email address: ${customerEmail}.</p><p>Questions? Contact us at <a href="mailto:support@mapleaurum.com">support@mapleaurum.com</a>.</p>`
             };
             await sgMail.send(msg);
-            console.info(`[Webhook] INFO: Success email sent to ${customerEmail} for session ${session.id}`);
-          } catch (emailError) {
-            console.error(`[Webhook] ERROR: Failed to send success email to ${customerEmail}:`, emailError.message);
+            console.info(`${logPrefix} INFO: Welcome email sent to ${customerEmail} for session ${session.id}.`);
+          } catch (emailError: any) {
+            console.error(`${logPrefix} ERROR: Failed to send welcome email to ${customerEmail}. Code: ${emailError.code}, Message: ${emailError.message}`, emailError.response?.body?.errors);
           }
-        } else {
-          console.warn(`[Webhook] WARN: No customer email found in session ${session.id}. Skipping email.`);
-        }
-        // Sync subscription
+        } else if (!customerEmail) console.warn(`${logPrefix} WARN: No customer email in session ${session.id}. Cannot send welcome email.`);
+        
         await syncSubscriptionDataToSupabase(stripeCustomerId, stripeSubscriptionId, supabaseUserIdFromMetadata);
-      } else {
-        console.info(`[Webhook] INFO: Ignoring 'checkout.session.completed' event (mode: ${session.mode}, subscription: ${session.subscription ? 'present' : 'absent'}).`);
-      }
+      } else console.info(`${logPrefix} INFO: Ignoring 'checkout.session.completed' (mode: ${session.mode}, subscription field: ${session.subscription ? 'present' : 'absent'}).`);
       break;
+
     case 'customer.subscription.created':
     case 'customer.subscription.updated':
-    case 'customer.subscription.deleted':
-      const subscription = eventData;
-      console.info(`[Webhook] INFO: Handling '${event.type}' for subscription ID: ${subscription.id}`);
-      if (!subscription.customer) {
-        console.error(`[Webhook] ERROR: Event '${event.type}' for subscription ${subscription.id} is missing customer ID.`);
-        return;
+    case 'customer.subscription.deleted': 
+    case 'invoice.payment_succeeded':     
+    case 'invoice.payment_failed':        
+      let subIdToSync: string | null = null;
+      let custIdForSync: string | null = null;
+
+      if ('subscription' in eventObject && eventObject.subscription) { 
+        subIdToSync = typeof eventObject.subscription === 'string' ? eventObject.subscription : eventObject.subscription.id;
+        custIdForSync = typeof eventObject.customer === 'string' ? eventObject.customer : eventObject.customer?.id;
+      } else if ('id' in eventObject && 'customer' in eventObject) { 
+        subIdToSync = eventObject.id;
+        custIdForSync = typeof eventObject.customer === 'string' ? eventObject.customer : eventObject.customer.id;
       }
-      const stripeCustomerIdForSubEvent = typeof subscription.customer === 'string' ? subscription.customer : subscription.customer.id;
-      await syncSubscriptionDataToSupabase(stripeCustomerIdForSubEvent, subscription.id);
+
+      if (subIdToSync && custIdForSync) {
+        console.info(`${logPrefix} INFO: Handling '${event.type}' for Sub ID: ${subIdToSync}, Cust ID: ${custIdForSync}.`);
+        await syncSubscriptionDataToSupabase(custIdForSync, subIdToSync, supabaseUserIdFromMetadata);
+      } else console.warn(`${logPrefix} WARN: Could not extract relevant subscription/customer ID from event type '${event.type}'.`);
       break;
-    case 'invoice.payment_succeeded':
-      const invoice = eventData;
-      console.info(`[Webhook] INFO: Handling 'invoice.payment_succeeded' for invoice ID: ${invoice.id}, Subscription ID: ${invoice.subscription}`);
-      if (invoice.subscription && invoice.customer) {
-        const subId = typeof invoice.subscription === 'string' ? invoice.subscription : invoice.subscription.id;
-        const custId = typeof invoice.customer === 'string' ? invoice.customer : invoice.customer.id;
-        await syncSubscriptionDataToSupabase(custId, subId);
-      }
-      break;
-    case 'invoice.payment_failed':
-      const failedInvoice = eventData;
-      console.warn(`[Webhook] WARN: Handling 'invoice.payment_failed' for invoice ID: ${failedInvoice.id}, Subscription ID: ${failedInvoice.subscription}`);
-      if (failedInvoice.subscription && failedInvoice.customer) {
-        const subId = typeof failedInvoice.subscription === 'string' ? failedInvoice.subscription : invoice.subscription.id;
-        const custId = typeof failedInvoice.customer === 'string' ? invoice.customer : invoice.customer.id;
-        await syncSubscriptionDataToSupabase(custId, subId);
-      }
-      break;
+
     default:
-      console.info(`[Webhook] INFO: Unhandled Stripe event type: ${event.type}`);
+      console.info(`${logPrefix} INFO: Received unhandled Stripe event type: ${event.type}`);
   }
 }
-Deno.serve(async (req)=>{
-  console.log(`[stripe-webhook] INFO: Received webhook request: ${req.method} ${req.url}`);
+
+// --- Deno Serve Entry Point ---
+Deno.serve(async (req: Request) => {
+  console.log(`${logPrefix} INFO: Webhook request received: ${req.method} ${req.url}`);
+  
   if (req.method === 'OPTIONS') {
-    return new Response(null, {
-      status: 204,
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'POST, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type, Stripe-Signature'
+    return new Response(null, { 
+      status: 204, 
+      headers: { 
+        'Access-Control-Allow-Origin': '*', 
+        'Access-Control-Allow-Methods': 'POST, OPTIONS', 
+        'Access-Control-Allow-Headers': 'Content-Type, Stripe-Signature, Authorization'
       }
     });
   }
-  if (req.method !== 'POST') {
-    return createStandardResponse({
-      error: 'Method Not Allowed. Webhook expects POST.'
-    }, 405);
-  }
+
+  if (req.method !== 'POST') return createStandardResponse({ error: 'Method Not Allowed.' }, 405);
+
   const signature = req.headers.get('Stripe-Signature');
-  if (!signature) {
-    console.error('[stripe-webhook] ERROR: Missing Stripe-Signature header.');
-    return createStandardResponse({
-      error: 'Missing Stripe signature. Ensure webhook is configured correctly.'
-    }, 400);
-  }
+  if (!signature) return createStandardResponse({ error: 'Missing Stripe-Signature.' }, 400);
+  
   const requestBodyText = await req.text();
-  let stripeEvent;
+  let stripeEvent: Stripe.Event;
   try {
-    stripeEvent = await stripe.webhooks.constructEventAsync(requestBodyText, signature, stripeWebhookSigningSecret);
-    console.info(`[stripe-webhook] INFO: Stripe event (ID: ${stripeEvent.id}, Type: ${stripeEvent.type}) successfully constructed and verified.`);
-  } catch (err) {
-    console.error('[stripe-webhook] ERROR: Stripe webhook signature verification failed:', err.message);
-    return createStandardResponse({
-      error: `Webhook signature verification failed: ${err.message}`
-    }, 400);
+    stripeEvent = await stripe.webhooks.constructEventAsync(
+        requestBodyText, 
+        signature, 
+        WEBHOOK_SIGNING_SECRET_TO_USE! 
+    );
+    console.info(`${logPrefix} INFO: Event (ID: ${stripeEvent.id}, Type: ${stripeEvent.type}) verified using ${STRIPE_MODE_ENV} secret.`);
+  } catch (err: any) {
+    console.error(`${logPrefix} ERROR: Webhook signature verification failed:`, err.message);
+    return createStandardResponse({ error: `Webhook error (signature verification): ${err.message}` }, 400);
   }
+
   try {
-    EdgeRuntime.waitUntil(handleWebhookEvent(stripeEvent));
-    return createStandardResponse({
-      received: true,
-      eventId: stripeEvent.id
-    }, 200);
-  } catch (processingError) {
-    console.error('[stripe-webhook] ERROR: Error scheduling webhook event processing:', processingError.message);
-    return createStandardResponse({
-      error: 'Internal error during event scheduling.'
-    }, 500);
+    EdgeRuntime.waitUntil(handleWebhookEvent(stripeEvent)); 
+    return createStandardResponse({ received: true, eventId: stripeEvent.id, message: "Event received, processing scheduled." }, 200);
+  } catch (e: any) {
+    console.error(`${logPrefix} ERROR: Scheduling event processing:`, e.message);
+    return createStandardResponse({ error: 'Error scheduling event processing.' }, 500);
   }
 });
