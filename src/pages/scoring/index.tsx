@@ -313,8 +313,8 @@ const ScoringPage: React.FC = () => {
                                     <p className="text-xs sm:text-sm text-gray-400 pt-1">Adjust weights (0-100%). Higher score is better.</p>
                                 </div>
                                 <div className="flex items-center gap-2 flex-shrink-0 mt-2 sm:mt-0">
-                                    <Button onClick={handleSetAllMax} variant="secondary" size="xs" title="Set all weights to 100%" disabled={metricsForScoring.length === 0 || overallLoading}><ChevronsUp className="h-3.5 w-3.5 mr-1" />Max</Button>
-                                    <Button onClick={handleSetAllMin} variant="secondary" size="xs" title="Set all weights to 0%" disabled={metricsForScoring.length === 0 || overallLoading}><ChevronsDown className="h-3.5 w-3.5 mr-1" />Min</Button>
+                                    <Button onClick={handleSetAllMax} variant="secondary" size="sm" title="Set all weights to 100%" disabled={metricsForScoring.length === 0 || overallLoading}><ChevronsUp className="h-3.5 w-3.5 mr-1" />Max</Button>
+                                    <Button onClick={handleSetAllMin} variant="secondary" size="sm" title="Set all weights to 0%" disabled={metricsForScoring.length === 0 || overallLoading}><ChevronsDown className="h-3.5 w-3.5 mr-1" />Min</Button>
                                 </div>
                             </div>
                             <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
