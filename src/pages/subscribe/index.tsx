@@ -56,7 +56,7 @@ const plansData: PlanDisplayData[] = [
                 description: 'Full-featured test plan for Premium access.',
                 features: ['All Pro features (Test)', 'Priority support (Test)', 'Advanced financial metrics (Test)', 'Valuation models (Test)'],
                 icon: Crown, color: 'accent-yellow', popular: true, tier: 'premium',
-                priceIdMonthly: import.meta.env.VITE_STRIPE_PREMIUM_MONTHLY_PRICE_ID || 'price_1RKAGeAst4LlpL7pEjhS8E4F', // Price ID from user's log for Premium Test
+                priceIdMonthly: import.meta.env.VITE_STRIPE_PREMIUM_MONTHLY_PRICE_ID || 'price_1ROT6GAst4LlpL7pRASKFwYA', // Price ID from user's log for Premium Test
                 priceIdYearly: import.meta.env.VITE_STRIPE_PREMIUM_YEARLY_PRICE_ID_TEST || '', // Use specific test yearly price ID
                 buyButtonIdMonthly: import.meta.env.VITE_STRIPE_PREMIUM_MONTHLY_BUY_BUTTON_ID_TEST || '',
                 buyButtonIdYearly: import.meta.env.VITE_STRIPE_PREMIUM_YEARLY_BUY_BUTTON_ID_TEST || '',
