@@ -1,3 +1,4 @@
+//src/components/ui/typography.tsx
 import React from 'react';
 import { cn } from '../../lib/utils';
 
@@ -29,7 +30,7 @@ export function Typography({
   return (
     <Component
       className={cn(
-        'text-gray-900',
+        'text-gray-100',
         {
           'text-4xl md:text-5xl lg:text-6xl leading-tight': variant === 'h1',
           'text-3xl md:text-4xl lg:text-5xl leading-tight': variant === 'h2',

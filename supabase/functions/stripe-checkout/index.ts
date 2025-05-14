@@ -28,7 +28,7 @@ const STRIPE_KEY_TO_USE = STRIPE_MODE_ENV === 'test' ? TEST_STRIPE_SECRET_KEY : 
 
 const supabaseUrl = Deno.env.get('SUPABASE_URL');
 const supabaseServiceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
-const PRODUCTION_FRONTEND_URL = Deno.env.get('LIVE_FRONTEND_URL'); // Your https://mapleaurum.com
+const PRODUCTION_FRONTEND_URL = Deno.env.get('LIVE_FRONTEND_URL'); 
 const DEV_FRONTEND_URL_PRIMARY = Deno.env.get('FRONTEND_URL_DEVELOPMENT') || 'http://localhost:3000';
 const DEV_FRONTEND_URL_ALTERNATE = 'http://localhost:5173';
 
@@ -43,14 +43,14 @@ const supabaseAdmin: SupabaseClient = createClient(supabaseUrl, supabaseServiceR
 const stripe = new Stripe(STRIPE_KEY_TO_USE, {
   apiVersion: '2024-06-20',
   typescript: true,
-  appInfo: { name: 'MapleAurum/stripe-checkout', version: '1.3.3' },
+  appInfo: { name: 'MapleAurum/stripe-checkout', version: '1.3.4' }, // Version bump for this fix
 });
 
 function createJsonResponse(req: Request, body: object | null, status = 200, extraHeaders = {}): Response {
     const requestOrigin = req.headers.get('Origin');
     let accessControlAllowOrigin = '';
     const isNetlifyPreview = requestOrigin && requestOrigin.includes('.netlify.app');
-    const allowedLocalhostPorts = [DEV_FRONTEND_URL_PRIMARY, DEV_FRONTEND_URL_ALTERNATE];
+    const allowedLocalhostPorts = [DEV_FRONTEND_URL_PRIMARY, DEV_FRONTEND_URL_ALTERNATE].filter(Boolean);
 
     if (STRIPE_MODE_ENV === 'live') {
         if (requestOrigin && requestOrigin === PRODUCTION_FRONTEND_URL) {
@@ -61,19 +61,19 @@ function createJsonResponse(req: Request, body: object | null, status = 200, ext
                  console.warn(`${logPrefix} CORS WARN (LIVE): Req from '${requestOrigin}' != allowed '${PRODUCTION_FRONTEND_URL}'. ACAOrigin: '${accessControlAllowOrigin}'.`);
             }
         }
-    } else { // TEST mode
+    } else { 
         if (requestOrigin) {
-            if (requestOrigin === PRODUCTION_FRONTEND_URL || // Allow testing prod URL against test Stripe
+            if (requestOrigin === PRODUCTION_FRONTEND_URL || 
                 allowedLocalhostPorts.includes(requestOrigin) || 
-                requestOrigin.startsWith('http://localhost:') || // General localhost
+                requestOrigin.startsWith('http://localhost:') || 
                 isNetlifyPreview) {
                 accessControlAllowOrigin = requestOrigin; 
             } else {
-                accessControlAllowOrigin = PRODUCTION_FRONTEND_URL || DEV_FRONTEND_URL_PRIMARY; // Fallback
-                console.warn(`${logPrefix} CORS WARN (TEST): Req from '${requestOrigin}' not in allow list. ACAOrigin: '${accessControlAllowOrigin}'.`);
+                accessControlAllowOrigin = PRODUCTION_FRONTEND_URL || DEV_FRONTEND_URL_PRIMARY; 
+                console.warn(`${logPrefix} CORS WARN (TEST): Req from '${requestOrigin}' not in allow list for test. ACAOrigin: '${accessControlAllowOrigin}'.`);
             }
-        } else { // No origin header (e.g. direct tool call)
-             accessControlAllowOrigin = PRODUCTION_FRONTEND_URL || DEV_FRONTEND_URL_PRIMARY; // Default for test if no origin
+        } else { 
+             accessControlAllowOrigin = PRODUCTION_FRONTEND_URL || DEV_FRONTEND_URL_PRIMARY; 
         }
     }
     
@@ -111,8 +111,8 @@ Deno.serve(async (req: Request) => {
     try {
         const headersObject: Record<string, string> = {};
         req.headers.forEach((value, key) => { headersObject[key] = value; });
-        console.log(`${logPrefix} INFO: Incoming Request Headers:`, JSON.stringify(headersObject).substring(0, 1000));
-    } catch (e) { console.warn(`${logPrefix} WARN: Could not stringify all request headers:`, e.message); }
+        console.log(`${logPrefix} INFO: Incoming Request Headers (first 1000 chars):`, JSON.stringify(headersObject).substring(0, 1000));
+    } catch (e) { console.warn(`${logPrefix} WARN: Could not stringify all request headers:`, (e as Error).message); }
 
     if (req.method === 'OPTIONS') {
         return createJsonResponse(req, {}, 204);
@@ -122,19 +122,19 @@ Deno.serve(async (req: Request) => {
     }
 
     let requestBody: CheckoutRequestBody;
-    let rawBodyForLogging = "[Reading body failed or was empty]";
+    let rawBodyForLogging = "[Reading body failed or was empty initially]";
     try {
-        const rawBody = await req.text(); // Attempt to read the raw body
-        rawBodyForLogging = rawBody;     // Store it for logging regardless of emptiness
-
+        const rawBody = await req.text();
+        rawBodyForLogging = rawBody; 
         if (!rawBody || rawBody.trim() === '') {
-            console.error(`${logPrefix} ERROR: Request body is effectively empty. Raw body received: "${rawBody}"`);
+            console.error(`${logPrefix} ERROR: Request body is effectively empty. Raw body: "${rawBody}"`);
             return createJsonResponse(req, { error: 'Invalid request: Request body is empty or contains only whitespace.' }, 400);
         }
-        requestBody = JSON.parse(rawBody); // Now parse
-        console.info(`${logPrefix} INFO: Successfully parsed request body. Plan: ${requestBody.plan_name || 'N/A'}, Price ID: ${requestBody.price_id}`);
+        console.log(`${logPrefix} INFO: Received raw body (first 500 chars): "${rawBody.substring(0,500)}"`);
+        requestBody = JSON.parse(rawBody); 
+        console.info(`${logPrefix} INFO: Successfully parsed body. Plan: ${requestBody.plan_name || 'N/A'}, Price ID: ${requestBody.price_id}`);
     } catch (parseError: any) {
-        console.error(`${logPrefix} ERROR: Failed to parse JSON request body. Raw body snippet: "${rawBodyForLogging.substring(0, 500)}". Error:`, parseError.message);
+        console.error(`${logPrefix} ERROR: Failed to parse JSON. Raw body: "${rawBodyForLogging.substring(0, 500)}". Error:`, parseError.message);
         return createJsonResponse(req, { error: 'Invalid request: Could not parse JSON body.', details: parseError.message }, 400);
     }
     
@@ -164,31 +164,43 @@ Deno.serve(async (req: Request) => {
         let derivedInterval = clientInterval;
         try {
             fetchedPrice = await stripe.prices.retrieve(price_id, { expand: ['product'] });
-            if (!fetchedPrice?.active) throw new Error(`Price ID ${price_id} inactive/invalid.`);
+            if (!fetchedPrice?.active) throw new Error(`Price ID ${price_id} inactive/invalid in Stripe.`);
+            if (fetchedPrice.type !== 'recurring' && mode === 'subscription') {
+                throw new Error(`Price ID ${price_id} is for a '${fetchedPrice.type}' payment, but checkout mode is 'subscription'. A recurring price is required.`);
+            }
             if (fetchedPrice.product && typeof fetchedPrice.product === 'object' && 'name' in fetchedPrice.product) {
                 derivedPlanName = clientPlanName || (fetchedPrice.product as Stripe.Product).name || derivedPlanName;
             }
             derivedInterval = clientInterval || fetchedPrice.recurring?.interval as ('month' | 'year' | undefined);
+            console.info(`${logPrefix} Stripe Price ${price_id} validated. Type: ${fetchedPrice.type}, Product: "${derivedPlanName}", Interval: ${derivedInterval}.`);
         } catch (priceErr: any) {
-            return createJsonResponse(req, { error: `Invalid product price. Details: ${priceErr.message}` }, 400);
+            console.error(`${logPrefix} ERROR: Problem with Stripe Price ID ${price_id}:`, priceErr.message);
+            return createJsonResponse(req, { error: `Invalid product price setup. Details: ${priceErr.message}` }, 400);
         }
-        console.info(`${logPrefix} Price ${price_id} validated. Product: "${derivedPlanName}", Interval: ${derivedInterval}.`);
 
         let stripeCustomerId: string | undefined;
         const { data: custMap, error: dbCustErr } = await supabaseAdmin.from('stripe_customers').select('customer_id').eq('user_id', user.id).maybeSingle();
-        if (dbCustErr) throw new Error(`DB error fetching customer: ${dbCustErr.message}`);
+        if (dbCustErr) { console.error(`${logPrefix} ERROR: DB error fetching customer map:`, dbCustErr.message); throw new Error(`DB error: ${dbCustErr.message}`); }
+        
         if (custMap?.customer_id) {
             try {
                 const stripeCust = await stripe.customers.retrieve(custMap.customer_id);
                 if (stripeCust && !(stripeCust as Stripe.DeletedCustomer).deleted) stripeCustomerId = stripeCust.id;
-            } catch (e) { console.warn(`${logPrefix} WARN: Retrieving Stripe customer ${custMap.customer_id} failed. New one will be created.`); }
+            } catch (e) { console.warn(`${logPrefix} WARN: Retrieving Stripe customer ${custMap.customer_id} failed. New one created if needed. Error: ${(e as Error).message}`); }
         }
         if (!stripeCustomerId) {
+            console.info(`${logPrefix} Creating new Stripe customer for user ${user.id}.`);
             const customer = await stripe.customers.create({ email: user.email!, name: user.user_metadata?.full_name || user.email!, metadata: { supabaseUserId: user.id } });
             stripeCustomerId = customer.id;
-            await supabaseAdmin.from('stripe_customers').upsert({ user_id: user.id, customer_id: stripeCustomerId, email: user.email, updated_at: new Date().toISOString() }, { onConflict: 'user_id' })
-              .then(({error: upsertErr}) => { if(upsertErr) console.error(`${logPrefix} ERROR: Upserting customer map:`, upsertErr.message )});
+            // **** MODIFIED: Removed email from this upsert ****
+            const { error: upsertError } = await supabaseAdmin.from('stripe_customers').upsert(
+                { user_id: user.id, customer_id: stripeCustomerId, updated_at: new Date().toISOString() },
+                { onConflict: 'user_id' }
+            ).select(); // Add select() to potentially get more error details if needed
+            if (upsertError) console.error(`${logPrefix} ERROR: Upserting stripe_customers mapping:`, upsertError.message, upsertError.details);
+            else console.info(`${logPrefix} INFO: Stripe customer mapping created/updated for user ${user.id} with Stripe customer ${stripeCustomerId}.`);
         }
+        console.info(`${logPrefix} Using Stripe Customer ID: ${stripeCustomerId} for user ${user.id}.`);
         
         const metadataForStripe = { supabaseUserId: user.id, priceId: price_id, planName: derivedPlanName, interval: derivedInterval || '' };
         const checkoutSessionParams: Stripe.Checkout.SessionCreateParams = {
@@ -198,11 +210,11 @@ Deno.serve(async (req: Request) => {
         if (mode === 'subscription') checkoutSessionParams.subscription_data = { metadata: metadataForStripe };
 
         const stripeCheckoutSession = await stripe.checkout.sessions.create(checkoutSessionParams);
-        console.info(`${logPrefix} Stripe Checkout session ${stripeCheckoutSession.id} created.`);
+        console.info(`${logPrefix} Stripe Checkout session ${stripeCheckoutSession.id} created successfully.`);
         return createJsonResponse(req, { sessionId: stripeCheckoutSession.id, url: stripeCheckoutSession.url } as CheckoutSuccessResponse, 200);
 
     } catch (error: any) {
-        console.error(`${logPrefix} ERROR: Unhandled in main logic:`, error.message, error.stack);
-        return createJsonResponse(req, { error: 'Internal Server Error.', details: error.message }, 500);
+        console.error(`${logPrefix} ERROR: Unhandled exception in main logic:`, error.message, error.stack);
+        return createJsonResponse(req, { error: 'Internal Server Error. Please try again or contact support.', details: error.message }, 500);
     }
 });
