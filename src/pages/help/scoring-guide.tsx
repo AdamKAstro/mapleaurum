@@ -1,10 +1,11 @@
 // src/pages/help/scoring-guide.tsx
 import React from 'react';
-// Assuming paths based on your project structure and previous successful builds for these components
+// Assuming paths based on your project structure
 import { PageContainer } from '../../components/ui/page-container';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
 import { Button } from '../../components/ui/button';
 import { Calculator, SlidersHorizontal, ListOrdered, Info, ChevronsDown, ChevronsUp, Microscope, Settings, HelpCircle, Package } from 'lucide-react';
+import { cn } from '../../lib/utils'; // Import cn if not already
 
 export function HelpScoringPage() {
     const backgroundImageUrl = "/Background2.jpg"; // Ensure this path is correct from your public folder
@@ -12,7 +13,8 @@ export function HelpScoringPage() {
     // Component to nicely display formulas
     const FormulaDisplay: React.FC<{ children: React.ReactNode; className?: string }> = ({ children, className }) => (
         <div className={cn("my-3 p-3 bg-navy-900/60 border border-navy-700 rounded-md text-sm shadow-inner", className)}>
-            <code className="text-cyan-300 whitespace-pre-wrap font-mono text-[0.8rem] sm:text-xs md:text-sm leading-relaxed">{children}</code>
+            {/* Using a pre tag for better formatting of multi-line formulas if needed, and ensuring consistent font */}
+            <pre className="text-cyan-300 whitespace-pre-wrap font-mono text-[0.8rem] sm:text-xs md:text-sm leading-relaxed m-0 p-0 bg-transparent">{children}</pre>
         </div>
     );
 
@@ -23,7 +25,6 @@ export function HelpScoringPage() {
         >
             <div className="relative isolate">
                 <div className="absolute inset-0 bg-cover bg-center bg-no-repeat bg-fixed -z-10 opacity-[0.03]" style={{ backgroundImage: `url('${backgroundImageUrl}')` }} aria-hidden="true" />
-                {/* Applied prose classes for better text styling. Adjusted max-width for wider content area. */}
                 <div className="relative z-0 space-y-8 text-gray-300 max-w-4xl mx-auto prose prose-sm sm:prose-base prose-invert prose-headings:text-cyan-400 prose-headings:font-semibold prose-a:text-accent-teal hover:prose-a:text-accent-yellow prose-strong:text-surface-white prose-code:text-accent-pink prose-code:before:content-none prose-code:after:content-none prose-code:bg-navy-700/50 prose-code:rounded prose-code:px-1 prose-code:py-0.5 prose-code:font-mono prose-code:text-xs">
                     
                     <Card className="bg-navy-800/70 border border-navy-700 backdrop-blur-sm shadow-xl">
@@ -50,7 +51,7 @@ export function HelpScoringPage() {
                                 <li><strong>Weight Sliders (0-100%):</strong> For each accessible metric, a slider allows you to assign its importance. A weight of 0% means the metric is ignored. A weight of 100% gives it full consideration relative to other weighted metrics. Metrics are grouped by category (e.g., Financials, Valuation, Production).</li>
                                 <li><strong>Tier Accessibility:</strong> Only metrics included in your current subscription tier will be available for weighting. Others will be indicated as locked or not shown.</li>
                                 <li><strong>Metric Info:</strong> Hover over the <Info size={14} className="inline align-baseline text-gray-400 mx-0.5"/> icon next to a metric's name for a detailed description of what it represents.</li>
-                                <li><strong>Quick Adjustments:</strong> Use the <Button variant="outline" size="sm" className="pointer-events-none mx-0.5 text-xs px-2 py-1 h-auto"><ChevronsUp className="h-3.5 w-3.5 mr-1"/>Max</Button> and <Button variant="outline" size="sm" className="pointer-events-none mx-0.5 text-xs px-2 py-1 h-auto"><ChevronsDown className="h-3.5 w-3.5 mr-1"/>Min</Button> buttons (changed size to "sm" for better appearance) at the top of the card to quickly set all accessible sliders to 100% or 0%, respectively.</li>
+                                <li><strong>Quick Adjustments:</strong> Use the <Button variant="outline" size="sm" className="pointer-events-none mx-0.5 text-xs px-2 py-1 h-auto"><ChevronsUp className="h-3.5 w-3.5 mr-1"/>Max</Button> and <Button variant="outline" size="sm" className="pointer-events-none mx-0.5 text-xs px-2 py-1 h-auto"><ChevronsDown className="h-3.5 w-3.5 mr-1"/>Min</Button> buttons (using "sm" size for better appearance) at the top of the card to quickly set all accessible sliders to 100% or 0%, respectively.</li>
                             </ul>
                             
                             <div className="mt-6 pt-4 border-t border-navy-700/50">
@@ -82,7 +83,6 @@ export function HelpScoringPage() {
                             
                             <div>
                                 <h4 className="text-md font-semibold text-accent-teal">Global Min-Max</h4>
-                                {/* Corrected JSX for math expressions */}
                                 <p>Scales values based on the absolute minimum ({'$X_{min\\_global}$'}) and maximum ({'$X_{max\\_global}$'}) observed for that metric across the entire database (from the "Metric Full Ranges").</p>
                                 <FormulaDisplay>
                                     If higher is better: {'$X_{norm} = (X - X_{min\\_global}) / (X_{max\\_global} - X_{min\\_global})$'}
@@ -110,7 +110,7 @@ export function HelpScoringPage() {
                                     Let {'$N_{valid}$'} be the number of companies with valid data for the metric.
                                     {'\n'}Assign ranks {'$R$'} from 1 (best) to {'$N_{valid}$'} (worst), handling ties appropriately.
                                     {'\n'}If higher raw value is better, higher ranks get higher scores. If lower is better, lower ranks get higher scores.
-                                    {'\n'}Normalized Score: {'$X_{norm} = (Rank_{adjusted\_for\_direction} - 1) / (N_{valid} - 1)$'} (for {'$N_{valid} > 1$'})
+                                    {'\n'}Normalized Score: {'$X_{norm} = (Rank_{adjusted\\_for\\_direction} - 1) / (N_{valid} - 1)$'} (for {'$N_{valid} > 1$'})
                                     {'\n'}If {'$N_{valid} = 1$'}, {'$X_{norm} = 0.5$'}
                                     {'\n'}This means {'$X_{norm}$'} is the proportion of companies that perform worse (or equally, depending on tie-breaking).
                                 </FormulaDisplay>
@@ -145,12 +145,12 @@ export function HelpScoringPage() {
                                 <h4 className="text-md font-semibold text-accent-teal">Treat as Zero/Worst (Default)</h4>
                                 <p className="text-xs">If a company's value for a metric is unusable, its normalized score for that metric component effectively becomes 0 (if higher raw values are better) or 1 (if lower raw values are better, which after the standard inversion for "lower is better" metrics, also results in a 0 towards the "goodness" scale). This means it gets the worst possible normalized score for that metric's contribution.</p>
                                 <p className="text-xs"><strong className="text-gray-200">Pros:</strong> Simple to understand and implement. Clearly penalizes missing or invalid data.</p>
-                                <p className="text-xs"><strong className="text-gray-200">Cons:</strong> Can be overly punitive, especially if data is missing randomly (Missing Not At Random - MNAR vs. Missing Completely At Random - MCAR) and not indicative of poor underlying performance for that specific metric. It does not leverage any information from the dataset to make an informed guess.</p>
+                                <p className="text-xs"><strong className="text-gray-200">Cons:</strong> Can be overly punitive, especially if data is missing for reasons unrelated to poor performance. It does not leverage any information from the dataset to make an informed guess.</p>
                             </div>
                             <div>
                                 <h4 className="text-md font-semibold text-accent-teal">Dataset Mean</h4>
                                 <p className="text-xs">Replaces unusable values with the arithmetic mean ({'$\mu_{dataset}$'}) of all valid, finite values for that specific metric, calculated from the <strong className="text-accent-yellow">currently filtered set of companies</strong>. This imputed mean is then passed to the normalization step.</p>
-                                <p className="text-xs"><strong className="text-gray-200">Pros:</strong> Allows the company to still be scored on the metric using a central tendency value from its peers. Preserves the dataset mean for that metric if imputed values are drawn from it.</p>
+                                <p className="text-xs"><strong className="text-gray-200">Pros:</strong> Allows the company to still be scored on the metric using a central tendency value from its peers. Preserves the dataset mean for that metric if only a few values are imputed.</p>
                                 <p className="text-xs"><strong className="text-gray-200">Cons:</strong> The mean is sensitive to outliers within the dataset; if the data for a metric is skewed, the mean might not be a typical or representative value. Imputation reduces the true variance of the metric and can artificially strengthen correlations.</p>
                             </div>
                              <div>
@@ -176,17 +176,18 @@ export function HelpScoringPage() {
                                     <ul className="list-disc pl-5 text-xs mt-1 space-y-1">
                                         <li>The raw metric value is retrieved from the database.</li>
                                         <li>Invalid or missing values are handled according to the selected <strong className="text-accent-yellow">Imputation Mode</strong> to derive a usable numeric value.</li>
-                                        <li>This (potentially imputed) numeric value is then normalized to a 0-1 scale using the selected <strong className="text-accent-yellow">Normalization Mode</strong>. This step also accounts for whether higher or lower raw values are considered "better" for that specific metric (e.g., a low AISC is good, so it gets a high normalized score). Let this be the $X_{norm\_i}$ for metric $i$.</li>
+                                        {/* Corrected line 179 */}
+                                        <li>This (potentially imputed) numeric value is then normalized to a 0-1 scale using the selected <strong className="text-accent-yellow">Normalization Mode</strong>. This step also accounts for whether higher or lower raw values are considered "better" for that specific metric (e.g., a low AISC is good, so it gets a high normalized score). Let this be the {'$X_{norm\\_i}$'} for metric {'$i$'}.</li>
                                     </ul>
                                 </li>
-                                <li><strong>Weighted Score Calculation:</strong> The Normalized Value ({'$X_{norm\_i}$'}) for each processed metric is multiplied by its assigned User Weight ({'$W_i$'} - which is a percentage from 0 to 100, used as a raw number in calculation e.g., 50 for 50%). This produces a $WeightedNormalizedScore_i = X_{norm\_i} \times W_i$.</li>
-                                <li><strong>Summation:</strong> All individual $WeightedNormalizedScore_i$ values for a company are summed up: $\sum (X_{norm\_i} \times W_i)$.</li>
-                                <li><strong>Total Effective Weight:</strong> The sum of all User Weights ({'$W_i$'}) that were actually applied (i.e., for metrics that were accessible, had data, and were successfully processed) is calculated: $\sum W_i$.</li>
-                                <li><strong>Final Score Calculation:</strong> The company's final score is determined by the weighted average, typically scaled for display:
+                                <li>The <strong className="text-accent-yellow">Normalized Value</strong> ({'$X_{norm\\_i}$'}) for each processed metric is multiplied by its assigned <strong className="text-accent-yellow">User Weight</strong> ({'$W_i$'} - which is a percentage from 0 to 100, used as a raw number in calculation e.g., 50 for 50%). This gives a {'$WeightedNormalizedScore_i = X_{norm\\_i} \\times W_i$'} .</li>
+                                <li>All individual {'$WeightedNormalizedScore_i$'} values for a company are summed up: {'$\sum (X_{norm\\_i} \\times W_i)$'}.</li>
+                                <li>The sum of all <strong className="text-accent-yellow">User Weights</strong> ({'$W_i$'}) that were actually applied (i.e., for metrics that had data and were scored) is calculated: {'$\sum W_i$'}.</li>
+                                <li>The company's final score is calculated as:
                                     <FormulaDisplay>
-                                        Final Score = $(\sum (X_{norm\_i} \times W_i) / \sum W_i) \times 1000$
+                                        Final Score = ({'$\sum (X_{norm\\_i} \\times W_i) / \sum W_i$'}) {'$\times 1000$'}
                                     </FormulaDisplay>
-                                    If the total effective weight ({'$\sum W_i$'}) is zero (e.g., no metrics were weighted, or all weighted metrics had unusable data and 'zero_worst' imputation was not effective in providing a scorable value), the final score will be N/A. The score is designed to generally fall between 0 and 1000.
+                                    If {'$\sum W_i$'} is zero (e.g., no metrics were weighted, or all weighted metrics had unusable data and 'zero_worst' imputation was not effective in providing a scorable value), the final score will be N/A. The score is designed to generally fall between 0 and 1000.
                                 </li>
                             </ol>
                             <p className="mt-3">An "N/A" score indicates the company could not be definitively scored, usually due to insufficient data for the metrics that were assigned significant weight, or if all weighted metrics resulted in non-finite values even after imputation.</p>
@@ -211,7 +212,7 @@ export function HelpScoringPage() {
                                         <li>Final Calculated Score: The score value displayed in the ranked list.</li>
                                     </ul>
                                 </li>
-                                <li><strong>Active Metric Breakdown:</strong> This section details each metric that was <strong className="text-accent-yellow">accessible to your tier, had a user-assigned weight greater than 0, and was successfully included in the score calculation</strong>. For each of these contributing metrics, you'll see:
+                                <li><strong>Active Metric Breakdown:</strong> This section details each metric that was <strong className="text-accent-yellow">accessible to your tier, had a user-assigned weight &gt; 0, and was successfully included in the score calculation</strong>. For each of these contributing metrics, you'll see:
                                     <ul className="list-circle pl-5 text-xs mt-1 space-y-0.5">
                                         <li>Metric Name & its assigned User Weight (%).</li>
                                         <li>Raw Value: The original value as fetched from the database for that company.</li>
