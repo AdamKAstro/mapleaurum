@@ -4,7 +4,8 @@ import { twMerge } from "tailwind-merge";
 
 // Debug logging configuration
 const DEBUG = process.env.NODE_ENV === 'development';
-const logDebug = (message: string, data?: any) => {
+// Add 'export' here
+export const logDebug = (message: string, data?: any) => {
   if (DEBUG) {
     console.debug(`[Utils] ${message}`, data);
   }

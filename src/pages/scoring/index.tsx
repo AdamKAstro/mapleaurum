@@ -11,19 +11,19 @@ import {
 import { metrics as allMetricsFromTypes, MetricConfig, metricCategories, MetricCategory } from '../../lib/metric-types';
 import { isFeatureAccessible } from '../../lib/tier-utils';
 import { isValidNumber, cn } from '../../lib/utils';
-import { Lock, Info, ChevronsUp, ChevronsDown, AlertTriangle, ListChecks, Microscope, ChevronDown, ChevronRight } from 'lucide-react';
+import { Lock, Info, ChevronsUp, ChevronsDown, AlertTriangle, ListChecks, Microscope, ChevronDown } from 'lucide-react';
 
-// Corrected UI component import paths based on your git ls-files output
+// Assuming these paths are correct based on your git ls-files and previous discussions
 import { PageContainer } from '../../components/ui/page-container';
 import { Slider } from '../../components/ui/slider';
-import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '../../components/ui/card'; // CardDescription and CardFooter not used here but kept if needed later
+import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '../../components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../../components/ui/tooltip';
-import { CompanyNameBadge } from '../../components/company-name-badge'; // Directly in components
+import { CompanyNameBadge } from '../../components/company-name-badge';
 import { Button } from '../../components/ui/button';
 import { LoadingIndicator } from '../../components/ui/loading-indicator';
-import { StatusBadge } from '../../components/status-badge'; // Directly in components
-// Dialog and ScrollArea imports are removed as they don't exist in your project
+import { StatusBadge } from '../../components/status-badge';
+import { ScrollArea } from '../../components/ui/scroll-area'; // IMPORTING YOUR NEW COMPONENT
 
 import type { Company, CompanyStatus, ColumnTier } from '../../lib/types';
 
@@ -169,7 +169,7 @@ const ScoringPage: React.FC = () => {
         };
         fetchDataForScoring();
         return () => { isMounted = false; };
-    }, [filteredCompanyIds, loadingFilteredSet, fetchCompaniesByIds, B2GOLD_ID]); // Added B2GOLD_ID to dep array for the log, though it's constant
+    }, [filteredCompanyIds, loadingFilteredSet, fetchCompaniesByIds, B2GOLD_ID]);
 
      useEffect(() => {
         console.log(`[ScoringPage][ContextWatchEffect] Global filteredCompanyIds updated. Count: ${filteredCompanyIds?.length ?? 'N/A'}. Sample IDs (first 3): ${filteredCompanyIds?.slice(0,3).join(',')}`);
@@ -197,7 +197,7 @@ const ScoringPage: React.FC = () => {
             setSelectedDebugCompany(null);
         } else {
             setShowDebugForCompanyId(scoreItem.companyId);
-            setSelectedDebugCompany(scoreItem); // Store the whole item for easy access to logs
+            setSelectedDebugCompany(scoreItem);
             console.log(`[ScoringPage] Toggled inline debug for ${scoreItem.companyName} (ID: ${scoreItem.companyId})`);
         }
     }, [showDebugForCompanyId]);
@@ -334,34 +334,39 @@ const ScoringPage: React.FC = () => {
                                 </div>
                             </div>
                         </CardHeader>
-                        <CardContent className="space-y-3 px-4 sm:px-6 pb-4 sm:pb-6 flex-grow overflow-y-auto custom-scrollbar">
-                            {loadingRanges && <div className="text-center text-gray-400 p-3"><LoadingIndicator message="Loading Metric Ranges..." /></div>}
-                            {!loadingRanges && Object.keys(groupedMetricsForUI).length === 0 && <p className="text-gray-400 p-3 text-center text-sm">No metric categories.</p>}
-                            {!loadingRanges && Object.entries(groupedMetricsForUI).map(([categoryKey, categoryMetricsInGroup]) => {
-                                const accessibleMetricsToDisplay = categoryMetricsInGroup.filter(metric => isFeatureAccessible(metric.tier, currentUserTier || 'free'));
-                                if (accessibleMetricsToDisplay.length === 0) return null;
-                                return (
-                                    <div key={categoryKey} className="mb-3 border-b border-navy-700 pb-3 last:border-b-0 last:pb-0">
-                                        <h3 className="text-sm lg:text-base font-semibold text-cyan-400 mb-2 capitalize">{metricCategories[categoryKey as MetricCategory] || categoryKey}</h3>
-                                        {accessibleMetricsToDisplay.map(metric => {
-                                            const weightValue = metricWeights[metric.db_column] ?? 0;
-                                            return (
-                                                <div key={metric.db_column} className="mb-2.5">
-                                                    <label className="flex items-center text-xs sm:text-sm font-medium text-gray-300 mb-1 space-x-1">
-                                                        <span>{metric.label} ({weightValue}%)</span>
-                                                        {metric.higherIsBetter ? (<span className="text-green-400/90">↑</span>) : (<span className="text-red-400/90">↓</span>)}
-                                                        <TooltipProvider delayDuration={100}><Tooltip>
-                                                            <TooltipTrigger asChild><button type="button" aria-label={`Info for ${metric.label}`} className="cursor-help text-gray-400 hover:text-cyan-300"><Info size={12} /></button></TooltipTrigger>
-                                                            <TooltipContent side="top" align="start" className="max-w-xs text-xs z-50 bg-navy-600 border-navy-500 shadow-lg px-2 py-1 text-gray-200"><p>{metric.description || 'No description.'}</p></TooltipContent>
-                                                        </Tooltip></TooltipProvider>
-                                                    </label>
-                                                    <div className="relative pl-0.5 pr-0.5"><Slider value={[weightValue]} onValueChange={(value) => handleWeightChange(metric.db_column, value)} max={100} step={1} aria-label={`${metric.label} weight`} disabled={loadingRanges || overallLoading} /></div>
-                                                </div>
-                                            );
-                                        })}
-                                    </div>
-                                );
-                            })}
+                        {/* Apply ScrollArea to CardContent for metric sliders */}
+                        <CardContent className="flex-grow overflow-hidden p-0"> {/* Remove padding, add overflow-hidden for ScrollArea */}
+                           <ScrollArea className="h-full w-full custom-scrollbar"> {/* custom-scrollbar for potential tailwind-scrollbar plugin */}
+                                <div className="space-y-3 p-4 sm:p-6"> {/* Add padding back to an inner div */}
+                                    {loadingRanges && <div className="text-center text-gray-400 p-3"><LoadingIndicator message="Loading Metric Ranges..." /></div>}
+                                    {!loadingRanges && Object.keys(groupedMetricsForUI).length === 0 && <p className="text-gray-400 p-3 text-center text-sm">No metric categories.</p>}
+                                    {!loadingRanges && Object.entries(groupedMetricsForUI).map(([categoryKey, categoryMetricsInGroup]) => {
+                                        const accessibleMetricsToDisplay = categoryMetricsInGroup.filter(metric => isFeatureAccessible(metric.tier, currentUserTier || 'free'));
+                                        if (accessibleMetricsToDisplay.length === 0) return null;
+                                        return (
+                                            <div key={categoryKey} className="mb-3 border-b border-navy-700 pb-3 last:border-b-0 last:pb-0">
+                                                <h3 className="text-sm lg:text-base font-semibold text-cyan-400 mb-2 capitalize">{metricCategories[categoryKey as MetricCategory] || categoryKey}</h3>
+                                                {accessibleMetricsToDisplay.map(metric => {
+                                                    const weightValue = metricWeights[metric.db_column] ?? 0;
+                                                    return (
+                                                        <div key={metric.db_column} className="mb-2.5">
+                                                            <label className="flex items-center text-xs sm:text-sm font-medium text-gray-300 mb-1 space-x-1">
+                                                                <span>{metric.label} ({weightValue}%)</span>
+                                                                {metric.higherIsBetter ? (<span className="text-green-400/90">↑</span>) : (<span className="text-red-400/90">↓</span>)}
+                                                                <TooltipProvider delayDuration={100}><Tooltip>
+                                                                    <TooltipTrigger asChild><button type="button" aria-label={`Info for ${metric.label}`} className="cursor-help text-gray-400 hover:text-cyan-300"><Info size={12} /></button></TooltipTrigger>
+                                                                    <TooltipContent side="top" align="start" className="max-w-xs text-xs z-50 bg-navy-600 border-navy-500 shadow-lg px-2 py-1 text-gray-200"><p>{metric.description || 'No description.'}</p></TooltipContent>
+                                                                </Tooltip></TooltipProvider>
+                                                            </label>
+                                                            <div className="relative pl-0.5 pr-0.5"><Slider value={[weightValue]} onValueChange={(value) => handleWeightChange(metric.db_column, value)} max={100} step={1} aria-label={`${metric.label} weight`} disabled={loadingRanges || overallLoading} /></div>
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                           </ScrollArea>
                         </CardContent>
                     </Card>
                 </div>
@@ -381,8 +386,7 @@ const ScoringPage: React.FC = () => {
                             </div>
                         </CardHeader>
                         <CardContent className="px-1.5 sm:px-3 md:px-4 pb-4 pt-3 flex-grow overflow-hidden">
-                            {/* Using a div with overflow-auto if ScrollArea component is not available */}
-                            <div className="h-full w-full custom-scrollbar overflow-y-auto">
+                            <ScrollArea className="h-full w-full custom-scrollbar"> {/* Using ScrollArea here */}
                                 {(overallLoading && filteredScores.length === 0) ? (
                                     <div className="text-center text-gray-400 py-8 px-2 flex flex-col items-center justify-center h-full"><LoadingIndicator message={getEmptyStateMessage()} /></div>
                                 ) : filteredScores.length > 0 ? (
@@ -405,16 +409,17 @@ const ScoringPage: React.FC = () => {
                                                 {showDebugForCompanyId === item.companyId && selectedDebugCompany && selectedDebugCompany.companyId === item.companyId && (
                                                     <li className="bg-navy-900/30 p-2 rounded-b-md text-xs border-x border-b border-navy-700/50">
                                                         <h4 className="text-xs font-semibold mb-1 text-sky-300 flex items-center"><ListChecks size={14} className="mr-1.5"/>Debug Info: {selectedDebugCompany.companyName}</h4>
-                                                        <div className="max-h-[200px] w-full overflow-y-auto custom-scrollbar pr-2 bg-navy-900 p-1.5 rounded-sm"> {/* Scrollable div for debug content */}
-                                                            <h5 className="text-[0.7rem] font-semibold mt-1 mb-0.5 text-sky-400 sticky top-0 bg-navy-900 py-0.5 z-10">Calculation Trace:</h5>
-                                                            <pre className="text-[0.65rem] whitespace-pre-wrap break-all font-mono leading-relaxed mb-2">
+                                                        {/* Scrollable div for debug content using CSS overflow */}
+                                                        <div className="max-h-[200px] w-full overflow-y-auto custom-scrollbar pr-2 bg-navy-900 p-1.5 rounded-sm text-[0.7rem] leading-relaxed">
+                                                            <h5 className="text-[0.75rem] font-semibold mt-1 mb-0.5 text-sky-400 sticky top-0 bg-navy-900 py-0.5 z-10">Calculation Trace:</h5>
+                                                            <pre className="whitespace-pre-wrap break-all font-mono mb-2">
                                                                 {selectedDebugCompany.debugLogs.join('\n')}
                                                             </pre>
-                                                            <h5 className="text-[0.7rem] font-semibold mt-1 mb-0.5 text-sky-400 sticky top-0 bg-navy-900 py-0.5 z-10">Active Metric Breakdown:</h5>
+                                                            <h5 className="text-[0.75rem] font-semibold mt-1 mb-0.5 text-sky-400 sticky top-0 bg-navy-900 py-0.5 z-10">Active Metric Breakdown:</h5>
                                                             {Object.entries(selectedDebugCompany.breakdown)
                                                                 .filter(([, comp]) => comp.isAccessible && comp.weight > 0)
                                                                 .map(([metricDbCol, compDetails]) => (
-                                                                <div key={metricDbCol} className="mb-1 p-1 border-t border-navy-700/40 text-[0.6rem] leading-tight">
+                                                                <div key={metricDbCol} className="mb-1 p-1 border-t border-navy-700/40">
                                                                     <p><strong>{compDetails.metricLabel}</strong> (Wt: {compDetails.weight}%)</p>
                                                                     <p className="ml-1">Raw: <span className="text-gray-400">{String(compDetails.rawValue)}</span> | Proc: <span className="text-gray-400">{isValidNumber(compDetails.processedValue) ? compDetails.processedValue.toFixed(2) : String(compDetails.processedValue)}</span></p>
                                                                     {compDetails.imputedValue !== undefined && compDetails.imputedValue !== null && <p className="ml-1">Imputed ({compDetails.imputationMethodApplied || imputationMode}): <span className="text-orange-300">{compDetails.imputedValue?.toFixed(2)}</span></p>}
@@ -436,7 +441,7 @@ const ScoringPage: React.FC = () => {
                                         <p className="font-medium text-sm">{getEmptyStateMessage()}</p>
                                     </div>
                                 )}
-                            </div> {/* End of replacement for ScrollArea */}
+                            </div>
                         </CardContent>
                     </Card>
                 </div>
