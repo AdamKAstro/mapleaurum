@@ -15,7 +15,6 @@ import { SubscriptionTier } from '../../lib/types';
 import { supabase } from '../../lib/supabaseClient';
 
 const FRONTEND_URL = import.meta.env.VITE_FRONTEND_URL || 'http://localhost:3000';
-// Client-side STRIPE_MODE to decide which set of keys/plans to show
 const STRIPE_MODE_CLIENT = import.meta.env.VITE_STRIPE_MODE?.toLowerCase() || 'live'; 
 
 const STRIPE_PUBLISHABLE_KEY_TO_USE = STRIPE_MODE_CLIENT === 'test'
@@ -40,11 +39,6 @@ interface PlanDisplayData {
     buyButtonIdYearly: string;  
 }
 
-// ** IMPORTANT **
-// Ensure Price IDs used below are for RECURRING prices in your Stripe Dashboard
-// for the corresponding mode (TEST or LIVE).
-// Using a 'one_time' Price ID for a 'subscription' mode checkout will fail.
-// Replace 'YOUR_...' placeholders with your actual Stripe IDs.
 const plansData: PlanDisplayData[] = [
     {
         name: 'Free',
@@ -64,8 +58,8 @@ const plansData: PlanDisplayData[] = [
                 icon: Star, color: 'accent-teal', popular: false, tier: 'pro',
                 priceIdMonthly: import.meta.env.VITE_STRIPE_PRO_MONTHLY_PRICE_ID_TEST || 'REPLACE_WITH_YOUR_TEST_PRO_MONTHLY_RECURRING_PRICE_ID',
                 priceIdYearly: import.meta.env.VITE_STRIPE_PRO_YEARLY_PRICE_ID_TEST || 'REPLACE_WITH_YOUR_TEST_PRO_YEARLY_RECURRING_PRICE_ID',
-                buyButtonIdMonthly: import.meta.env.VITE_STRIPE_PRO_MONTHLY_BUY_BUTTON_ID_TEST || '', // Optional: Your TEST Pro Monthly Buy Button ID
-                buyButtonIdYearly: import.meta.env.VITE_STRIPE_PRO_YEARLY_BUY_BUTTON_ID_TEST || '',   // Optional: Your TEST Pro Yearly Buy Button ID
+                buyButtonIdMonthly: import.meta.env.VITE_STRIPE_PRO_MONTHLY_BUY_BUTTON_ID_TEST || '',
+                buyButtonIdYearly: import.meta.env.VITE_STRIPE_PRO_YEARLY_BUY_BUTTON_ID_TEST || '',  
             },
             {
                 name: 'Premium Test', 
@@ -73,10 +67,10 @@ const plansData: PlanDisplayData[] = [
                 description: 'Full-featured test plan for Premium access. Uses TEST recurring price.',
                 features: ['All Pro features (Test)', 'Priority support (Test)', 'Advanced financial metrics (Test)', 'Valuation models (Test)'],
                 icon: Crown, color: 'accent-yellow', popular: true, tier: 'premium',
-                priceIdMonthly: import.meta.env.VITE_STRIPE_PREMIUM_MONTHLY_PRICE_ID_TEST || 'price_1ROT6GAst4LlpL7pRASKFwYA', // This was mentioned as a new test ID, ensure it's RECURRING
+                priceIdMonthly: import.meta.env.VITE_STRIPE_PREMIUM_MONTHLY_PRICE_ID_TEST || 'price_1ROT6GAst4LlpL7pRASKFwYA',
                 priceIdYearly: import.meta.env.VITE_STRIPE_PREMIUM_YEARLY_PRICE_ID_TEST || 'REPLACE_WITH_YOUR_TEST_PREMIUM_YEARLY_RECURRING_PRICE_ID', 
                 buyButtonIdMonthly: import.meta.env.VITE_STRIPE_PREMIUM_MONTHLY_BUY_BUTTON_ID_TEST || '', 
-                buyButtonIdYearly: import.meta.env.VITE_STRIPE_PREMIUM_YEARLY_BUY_BUTTON_ID_TEST || '',   
+                buyButtonIdYearly: import.meta.env.VITE_STRIPE_PREMIUM_YEARLY_BUY_BUTTON_ID_TEST || '',    
             }
         ]
         : [ // ------------- LIVE MODE PLANS -------------
@@ -95,7 +89,7 @@ const plansData: PlanDisplayData[] = [
                 name: 'Premium',
                 priceMonthlyDisplay: '$90', priceYearlyDisplay: '$960', periodMonthly: '/month', periodYearly: '/year',
                 description: 'Complete access and premium features',
-                features: ['All Pro features', 'Priority support', 'Advanced financial metrics', 'Valuation models', /* ... other live premium features ... */],
+                features: ['All Pro features', 'Priority support', 'Advanced financial metrics', 'Valuation models'],
                 icon: Crown, color: 'accent-yellow', popular: false, tier: 'premium',
                 priceIdMonthly: import.meta.env.VITE_STRIPE_PREMIUM_MONTHLY_PRICE_ID!,
                 priceIdYearly: import.meta.env.VITE_STRIPE_PREMIUM_YEARLY_PRICE_ID!,
@@ -109,9 +103,9 @@ export function SubscribePage() {
     const { session, user, isLoading: isAuthLoading } = useAuth();
     const { currentUserSubscriptionTier, isLoading: isSubscriptionLoading, refreshSubscriptionStatus } = useSubscription();
     const [isYearly, setIsYearly] = useState(false);
-    const [isProcessing, setIsProcessing] = useState<string | null>(null); // Tracks which plan button is processing
-    const [isRedirecting, setIsRedirecting] = useState(false); // For feedback when navigating
-    const [testEmail, setTestEmail] = useState(''); // For admin test email form
+    const [isProcessing, setIsProcessing] = useState<string | null>(null);
+    const [isRedirecting, setIsRedirecting] = useState(false);
+    const [testEmail, setTestEmail] = useState('');
     const [testSubject, setTestSubject] = useState('Test Email from MapleAurum');
     const [testMessage, setTestMessage] = useState('This is a test email sent from the MapleAurum Subscribe page.');
     const [emailStatus, setEmailStatus] = useState<string | null>(null);
@@ -119,7 +113,8 @@ export function SubscribePage() {
     const navigate = useNavigate();
     const backgroundImageUrl = '/Background2.jpg';
 
-    const isAdmin = user?.email === 'adamkiil@outlook.com' || user?.email === 'adamkiil79@gmail.com';
+    // const isAdmin = user?.email === 'adamkiil@outlook.com' || user?.email === 'adamkiil79@gmail.com'; // Kept for potential other admin uses, but not for test email box
+    const showTestEmailBox = user?.email === 'testuser@gmail.com'; // Specific condition for the test email box
 
     useEffect(() => {
         if (!isAuthLoading && session) {
@@ -129,37 +124,36 @@ export function SubscribePage() {
             });
         }
     }, [session, isAuthLoading, refreshSubscriptionStatus]);
-  
-    // Log details for Stripe buttons/keys for easier debugging
+ 
     useEffect(() => {
         console.log(`[SubscribePage] Client-side STRIPE_MODE_CLIENT: ${STRIPE_MODE_CLIENT}`);
         console.log(`[SubscribePage] Effective Stripe Publishable Key: ${STRIPE_PUBLISHABLE_KEY_TO_USE ? 'Set (' + STRIPE_PUBLISHABLE_KEY_TO_USE.substring(0,10) + '...)' : 'NOT SET - Stripe Buy Buttons will fail for guests.'}`);
-        plansData.filter(p => p.tier !== 'free').forEach(plan => { // Only log for paid plans
+        plansData.filter(p => p.tier !== 'free').forEach(plan => {
             const priceId = isYearly ? plan.priceIdYearly : plan.priceIdMonthly;
             const buyButtonId = isYearly ? plan.buyButtonIdYearly : plan.buyButtonIdMonthly;
             console.log(`[SubscribePage] Plan Details: ${plan.name} (Tier: ${plan.tier}, Yearly: ${isYearly}) - Price ID for function call: '${priceId || 'N/A'}', Buy Button ID for Stripe Element: '${buyButtonId || 'N/A'}'`);
-            if (!priceId && (session && user)) { // Price ID is critical for logged-in user flow
-                 console.warn(`[SubscribePage] CRITICAL WARNING: Missing Price ID for logged-in user flow for plan "${plan.name}" (${isYearly ? 'Yearly' : 'Monthly'}). Checkout will fail.`);
+            if (!priceId && (session && user)) {
+                console.warn(`[SubscribePage] CRITICAL WARNING: Missing Price ID for logged-in user flow for plan "${plan.name}" (${isYearly ? 'Yearly' : 'Monthly'}). Checkout will fail.`);
             }
-            if (!(session && user) && !buyButtonId) { // Buy Button ID is critical for guest flow with Stripe elements
+            if (!(session && user) && !buyButtonId) {
                 console.warn(`[SubscribePage] WARNING: Missing Buy Button ID for guest flow for plan "${plan.name}" (${isYearly ? 'Yearly' : 'Monthly'}). Stripe <stripe-buy-button> will not render.`);
             }
         });
-    }, [isYearly, session, user]); // Re-log if these change
+    }, [isYearly, session, user]);
 
 
     const handlePaymentForLoggedInUser = async (plan: PlanDisplayData) => {
-        if (!user || !session?.access_token) { // Check for access_token too
+        if (!user || !session?.access_token) {
             console.log('[SubscribePage] User not logged in or session invalid. Redirecting to login.');
             setIsRedirecting(true);
             navigate('/login?action=login&from=subscribe&plan=' + plan.tier, { state: { from: { pathname: '/subscribe' } } });
             return;
         }
-        if (plan.tier === 'free') return; // Should not be called for free plan
+        if (plan.tier === 'free') return;
 
         const priceIdToUse = isYearly ? plan.priceIdYearly : plan.priceIdMonthly;
         if (!priceIdToUse) {
-            console.error(`[SubscribePage] CRITICAL: Stripe Price ID is missing for plan "${plan.name}" (${isYearly ? 'Yearly' : 'Monthly'}). Cannot proceed with checkout.`);
+            console.error(`[SubscribePage] CRITICAL: Stripe Price ID is missing for plan "${plan.name}" (${isYearly ? 'Yearly' : 'Monthly'}).`);
             alert("Configuration error: This plan's Price ID is missing. Please contact support at support@mapleaurum.com.");
             return;
         }
@@ -172,16 +166,15 @@ export function SubscribePage() {
             success_url: `${FRONTEND_URL}/onboarding?session_id={CHECKOUT_SESSION_ID}&plan_name=${encodeURIComponent(plan.name)}&tier=${plan.tier}`,
             cancel_url: `${FRONTEND_URL}/subscribe`,
             mode: 'subscription' as 'subscription',
-            plan_name: plan.name, // For metadata
-            interval: isYearly ? 'year' : ('month' as 'month' | 'year'), // For metadata
+            plan_name: plan.name,
+            interval: isYearly ? 'year' : ('month' as 'month' | 'year'),
         };
         
-        console.log(`[SubscribePage] Logged-in user: Invoking 'stripe-checkout'. User ID: ${user.id}, Plan: ${plan.name} (Tier: ${plan.tier}), Price ID: ${priceIdToUse}. Body being sent:`, JSON.stringify(checkoutBody, null, 2));
+        console.log(`[SubscribePage] Logged-in user: Invoking 'stripe-checkout'. User ID: ${user.id}, Plan: ${plan.name}, Price ID: ${priceIdToUse}. Body:`, JSON.stringify(checkoutBody, null, 2));
 
         try {
             const { data, error: functionError } = await supabase.functions.invoke('stripe-checkout', {
-                body: checkoutBody, // CRITICAL: Pass the JavaScript object directly
-                // Supabase client handles Authorization header if session is active
+                body: checkoutBody,
             });
 
             console.log('[SubscribePage] Raw response from stripe-checkout (logged-in user):', { data, functionError });
@@ -191,44 +184,49 @@ export function SubscribePage() {
                 const errorContext = (functionError as any).context;
                 if (errorContext?.error?.message) displayError += ` Server Message: ${errorContext.error.message}`;
                 else if (errorContext?.details) displayError += ` Server Details: ${errorContext.details}`;
-                else if (functionError.message) displayError += ` Message: ${functionError.message}`; // This catches "Edge Function returned a non-2xx status code"
+                else if (functionError.message) displayError += ` Message: ${functionError.message}`;
                 else displayError += ' An unknown error occurred with the Edge Function.';
                 
                 console.error('[SubscribePage] Supabase Function Error:', displayError, functionError);
-                alert(displayError + " Please try again or contact support at support@mapleaurum.com.");
-                setIsProcessing(null); // Reset processing state on error
+                alert(displayError + " Please try again or contact support.");
+                setIsProcessing(null);
                 return; 
             }
 
             if (data && data.url) {
                 console.log("[SubscribePage] Received Stripe Checkout URL, redirecting:", data.url);
                 window.location.href = data.url;
-                // setIsProcessing(null); // Not reached if redirecting
             } else {
-                console.error('[SubscribePage] Stripe Checkout URL missing in function response. Data:', data);
-                alert('Could not retrieve a valid checkout session. Please check console and contact support.');
+                console.error('[SubscribePage] Stripe Checkout URL missing. Data:', data);
+                alert('Could not retrieve a valid checkout session. Please contact support.');
                 setIsProcessing(null);
             }
         } catch (error: any) { 
-            console.error('[SubscribePage] Error during "invoke" call or subsequent logic:', error.message, error);
-            alert(`An unexpected error occurred during checkout: ${error.message}. Please try again or contact support at support@mapleaurum.com.`);
+            console.error('[SubscribePage] Error during "invoke" call:', error.message, error);
+            alert(`An unexpected error occurred: ${error.message}. Please contact support.`);
             setIsProcessing(null);
         }
     };
 
     const handleSendTestEmail = async (e: FormEvent) => { 
         e.preventDefault();
-        if (!isAdmin) { setEmailStatus('Unauthorized: Admin access required.'); return; }
+        // Use showTestEmailBox for authorization here specifically
+        if (!showTestEmailBox) { 
+            setEmailStatus('Unauthorized: This feature is restricted.'); 
+            console.warn('[SubscribePage] Unauthorized attempt to send test email by user:', user?.email);
+            return; 
+        }
         if (!testEmail) { setEmailStatus('Please enter a recipient email.'); return; }
+
         setIsEmailSending(true); setEmailStatus(null);
         try {
             const { data: { session: currentAuthSession } , error: sessionErr } = await supabase.auth.getSession();
             if (sessionErr || !currentAuthSession?.access_token) {
-                 throw new Error(sessionErr?.message || 'Authentication token not available for sending email.');
+                throw new Error(sessionErr?.message || 'Authentication token not available.');
             }
             const token = currentAuthSession.access_token;
-            console.log('[SubscribePage] Admin attempting to send test email.');
-            const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-email`, { // Ensure VITE_SUPABASE_URL is correct
+            console.log('[SubscribePage] Test user attempting to send test email.');
+            const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-email`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
                 body: JSON.stringify({ to: testEmail, subject: testSubject, message: testMessage }),
@@ -239,7 +237,6 @@ export function SubscribePage() {
             }
             setEmailStatus('Test email sent successfully!'); 
             setTestEmail(''); 
-            // Optionally reset subject/message or keep them for further tests
         } catch (error: any) { 
             console.error('[SubscribePage] Error sending test email:', error);
             setEmailStatus(`Error: ${error.message}`);
@@ -247,7 +244,7 @@ export function SubscribePage() {
             setIsEmailSending(false); 
         }
     };
-    
+     
     const isLoadingOverall = isAuthLoading || isSubscriptionLoading;
 
     return (
@@ -256,7 +253,6 @@ export function SubscribePage() {
             description="Choose the plan that best fits your mining analytics needs."
             className="relative min-h-screen w-full overflow-hidden bg-gradient-to-b from-navy-400 via-navy-300 to-navy-400"
         >
-            {/* Load Stripe.js only if a publishable key is available */}
             {STRIPE_PUBLISHABLE_KEY_TO_USE && <script async src="https://js.stripe.com/v3/buy-button.js"></script>}
             {!STRIPE_PUBLISHABLE_KEY_TO_USE && 
                 <div className="bg-red-600 text-white p-3 text-center text-sm font-medium fixed top-0 left-0 right-0 z-[100] shadow-lg">
@@ -282,9 +278,10 @@ export function SubscribePage() {
                     </div>
                 </div>
 
-                {isAdmin && ( 
+                {/* Test Email box now uses showTestEmailBox condition */}
+                {showTestEmailBox && ( 
                     <div className="max-w-md mx-auto mb-8 p-6 bg-navy-700/60 border border-navy-600/50 rounded-lg backdrop-blur-sm shadow-lg">
-                        <Typography variant="h3" className="text-xl font-bold text-cyan-300 mb-4">Admin: Send Test Email</Typography>
+                        <Typography variant="h3" className="text-xl font-bold text-cyan-300 mb-4">Test User: Send Test Email</Typography>
                         {emailStatus && <Typography variant="body" className={`mb-4 text-sm ${emailStatus.includes('Error') || emailStatus.includes('Unauthorized') ? 'text-red-400' : 'text-green-400'}`}>{emailStatus}</Typography>}
                         <form onSubmit={handleSendTestEmail} className="space-y-4">
                             <div><Label htmlFor="test-email" className="block text-sm font-medium text-gray-300 mb-1">Recipient Email</Label><Input id="test-email" type="email" value={testEmail} onChange={(e) => setTestEmail(e.target.value)} placeholder="e.g., recipient@example.com" required disabled={isEmailSending} className="bg-navy-600/80 border-navy-500 text-white placeholder-gray-400/70" /></div>
@@ -298,7 +295,7 @@ export function SubscribePage() {
                     </div>
                 )}
 
-                <div className="grid grid-cols-1 gap-6 sm:gap-8 lg:grid-cols-3 max-w-5xl mx-auto px-4 sm:px-0"> {/* Added padding for small screens */}
+                <div className="grid grid-cols-1 gap-6 sm:gap-8 lg:grid-cols-3 max-w-5xl mx-auto px-4 sm:px-0">
                     {plansData.map((plan) => {
                         const IconComponent = plan.icon;
                         const displayPrice = isYearly ? plan.priceYearlyDisplay : plan.priceMonthlyDisplay;
@@ -314,14 +311,14 @@ export function SubscribePage() {
                         let showStripeBuyButtonElement = false;
 
                         if (plan.tier === 'free') {
-                            if (session) { // Logged in user
+                            if (session) {
                                 buttonText = actualUserTier === 'free' ? 'Current Plan (Free)' : 'Free Access Included';
-                                isButtonDisabled = true; // Always disabled & static for logged-in user on free plan card
+                                isButtonDisabled = true;
                                 currentActionHandler = null;
-                            } else { // Guest user
+                            } else {
                                 buttonText = 'Sign Up for Free';
                                 if (!isButtonCurrentlyProcessing) isButtonDisabled = isLoadingOverall || isRedirecting;
-                                currentActionHandler = () => navigate('/login?action=signup&plan=Free'); 
+                                currentActionHandler = () => { setIsRedirecting(true); navigate('/login?action=signup&plan=Free')}; 
                             }
                         } else { // Paid plans
                             if (session && user) { // Logged-in user
@@ -332,10 +329,10 @@ export function SubscribePage() {
                                     if (!isButtonCurrentlyProcessing) isButtonDisabled = isLoadingOverall || isRedirecting;
                                     currentActionHandler = () => handlePaymentForLoggedInUser(plan);
                                 } else { 
-                                    buttonText = 'Manage Subscription'; isButtonDisabled = true;
+                                    buttonText = 'Manage Subscription'; isButtonDisabled = true; // e.g. Premium user seeing Pro plan
                                 }
                             } else { // Guest looking at paid plans
-                                buttonText = `Get ${plan.name}`; // Fallback text if Stripe button fails to render
+                                buttonText = `Get ${plan.name}`;
                                 const currentBuyButtonIdForStripe = isYearly ? plan.buyButtonIdYearly : plan.buyButtonIdMonthly;
                                 showStripeBuyButtonElement = !!(STRIPE_PUBLISHABLE_KEY_TO_USE && currentBuyButtonIdForStripe);
                                 
@@ -345,7 +342,6 @@ export function SubscribePage() {
                                         navigate(`/login?action=signup&plan=${plan.tier}&yearly=${isYearly}`, { state: { from: { pathname: '/subscribe' } }});
                                     };
                                 }
-                                // If Stripe button is shown, the custom button path should be disabled or not primary
                                 if (showStripeBuyButtonElement) isButtonDisabled = true; 
                                 else if (!isButtonCurrentlyProcessing) isButtonDisabled = isLoadingOverall || isRedirecting;
                             }
@@ -368,7 +364,7 @@ export function SubscribePage() {
                                         <span className="text-3xl font-bold tracking-tight text-white">{displayPrice}</span>
                                         {displayPeriod && <span className="text-sm font-semibold leading-6 text-gray-400">{displayPeriod}</span>}
                                     </div>
-                                    <p className="mt-4 text-sm leading-6 text-gray-300 flex-shrink-0 h-12 overflow-y-auto">{plan.description}</p>
+                                    <p className="mt-4 text-sm leading-6 text-gray-300 flex-shrink-0 h-12 overflow-y-auto">{plan.description}</p> {/* Simple overflow for description */}
                                     <ul role="list" className="mt-6 space-y-3 text-sm leading-6 text-gray-200 flex-grow">
                                         {plan.features.map((feature) => (
                                             <li key={feature} className="flex gap-x-3">
@@ -391,7 +387,7 @@ export function SubscribePage() {
                                                 size="lg"
                                                 variant={isCurrentPlanActive || (plan.tier === 'free' && session) || (isButtonDisabled && !currentActionHandler) ? 'secondary' : (plan.popular ? 'primary' : 'outline')}
                                                 className={cn('w-full font-semibold', isButtonDisabled && 'opacity-60 cursor-not-allowed', plan.popular && !isCurrentPlanActive && !isButtonDisabled && 'bg-gradient-to-r from-teal-500 to-cyan-600 hover:from-teal-600 hover:to-cyan-700 text-white')}
-                                                style={(plan.tier === 'free' && session && actualUserTier !== 'free') || (plan.tier === 'free' && !session && !currentActionHandler) ? { pointerEvents: 'none' } : {}} // Make static if no action for free
+                                                style={(plan.tier === 'free' && session && actualUserTier !== 'free') || (plan.tier === 'free' && !session && !currentActionHandler) ? { pointerEvents: 'none' } : {}}
                                             >
                                                 {isButtonCurrentlyProcessing && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                                                 {buttonText}
