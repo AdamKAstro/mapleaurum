@@ -4,15 +4,21 @@ import type { ClassValue } from 'clsx';
 // --- Base Types ---
 export type Theme = 'default' | 'ocean' | 'sunset';
 
-// UPDATED and ALIGNED: ColumnTier and SubscriptionTier now both use 'pro'
 export type ColumnTier = 'free' | 'pro' | 'premium';
 export type SubscriptionTier = 'free' | 'pro' | 'premium';
 
-export type Currency = 'USD' | 'CAD' | 'AUD' | 'EUR' | 'GBP';
+export type Currency = 'USD' | 'CAD' | 'AUD' | 'EUR' | 'GBP'; // Add more as needed
 export type CompanyStatus = 'Producer' | 'Developer' | 'Explorer' | 'Royalty' | 'Other';
 
-// Main Company data structure
-export interface Company {
+// --- NEW: Interface for augmented share price details ---
+export interface AugmentedPriceInfo {
+  share_price_currency_actual?: string | null; // The currency of the share_price (from stock_prices or fallback)
+  share_price_date_actual?: string | null;     // ISO string date of the share_price from stock_prices table
+  share_price_source_actual?: 'stock_prices_table' | 'stock_prices_table_old' | 'calculated_from_market_cap';
+}
+
+// --- MODIFIED: Main Company data structure, extended with AugmentedPriceInfo ---
+export interface Company extends AugmentedPriceInfo { // Company now includes AugmentedPriceInfo
   company_id: number;
   company_name: string;
   tsx_code: string | null;
@@ -22,10 +28,14 @@ export interface Company {
   minerals_of_interest: string[] | null;
   percent_gold: number | null;
   percent_silver: number | null;
-  share_price: number | null;
+  share_price: number | null; // This will store the authoritative share_price after augmentation
+  
+  // Nested structures as per your original definition
+  // Ensure these nested objects and their properties are correctly populated by your convertRpcRowsToCompanies function
   financials: {
     cash_value: number | null;
     market_cap_value: number | null;
+    market_cap_currency?: string | null; // Crucial for fallback currency logic
     enterprise_value_value: number | null;
     net_financial_assets: number | null;
     free_cash_flow: number | null;
@@ -42,7 +52,7 @@ export interface Company {
     shares_outstanding: number | null;
   };
   capital_structure: {
-    existing_shares: number | null;
+    existing_shares: number | null; // Crucial for fallback share price calculation
     fully_diluted_shares: number | null;
     in_the_money_options: number | null;
     options_revenue: number | null;
@@ -82,21 +92,23 @@ export interface Company {
   };
 }
 
-// Type matching the flat structure returned by the Supabase RPC function
+// Type matching the flat structure returned by the Supabase RPC function (get_companies_paginated)
+// This should accurately reflect the columns in your `companies_detailed_view`
 export interface RpcResponseRow extends Record<string, any> {
   total_rows: number;
   company_id: number;
   company_name: string;
   tsx_code: string | null;
-  status: string | null;
+  status: string | null; // Will be cast to CompanyStatus
   headquarters: string | null;
   description: string | null;
   minerals_of_interest: string[] | null;
   percent_gold: number | null;
   percent_silver: number | null;
-  share_price: number | null;
+  share_price: number | null; // This is the calculated one from the view
   f_cash_value: number | null;
   f_market_cap_value: number | null;
+  f_market_cap_currency?: string | null; // Important for fallback currency
   f_enterprise_value_value: number | null;
   f_net_financial_assets: number | null;
   f_free_cash_flow: number | null;
@@ -111,7 +123,7 @@ export interface RpcResponseRow extends Record<string, any> {
   f_net_income_value: number | null;
   f_debt_value: number | null;
   f_shares_outstanding: number | null;
-  cs_existing_shares: number | null;
+  cs_existing_shares: number | null; // Important for fallback calculation
   cs_fully_diluted_shares: number | null;
   cs_in_the_money_options: number | null;
   cs_options_revenue: number | null;
@@ -142,13 +154,13 @@ export interface RpcResponseRow extends Record<string, any> {
   c_aisc_last_year: number | null;
 }
 
-// Type for paginated data result
+// Type for paginated data result (as provided by you)
 export interface PaginatedRowData {
   data: RpcResponseRow[];
   count: number | null;
 }
 
-// --- UI / Theme / Table Related Types ---
+// --- UI / Theme / Table Related Types (as provided by you) ---
 export interface ThemeConfig {
   name: Theme;
   label: string;
@@ -165,15 +177,16 @@ export interface ColumnDef {
   label: string;
   sortable?: boolean;
   sortKey?: string;
-  format?: string;
+  format?: string; // Could be MetricFormat or other custom formats
   description?: string;
-  preferredValues?: string;
+  preferredValues?: string; // Assuming this is a string from your original type
   access?: {
-    tier: ColumnTier; // Stays ColumnTier, which is now updated to 'free' | 'pro' | 'premium'
+    tier: ColumnTier;
     description: string;
   };
   width?: number | string;
   align?: 'left' | 'center' | 'right';
+  renderCell?: (row: Company) => React.ReactNode; // Added from other chatbot's suggestion, if you use it
 }
 
 export interface ColumnGroup {
@@ -193,32 +206,34 @@ export interface SortState {
   direction: 'asc' | 'desc';
 }
 
-export interface FilterState { // This seems like an older or alternative filter structure. Review if still needed.
+// FilterState: You had this, if it's an older structure, ensure FilterSettings is the primary one used.
+export interface FilterState { 
   searchTerm: string | null;
   status: CompanyStatus[] | null;
   market_cap_valueRange?: [number | null, number | null] | null;
   ev_per_resource_oz_allRange?: [number | null, number | null] | null;
-  [key: string]: any;
+  [key: string]: any; // For dynamic metric range filters
 }
 
+// FilterSettings: This is the primary structure for filters in FilterProvider.
 export interface FilterSettings {
   developmentStatus: CompanyStatus[];
   metricRanges: { [db_column: string]: [number | null, number | null] };
   searchTerm: string;
 }
 
-// --- Types for Scatter Chart ---
-export type MetricFormat = 'number' | 'currency' | 'percent' | 'moz' | 'koz' | 'ratio' | 'years'; // Added ratio and years based on metric-types
+// --- Types for Scatter Chart / Metrics (as provided by you) ---
+export type MetricFormat = 'number' | 'currency' | 'percent' | 'moz' | 'koz' | 'ratio' | 'years';
 
 export interface MetricConfig {
   key: string;
   label: string;
-  db_column: string;
-  nested_path: string;
-  unit: string;
+  db_column: string;        // The actual column name in the database/view
+  nested_path: string;      // The dot-notation path to access the value in the nested Company object
+  unit: string;             // e.g., "USD", "%", "Moz"
   higherIsBetter: boolean;
-  category: string; // Consider using MetricCategory type from metric-types.ts if defined elsewhere
-  tier: ColumnTier; // Stays ColumnTier, which is now updated to 'free' | 'pro' | 'premium'
+  category: string;         // e.g., "Financials", "Valuation", "Production" (Consider a MetricCategory type)
+  tier: ColumnTier;
   format: MetricFormat;
   description?: string;
 }
@@ -242,5 +257,5 @@ export interface ScatterPoint {
   y: number;
   z: number;
   normalizedZ: number;
-  company: Company;
+  company: Company; // Uses the extended Company type
 }
