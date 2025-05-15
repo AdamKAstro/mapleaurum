@@ -10,16 +10,16 @@ import React, {
   useRef,
 } from 'react';
 // Import the updated Company type and new AugmentedPriceInfo type from your types file
-import type { 
+import type {
     Company, // This is your extended Company type from types.ts
-    AugmentedPriceInfo, // This is also from types.ts now
-    RpcResponseRow, 
-    CompanyStatus, 
-    ColumnTier, 
-    Currency, 
-    SortState, 
-    FilterSettings, 
-    MetricConfig 
+    AugmentedPriceInfo,
+    RpcResponseRow,
+    CompanyStatus,
+    ColumnTier,
+    Currency,
+    SortState,
+    FilterSettings,
+    MetricConfig
 } from '../lib/types'; // Ensure this path is correct
 import { supabase } from '../lib/supabaseClient';
 import { convertRpcRowsToCompanies } from '../lib/converters';
@@ -144,7 +144,7 @@ export const FilterProvider: React.FC<{ children: ReactNode }> = ({ children }) 
   const [pageSize, setPageSizeState] = useState<number>(DEFAULT_PAGE_SIZE);
   const lastFetchedPageRef = useRef<number>(0);
 
-  // --- Helper function to augment companies with latest stock prices ---
+  // Helper function to augment companies with latest stock prices
   const augmentCompaniesWithStockPrices = useCallback(async (companiesToAugment: Company[]): Promise<Company[]> => {
     if (!companiesToAugment || companiesToAugment.length === 0) {
         console.log("[FilterContext][Augment] No companies provided to augment.");
@@ -157,7 +157,7 @@ export const FilterProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         return companiesToAugment;
     }
 
-    console.log(`[FilterContext][Augment] Attempting to augment prices for ${companyIds.length} companies. IDs (sample): ${companyIds.slice(0,3).join(', ')}`);
+    console.log(`[FilterContext][Augment] Starting price augmentation for ${companyIds.length} companies. Sample IDs: ${companyIds.slice(0,3).join(', ')}`);
     setLoadingPriceAugmentation(true);
 
     try {
@@ -167,48 +167,46 @@ export const FilterProvider: React.FC<{ children: ReactNode }> = ({ children }) 
 
         if (stockPriceError) {
             console.error("[FilterContext][Augment] Error fetching latest stock prices from RPC 'get_latest_stock_prices':", stockPriceError.message, stockPriceError);
-            // Return original data, marking that fallback was used
             return companiesToAugment.map(company => ({
                 ...company,
-                share_price: company.share_price, // Keep original calculated price
+                share_price: company.share_price,
                 share_price_source_actual: 'calculated_from_market_cap',
-                share_price_currency_actual: company.financials?.market_cap_currency ?? (company as any).f_market_cap_currency ?? 'USD', // Assuming f_market_cap_currency if financials not populated by converter
+                share_price_currency_actual: company.financials?.market_cap_currency ?? (company as any).f_market_cap_currency ?? 'USD',
                 share_price_date_actual: null,
             }));
         }
         
-        const stockPriceData = rpcStockPriceData as FetchedStockPrice[] | null; // Cast RPC response
-        const priceMap = new Map<number, AugmentedPriceInfo & { latest_price_value?: number | null }>(); // Store fetched prices
+        const stockPriceData = rpcStockPriceData as FetchedStockPrice[] | null;
+        const priceMap = new Map<number, AugmentedPriceInfo & { latest_price_value?: number | null }>();
         
         if (stockPriceData) {
             console.log(`[FilterContext][Augment] Received ${stockPriceData.length} stock price entries from RPC.`);
             stockPriceData.forEach(sp => {
-                if (sp.latest_price_date && isValidNumber(sp.latest_price_value)) { // Price value must be valid
+                if (sp.latest_price_date && isValidNumber(sp.latest_price_value)) {
                     const priceDate = new Date(sp.latest_price_date);
                     const roughlyOneWeekAgo = new Date();
-                    roughlyOneWeekAgo.setDate(roughlyOneWeekAgo.getDate() - 7); // "Roughly a week" old is the cutoff
-                    // Ensure date objects are valid before comparison
-                    if (!isNaN(priceDate.getTime()) && !isNaN(roughlyOneWeekAgo.getTime())) {
+                    roughlyOneWeekAgo.setDate(roughlyOneWeekAgo.getDate() - 7);
+                    roughlyOneWeekAgo.setHours(0,0,0,0);
+
+                    if (!isNaN(priceDate.getTime())) {
                         if (priceDate >= roughlyOneWeekAgo) {
-                            // Price is recent and valid
                             priceMap.set(sp.company_id, {
                                 latest_price_value: sp.latest_price_value,
                                 share_price_currency_actual: sp.latest_price_currency,
-                                share_price_date_actual: sp.latest_price_date, // Keep as ISO string from RPC
+                                share_price_date_actual: sp.latest_price_date,
                                 share_price_source_actual: 'stock_prices_table',
                             });
                         } else {
-                            // Price is valid but older than a week
                             console.log(`[FilterContext][Augment] Stock price for company ${sp.company_id} (date: ${sp.latest_price_date}) is valid but older than ~7 days.`);
                             priceMap.set(sp.company_id, {
-                                latest_price_value: sp.latest_price_value, // Store it anyway for info if needed, but mark as old
+                                latest_price_value: sp.latest_price_value,
                                 share_price_currency_actual: sp.latest_price_currency,
                                 share_price_date_actual: sp.latest_price_date,
                                 share_price_source_actual: 'stock_prices_table_old',
                             });
                         }
                     } else {
-                        console.warn(`[FilterContext][Augment] Invalid date encountered for company ${sp.company_id}, price data:`, sp);
+                        console.warn(`[FilterContext][Augment] Invalid priceDate encountered for company ${sp.company_id}, price data:`, sp);
                     }
                 } else {
                      console.log(`[FilterContext][Augment] Stock price entry for company ${sp.company_id} skipped (missing date or invalid price value in RPC response).`);
@@ -218,13 +216,12 @@ export const FilterProvider: React.FC<{ children: ReactNode }> = ({ children }) 
             console.log("[FilterContext][Augment] No stock price data returned from RPC call.");
         }
 
-        // Map over original companies and augment them
         const augmentedCompanies = companiesToAugment.map(company => {
             const stockPriceInfo = priceMap.get(company.company_id);
             
-            // Priority 1: Recent price from stock_prices table
             if (stockPriceInfo && stockPriceInfo.share_price_source_actual === 'stock_prices_table' && isValidNumber(stockPriceInfo.latest_price_value)) {
-                if (company.company_id === B2GOLD_ID) console.log(`[B2GOLD_ID_TRACE][Augment] B2Gold (ID ${B2GOLD_ID}) using recent stock_prices_table value: ${stockPriceInfo.latest_price_value}`);
+                // Example of specific logging for a company ID, can be adapted or removed
+                // if (company.company_id === YOUR_SPECIFIC_DEBUG_ID) console.log(`[YOUR_DEBUG_ID_TRACE][Augment] Company ${company.company_id} using recent stock_prices_table value: ${stockPriceInfo.latest_price_value}`);
                 return {
                     ...company,
                     share_price: stockPriceInfo.latest_price_value,
@@ -232,48 +229,28 @@ export const FilterProvider: React.FC<{ children: ReactNode }> = ({ children }) 
                     share_price_date_actual: stockPriceInfo.share_price_date_actual,
                     share_price_source_actual: 'stock_prices_table',
                 };
-            }
-            
-            // Fallback: Use the share_price already present on the Company object
-            // This share_price would have come from the companies_detailed_view (calculated or otherwise)
-            // and transformed by convertRpcRowsToCompanies.
-            // If it's null, we try one more time to calculate if source data is available on the Company object.
-            let finalSharePrice = company.share_price;
-            let source = company.share_price_source_actual || 'calculated_from_market_cap'; // Default if no source yet
-            let currencyActual = company.share_price_currency_actual;
-            let dateActual = company.share_price_date_actual;
-
-            if (!isValidNumber(finalSharePrice)) { // If existing share_price is null or invalid
-                const marketCap = company.financials?.market_cap_value;
-                const existingShares = company.capital_structure?.existing_shares;
-                if (isValidNumber(marketCap) && isValidNumber(existingShares) && existingShares > 0) {
-                    finalSharePrice = marketCap / existingShares;
-                    source = 'calculated_from_market_cap'; // Recalculated now
-                    currencyActual = company.financials?.market_cap_currency ?? 'USD'; // Prefer market cap currency
-                    dateActual = null; // No specific date for this calculation
-                     if (company.company_id === B2GOLD_ID) console.log(`[B2GOLD_ID_TRACE][Augment] B2Gold (ID ${B2GOLD_ID}) had no recent stock_prices, used calculated value: ${finalSharePrice}`);
-                } else {
-                    if (company.company_id === B2GOLD_ID) console.log(`[B2GOLD_ID_TRACE][Augment] B2Gold (ID ${B2GOLD_ID}) had no recent stock_prices AND no data for calculation. Share price remains: ${finalSharePrice}`);
-                }
             } else {
-                 if (company.company_id === B2GOLD_ID) console.log(`[B2GOLD_ID_TRACE][Augment] B2Gold (ID ${B2GOLD_ID}) using its existing share_price from initial load (likely calculated): ${finalSharePrice}`);
-            }
-            
-            // If stockPriceInfo indicates an old price, use its date/currency for info, but price is already determined
-            if (stockPriceInfo && stockPriceInfo.share_price_source_actual === 'stock_prices_table_old') {
-                source = 'stock_prices_table_old';
-                currencyActual = stockPriceInfo.share_price_currency_actual ?? currencyActual; // Prefer old stock price currency if available
-                dateActual = stockPriceInfo.share_price_date_actual ?? dateActual;
-            }
+                const marketCap = company.financials?.market_cap_value ?? (company as any).f_market_cap_value;
+                const existingShares = company.capital_structure?.existing_shares ?? (company as any).cs_existing_shares;
+                const marketCapCurrency = company.financials?.market_cap_currency ?? (company as any).f_market_cap_currency;
 
+                let calculatedPrice = company.share_price; 
+                if (!isValidNumber(calculatedPrice) && isValidNumber(marketCap) && isValidNumber(existingShares) && existingShares > 0) {
+                    calculatedPrice = marketCap / existingShares;
+                }
+                
+                const sourceToSet = stockPriceInfo?.share_price_source_actual === 'stock_prices_table_old' ? 'stock_prices_table_old' : 'calculated_from_market_cap';
+                const currencyToSet = stockPriceInfo?.share_price_source_actual === 'stock_prices_table_old' ? stockPriceInfo.share_price_currency_actual : (marketCapCurrency ?? 'USD');
+                const dateToSet = stockPriceInfo?.share_price_source_actual === 'stock_prices_table_old' ? stockPriceInfo.share_price_date_actual : null;
 
-            return {
-                ...company,
-                share_price: finalSharePrice,
-                share_price_source_actual: source,
-                share_price_currency_actual: currencyActual,
-                share_price_date_actual: dateActual,
-            };
+                return {
+                    ...company,
+                    share_price: calculatedPrice,
+                    share_price_source_actual: sourceToSet,
+                    share_price_currency_actual: currencyToSet,
+                    share_price_date_actual: dateToSet,
+                };
+            }
         });
         
         console.log(`[FilterContext][Augment] Price augmentation logic applied. Returning ${augmentedCompanies.length} companies.`);
@@ -281,7 +258,6 @@ export const FilterProvider: React.FC<{ children: ReactNode }> = ({ children }) 
 
     } catch (error) {
         console.error("[FilterContext][Augment] Exception during price augmentation process:", error);
-        // On major error, return original companies but mark as calculated
         return companiesToAugment.map(company => ({
             ...company,
             share_price_source_actual: 'calculated_from_market_cap',
@@ -291,16 +267,14 @@ export const FilterProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     } finally {
         setLoadingPriceAugmentation(false);
     }
-  }, [supabase, B2GOLD_ID]); // Added B2GOLD_ID here so the log inside can access it
+  }, [supabase]); // Removed B2GOLD_ID from here as it's no longer a top-level const in this file
 
-  // Combined loading state
   const loading = useMemo(() => isSubscriptionLoading || loadingRanges || loadingFilteredSet || loadingPaginated || loadingPriceAugmentation,
     [isSubscriptionLoading, loadingRanges, loadingFilteredSet, loadingPaginated, loadingPriceAugmentation]);
 
-  // Effect to fetch global metric ranges
   useEffect(() => {
     let mounted = true;
-    const fetchFullRanges = async () => { /* ... (same as your existing, ensure no issues) ... */ 
+    const fetchFullRanges = async () => { 
         if (!mounted) return;
         setLoadingRanges(true); setError(null);
         try {
@@ -321,8 +295,7 @@ export const FilterProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     return () => { mounted = false; };
   }, []);
 
-  // Function to build JSON for RPC filters
-  const buildFiltersJson = useCallback((settings: FilterSettings): Record<string, any> => { /* ... (same as your existing) ... */ 
+  const buildFiltersJson = useCallback((settings: FilterSettings): Record<string, any> => { 
     const filtersJson: Record<string, any> = {};
     if (settings.developmentStatus?.length > 0) {
       filtersJson.status = settings.developmentStatus.filter(s => typeof s === 'string');
@@ -343,7 +316,6 @@ export const FilterProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     return filtersJson;
   }, []);
 
-  // --- Data Fetching Functions (Modified to include augmentation) ---
   const fetchFilteredSetAndFirstPage = useCallback(async (
     currentFilters: FilterSettings, currentSort: SortState, sizeForFirstPage: number,
     currency: Currency, tier: ColumnTier
@@ -376,7 +348,7 @@ export const FilterProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         fetchedTotalCount = 0; 
         firstPageItems = EMPTY_COMPANY_ARRAY;
       } else {
-        const rpcTotalRows = pageOneData[0]?.total_rows;
+        const rpcTotalRows = pageOneData[0]?.total_rows; 
         if (typeof rpcTotalRows !== 'number' || !isFinite(rpcTotalRows)) {
             console.warn("[FilterContext][InitialFetch] Invalid or missing total_rows in RPC response. Response sample:", pageOneData.slice(0,1));
         } else {
@@ -481,7 +453,6 @@ export const FilterProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     }
   }, [buildFiltersJson, totalCount, loadingRanges, loadingFilteredSet, loadingPaginated, isSubscriptionLoading, currentUserTier, augmentCompaniesWithStockPrices]);
 
-  // --- Effects for orchestrating data fetches ---
   useEffect(() => {
     if (loadingRanges || (isSubscriptionLoading && !currentUserTier)) {
       console.log(`[FilterContext][Effect1] Initial data fetch prerequisites not met (loadingRanges: ${loadingRanges}, isSubscriptionLoading: ${isSubscriptionLoading}, currentUserTier: ${!!currentUserTier}).`);
@@ -494,16 +465,20 @@ export const FilterProvider: React.FC<{ children: ReactNode }> = ({ children }) 
   }, [filterSettings, currentCurrency, pageSize, sortState, currentUserTier, loadingRanges, isSubscriptionLoading, fetchFilteredSetAndFirstPage]);
 
   useEffect(() => {
+    // This effect handles subsequent page changes (NOT page 1)
     if (currentPage === DEFAULT_PAGE || lastFetchedPageRef.current === currentPage) {
+        // Page 1 is handled by the effect above.
+        // If lastFetchedPageRef already matches currentPage, it means data for this page was just fetched (likely by page 1 logic or previous pagination).
         return;
     }
+    // Prevent fetching if other critical operations are ongoing
     if (loadingRanges || loadingFilteredSet || (isSubscriptionLoading && !currentUserTier) || loadingPaginated || loadingPriceAugmentation ) {
       console.log(`[FilterContext][Effect2-Pagination] Skipping fetch for page ${currentPage} due to other active loading states.`);
       return;
     }
     console.log(`[FilterContext][Effect2-Pagination] CurrentPage changed to ${currentPage}. Fetching paginated data.`);
     fetchPaginatedDataOnly(currentPage, pageSize, sortState, filterSettings, currentCurrency, currentUserTier);
-  }, [currentPage]); // Simplified dependencies: only currentPage triggers this specific pagination effect
+  }, [currentPage]); // Only depends on currentPage to react to its changes for pagination
 
   const fetchCompaniesByIds = useCallback(async (ids: number[]): Promise<Company[]> => {
     if (!Array.isArray(ids) || ids.length === 0) {
@@ -512,7 +487,7 @@ export const FilterProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     }
     console.log(`[FilterContext] fetchCompaniesByIds: Fetching details for ${ids.length} companies from view 'companies_detailed_view'.`);
     setError(null); 
-    setLoadingPriceAugmentation(true); // Indicate process involving augmentation is starting
+    setLoadingPriceAugmentation(true);
 
     try {
       const { data, error: viewError } = await supabase
@@ -556,7 +531,6 @@ export const FilterProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     setSortState(DEFAULT_SORT_STATE);
     setExcludedCompanyIds(EMPTY_SET);
     setPageSizeState(DEFAULT_PAGE_SIZE);
-    // setCurrentPage(DEFAULT_PAGE); // The main useEffect for filterSettings will handle this
   }, []);
   const handleToggleCompanyExclusion = useCallback((companyId: number) => {
     setExcludedCompanyIds(prev => {
@@ -577,8 +551,9 @@ export const FilterProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     const validPage = Math.max(1, Math.min(page, maxPage));
     if (validPage !== currentPage) {
         console.log(`[FilterContext] Page changed from ${currentPage} to ${validPage}.`);
+        // Set current page to the new valid page. The useEffect watching `currentPage` will trigger data fetch.
         setCurrentPage(validPage);
-    } else if (page !== validPage) {
+    } else if (page !== validPage) { // If requested page was out of bounds
         console.log(`[FilterContext] Requested page ${page} is out of bounds (1-${maxPage}). Staying on page ${currentPage}.`);
     }
   }, [currentPage, effectiveTotalCount, pageSize]);
@@ -586,6 +561,7 @@ export const FilterProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     if (pageSizeOptions.includes(size) && size !== pageSize) {
         console.log(`[FilterContext] Page size changed to: ${size}`);
         setPageSizeState(size);
+        // Changing page size should also reset to page 1, which will be handled by the main useEffect
     }
   }, [pageSize]);
   const handleSetCurrentCurrency = useCallback((currency: Currency) => {
@@ -611,7 +587,7 @@ export const FilterProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     filteredCompanyIds, excludedCompanyIds, handleToggleCompanyExclusion, loadingPaginated, loadingRanges,
     loadingFilteredSet, loadingPriceAugmentation, loading, error, handleSetCurrentCurrency, handleSetDevelopmentStatus, handleSetMetricRange,
     handleSetSearchTerm, handleResetFilters, getMetricConfigByDbColumn, sortState, currentPage, pageSize,
-    handleSetSort, handleSetPage, handleSetPageSize, fetchCompaniesByIds
+    handleSetSort, handleSetPage, handleSetPageSize, fetchCompaniesByIds // fetchCompaniesByIds is now stable due to useCallback
   ]);
 
   return <FilterContext.Provider value={value}>{children}</FilterContext.Provider>;
