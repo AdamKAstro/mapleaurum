@@ -95,7 +95,7 @@ export interface Company extends AugmentedPriceInfo { // Company now includes Au
 // Type matching the flat structure returned by the Supabase RPC function (get_companies_paginated)
 // This should accurately reflect the columns in your `companies_detailed_view`
 export interface RpcResponseRow extends Record<string, any> {
-  total_rows: number;
+  total_rows: bigint;
   company_id: number;
   company_name: string;
   tsx_code: string | null;
