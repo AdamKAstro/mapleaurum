@@ -1,0 +1,42 @@
+-- Example: Add/Update share price for Company ID 69 for May 15, 2025
+
+-- Prepare the data for upsert
+-- Replace values as needed
+WITH data_to_upsert (
+    target_company_id, 
+    target_price_date, 
+    target_price_value, 
+    target_price_currency, 
+    target_data_source
+) AS (
+    VALUES 
+        (69, '2025-05-15'::DATE, 0.05, 'CAD', 'Manual Entry - Corrected')
+)
+INSERT INTO public.stock_prices (
+    company_id, 
+    price_date,
+    price_value, 
+    price_currency, 
+    data_source,
+    last_updated
+) 
+SELECT
+    d.target_company_id,
+    d.target_price_date,
+    d.target_price_value,
+    d.target_price_currency,
+    d.target_data_source,
+    NOW() -- Current timestamp for last_updated
+FROM
+    data_to_upsert d
+ON CONFLICT (company_id, price_date, data_source) 
+DO UPDATE SET
+    price_value = EXCLUDED.price_value,
+    price_currency = EXCLUDED.price_currency,
+    last_updated = NOW();
+
+-- After running, you can verify:
+SELECT * FROM public.stock_prices WHERE company_id = 69 ORDER BY price_date DESC;
+-- And then check your companies_detailed_view
+SELECT company_id, company_name, share_price, share_price_currency, share_price_actual_date, share_price_source 
+FROM public.companies_detailed_view WHERE company_id = 69;

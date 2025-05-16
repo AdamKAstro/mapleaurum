@@ -1,0 +1,524 @@
+-- Template: Create New Company
+-- Replace values in data_to_upsert as needed
+-- Required: company_name, tsx_code; others optional
+
+WITH data_to_upsert (
+    company_name,
+    tsx_code,
+    status,
+    headquarters,
+    description,
+    minerals_of_interest,
+    percent_gold,
+    percent_silver,
+    share_price,
+    share_price_currency,
+    share_price_actual_date,
+    share_price_source,
+    cash_value,
+    cash_currency,
+    cash_date,
+    market_cap_value,
+    market_cap_currency,
+    enterprise_value_value,
+    enterprise_value_currency,
+    net_financial_assets,
+    net_financial_assets_currency,
+    free_cash_flow,
+    price_to_book,
+    price_to_sales,
+    enterprise_to_revenue,
+    enterprise_to_ebitda,
+    trailing_pe,
+    forward_pe,
+    peg_ratio,
+    revenue_value,
+    revenue_currency,
+    cost_of_revenue,
+    gross_profit,
+    operating_expense,
+    operating_income,
+    ebitda,
+    net_income_value,
+    net_income_currency,
+    debt_value,
+    debt_currency,
+    shares_outstanding,
+    investments_json,
+    hedgebook,
+    liabilities,
+    liabilities_currency,
+    other_financial_assets,
+    other_financial_assets_currency,
+    financials_data_source,
+    existing_shares,
+    fully_diluted_shares,
+    in_the_money_options,
+    options_revenue,
+    options_revenue_currency,
+    reserves_total_aueq_moz,
+    measured_indicated_total_aueq_moz,
+    resources_total_aueq_moz,
+    potential_total_aueq_moz,
+    reserves_precious_aueq_moz,
+    measured_indicated_precious_aueq_moz,
+    resources_precious_aueq_moz,
+    reserves_non_precious_aueq_moz,
+    measured_indicated_non_precious_aueq_moz,
+    resources_non_precious_aueq_moz,
+    potential_non_precious_aueq_moz,
+    mineable_total_aueq_moz,
+    mineable_precious_aueq_moz,
+    mineable_non_precious_aueq_moz,
+    ev_per_resource_oz_all,
+    ev_per_reserve_oz_all,
+    mkt_cap_per_resource_oz_all,
+    mkt_cap_per_reserve_oz_all,
+    ev_per_resource_oz_precious,
+    ev_per_reserve_oz_precious,
+    mkt_cap_per_resource_oz_precious,
+    mkt_cap_per_reserve_oz_all,
+    ev_per_mi_oz_all,
+    ev_per_mi_oz_precious,
+    ev_per_mineable_oz_all,
+    ev_per_mineable_oz_precious,
+    ev_per_production_oz,
+    mkt_cap_per_mi_oz_all,
+    mkt_cap_per_mi_oz_precious,
+    mkt_cap_per_mineable_oz_all,
+    mkt_cap_per_mineable_oz_precious,
+    mkt_cap_per_production_oz,
+    current_production_total_aueq_koz,
+    future_production_total_aueq_koz,
+    reserve_life_years,
+    current_production_precious_aueq_koz,
+    current_production_non_precious_aueq_koz,
+    aisc_future,
+    aisc_future_currency,
+    construction_costs,
+    construction_costs_currency,
+    tco_future,
+    tco_future_currency,
+    aisc_last_quarter,
+    aisc_last_quarter_currency,
+    aisc_last_year,
+    aisc_last_year_currency,
+    aic_last_quarter,
+    aic_last_quarter_currency,
+    aic_last_year,
+    aic_last_year_currency,
+    tco_current,
+    tco_current_currency
+) AS (
+    VALUES (
+        'New Gold Corp'::text, -- company_name
+        'NGC'::text, -- tsx_code
+        'active'::company_status_enum, -- status
+        'Toronto, Canada'::text, -- headquarters
+        'Gold mining company focused on sustainable extraction'::text, -- description
+        'Gold, Silver'::text, -- minerals_of_interest
+        80.0::double precision, -- percent_gold
+        20.0::double precision, -- percent_silver
+        1.25::double precision, -- share_price
+        'CAD'::text, -- share_price_currency
+        '2025-05-15'::date, -- share_price_actual_date
+        'Manual Entry'::text, -- share_price_source
+        5000000.0::double precision, -- cash_value
+        'CAD'::text, -- cash_currency
+        NOW()::timestamptz, -- cash_date
+        250000000.0::double precision, -- market_cap_value
+        'CAD'::text, -- market_cap_currency
+        275000000.0::double precision, -- enterprise_value_value
+        'CAD'::text, -- enterprise_value_currency
+        NULL::double precision, -- net_financial_assets
+        NULL::text, -- net_financial_assets_currency
+        NULL::double precision, -- free_cash_flow
+        NULL::double precision, -- price_to_book
+        NULL::double precision, -- price_to_sales
+        NULL::double precision, -- enterprise_to_revenue
+        NULL::double precision, -- enterprise_to_ebitda
+        NULL::double precision, -- trailing_pe
+        NULL::double precision, -- forward_pe
+        NULL::double precision, -- peg_ratio
+        NULL::double precision, -- revenue_value
+        NULL::text, -- revenue_currency
+        NULL::double precision, -- cost_of_revenue
+        NULL::double precision, -- gross_profit
+        NULL::double precision, -- operating_expense
+        NULL::double precision, -- operating_income
+        NULL::double precision, -- ebitda
+        NULL::double precision, -- net_income_value
+        NULL::text, -- net_income_currency
+        NULL::double precision, -- debt_value
+        NULL::text, -- debt_currency
+        NULL::double precision, -- shares_outstanding
+        NULL::text, -- investments_json
+        NULL::text, -- hedgebook
+        NULL::double precision, -- liabilities
+        NULL::text, -- liabilities_currency
+        NULL::double precision, -- other_financial_assets
+        NULL::text, -- other_financial_assets_currency
+        'Manual Entry'::text, -- financials_data_source
+        200000000::bigint, -- existing_shares
+        210000000::bigint, -- fully_diluted_shares
+        10000000::bigint, -- in_the_money_options
+        NULL::double precision, -- options_revenue
+        NULL::text, -- options_revenue_currency
+        5.0::double precision, -- reserves_total_aueq_moz
+        NULL::double precision, -- measured_indicated_total_aueq_moz
+        NULL::double precision, -- resources_total_aueq_moz
+        NULL::double precision, -- potential_total_aueq_moz
+        NULL::double precision, -- reserves_precious_aueq_moz
+        NULL::double precision, -- measured_indicated_precious_aueq_moz
+        NULL::double precision, -- resources_precious_aueq_moz
+        NULL::double precision, -- reserves_non_precious_aueq_moz
+        NULL::double precision, -- measured_indicated_non_precious_aueq_moz
+        NULL::double precision, -- resources_non_precious_aueq_moz
+        NULL::double precision, -- potential_non_precious_aueq_moz
+        NULL::double precision, -- mineable_total_aueq_moz
+        NULL::double precision, -- mineable_precious_aueq_moz
+        NULL::double precision, -- mineable_non_precious_aueq_moz
+        NULL::double precision, -- ev_per_resource_oz_all
+        NULL::double precision, -- ev_per_reserve_oz_all
+        NULL::double precision, -- mkt_cap_per_resource_oz_all
+        NULL::double precision, -- mkt_cap_per_reserve_oz_all
+        NULL::double precision, -- ev_per_resource_oz_precious
+        NULL::double precision, -- ev_per_reserve_oz_precious
+        NULL::double precision, -- mkt_cap_per_resource_oz_precious
+        NULL::double precision, -- mkt_cap_per_reserve_oz_all
+        NULL::double precision, -- ev_per_mi_oz_all
+        NULL::double precision, -- ev_per_mi_oz_precious
+        NULL::double precision, -- ev_per_mineable_oz_all
+        NULL::double precision, -- ev_per_mineable_oz_precious
+        NULL::double precision, -- ev_per_production_oz
+        NULL::double precision, -- mkt_cap_per_mi_oz_all
+        NULL::double precision, -- mkt_cap_per_mi_oz_precious
+        NULL::double precision, -- mkt_cap_per_mineable_oz_all
+        NULL::double precision, -- mkt_cap_per_mineable_oz_precious
+        NULL::double precision, -- mkt_cap_per_production_oz
+        NULL::double precision, -- current_production_total_aueq_koz
+        NULL::double precision, -- future_production_total_aueq_koz
+        NULL::double precision, -- reserve_life_years
+        NULL::double precision, -- current_production_precious_aueq_koz
+        NULL::double precision, -- current_production_non_precious_aueq_koz
+        NULL::double precision, -- aisc_future
+        NULL::text, -- aisc_future_currency
+        NULL::double precision, -- construction_costs
+        NULL::text, -- construction_costs_currency
+        NULL::double precision, -- tco_future
+        NULL::text, -- tco_future_currency
+        NULL::double precision, -- aisc_last_quarter
+        NULL::text, -- aisc_last_quarter_currency
+        NULL::double precision, -- aisc_last_year
+        NULL::text, -- aisc_last_year_currency
+        NULL::double precision, -- aic_last_quarter
+        NULL::text, -- aic_last_quarter_currency
+        NULL::double precision, -- aic_last_year
+        NULL::text, -- aic_last_year_currency
+        NULL::double precision, -- tco_current
+        NULL::text -- tco_current_currency
+    )
+),
+-- Insert into companies table and get new company_id
+new_company AS (
+    INSERT INTO public.companies (
+        company_name,
+        tsx_code,
+        status,
+        headquarters,
+        description,
+        minerals_of_interest,
+        percent_gold,
+        percent_silver
+    )
+    SELECT
+        d.company_name,
+        d.tsx_code,
+        d.status,
+        d.headquarters,
+        d.description,
+        d.minerals_of_interest,
+        d.percent_gold,
+        d.percent_silver
+    FROM data_to_upsert d
+    ON CONFLICT (tsx_code) DO NOTHING
+    RETURNING company_id
+),
+-- Insert into financials table
+insert_financials AS (
+    INSERT INTO public.financials (
+        company_id,
+        share_price,
+        share_price_currency,
+        share_price_actual_date,
+        share_price_source,
+        cash_value,
+        cash_currency,
+        cash_date,
+        market_cap_value,
+        market_cap_currency,
+        enterprise_value_value,
+        enterprise_value_currency,
+        net_financial_assets,
+        net_financial_assets_currency,
+        free_cash_flow,
+        price_to_book,
+        price_to_sales,
+        enterprise_to_revenue,
+        enterprise_to_ebitda,
+        trailing_pe,
+        forward_pe,
+        peg_ratio,
+        revenue_value,
+        revenue_currency,
+        cost_of_revenue,
+        gross_profit,
+        operating_expense,
+        operating_income,
+        ebitda,
+        net_income_value,
+        net_income_currency,
+        debt_value,
+        debt_currency,
+        shares_outstanding,
+        investments_json,
+        hedgebook,
+        liabilities,
+        liabilities_currency,
+        other_financial_assets,
+        other_financial_assets_currency,
+        data_source,
+        last_updated
+    )
+    SELECT
+        nc.company_id,
+        d.share_price,
+        d.share_price_currency,
+        d.share_price_actual_date,
+        d.share_price_source,
+        d.cash_value,
+        d.cash_currency,
+        d.cash_date,
+        d.market_cap_value,
+        d.market_cap_currency,
+        d.enterprise_value_value,
+        d.enterprise_value_currency,
+        d.net_financial_assets,
+        d.net_financial_assets_currency,
+        d.free_cash_flow,
+        d.price_to_book,
+        d.price_to_sales,
+        d.enterprise_to_revenue,
+        d.enterprise_to_ebitda,
+        d.trailing_pe,
+        d.forward_pe,
+        d.peg_ratio,
+        d.revenue_value,
+        d.revenue_currency,
+        d.cost_of_revenue,
+        d.gross_profit,
+        d.operating_expense,
+        d.operating_income,
+        d.ebitda,
+        d.net_income_value,
+        d.net_income_currency,
+        d.debt_value,
+        d.debt_currency,
+        d.shares_outstanding,
+        d.investments_json,
+        d.hedgebook,
+        d.liabilities,
+        d.liabilities_currency,
+        d.other_financial_assets,
+        d.other_financial_assets_currency,
+        d.financials_data_source,
+        NOW()
+    FROM data_to_upsert d
+    CROSS JOIN new_company nc
+    ON CONFLICT (company_id) DO NOTHING
+),
+-- Insert into capital_structure table
+insert_capital_structure AS (
+    INSERT INTO public.capital_structure (
+        company_id,
+        existing_shares,
+        fully_diluted_shares,
+        in_the_money_options,
+        options_revenue,
+        options_revenue_currency,
+        last_updated
+    )
+    SELECT
+        nc.company_id,
+        d.existing_shares,
+        d.fully_diluted_shares,
+        d.in_the_money_options,
+        d.options_revenue,
+        d.options_revenue_currency,
+        NOW()
+    FROM data_to_upsert d
+    CROSS JOIN new_company nc
+    ON CONFLICT (company_id) DO NOTHING
+),
+-- Insert into mineral_estimates table
+insert_mineral_estimates AS (
+    INSERT INTO public.mineral_estimates (
+        company_id,
+        reserves_total_aueq_moz,
+        measured_indicated_total_aueq_moz,
+        resources_total_aueq_moz,
+        potential_total_aueq_moz,
+        reserves_precious_aueq_moz,
+        measured_indicated_precious_aueq_moz,
+        resources_precious_aueq_moz,
+        reserves_non_precious_aueq_moz,
+        measured_indicated_non_precious_aueq_moz,
+        resources_non_precious_aueq_moz,
+        potential_non_precious_aueq_moz,
+        mineable_total_aueq_moz,
+        mineable_precious_aueq_moz,
+        mineable_non_precious_aueq_moz,
+        last_updated
+    )
+    SELECT
+        nc.company_id,
+        d.reserves_total_aueq_moz,
+        d.measured_indicated_total_aueq_moz,
+        d.resources_total_aueq_moz,
+        d.potential_total_aueq_moz,
+        d.reserves_precious_aueq_moz,
+        d.measured_indicated_precious_aueq_moz,
+        d.resources_precious_aueq_moz,
+        d.reserves_non_precious_aueq_moz,
+        d.measured_indicated_non_precious_aueq_moz,
+        d.resources_non_precious_aueq_moz,
+        d.potential_non_precious_aueq_moz,
+        d.mineable_total_aueq_moz,
+        d.mineable_precious_aueq_moz,
+        d.mineable_non_precious_aueq_moz,
+        NOW()
+    FROM data_to_upsert d
+    CROSS JOIN new_company nc
+    ON CONFLICT (company_id) DO NOTHING
+),
+-- Insert into valuation_metrics table
+insert_valuation_metrics AS (
+    INSERT INTO public.valuation_metrics (
+        company_id,
+        ev_per_resource_oz_all,
+        ev_per_reserve_oz_all,
+        mkt_cap_per_resource_oz_all,
+        mkt_cap_per_reserve_oz_all,
+        ev_per_resource_oz_precious,
+        ev_per_reserve_oz_precious,
+        mkt_cap_per_resource_oz_precious,
+        mkt_cap_per_reserve_oz_precious,
+        ev_per_mi_oz_all,
+        ev_per_mi_oz_precious,
+        ev_per_mineable_oz_all,
+        ev_per_mineable_oz_precious,
+        ev_per_production_oz,
+        mkt_cap_per_mi_oz_all,
+        mkt_cap_per_mi_oz_precious,
+        mkt_cap_per_mineable_oz_all,
+        mkt_cap_per_mineable_oz_precious,
+        mkt_cap_per_production_oz,
+        last_updated
+    )
+    SELECT
+        nc.company_id,
+        d.ev_per_resource_oz_all,
+        d.ev_per_reserve_oz_all,
+        d.mkt_cap_per_resource_oz_all,
+        d.mkt_cap_per_reserve_oz_all,
+        d.ev_per_resource_oz_precious,
+        d.ev_per_reserve_oz_precious,
+        d.mkt_cap_per_resource_oz_precious,
+        d.mkt_cap_per_reserve_oz_precious,
+        d.ev_per_mi_oz_all,
+        d.ev_per_mi_oz_precious,
+        d.ev_per_mineable_oz_all,
+        d.ev_per_mineable_oz_precious,
+        d.ev_per_production_oz,
+        d.mkt_cap_per_mi_oz_all,
+        d.mkt_cap_per_mi_oz_precious,
+        d.mkt_cap_per_mineable_oz_all,
+        d.mkt_cap_per_mineable_oz_precious,
+        d.mkt_cap_per_production_oz,
+        NOW()
+    FROM data_to_upsert d
+    CROSS JOIN new_company nc
+    ON CONFLICT (company_id) DO NOTHING
+),
+-- Insert into production table
+insert_production AS (
+    INSERT INTO public.production (
+        company_id,
+        current_production_total_aueq_koz,
+        future_production_total_aueq_koz,
+        reserve_life_years,
+        current_production_precious_aueq_koz,
+        current_production_non_precious_aueq_koz,
+        last_updated
+    )
+    SELECT
+        nc.company_id,
+        d.current_production_total_aueq_koz,
+        d.future_production_total_aueq_koz,
+        d.reserve_life_years,
+        d.current_production_precious_aueq_koz,
+        d.current_production_non_precious_aueq_koz,
+        NOW()
+    FROM data_to_upsert d
+    CROSS JOIN new_company nc
+    ON CONFLICT (company_id) DO NOTHING
+),
+-- Insert into costs table
+insert_costs AS (
+    INSERT INTO public.costs (
+        company_id,
+        aisc_future,
+        aisc_future_currency,
+        construction_costs,
+        construction_costs_currency,
+        tco_future,
+        tco_future_currency,
+        aisc_last_quarter,
+        aisc_last_quarter_currency,
+        aisc_last_year,
+        aisc_last_year_currency,
+        aic_last_quarter,
+        aic_last_quarter_currency,
+        aic_last_year,
+        aic_last_year_currency,
+        tco_current,
+        tco_current_currency,
+        last_updated
+    )
+    SELECT
+        nc.company_id,
+        d.aisc_future,
+        d.aisc_future_currency,
+        d.construction_costs,
+        d.construction_costs_currency,
+        d.tco_future,
+        d.tco_future_currency,
+        d.aisc_last_quarter,
+        d.aisc_last_quarter_currency,
+        d.aisc_last_year,
+        d.aisc_last_year_currency,
+        d.aic_last_quarter,
+        d.aic_last_quarter_currency,
+        d.aic_last_year,
+        d.aic_last_year_currency,
+        d.tco_current,
+        d.tco_current_currency,
+        NOW()
+    FROM data_to_upsert d
+    CROSS JOIN new_company nc
+    ON CONFLICT (company_id) DO NOTHING
+)
+-- Verify new company
+SELECT company_id, company_name, share_price, share_price_currency, share_price_actual_date, share_price_source
+FROM public.companies_detailed_view
+WHERE tsx_code = 'NGC';

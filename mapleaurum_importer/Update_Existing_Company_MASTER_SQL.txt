@@ -1,0 +1,672 @@
+-- Template: Update Existing Company (Selective Attributes)
+-- Replace values in data_to_upsert as needed
+-- Leave fields as NULL to skip updating them
+-- Share price data is stored in stock_prices, not financials
+
+WITH data_to_upsert (
+    target_company_id,
+    -- Companies table fields
+    company_name,
+    tsx_code,
+    status,
+    headquarters,
+    description,
+    minerals_of_interest,
+    percent_gold,
+    percent_silver,
+    -- Stock Prices table fields (for share price)
+    share_price,
+    share_price_currency,
+    share_price_actual_date,
+    share_price_source,
+    -- Financials table fields
+    cash_value,
+    cash_currency,
+    cash_date,
+    market_cap_value,
+    market_cap_currency,
+    enterprise_value_value,
+    enterprise_value_currency,
+    net_financial_assets,
+    net_financial_assets_currency,
+    free_cash_flow,
+    price_to_book,
+    price_to_sales,
+    enterprise_to_revenue,
+    enterprise_to_ebitda,
+    trailing_pe,
+    forward_pe,
+    peg_ratio,
+    revenue_value,
+    revenue_currency,
+    cost_of_revenue,
+    gross_profit,
+    operating_expense,
+    operating_income,
+    ebitda,
+    net_income_value,
+    net_income_currency,
+    debt_value,
+    debt_currency,
+    shares_outstanding,
+    investments_json,
+    hedgebook,
+    liabilities,
+    liabilities_currency,
+    other_financial_assets,
+    other_financial_assets_currency,
+    financials_data_source,
+    -- Capital Structure table fields
+    existing_shares,
+    fully_diluted_shares,
+    in_the_money_options,
+    options_revenue,
+    options_revenue_currency,
+    -- Mineral Estimates table fields
+    reserves_total_aueq_moz,
+    measured_indicated_total_aueq_moz,
+    resources_total_aueq_moz,
+    potential_total_aueq_moz,
+    reserves_precious_aueq_moz,
+    measured_indicated_precious_aueq_moz,
+    resources_precious_aueq_moz,
+    reserves_non_precious_aueq_moz,
+    measured_indicated_non_precious_aueq_moz,
+    resources_non_precious_aueq_moz,
+    potential_non_precious_aueq_moz,
+    mineable_total_aueq_moz,
+    mineable_precious_aueq_moz,
+    mineable_non_precious_aueq_moz,
+    -- Valuation Metrics table fields
+    ev_per_resource_oz_all,
+    ev_per_reserve_oz_all,
+    mkt_cap_per_resource_oz_all,
+    mkt_cap_per_reserve_oz_all,
+    ev_per_resource_oz_precious,
+    ev_per_reserve_oz_precious,
+    mkt_cap_per_resource_oz_precious,
+    mkt_cap_per_reserve_oz_precious,
+    ev_per_mi_oz_all,
+    ev_per_mi_oz_precious,
+    ev_per_mineable_oz_all,
+    ev_per_mineable_oz_precious,
+    ev_per_production_oz,
+    mkt_cap_per_mi_oz_all,
+    mkt_cap_per_mi_oz_precious,
+    mkt_cap_per_mineable_oz_all,
+    mkt_cap_per_mineable_oz_precious,
+    mkt_cap_per_production_oz,
+    -- Production table fields
+    current_production_total_aueq_koz,
+    future_production_total_aueq_koz,
+    reserve_life_years,
+    current_production_precious_aueq_koz,
+    current_production_non_precious_aueq_koz,
+    -- Costs table fields
+    aisc_future,
+    aisc_future_currency,
+    construction_costs,
+    construction_costs_currency,
+    tco_future,
+    tco_future_currency,
+    aisc_last_quarter,
+    aisc_last_quarter_currency,
+    aisc_last_year,
+    aisc_last_year_currency,
+    aic_last_quarter,
+    aic_last_quarter_currency,
+    aic_last_year,
+    aic_last_year_currency,
+    tco_current,
+    tco_current_currency
+) AS (
+    VALUES (
+        257, -- target_company_id
+        -- Companies table
+        'McFarlane Lake Mining Limited'::text, -- company_name
+        'MLM.CN'::text, -- tsx_code
+        NULL::company_status_enum, -- status
+        'Sudbury, Ontario, Canada'::text, -- headquarters
+        'McFarlane Lake is a Canadian gold exploration and development company that acquired six gold properties; two west of Sudbury in a region consistently on the top gold exploration opportunities as identified by Ontario Geological Survey, an additional two straddling the Ontario - Manitoba border which are geologically similar to a number of significant gold deposits in Ontario, and an additional two properties located in the historic Timmins area along the prolific Porcupine Destor fault, home to dozens of mines over the last century and several current producing mines. Three of the properties are past producers of gold and all six properties are near infrastructure (roads, power), significant population bases and in a geopolitically stable environment.'::text, -- description
+        'gold'::text, -- minerals_of_interest
+        100.0::double precision, -- percent_gold
+        0.0::double precision, -- percent_silver
+        -- Stock Prices table
+        0.025::double precision, -- share_price
+        'USD'::text, -- share_price_currency
+        '2025-05-15'::date, -- share_price_actual_date
+        'Manual Entry'::text, -- share_price_source
+        -- Financials table
+        NULL::double precision, -- cash_value
+        NULL::text, -- cash_currency
+        NULL::timestamptz, -- cash_date
+        9700000.0::double precision, -- market_cap_value
+        'USD'::text, -- market_cap_currency
+        NULL::double precision, -- enterprise_value_value
+        NULL::text, -- enterprise_value_currency
+        NULL::double precision, -- net_financial_assets
+        NULL::text, -- net_financial_assets_currency
+        NULL::double precision, -- free_cash_flow
+        NULL::double precision, -- price_to_book
+        NULL::double precision, -- price_to_sales
+        NULL::double precision, -- enterprise_to_revenue
+        NULL::double precision, -- enterprise_to_ebitda
+        NULL::double precision, -- trailing_pe
+        NULL::double precision, -- forward_pe
+        NULL::double precision, -- peg_ratio
+        NULL::double precision, -- revenue_value
+        NULL::text, -- revenue_currency
+        NULL::double precision, -- cost_of_revenue
+        NULL::double precision, -- gross_profit
+        NULL::double precision, -- operating_expense
+        NULL::double precision, -- operating_income
+        NULL::double precision, -- ebitda
+        NULL::double precision, -- net_income_value
+        NULL::text, -- net_income_currency
+        NULL::double precision, -- debt_value
+        NULL::text, -- debt_currency
+        NULL::double precision, -- shares_outstanding
+        NULL::text, -- investments_json
+        NULL::text, -- hedgebook
+        NULL::double precision, -- liabilities
+        NULL::text, -- liabilities_currency
+        NULL::double precision, -- other_financial_assets
+        NULL::text, -- other_financial_assets_currency
+        'StockTitan'::text, -- financials_data_source
+        -- Capital Structure table
+        NULL::bigint, -- existing_shares
+        NULL::bigint, -- fully_diluted_shares
+        NULL::bigint, -- in_the_money_options
+        NULL::double precision, -- options_revenue
+        NULL::text, -- options_revenue_currency
+        -- Mineral Estimates table
+        NULL::double precision, -- reserves_total_aueq_moz
+        0.0458::double precision, -- measured_indicated_total_aueq_moz
+        0.142::double precision, -- resources_total_aueq_moz
+        NULL::double precision, -- potential_total_aueq_moz
+        NULL::double precision, -- reserves_precious_aueq_moz
+        0.0458::double precision, -- measured_indicated_precious_aueq_moz
+        0.142::double precision, -- resources_precious_aueq_moz
+        0.0::double precision, -- reserves_non_precious_aueq_moz
+        0.0::double precision, -- measured_indicated_non_precious_aueq_moz
+        0.0::double precision, -- resources_non_precious_aueq_moz
+        0.0::double precision, -- potential_non_precious_aueq_moz
+        NULL::double precision, -- mineable_total_aueq_moz
+        NULL::double precision, -- mineable_precious_aueq_moz
+        NULL::double precision, -- mineable_non_precious_aueq_moz
+        -- Valuation Metrics table
+        NULL::double precision, -- ev_per_resource_oz_all
+        NULL::double precision, -- ev_per_reserve_oz_all
+        NULL::double precision, -- mkt_cap_per_resource_oz_all
+        NULL::double precision, -- mkt_cap_per_reserve_oz_all
+        NULL::double precision, -- ev_per_resource_oz_precious
+        NULL::double precision, -- ev_per_reserve_oz_precious
+        NULL::double precision, -- mkt_cap_per_resource_oz_precious
+        NULL::double precision, -- mkt_cap_per_reserve_oz_precious
+        NULL::double precision, -- ev_per_mi_oz_all
+        NULL::double precision, -- ev_per_mi_oz_precious
+        NULL::double precision, -- ev_per_mineable_oz_all
+        NULL::double precision, -- ev_per_mineable_oz_precious
+        NULL::double precision, -- ev_per_production_oz
+        NULL::double precision, -- mkt_cap_per_mi_oz_all
+        NULL::double precision, -- mkt_cap_per_mi_oz_precious
+        NULL::double precision, -- mkt_cap_per_mineable_oz_all
+        NULL::double precision, -- mkt_cap_per_mineable_oz_precious
+        NULL::double precision, -- mkt_cap_per_production_oz
+        -- Production table
+        0.0::double precision, -- current_production_total_aueq_koz
+        NULL::double precision, -- future_production_total_aueq_koz
+        NULL::double precision, -- reserve_life_years
+        0.0::double precision, -- current_production_precious_aueq_koz
+        0.0::double precision, -- current_production_non_precious_aueq_koz
+        -- Costs table
+        NULL::double precision, -- aisc_future
+        NULL::text, -- aisc_future_currency
+        NULL::double precision, -- construction_costs
+        NULL::text, -- construction_costs_currency
+        NULL::double precision, -- tco_future
+        NULL::text, -- tco_future_currency
+        NULL::double precision, -- aisc_last_quarter
+        NULL::text, -- aisc_last_quarter_currency
+        NULL::double precision, -- aisc_last_year
+        NULL::text, -- aisc_last_year_currency
+        NULL::double precision, -- aic_last_quarter
+        NULL::text, -- aic_last_quarter_currency
+        NULL::double precision, -- aic_last_year
+        NULL::text, -- aic_last_year_currency
+        NULL::double precision, -- tco_current
+        NULL::text -- tco_current_currency
+    )
+)
+-- Update companies table
+UPDATE public.companies c
+SET
+    company_name = COALESCE(d.company_name, c.company_name),
+    tsx_code = COALESCE(d.tsx_code, c.tsx_code),
+    status = COALESCE(d.status, c.status),
+    headquarters = COALESCE(d.headquarters, c.headquarters),
+    description = COALESCE(d.description, c.description),
+    minerals_of_interest = COALESCE(d.minerals_of_interest, c.minerals_of_interest),
+    percent_gold = COALESCE(d.percent_gold, c.percent_gold),
+    percent_silver = COALESCE(d.percent_silver, c.percent_silver)
+FROM data_to_upsert d
+WHERE c.company_id = d.target_company_id;
+
+-- Upsert stock_prices table
+INSERT INTO public.stock_prices (
+    company_id,
+    price_date,
+    price_value,
+    price_currency,
+    data_source,
+    last_updated
+)
+SELECT
+    d.target_company_id,
+    d.share_price_actual_date,
+    d.share_price,
+    d.share_price_currency,
+    d.share_price_source,
+    NOW()
+FROM data_to_upsert d
+WHERE EXISTS (
+    SELECT 1 FROM public.companies WHERE company_id = d.target_company_id
+)
+AND d.share_price IS NOT NULL
+AND d.share_price_actual_date IS NOT NULL
+ON CONFLICT (company_id, price_date, data_source)
+DO UPDATE SET
+    price_value = COALESCE(EXCLUDED.price_value, stock_prices.price_value),
+    price_currency = COALESCE(EXCLUDED.price_currency, stock_prices.price_currency),
+    last_updated = NOW();
+
+-- Upsert financials table
+INSERT INTO public.financials (
+    company_id,
+    cash_value,
+    cash_currency,
+    cash_date,
+    market_cap_value,
+    market_cap_currency,
+    enterprise_value_value,
+    enterprise_value_currency,
+    net_financial_assets,
+    net_financial_assets_currency,
+    free_cash_flow,
+    price_to_book,
+    price_to_sales,
+    enterprise_to_revenue,
+    enterprise_to_ebitda,
+    trailing_pe,
+    forward_pe,
+    peg_ratio,
+    revenue_value,
+    revenue_currency,
+    cost_of_revenue,
+    gross_profit,
+    operating_expense,
+    operating_income,
+    ebitda,
+    net_income_value,
+    net_income_currency,
+    debt_value,
+    debt_currency,
+    shares_outstanding,
+    investments_json,
+    hedgebook,
+    liabilities,
+    liabilities_currency,
+    other_financial_assets,
+    other_financial_assets_currency,
+    data_source,
+    last_updated
+)
+SELECT
+    d.target_company_id,
+    d.cash_value,
+    d.cash_currency,
+    d.cash_date,
+    d.market_cap_value,
+    d.market_cap_currency,
+    d.enterprise_value_value,
+    d.enterprise_value_currency,
+    d.net_financial_assets,
+    d.net_financial_assets_currency,
+    d.free_cash_flow,
+    d.price_to_book,
+    d.price_to_sales,
+    d.enterprise_to_revenue,
+    d.enterprise_to_ebitda,
+    d.trailing_pe,
+    d.forward_pe,
+    d.peg_ratio,
+    d.revenue_value,
+    d.revenue_currency,
+    d.cost_of_revenue,
+    d.gross_profit,
+    d.operating_expense,
+    d.operating_income,
+    d.ebitda,
+    d.net_income_value,
+    d.net_income_currency,
+    d.debt_value,
+    d.debt_currency,
+    d.shares_outstanding,
+    d.investments_json,
+    d.hedgebook,
+    d.liabilities,
+    d.liabilities_currency,
+    d.other_financial_assets,
+    d.other_financial_assets_currency,
+    d.financials_data_source,
+    NOW()
+FROM data_to_upsert d
+WHERE EXISTS (
+    SELECT 1 FROM public.companies WHERE company_id = d.target_company_id
+)
+ON CONFLICT (company_id)
+DO UPDATE SET
+    cash_value = COALESCE(EXCLUDED.cash_value, financials.cash_value),
+    cash_currency = COALESCE(EXCLUDED.cash_currency, financials.cash_currency),
+    cash_date = COALESCE(EXCLUDED.cash_date, financials.cash_date),
+    market_cap_value = COALESCE(EXCLUDED.market_cap_value, financials.market_cap_value),
+    market_cap_currency = COALESCE(EXCLUDED.market_cap_currency, financials.market_cap_currency),
+    enterprise_value_value = COALESCE(EXCLUDED.enterprise_value_value, financials.enterprise_value_value),
+    enterprise_value_currency = COALESCE(EXCLUDED.enterprise_value_currency, financials.enterprise_value_currency),
+    net_financial_assets = COALESCE(EXCLUDED.net_financial_assets, financials.net_financial_assets),
+    net_financial_assets_currency = COALESCE(EXCLUDED.net_financial_assets_currency, financials.net_financial_assets_currency),
+    free_cash_flow = COALESCE(EXCLUDED.free_cash_flow, financials.free_cash_flow),
+    price_to_book = COALESCE(EXCLUDED.price_to_book, financials.price_to_book),
+    price_to_sales = COALESCE(EXCLUDED.price_to_sales, financials.price_to_sales),
+    enterprise_to_revenue = COALESCE(EXCLUDED.enterprise_to_revenue, financials.enterprise_to_revenue),
+    enterprise_to_ebitda = COALESCE(EXCLUDED.enterprise_to_ebitda, financials.enterprise_to_ebitda),
+    trailing_pe = COALESCE(EXCLUDED.trailing_pe, financials.trailing_pe),
+    forward_pe = COALESCE(EXCLUDED.forward_pe, financials.forward_pe),
+    peg_ratio = COALESCE(EXCLUDED.peg_ratio, financials.peg_ratio),
+    revenue_value = COALESCE(EXCLUDED.revenue_value, financials.revenue_value),
+    revenue_currency = COALESCE(EXCLUDED.revenue_currency, financialnitizeds.revenue_currency),
+    cost_of_revenue = COALESCE(EXCLUDED.cost_of_revenue, financials.cost_of_revenue),
+    gross_profit = COALESCE(EXCLUDED.gross_profit, financials.gross_profit),
+    operating_expense = COALESCE(EXCLUDED.operating_expense, financials.operating_expense),
+    operating_income = COALESCE(EXCLUDED.operating_income, financials.operating_income),
+    ebitda = COALESCE(EXCLUDED.ebitda, financials.ebitda),
+    net_income_value = COALESCE(EXCLUDED.net_income_value, financials.net_income_value),
+    net_income_currency = COALESCE(EXCLUDED.net_income_currency, financials.net_income_currency),
+    debt_value = COALESCE(EXCLUDED.debt_value, financials.debt_value),
+    debt_currency = COALESCE(EXCLUDED.debt_currency, financials.debt_currency),
+    shares_outstanding = COALESCE(EXCLUDED.shares_outstanding, financials.shares_outstanding),
+    investments_json = COALESCE(EXCLUDED.investments_json, financials.investments_json),
+    hedgebook = COALESCE(EXCLUDED.hedgebook, financials.hedgebook),
+    liabilities = COALESCE(EXCLUDED.liabilities, financials.liabilities),
+    liabilities_currency = COALESCE(EXCLUDED.liabilities_currency, financials.liabilities_currency),
+    other_financial_assets = COALESCE(EXCLUDED.other_financial_assets, financials.other_financial_assets),
+    other_financial_assets_currency = COALESCE(EXCLUDED.other_financial_assets_currency, financials.other_financial_assets_currency),
+    data_source = COALESCE(EXCLUDED.data_source, financials.data_source),
+    last_updated = NOW();
+
+-- Upsert capital_structure table
+INSERT INTO public.capital_structure (
+    company_id,
+    existing_shares,
+    fully_diluted_shares,
+    in_the_money_options,
+    options_revenue,
+    options_revenue_currency,
+    last_updated
+)
+SELECT
+    d.target_company_id,
+    d.existing_shares,
+    d.fully_diluted_shares,
+    d.in_the_money_options,
+    d.options_revenue,
+    d.options_revenue_currency,
+    NOW()
+FROM data_to_upsert d
+WHERE EXISTS (
+    SELECT 1 FROM public.companies WHERE company_id = d.target_company_id
+)
+ON CONFLICT (company_id)
+DO UPDATE SET
+    existing_shares = COALESCE(EXCLUDED.existing_shares, capital_structure.existing_shares),
+    fully_diluted_shares = COALESCE(EXCLUDED.fully_diluted_shares, capital_structure.fully_diluted_shares),
+    in_the_money_options = COALESCE(EXCLUDED.in_the_money_options, capital_structure.in_the_money_options),
+    options_revenue = COALESCE(EXCLUDED.options_revenue, capital_structure.options_revenue),
+    options_revenue_currency = COALESCE(EXCLUDED.options_revenue_currency, capital_structure.options_revenue_currency),
+    last_updated = NOW();
+
+-- Upsert mineral_estimates table
+INSERT INTO public.mineral_estimates (
+    company_id,
+    reserves_total_aueq_moz,
+    measured_indicated_total_aueq_moz,
+    resources_total_aueq_moz,
+    potential_total_aueq_moz,
+    reserves_precious_aueq_moz,
+    measured_indicated_precious_aueq_moz,
+    resources_precious_aueq_moz,
+    reserves_non_precious_aueq_moz,
+    measured_indicated_non_precious_aueq_moz,
+    resources_non_precious_aueq_moz,
+    potential_non_precious_aueq_moz,
+    mineable_total_aueq_moz,
+    mineable_precious_aueq_moz,
+    mineable_non_precious_aueq_moz,
+    last_updated
+)
+SELECT
+    d.target_company_id,
+    d.reserves_total_aueq_moz,
+    d.measured_indicated_total_aueq_moz,
+    d.resources_total_aueq_moz,
+    d.potential_total_aueq_moz,
+    d.reserves_precious_aueq_moz,
+    d.measured_indicated_precious_aueq_moz,
+    d.resources_precious_aueq_moz,
+    d.reserves_non_precious_aueq_moz,
+    d.measured_indicated_non_precious_aueq_moz,
+    d.resources_non_precious_aueq_moz,
+    d.potential_non_precious_aueq_moz,
+    d.mineable_total_aueq_moz,
+    d.mineable_precious_aueq_moz,
+    d.mineable_non_precious_aueq_moz,
+    NOW()
+FROM data_to_upsert d
+WHERE EXISTS (
+    SELECT 1 FROM public.companies WHERE company_id = d.target_company_id
+)
+ON CONFLICT (company_id)
+DO UPDATE SET
+    reserves_total_aueq_moz = COALESCE(EXCLUDED.reserves_total_aueq_moz, mineral_estimates.reserves_total_aueq_moz),
+    measured_indicated_total_aueq_moz = COALESCE(EXCLUDED.measured_indicated_total_aueq_moz, mineral_estimates.measured_indicated_total_aueq_moz),
+    resources_total_aueq_moz = COALESCE(EXCLUDED.resources_total_aueq_moz, mineral_estimates.resources_total_aueq_moz),
+    potential_total_aueq_moz = COALESCE(EXCLUDED.potential_total_aueq_moz, mineral_estimates.potential_total_aueq_moz),
+    reserves_precious_aueq_moz = COALESCE(EXCLUDED.reserves_precious_aueq_moz, mineral_estimates.reserves_precious_aueq_moz),
+    measured_indicated_precious_aueq_moz = COALESCE(EXCLUDED.measured_indicated_precious_aueq_moz, mineral_estimates.measured_indicated_precious_aueq_moz),
+    resources_precious_aueq_moz = COALESCE(EXCLUDED.resources_precious_aueq_moz, mineral_estimates.resources_precious_aueq_moz),
+    reserves_non_precious_aueq_moz = COALESCE(EXCLUDED.reserves_non_precious_aueq_moz, mineral_estimates.reserves_non_precious_aueq_moz),
+    measured_indicated_non_precious_aueq_moz = COALESCE(EXCLUDED.measured_indicated_non_precious_aueq_moz, mineral_estimates.measured_indicated_non_precious_aueq_moz),
+    resources_non_precious_aueq_moz = COALESCE(EXCLUDED.resources_non_precious_aueq_moz, mineral_estimates.resources_non_precious_aueq_moz),
+    potential_non_precious_aueq_moz = COALESCE(EXCLUDED.potential_non_precious_aueq_moz, mineral_estimates.potential_non_precious_aueq_moz),
+    mineable_total_aueq_moz = COALESCE(EXCLUDED.mineable_total_aueq_moz, mineral_estimates.mineable_total_aueq_moz),
+    mineable_precious_aueq_moz = COALESCE(EXCLUDED.mineable_precious_aueq_moz, mineral_estimates.mineable_precious_aueq_moz),
+    mineable_non_precious_aueq_moz = COALESCE(EXCLUDED.mineable_non_precious_aueq_moz, mineral_estimates.mineable_non_precious_aueq_moz),
+    last_updated = NOW();
+
+-- Upsert valuation_metrics table
+INSERT INTO public.valuation_metrics (
+    company_id,
+    ev_per_resource_oz_all,
+    ev_per_reserve_oz_all,
+    mkt_cap_per_resource_oz_all,
+    mkt_cap_per_reserve_oz_all,
+    ev_per_resource_oz_precious,
+    ev_per_reserve_oz_precious,
+    mkt_cap_per_resource_oz_precious,
+    mkt_cap_per_reserve_oz_precious,
+    ev_per_mi_oz_all,
+    ev_per_mi_oz_precious,
+    ev_per_mineable_oz_all,
+    ev_per_mineable_oz_precious,
+    ev_per_production_oz,
+    mkt_cap_per_mi_oz_all,
+    mkt_cap_per_mi_oz_precious,
+    mkt_cap_per_mineable_oz_all,
+    mkt_cap_per_mineable_oz_precious,
+    mkt_cap_per_production_oz,
+    last_updated
+)
+SELECT
+    d.target_company_id,
+    d.ev_per_resource_oz_all,
+    d.ev_per_reserve_oz_all,
+    d.mkt_cap_per_resource_oz_all,
+    d.mkt_cap_per_reserve_oz_all,
+    d.ev_per_resource_oz_precious,
+    d.ev_per_reserve_oz_precious,
+    d.mkt_cap_per_resource_oz_precious,
+    d.mkt_cap_per_reserve_oz_precious,
+    d.ev_per_mi_oz_all,
+    d.ev_per_mi_oz_precious,
+    d.ev_per_mineable_oz_all,
+    d.ev_per_mineable_oz_precious,
+    d.ev_per_production_oz,
+    d.mkt_cap_per_mi_oz_all,
+    d.mkt_cap_per_mi_oz_precious,
+    d.mkt_cap_per_mineable_oz_all,
+    d.mkt_cap_per_mineable_oz_precious,
+    d.mkt_cap_per_production_oz,
+    NOW()
+FROM data_to_upsert d
+WHERE EXISTS (
+    SELECT 1 FROM public.companies WHERE company_id = d.target_company_id
+)
+ON CONFLICT (company_id)
+DO UPDATE SET
+    ev_per_resource_oz_all = COALESCE(EXCLUDED.ev_per_resource_oz_all, valuation_metrics.ev_per_resource_oz_all),
+    ev_per_reserve_oz_all = COALESCE(EXCLUDED.ev_per_reserve_oz_all, valuation_metrics.ev_per_reserve_oz_all),
+    mkt_cap_per_resource_oz_all = COALESCE(EXCLUDED.mkt_cap_per_resource_oz_all, valuation_metrics.mkt_cap_per_resource_oz_all),
+    mkt_cap_per_reserve_oz_all = COALESCE(EXCLUDED.mkt_cap_per_reserve_oz_all, valuation_metrics.mkt_cap_per_reserve_oz_all),
+    ev_per_resource_oz_precious = COALESCE(EXCLUDED.ev_per_resource_oz_precious, valuation_metrics.ev_per_resource_oz_precious),
+    ev_per_reserve_oz_precious = COALESCE(EXCLUDED.ev_per_reserve_oz_precious, valuation_metrics.ev_per_reserve_oz_precious),
+    mkt_cap_per_resource_oz_precious = COALESCE(EXCLUDED.mkt_cap_per_resource_oz_precious, valuation_metrics.mkt_cap_per_resource_oz_precious),
+    mkt_cap_per_reserve_oz_precious = COALESCE(EXCLUDED.mkt_cap_per_reserve_oz_precious, valuation_metrics.mkt_cap_per_reserve_oz_precious),
+    ev_per_mi_oz_all = COALESCE(EXCLUDED.ev_per_mi_oz_all, valuation_metrics.ev_per_mi_oz_all),
+    ev_per_mi_oz_precious = COALESCE(EXCLUDED.ev_per_mi_oz_precious, valuation_metrics.ev_per_mi_oz_precious),
+    ev_per_mineable_oz_all = COALESCE(EXCLUDED.ev_per_mineable_oz_all, valuation_metrics.ev_per_mineable_oz_all),
+    ev_per_mineable_oz_precious = COALESCE(EXCLUDED.ev_per_mineable_oz_precious, valuation_metrics.ev_per_mineable_oz_precious),
+    ev_per_production_oz = COALESCE(EXCLUDED.ev_per_production_oz, valuation_metrics.ev_per_production_oz),
+    mkt_cap_per_mi_oz_all = COALESCE(EXCLUDED.mkt_cap_per_mi_oz_all, valuation_metrics.mkt_cap_per_mi_oz_all),
+    mkt_cap_per_mi_oz_precious = COALESCE(EXCLUDED.mkt_cap_per_mi_oz_precious, valuation_metrics.mkt_cap_per_mi_oz_precious),
+    mkt_cap_per_mineable_oz_all = COALESCE(EXCLUDED.mkt_cap_per_mineable_oz_all, valuation_metrics.mkt_cap_per_mineable_oz_all),
+    mkt_cap_per_mineable_oz_precious = COALESCE(EXCLUDED.mkt_cap_per_mineable_oz_precious, valuation_metrics.mkt_cap_per_mineable_oz_precious),
+    mkt_cap_per_production_oz = COALESCE(EXCLUDED.mkt_cap_per_production_oz, valuation_metrics.mkt_cap_per_production_oz),
+    last_updated = NOW();
+
+-- Upsert production table
+INSERT INTO public.production (
+    company_id,
+    current_production_total_aueq_koz,
+    future_production_total_aueq_koz,
+    reserve_life_years,
+    current_production_precious_aueq_koz,
+    current_production_non_precious_aueq_koz,
+    last_updated
+)
+SELECT
+    d.target_company_id,
+    d.current_production_total_aueq_koz,
+    d.futurizedure_production_total_aueq_koz,
+    d.reserve_life_years,
+    d.current_production_precious_aueq_koz,
+    d.current_production_non_precious_aueq_koz,
+    NOW()
+FROM data_to_upsert d
+WHERE EXISTS (
+    SELECT 1 FROM public.companies WHERE company_id = d.target_company_id
+)
+ON CONFLICT (company_id)
+DO UPDATE SET
+    current_production_total_aueq_koz = COALESCE(EXCLUDED.current_production_total_aueq_koz, production.current_production_total_aueq_koz),
+    future_production_total_aueq_koz = COALESCE(EXCLUDED.future_production_total_aueq_koz, production.future_production_total_aueq_koz),
+    reserve_life_years = COALESCE(EXCLUDED.reserve_life_years, production.reserve_life_years),
+    current_production_precious_aueq_koz = COALESCE(EXCLUDED.current_production_precious_aueq_koz, production.current_production_precious_aueq_koz),
+    current_production_non_precious_aueq_koz = COALESCE(EXCLUDED.current_production_non_precious_aueq_koz, production.current_production_non_precious_aueq_koz),
+    last_updated = NOW();
+
+-- Upsert costs table
+INSERT INTO public.costs (
+    company_id,
+    aisc_future,
+    aisc_future_currency,
+    construction_costs,
+    construction_costs_currency,
+    tco_future,
+    tco_future_currency,
+    aisc_last_quarter,
+    aisc_last_quarter_currency,
+    aisc_last_year,
+    aisc_last_year_currency,
+    aic_last_quarter,
+    aic_last_quarter_currency,
+    aic_last_year,
+    aic_last_year_currency,
+    tco_current,
+    tco_current_currency,
+    last_updated
+)
+SELECT
+    d.target_company_id,
+    d.aisc_future,
+    d.aisc_future_currency,
+    d.construction_costs,
+    d.construction_costs_currency,
+    d.tco_future,
+    d.tco_future_currency,
+    d.aisc_last_quarter,
+    d.aisc_last_quarter_currency,
+    d.aisc_last_year,
+    d.aisc_last_year_currency,
+    d.aic_last_quarter,
+    d.aic_last_quarter_currency,
+    d.aic_last_year,
+    d.aic_last_year_currency,
+    d.tco_current,
+    d.tco_current_currency,
+    NOW()
+FROM data_to_upsert d
+WHERE EXISTS (
+    SELECT 1 FROM public.companies WHERE company_id = d.target_company_id
+)
+ON CONFLICT (company_id)
+DO UPDATE SET
+    aisc_future = COALESCE(EXCLUDED.aisc_future, costs.aisc_future),
+    aisc_future_currency = COALESCE(EXCLUDED.aisc_future_currency, costs.aisc_future_currency),
+    construction_costs = COALESCE(EXCLUDED.construction_costs, costs.construction_costs),
+    construction_costs_currency = COALESCE(EXCLUDED.construction_costs_currency, costs.construction_costs_currency),
+    tco_future = COALESCE(EXCLUDED.tco_future, costs.tco_future),
+    tco_future_currency = COALESCE(EXCLUDED.tco_future_currency, costs.tco_future_currency),
+    aisc_last_quarter = COALESCE(EXCLUDED.aisc_last_quarter, costs.aisc_last_quarter),
+    aisc_last_quarter_currency = COALESCE(EXCLUDED.aisc_last_quarter_currency, costs.aisc_last_quarter_currency),
+    aisc_last_year = COALESCE(EXCLUDED.aisc_last_year, costs.aisc_last_year),
+    aisc_last_year_currency = COALESCE(EXCLUDED.aisc_last_year_currency, costs.aisc_last_year_currency),
+    aic_last_quarter = COALESCE(EXCLUDED.aic_last_quarter, costs.aic_last_quarter),
+    aic_last_quarter_currency = COALESCE(EXCLUDED.aic_last_quarter_currency, costs.aic_last_quarter_currency),
+    aic_last_year = COALESCE(EXCLUDED.aic_last_year, costs.aic_last_year),
+    aic_last_year_currency = COALESCE(EXCLUDED.aic_last_year_currency, costs.aic_last_year_currency),
+    tco_current = COALESCE(EXCLUDED.tco_current, costs.tco_current),
+    tco_current_currency = COALESCE(EXCLUDED.tco_current_currency, costs.tco_current_currency),
+    last_updated = NOW();
+
+-- Verify updates
+SELECT 
+    c.company_id, 
+    c.company_name, 
+    sp.price_value AS share_price, 
+    sp.price_currency AS share_price_currency, 
+    sp.price_date AS share_price_actual_date, 
+    sp.data_source AS share_price_source
+FROM public.companies c
+LEFT JOIN public.stock_prices sp ON c.company_id = sp.company_id
+WHERE c.company_id = 257
+AND (sp.price_date = (SELECT MAX(price_date) FROM public.stock_prices WHERE company_id = 257) OR sp.price_date IS NULL);

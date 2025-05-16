@@ -1,0 +1,38 @@
+-- Template: Update Existing Company URL
+-- Replace values in data_to_upsert as needed
+
+WITH data_to_upsert (
+    target_company_id,
+    url_type,
+    url
+) AS (
+    VALUES (
+        257, -- target_company_id
+        'yahoo_finance'::text, -- url_type
+        'https://finance.yahoo.com/quote/MLM.CN/'::text -- url
+    )
+)
+INSERT INTO public.company_urls (
+    company_id,
+    url_type,
+    url,
+    last_validated
+)
+SELECT
+    d.target_company_id,
+    d.url_type,
+    d.url,
+    NOW()
+FROM data_to_upsert d
+WHERE EXISTS (
+    SELECT 1 FROM public.companies WHERE company_id = d.target_company_id
+)
+ON CONFLICT (company_id, url_type)
+DO UPDATE SET
+    url = COALESCE(EXCLUDED.url, company_urls.url),
+    last_validated = NOW();
+
+-- Verify update
+SELECT company_id, url_type, url, last_updated
+FROM public.company_urls
+WHERE company_id = 257 AND url_type = 'yahoo_finance';
