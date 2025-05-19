@@ -47,3 +47,12 @@ mapleaurum_importer/logs_url_validation/*.csv
 
 # macOS specific
 .DS_Store
+PricesXLS.xlsx
+SupabaseSnippetCompanyDetailsRetrievalStatusSharePrice150525.csv
+contactsAdmin.csv
+create_checkout.js
+directory_structure.txt
+relevant_files.txt
+src/Test_Users.txt
+src/components/TestIcons.tsx
+src_directory_structure.txt
