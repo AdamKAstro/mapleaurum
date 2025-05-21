@@ -56,3 +56,8 @@ relevant_files.txt
 src/Test_Users.txt
 src/components/TestIcons.tsx
 src_directory_structure.txt
+
+# Local development/planning files
+
+bfg-report/
+BackUp_*/
