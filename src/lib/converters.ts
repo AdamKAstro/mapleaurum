@@ -28,25 +28,29 @@ function logDebug(message: string, ...args: any[]) {
   }
 }
 
+// Validation helper for numbers
 function validateNumber(value: any, fieldNameForError: string): number | null {
   if (value === null || value === undefined || String(value).trim() === "") return null;
   const num = Number(value);
   if (Number.isFinite(num)) {
     return num;
   }
-  if (DEBUG) {
-    console.warn(`[CONVERTERS] Validation Warning: Field '${fieldNameForError}' received non-finite number value (will be null):`, value);
+  // Log only in debug mode for unexpected non-finite numbers.
+  if (DEBUG && value !== null && value !== undefined && String(value).trim() !== "") {
+    logDebug(`Validation Warning: Field '${fieldNameForError}' received non-finite number value (will be null):`, value);
   }
   return null;
 }
 
+// Validation helper for strings
 function validateString(value: any, fieldNameForError: string): string | null {
   if (value === null || value === undefined) return null;
-  // Consider if an empty string should also be treated as null, depending on requirements.
-  // if (String(value).trim() === "") return null;
+  // An empty string might be valid or might mean "no data".
+  // If empty strings should be null, add: if (String(value).trim() === "") return null;
   return String(value);
 }
 
+// Validation helper for CompanyStatus enum
 function validateStatus(value: any): CompanyStatus | null {
   if (value === null || value === undefined || String(value).trim() === "") return null;
   const statusString = String(value).trim().toLowerCase();
@@ -55,22 +59,23 @@ function validateStatus(value: any): CompanyStatus | null {
     return statusString as CompanyStatus;
   }
   if (DEBUG) {
-    console.warn(`[CONVERTERS] Validation Warning: Field 'status' received invalid value (will be null):`, value);
+    logDebug(`Validation Warning: Field 'status' received invalid value (will be null):`, value);
   }
   return null;
 }
 
+// Validation and parsing for comma-separated strings into string arrays
 function validateStringArray(value: any, fieldNameForError: string): string[] | null {
-  if (value === null || value === undefined) return null;
-  if (Array.isArray(value)) {
+  if (value === null || value === undefined) return null; // Explicitly return null for null/undefined
+  if (Array.isArray(value)) { // If it's already an array (e.g., from direct JSONB or test data)
     return value.filter(item => typeof item === 'string' && item.trim() !== "").map(s => s.trim());
   }
   if (typeof value === 'string') {
-    if (value.trim() === "") return []; // An empty string means no minerals, so an empty array.
+    if (value.trim() === "") return []; // An empty string means no minerals.
     return value.split(',').map(s => s.trim()).filter(Boolean); // Filter out empty strings after split
   }
   if (DEBUG) {
-    console.warn(`[CONVERTERS] Validation Warning: Field '${fieldNameForError}' expected string or array, received (will be null):`, typeof value, value);
+    logDebug(`Validation Warning: Field '${fieldNameForError}' expected string or array, received (will be null):`, typeof value, value);
   }
   return null;
 }
@@ -82,7 +87,7 @@ function validateStringArray(value: any, fieldNameForError: string): string[] | 
  *
  * @param rows - Array of RpcResponseRow data from the database.
  * @param options - Configuration options for conversion.
- * @param options.throwOnError - If true, throws RpcConverterError on any critical field validation failure. Defaults to false.
+ * @param options.throwOnError - If true, throws RpcConverterError if any row fails essential field validation. Defaults to false.
  * @param options.debugMode - Overrides global DEBUG for this function call. Defaults to process.env.NODE_ENV === 'development'.
  * @returns Array of converted Company objects.
  */
@@ -109,45 +114,37 @@ export function convertRpcRowsToCompanies(
   if (debugMode) logDebug(`Starting conversion for ${rows.length} RPC rows.`);
 
   rows.forEach((row, rowIndex) => {
-    const rowSpecificErrors: ConversionError[] = []; // To track errors for the current row before deciding to push
-    const recordError = (field: string, errorMsg: string, value?: any) => {
-      rowSpecificErrors.push({ row: rowIndex, field, error: errorMsg, value });
-    };
+    const rowSpecificFieldErrors: ConversionError[] = [];
+    let isRowCriticallyInvalid = false;
 
-    // Validate essential fields first - these are required to form a meaningful Company object.
+    // --- Start of a single row processing block ---
+    // Validate essential fields first
     const company_id = validateNumber(row.company_id, `company_id (row ${rowIndex})`);
     if (company_id === null) {
-      recordError('company_id', 'Invalid or missing company_id', row.company_id);
+      rowSpecificFieldErrors.push({ row: rowIndex, field: 'company_id', error: 'Invalid or missing company_id', value: row.company_id });
+      isRowCriticallyInvalid = true;
     }
 
     const company_name = validateString(row.company_name, `company_name (row ${rowIndex})`);
-    if (company_name === null || company_name.trim() === "") { // Also check for empty company name
-      recordError('company_name', 'Invalid or missing company_name', row.company_name);
+    if (company_name === null || company_name.trim() === "") {
+      rowSpecificFieldErrors.push({ row: rowIndex, field: 'company_name', error: 'Invalid or missing company_name', value: row.company_name });
+      isRowCriticallyInvalid = true;
     }
 
-    // If essential fields are invalid and we're configured to throw errors, do it now.
-    if (throwOnError && (company_id === null || company_name === null)) {
-      overallConversionErrors.push(...rowSpecificErrors); // Add collected errors for this row
-      // No need to throw immediately for each row, collect all errors and throw once at the end.
-      // But we will skip pushing this company.
-      logDebug(`Row ${rowIndex} skipped due to critical field errors (company_id or company_name) and throwOnError is true.`);
-      return; // Skips to the next row in forEach
-    }
-    
-    // If not throwing, but essential fields are missing, log and skip this row from being added to `companies`.
-    if (company_id === null || company_name === null) {
-      overallConversionErrors.push(...rowSpecificErrors);
+    // If essential fields are invalid for this row, collect errors and decide whether to skip or prepare to throw
+    if (isRowCriticallyInvalid) {
+      overallConversionErrors.push(...rowSpecificFieldErrors);
       if (debugMode) {
-          logDebug(`Row ${rowIndex} skipped due to missing essential fields (company_id or company_name). Errors for this row:`, rowSpecificErrors);
+          logDebug(`Row ${rowIndex} skipped due to critical errors (company_id or company_name). Errors for this row:`, rowSpecificFieldErrors);
       }
-      return; // Skips to the next row in forEach
+      return; // Skips to the next row in forEach, this row will not be added.
     }
 
-    // Construct the Company object using validated values.
-    // All validateX functions return null for invalid/missing values, which aligns with Company type properties.
+    // Construct the Company object now that essential fields are validated (though might still be null if not throwing earlier)
+    // All validateX functions will set non-critical invalid fields to null.
     const company: Company = {
-      company_id: company_id as number, // Safe due to checks above
-      company_name: company_name as string, // Safe due to checks above
+      company_id: company_id as number, // Safe due to above check
+      company_name: company_name as string, // Safe due to above check
       tsx_code: validateString(row.tsx_code, `row[${rowIndex}].tsx_code`),
       status: validateStatus(row.status),
       headquarters: validateString(row.headquarters, `row[${rowIndex}].headquarters`),
@@ -262,52 +259,54 @@ export function convertRpcRowsToCompanies(
         tco_current: validateNumber(row.c_tco_current, `row[${rowIndex}].c_tco_current`),
         tco_current_currency: validateString(row.c_tco_current_currency, `row[${rowIndex}].c_tco_current_currency`),
       }
-      // Note: Last updated fields like row.f_last_updated, row.cs_last_updated, etc.,
-      // are not explicitly mapped to the nested Company object here unless defined in the Company type.
-      // They are available on the RpcResponseRow if needed for other purposes.
     };
     
-    companies.push(company); // Add the company object to the results
+    companies.push(company);
 
-    // If there were any non-critical errors during this row's conversion, log them if debug mode is on.
-    if (debugMode && rowSpecificErrors.length > 0) {
-      logDebug(`Row ${rowIndex} (ID: ${company_id}) converted with ${rowSpecificErrors.length} field-level validation warnings (values set to null). Details:`, rowSpecificErrors);
+    // Consolidate non-critical field errors from this successfully processed row
+    if (rowSpecificFieldErrors.length > 0) {
+        overallConversionErrors.push(...rowSpecificFieldErrors);
+        if (debugMode) {
+            logDebug(`Row ${rowIndex} (ID: ${company_id}) converted with ${rowSpecificFieldErrors.length} non-critical field validation warnings (values set to null). Details:`, rowSpecificFieldErrors);
+        }
     }
-    // Add this row's errors to the overall list
-    overallConversionErrors.push(...rowSpecificErrors);
+  }); // End of rows.forEach
 
-    } catch (error: any) {
-      // This catch block is primarily for unexpected errors during the try block,
-      // not for individual field validation errors handled by recordError.
-      // Critical errors leading to row skip are handled above.
-      const criticalError: ConversionError = {
-        row: rowIndex,
-        field: 'row_processing_critical',
-        error: error.message || 'Unknown critical error during row processing.',
-        value: `Row Data Snippet: ${JSON.stringify(row).substring(0, 200)}...`,
-      };
-      overallConversionErrors.push(criticalError);
-      if (debugMode) {
-        console.error(`[CONVERTERS] Unhandled CRITICAL error processing row ${rowIndex}:`, criticalError);
-      }
-      // If throwOnError is true, this error will contribute to the RpcConverterError thrown after the loop.
-    }
-  });
-
+  // Final error reporting
   if (overallConversionErrors.length > 0) {
-    const criticalErrorsCount = overallConversionErrors.filter(e => e.field === 'company_id' || e.field === 'company_name' || e.field === 'critical_conversion_step' || e.field === 'row_processing_critical').length;
-    const fieldErrorsCount = overallConversionErrors.length - criticalErrorsCount;
+    const criticalRowCount = overallConversionErrors.filter(e => e.field === 'company_id' || e.field === 'company_name').length;
+    const fieldErrorCount = overallConversionErrors.length - criticalRowCount; // Count of non-critical field issues
 
-    const summaryMessage = `Conversion completed for ${rows.length} rows. Resulted in ${companies.length} valid Company objects. Encountered ${criticalErrorsCount} critical row error(s) (rows skipped) and ${fieldErrorsCount} non-critical field validation warning(s) (values set to null).`;
+    let summaryMessage = `Conversion of ${rows.length} rows completed. Resulted in ${companies.length} valid Company objects.`;
+    if (criticalRowCount > 0) {
+        summaryMessage += ` ${criticalRowCount} row(s) were skipped due to missing/invalid essential identifiers (company_id or company_name).`;
+    }
+    if (fieldErrorCount > 0) {
+        summaryMessage += ` Encountered ${fieldErrorCount} non-critical field validation issue(s) where problematic values were set to null.`;
+    }
     
-    if (throwOnError && criticalErrorsCount > 0) { // Only throw if critical errors occurred and throwOnError is true
-      logDebug(summaryMessage + " Throwing RpcConverterError due to critical errors.", overallConversionErrors);
+    if (throwOnError && criticalRowCount > 0) {
+      logDebug(summaryMessage + " Throwing RpcConverterError due to critical row errors.", overallConversionErrors);
       throw new RpcConverterError(summaryMessage, overallConversionErrors);
-    } else if (overallConversionErrors.length > 0) { // Log as warning if not throwing or only field errors
+    } else {
+      // Log as a warning if not throwing, or if errors were only non-critical field issues
       console.warn(`[CONVERTERS] ${summaryMessage}`);
-      if (debugMode) { // Log all collected errors if debug is on for the function call
-          overallConversionErrors.forEach(err => console.warn(`[CONVERTERS] Detail: Row ${err.row}, Field '${err.field}', Msg: '${err.error}', Value:`, err.value));
+      if (debugMode && fieldErrorCount > 0) { 
+          logDebug("Details of non-critical field conversion warnings:");
+          overallConversionErrors.forEach(err => {
+              if (err.field !== 'company_id' && err.field !== 'company_name') {
+                console.warn(`  Row ${err.row}, Field '${err.field}', Msg: '${err.error}', Received Value:`, err.value);
+              }
+          });
       }
+       if (debugMode && criticalRowCount > 0) {
+          logDebug("Details of critical row errors (rows skipped):");
+           overallConversionErrors.forEach(err => {
+              if (err.field === 'company_id' || err.field === 'company_name') {
+                console.warn(`  Row ${err.row}, Field '${err.field}', Msg: '${err.error}', Received Value:`, err.value);
+              }
+          });
+       }
     }
   } else {
     if (debugMode) logDebug(`Successfully converted ${companies.length} Company objects from ${rows.length} RPC rows with no field validation warnings.`);
