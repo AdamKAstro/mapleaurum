@@ -33,6 +33,12 @@ const detailedDescriptions: Record<string, string> = {
     'financials.net_income_value': 'The company’s net profit after all expenses, taxes, and interest, reported in millions of dollars ($M). This bottom-line figure reflects overall profitability and is a key indicator of financial success. A higher net income is preferred, but it can be distorted by one-time items (e.g., asset sales) or accounting practices. In mining, net income is sensitive to commodity price swings and operational costs. Investors should analyze its consistency and pair it with cash flow metrics to ensure earnings translate to tangible value.',
     'financials.debt_value': 'The total debt obligations of a company, including short- and long-term liabilities, reported in millions of dollars ($M). Lower debt is generally preferred, as it reduces financial risk and interest expenses, enhancing stability. However, manageable debt can fuel growth (e.g., funding new mines), so context is critical. In mining, high debt can be risky during commodity downturns. Investors should compare debt to cash reserves, EBITDA, or equity to assess leverage and repayment capacity.',
     'financials.shares_outstanding': 'The total number of shares issued by a company, reported in millions. A lower number is generally preferred, as it minimizes ownership dilution, giving existing shareholders a larger claim on earnings and assets. However, larger companies naturally have more shares, so scale matters. In mining, share issuance often funds exploration or acquisitions, but excessive issuance can erode shareholder value. Investors should monitor trends in shares outstanding and check for dilutive actions like stock offerings.',
+    'financials.peg_ratio': 'The price/earnings-to-growth (PEG) ratio, calculated as the trailing P/E ratio divided by the annual earnings growth rate. This metric adjusts the P/E ratio for expected growth, providing a more nuanced valuation measure. A lower PEG ratio is generally preferred by value investors, as it suggests the stock is undervalued relative to its growth potential. In mining, where earnings can be volatile due to commodity price swings, a PEG below 1 may indicate a bargain, but high growth forecasts can inflate the ratio. Investors should verify growth projections and compare PEG to industry peers, as mining firms with stable production may have more reliable estimates.',
+    'financials.cost_of_revenue': 'The total cost directly attributable to producing goods sold, reported in millions of dollars ($M). In mining, this includes expenses like labor, materials, and energy for extracting and processing minerals. A lower cost of revenue is preferred, as it indicates higher operational efficiency and better margins, especially when commodity prices are volatile. However, very low costs may reflect underinvestment in quality or safety. Investors should compare this to revenue to calculate gross margin and assess cost trends relative to production volumes.',
+    'financials.gross_profit': 'Revenue minus cost of revenue, reported in millions of dollars ($M). This metric reflects the profitability of core mining operations before operating expenses, taxes, or interest. A higher gross profit is preferred, as it signals strong revenue generation relative to production costs, a critical factor in the capital-intensive mining sector. High gross profit can support reinvestment or debt repayment, but investors should check gross margin (gross profit/revenue) to assess efficiency and compare to peers, as commodity price spikes can temporarily inflate this figure.',
+    'financials.operating_expense': 'The costs of running the business beyond direct production, such as administrative, marketing, and exploration expenses, reported in millions of dollars ($M). A lower operating expense is preferred, as it reflects cost discipline and enhances operating margins. In mining, high exploration costs may justify elevated expenses if they lead to resource growth, but bloated overhead can erode profitability. Investors should compare this to revenue and operating income to evaluate efficiency and check for one-time expenses.',
+    'financials.operating_income': 'Gross profit minus operating expenses, reported in millions of dollars ($M). This metric measures profitability from core operations before interest and taxes, a key indicator of operational efficiency in mining. A higher operating income is preferred, as it reflects the ability to generate profit after covering production and overhead costs. Negative operating income may signal operational challenges, especially during low commodity price cycles. Investors should analyze trends and compare to EBITDA for a fuller picture of operational health.',
+    'financials.liabilities': 'The sum of all financial obligations, including debt, accounts payable, and other liabilities, reported in millions of dollars ($M). A lower value is preferred, as it reduces financial risk and interest burdens, particularly in the cyclical mining industry. However, moderate liabilities may be acceptable if used to fund high-return projects like mine development. Investors should compare liabilities to assets (e.g., net financial assets) and cash flow to assess repayment capacity and financial stability.',
     // Capital Structure
     'capital_structure.existing_shares': 'The current number of shares outstanding, reported in millions, representing the total equity ownership. A lower count is preferred to maintain concentrated ownership, benefiting existing shareholders. However, larger firms require more shares to support their scale. In mining, this metric is critical when assessing dilution from financing activities. Investors should compare it to fully diluted shares to understand potential future impacts.',
     'capital_structure.fully_diluted_shares': 'The total shares outstanding plus potential shares from exercisable options, warrants, or convertible securities, reported in millions. A lower number is preferred, as it indicates less risk of future dilution, preserving shareholder value. In mining, where capital raises are common, this metric highlights potential ownership changes. Investors should analyze the gap between existing and fully diluted shares to gauge dilution risk.',
@@ -46,6 +52,13 @@ const detailedDescriptions: Record<string, string> = {
     'mineral_estimates.reserves_precious_aueq_moz': 'Proven and probable reserves of precious metals (gold and silver equivalent, Moz). A higher value is preferred, as precious metals typically command higher value and stability than base metals. This metric emphasizes a company’s high-value asset base. Investors should evaluate reserve grade and market demand for precious metals.',
     'mineral_estimates.measured_indicated_precious_aueq_moz': 'Measured and indicated resources of precious metals (Au+Ag eq., Moz). A higher value is preferred for reliable, high-value resource potential. This metric is key for assessing near-term precious metal upside. Investors should check resource quality and conversion likelihood.',
     'mineral_estimates.resources_precious_aueq_moz': 'Total measured, indicated, and inferred precious metal resources (Moz). A higher value is preferred for overall precious metal scale, though inferred resources are speculative. This metric highlights a company’s precious metal focus. Investors should prioritize higher-confidence categories.',
+    'mineral_estimates.reserves_non_precious_aueq_moz': 'Proven and probable reserves of non-precious metals (e.g., copper, zinc) in gold-equivalent ounces, reported in millions of ounces (Moz). A higher value is preferred for diversified miners, as non-precious metals can stabilize revenue during precious metal price declines. However, non-precious reserves often have lower margins and are sensitive to industrial demand. Investors should evaluate the quality (e.g., grade, cost) and market outlook for these metals, and compare to precious reserves to assess portfolio balance.',
+    'mineral_estimates.measured_indicated_non_precious_aueq_moz': 'Measured and indicated resources of non-precious metals in gold-equivalent ounces (Moz), representing deposits with high geological confidence but not yet reserves. A higher value is preferred, as it indicates potential for future reserve conversion, adding to a company’s diversified asset base. Investors should assess conversion feasibility, extraction costs, and market demand for non-precious metals, as these resources may contribute to revenue stability but carry lower value than precious metals.',
+    'mineral_estimates.resources_non_precious_aueq_moz': 'Total measured, indicated, and inferred resources of non-precious metals in gold-equivalent ounces (Moz). A higher value is preferred for overall scale, though inferred resources are speculative. This metric highlights a company’s long-term potential in non-precious metals, which can diversify revenue but are subject to industrial market fluctuations. Investors should prioritize higher-confidence (measured/indicated) resources and evaluate extraction economics.',
+    'mineral_estimates.potential_non_precious_aueq_moz': 'Estimated exploration potential for additional non-precious metal resources in gold-equivalent ounces (Moz), based on geological studies but not yet classified. A higher value is preferred for speculative upside, appealing to growth-focused investors betting on exploration success in base metals. However, this metric is highly uncertain, and realization depends on funding and drilling outcomes. Investors should review the company’s exploration track record and market conditions for non-precious metals.',
+    'mineral_estimates.mineable_total_aueq_moz': 'The total gold-equivalent ounces (Moz) deemed economically mineable under current conditions, typically a subset of reserves and high-confidence resources. A higher value is preferred, as it reflects immediately viable assets for production, critical for near-term cash flow. Unlike reserves, this metric may include select measured/indicated resources with strong economics. Investors should verify cost assumptions (e.g., AISC) and compare to production rates to assess mine life and profitability.',
+    'mineral_estimates.mineable_precious_aueq_moz': 'Mineable ounces of precious metals (gold and silver equivalent, Moz) that are economically viable under current conditions. A higher value is preferred, as precious metals typically offer higher margins and market stability, enhancing profitability. This metric focuses on high-value assets ready for production. Investors should check extraction costs and market demand for gold/silver to evaluate its impact on revenue potential.',
+    'mineral_estimates.mineable_non_precious_aueq_moz': 'Mineable ounces of non-precious metals (e.g., copper, zinc) in gold-equivalent ounces (Moz) that are economically viable. A higher value is preferred for diversified miners, as it supports revenue stability through base metal production. However, non-precious metals may have lower margins and higher market risk. Investors should assess extraction costs and industrial demand to gauge profitability and compare to precious mineable ounces.',
     // Valuation Metrics
     'valuation_metrics.ev_per_resource_oz_all': 'Enterprise value divided by total gold-equivalent resource ounces ($/oz). A lower value is often preferred, as it suggests the market undervalues the company’s resources relative to its total value. This metric is widely used in mining to identify potential bargains. Investors should compare it to peers and consider resource quality.',
     'valuation_metrics.ev_per_reserve_oz_all': 'Enterprise value per proven and probable reserve ounce ($/oz). A lower value is preferred, indicating undervaluation of confirmed reserves. This metric is more reliable than EV per resource due to reserves’ higher certainty. Investors should benchmark against industry averages.',
@@ -55,6 +68,16 @@ const detailedDescriptions: Record<string, string> = {
     'valuation_metrics.ev_per_reserve_oz_precious': 'Enterprise value per precious metal reserve ounce ($/oz). A lower value indicates undervaluation of confirmed precious reserves, a key indicator for value-focused precious metal investors.',
     'valuation_metrics.mkt_cap_per_resource_oz_precious': 'Market cap per precious metal resource ounce ($/oz). A lower value suggests the market undervalues the company’s precious resource base, appealing to value investors targeting gold and silver.',
     'valuation_metrics.mkt_cap_per_reserve_oz_precious': 'Market cap per precious metal reserve ounce ($/oz). A lower value indicates potential undervaluation of confirmed precious reserves, a precise metric for precious metal valuation.',
+    'valuation_metrics.ev_per_mi_oz_all': 'Enterprise value divided by total measured and indicated gold-equivalent ounces ($/oz). A lower value is preferred, as it suggests the market undervalues the company’s high-confidence resources relative to its total value (equity + debt). This metric is more reliable than EV per total resources, as M&I ounces have greater geological certainty. Investors should compare to peers and consider resource quality (e.g., grade, location) to identify potential undervaluation.',
+    'valuation_metrics.ev_per_mi_oz_precious': 'Enterprise value per measured and indicated precious metal ounce ($/oz). A lower value is preferred, indicating undervaluation of high-confidence precious resources, which are critical for gold/silver-focused investors. This metric isolates the value of high-margin assets. Investors should benchmark against industry averages and verify resource economics to assess whether the market fairly values these assets.',
+    'valuation_metrics.ev_per_mineable_oz_all': 'Enterprise value divided by total mineable gold-equivalent ounces ($/oz), reflecting economically viable assets. A lower value is preferred, as it suggests the market undervalues the company’s immediately producible resources. This metric is highly reliable for assessing near-term value, as mineable ounces are typically a subset of reserves and high-confidence resources. Investors should compare to peers and check cost assumptions (e.g., AISC) for profitability context.',
+    'valuation_metrics.ev_per_mineable_oz_precious': 'Enterprise value per mineable precious metal ounce ($/oz). A lower value is preferred, indicating undervaluation of economically viable gold and silver assets, which offer high margins and stability. This metric is key for precious metal investors seeking near-term production value. Investors should compare to industry norms and evaluate extraction costs to ensure profitability.',
+    'valuation_metrics.ev_per_production_oz': 'Enterprise value divided by current annual gold-equivalent production ($/oz). A lower value is preferred, as it suggests the market undervalues the company’s operational output relative to its total value. This metric highlights efficiency in converting assets to production, critical for cash flow generation. Investors should compare to peers and pair with cost metrics (e.g., AISC) to assess profitability and sustainability.',
+    'valuation_metrics.mkt_cap_per_mi_oz_all': 'Market capitalization per total measured and indicated gold-equivalent ounce ($/oz). A lower value is preferred, suggesting the market undervalues the company’s high-confidence resources relative to its equity value. This metric is useful for value investors screening for undervalued miners with strong resource bases. Investors should compare to peers and consider resource quality and conversion potential.',
+    'valuation_metrics.mkt_cap_per_mi_oz_precious': 'Market capitalization per measured and indicated precious metal ounce ($/oz). A lower value is preferred, indicating undervaluation of high-confidence gold and silver resources, appealing to precious metal-focused investors. This metric isolates high-value assets with strong conversion potential. Investors should benchmark against peers and check resource economics.',
+    'valuation_metrics.mkt_cap_per_mineable_oz_all': 'Market capitalization per total mineable gold-equivalent ounce ($/oz). A lower value is preferred, suggesting undervaluation of economically viable assets ready for production. This metric is ideal for investors seeking companies with near-term cash flow potential. Investors should compare to peers and verify cost assumptions for mineable ounces to ensure profitability.',
+    'valuation_metrics.mkt_cap_per_mineable_oz_precious': 'Market capitalization per mineable precious metal ounce ($/oz). A lower value is preferred, indicating undervaluation of high-margin, economically viable gold and silver assets. This metric is critical for investors prioritizing near-term precious metal production. Investors should compare to industry averages and assess extraction costs for profitability.',
+    'valuation_metrics.mkt_cap_per_production_oz': 'Market capitalization divided by current annual gold-equivalent production ($/oz). A lower value is preferred, as it suggests the market undervalues the company’s operational output relative to its equity value. This metric is useful for assessing production efficiency and cash flow potential. Investors should pair with cost metrics (e.g., AISC) and compare to peers to evaluate value.',
     // Production
     'production.current_production_total_aueq_koz': 'Current annual production of gold-equivalent ounces, reported in thousand ounces (koz). A higher value is preferred, as it reflects strong operational output and revenue potential. This metric is a core indicator of a mining company’s scale and efficiency. Investors should compare it to costs (e.g., AISC) to assess profitability.',
     'production.future_production_total_aueq_koz': 'Projected annual gold-equivalent production (koz) based on company guidance or analyst estimates. A higher value is preferred, signaling growth potential, but forecasts are uncertain due to operational or market risks. Investors should verify the credibility of projections and check funding for expansion.',
@@ -67,6 +90,9 @@ const detailedDescriptions: Record<string, string> = {
     'costs.tco_future': 'Projected total cash costs per ounce ($/oz), covering direct production costs (e.g., mining, processing). A lower value is preferred, as it reflects operational efficiency and higher margins. This metric excludes sustaining capital, making it narrower than AISC. Investors should track trends and commodity price impacts.',
     'costs.aisc_last_quarter': 'All-in sustaining cost per ounce ($/oz) for the most recent quarter. A lower value is preferred, indicating strong recent cost performance and profitability. This metric is widely used to compare operational efficiency across miners. Investors should check for one-time cost impacts.',
     'costs.aisc_last_year': 'All-in sustaining cost per ounce ($/oz) for the last reported year. A lower value is preferred, reflecting historical cost efficiency. This metric provides a longer-term view than quarterly AISC, smoothing out short-term fluctuations. Investors should compare it to peers and commodity prices.',
+    'costs.aic_last_quarter': 'All-in cost per ounce ($/oz) for the most recent quarter, including sustaining costs, exploration, and non-sustaining capital (e.g., new mine development). A lower value is preferred, as it reflects comprehensive cost efficiency, critical for profitability in mining. AIC is broader than AISC, capturing growth investments, so higher AIC may be acceptable for expanding firms. Investors should compare to peers and commodity prices to assess performance and check for one-time costs.',
+    'costs.aic_last_year': 'All-in cost per ounce ($/oz) for the last reported year, encompassing all costs, including sustaining and non-sustaining capital. A lower value is preferred, indicating long-term cost efficiency across operations and growth initiatives. This metric provides a broader view than AISC, useful for assessing strategic investments. Investors should compare to industry averages, check for cost trends, and pair with commodity prices to evaluate profitability.',
+    'costs.tco_current': 'Current total cash cost per ounce ($/oz), covering direct production costs (e.g., mining, processing) but excluding sustaining capital. A lower value is preferred, as it reflects operational efficiency and higher margins in current operations. This metric is narrower than AISC, focusing on cash outflows, making it sensitive to short-term cost control. Investors should compare to peers, track trends, and pair with commodity prices to assess profitability.'
 };
 
 // Group Metrics by Category
@@ -141,7 +167,7 @@ export function HelpMetricsPage() {
                                                         {metric.label}
                                                     </span>
                                                     {metric.unit && (
-                                                        <span className="text-xs text-gray-400">({metric.unit})</span>
+                                                        <span W className="text-xs text-gray-400">({metric.unit})</span>
                                                     )}
                                                     {metric.higherIsBetter === true ? (
                                                         <ArrowUp
@@ -225,6 +251,40 @@ export function HelpMetricsPage() {
                                                             </Tooltip>
                                                         </TooltipProvider>
                                                     )}
+                                                    {lookupKey === 'financials.peg_ratio' && (
+                                                        <TooltipProvider>
+                                                            <Tooltip>
+                                                                <TooltipTrigger asChild>
+                                                                    <Info
+                                                                        size={14}
+                                                                        className="inline ml-2 text-cyan-400 cursor-pointer"
+                                                                    />
+                                                                </TooltipTrigger>
+                                                                <TooltipContent>
+                                                                    <p>
+                                                                        Example: A PEG ratio of 0.5 suggests a stock is undervalued with strong growth (e.g., 20% annual earnings growth, P/E of 10), while a PEG of 2 (P/E of 20, 10% growth) may indicate overvaluation.
+                                                                    </p>
+                                                                </TooltipContent>
+                                                            </Tooltip>
+                                                        </TooltipProvider>
+                                                    )}
+                                                    {lookupKey === 'financials.gross_profit' && (
+                                                        <TooltipProvider>
+                                                            <Tooltip>
+                                                                <TooltipTrigger asChild>
+                                                                    <Info
+                                                                        size={14}
+                                                                        className="inline ml-2 text-cyan-400 cursor-pointer"
+                                                                    />
+                                                                </TooltipTrigger>
+                                                                <TooltipContent>
+                                                                    <p>
+                                                                        Example: A miner with $500M revenue and $300M gross profit (40% margin) is more efficient than one with $600M revenue and $240M gross profit (30% margin), assuming similar scale.
+                                                                    </p>
+                                                                </TooltipContent>
+                                                            </Tooltip>
+                                                        </TooltipProvider>
+                                                    )}
                                                     {lookupKey === 'mineral_estimates.reserves_total_aueq_moz' && (
                                                         <TooltipProvider>
                                                             <Tooltip>
@@ -242,6 +302,40 @@ export function HelpMetricsPage() {
                                                             </Tooltip>
                                                         </TooltipProvider>
                                                     )}
+                                                    {lookupKey === 'mineral_estimates.mineable_total_aueq_moz' && (
+                                                        <TooltipProvider>
+                                                            <Tooltip>
+                                                                <TooltipTrigger asChild>
+                                                                    <Info
+                                                                        size={14}
+                                                                        className="inline ml-2 text-cyan-400 cursor-pointer"
+                                                                    />
+                                                                </TooltipTrigger>
+                                                                <TooltipContent>
+                                                                    <p>
+                                                                        Example: A company with 5 Moz mineable at $900/oz AISC is more attractive than one with 6 Moz at $1,200/oz, as the former offers better near-term profitability at $1,800/oz gold.
+                                                                    </p>
+                                                                </TooltipContent>
+                                                            </Tooltip>
+                                                        </TooltipProvider>
+                                                    )}
+                                                    {lookupKey === 'valuation_metrics.ev_per_production_oz' && (
+                                                        <TooltipProvider>
+                                                            <Tooltip>
+                                                                <TooltipTrigger asChild>
+                                                                    <Info
+                                                                        size={14}
+                                                                        className="inline ml-2 text-cyan-400 cursor-pointer"
+                                                                    />
+                                                                </TooltipTrigger>
+                                                                <TooltipContent>
+                                                                    <p>
+                                                                        Example: A miner with $1B EV and 500 koz production ($2,000/oz EV/production) is likely undervalued compared to a peer with $1.5B EV and 500 koz ($3,000/oz), assuming similar costs.
+                                                                    </p>
+                                                                </TooltipContent>
+                                                            </Tooltip>
+                                                        </TooltipProvider>
+                                                    )}
                                                     {lookupKey === 'costs.aisc_last_quarter' && (
                                                         <TooltipProvider>
                                                             <Tooltip>
@@ -254,6 +348,23 @@ export function HelpMetricsPage() {
                                                                 <TooltipContent>
                                                                     <p>
                                                                         Example: A miner with an AISC of $900/oz last quarter is more profitable at $1,800/oz gold than a competitor with $1,200/oz AISC, assuming similar production volumes.
+                                                                    </p>
+                                                                </TooltipContent>
+                                                            </Tooltip>
+                                                        </TooltipProvider>
+                                                    )}
+                                                    {lookupKey === 'costs.aic_last_quarter' && (
+                                                        <TooltipProvider>
+                                                            <Tooltip>
+                                                                <TooltipTrigger asChild>
+                                                                    <Info
+                                                                        size={14}
+                                                                        className="inline ml-2 text-cyan-400 cursor-pointer"
+                                                                    />
+                                                                </TooltipTrigger>
+                                                                <TooltipContent>
+                                                                    <p>
+                                                                        Example: A miner with $1,000/oz AIC (including expansion costs) may be investing in growth, while a peer at $800/oz AIC with no expansion may be more profitable short-term at $1,800/oz gold.
                                                                     </p>
                                                                 </TooltipContent>
                                                             </Tooltip>

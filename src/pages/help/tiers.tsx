@@ -1,3 +1,4 @@
+//src/pages/help/tiers.tsx
 import React from 'react';
 import { PageContainer } from '../../components/ui/page-container';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
