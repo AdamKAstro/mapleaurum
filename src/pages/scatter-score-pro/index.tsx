@@ -13,7 +13,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../../
 import { Info, Lock, ArrowUp, ArrowDown, Settings, RefreshCw, ListPlus, X } from 'lucide-react';
 import { MetricSelector } from '../../components/metric-selector';
 import {
-  metrics as allMetrics,
+  metrics as allMetrics, // CORRECTED: Import 'metrics' and alias to 'allMetrics'
   metricCategories,
   getAccessibleMetrics,
   type MetricConfig
@@ -43,7 +43,7 @@ interface ScatterScoreTemplate {
 
 const DEBUG_SCATTER_SCORE = process.env.NODE_ENV === 'development';
 
-// --- PRE-DEFINED TEMPLATES ---
+// --- PRE-DEFINED TEMPLATES --- (Full 5 templates as previously confirmed by user)
 const PREDEFINED_TEMPLATES: ScatterScoreTemplate[] = [
   {
     name: "Value Hunter",
@@ -153,95 +153,97 @@ const normalizeWeights = (
     changedMetricKey?: string,
     userSetWeightForChangedMetric?: number
 ): AxisMetricConfig[] => {
-    if (!metrics || metrics.length === 0) return [];
+    if (!Array.isArray(metrics) || metrics.length === 0) return [];
 
-    let workingMetrics = metrics.map(m => ({ ...m }));
+    let mutableMetrics = metrics.map(m => ({ ...m })); // Work with a mutable copy
 
-    if (workingMetrics.length === 1) {
-        workingMetrics[0].weight = 100;
-        return workingMetrics;
+    if (mutableMetrics.length === 1) {
+        mutableMetrics[0].weight = 100;
+        return mutableMetrics;
     }
 
     let fixedWeightTotal = 0;
-    let countOfManuallySetMetrics = 0;
-    
-    // Apply user-set weight first if provided
+    let adjustableMetricsIndices: number[] = [];
+
+    // Apply user-set weight first and identify fixed vs. adjustable
     if (changedMetricKey && userSetWeightForChangedMetric !== undefined) {
-        const idx = workingMetrics.findIndex(m => m.key === changedMetricKey);
+        const idx = mutableMetrics.findIndex(m => m.key === changedMetricKey);
         if (idx !== -1) {
-            workingMetrics[idx].weight = Math.max(0, Math.min(100, userSetWeightForChangedMetric));
-            fixedWeightTotal = workingMetrics[idx].weight;
-            countOfManuallySetMetrics = 1;
+            mutableMetrics[idx].weight = Math.max(0, Math.min(100, userSetWeightForChangedMetric));
+            fixedWeightTotal = mutableMetrics[idx].weight;
         }
     }
     
-    const sumOfOtherWeights = workingMetrics.reduce((sum, m) => {
-        if (m.key !== changedMetricKey) return sum + m.weight;
-        return sum;
-    },0);
+    let sumOfAdjustableOriginalWeights = 0;
+    mutableMetrics.forEach((m, index) => {
+        if (m.key !== changedMetricKey) {
+            adjustableMetricsIndices.push(index);
+            sumOfAdjustableOriginalWeights += m.weight; // Sum original weights of adjustable metrics
+        }
+    });
 
-    const countOfOtherMetrics = workingMetrics.length - countOfManuallySetMetrics;
-    const remainingTargetWeight = 100 - fixedWeightTotal;
+    const remainingWeightToDistribute = 100 - fixedWeightTotal;
 
-    if (countOfOtherMetrics > 0) {
-        if (sumOfOtherWeights === 0 || changedMetricKey ) { // Distribute remaining equally if others were 0 or one was changed
-            const equalShare = remainingTargetWeight / countOfOtherMetrics;
-            workingMetrics = workingMetrics.map(m => {
-                if (m.key !== changedMetricKey) {
-                    return { ...m, weight: Math.max(0, Math.round(equalShare)) };
-                }
-                return m;
+    if (adjustableMetricsIndices.length > 0) {
+        if (sumOfAdjustableOriginalWeights === 0 || changedMetricKey) { 
+            // If others were 0 or one specific metric was changed, distribute remaining weight equally
+            const equalShare = remainingWeightToDistribute / adjustableMetricsIndices.length;
+            adjustableMetricsIndices.forEach(idx => {
+                mutableMetrics[idx].weight = Math.max(0, Math.round(equalShare));
             });
-        } else { // Distribute proportionally
-            const scaleFactor = remainingWeightToDistribute / sumOfOtherWeights;
-            workingMetrics = workingMetrics.map(m => {
-                if (m.key !== changedMetricKey) {
-                    return { ...m, weight: Math.max(0, Math.round(m.weight * scaleFactor)) };
-                }
-                return m;
+        } else { // Distribute remaining proportionally to original weights of adjustable metrics
+            adjustableMetricsIndices.forEach(idx => {
+                const proportion = mutableMetrics[idx].weight / sumOfAdjustableOriginalWeights;
+                mutableMetrics[idx].weight = Math.max(0, Math.round(proportion * remainingWeightToDistribute));
             });
         }
-    } else if (countOfManuallySetMetrics === 1 && workingMetrics.length === 1) { // Only one metric, and it was set
-        workingMetrics[0].weight = 100;
-    } else if (workingMetrics.length > 0 && !changedMetricKey) { // Initial distribution for add/remove or template load
-        const equalWeight = Math.floor(100 / workingMetrics.length);
-         workingMetrics = workingMetrics.map(m => ({ ...m, weight: equalWeight }));
+    } else if (mutableMetrics.length === 1 && changedMetricKey) { // Only one metric, and it was the one changed
+         mutableMetrics[0].weight = 100; // Ensure it takes full 100% if it's the only one after adjustment
+    } else if (mutableMetrics.length > 0 && !changedMetricKey) { // Fallback for add/remove or initial template load
+        const equalWeight = Math.floor(100 / mutableMetrics.length);
+        mutableMetrics = mutableMetrics.map(m => ({ ...m, weight: equalWeight }));
     }
-
 
     // Final pass to ensure sum is exactly 100 due to rounding
-    let currentSum = workingMetrics.reduce((sum, m) => sum + m.weight, 0);
-    if (workingMetrics.length > 0 && currentSum !== 100) {
+    let currentSum = mutableMetrics.reduce((sum, m) => sum + m.weight, 0);
+    if (mutableMetrics.length > 0 && currentSum !== 100) {
         const diff = 100 - currentSum;
-        // Try to adjust a metric that wasn't the one the user just changed, or the first if none changed
-        let adjustIndex = changedMetricKey ? workingMetrics.findIndex(m => m.key !== changedMetricKey) : -1;
-        if (adjustIndex === -1 && workingMetrics.length > 0) adjustIndex = 0; // Fallback to first
-
-        if (adjustIndex !== -1 && workingMetrics[adjustIndex]) {
-             workingMetrics[adjustIndex].weight = Math.max(0, workingMetrics[adjustIndex].weight + diff);
+        // Try to adjust a metric that wasn't the one explicitly changed by the user, or the first/last if no specific change
+        let adjustIndex = -1;
+        if (changedMetricKey) {
+            adjustIndex = mutableMetrics.findIndex(m => m.key !== changedMetricKey && (m.weight + diff) >= 0 && (m.weight + diff) <= 100);
         }
-        // If still not 100 (e.g. if previous adjustment made weight < 0), re-distribute more simply
-        currentSum = workingMetrics.reduce((sum, m) => sum + m.weight, 0);
-        if(workingMetrics.length > 0 && currentSum !== 100 && currentSum !== 0) { // avoid div by zero if sum is 0
-            const scale = 100 / currentSum;
-            workingMetrics = workingMetrics.map(m => ({...m, weight: Math.round(m.weight * scale)}));
-            currentSum = workingMetrics.reduce((sum, m) => sum + m.weight, 0);
-            if(workingMetrics.length > 0 && currentSum !== 100) workingMetrics[0].weight += (100-currentSum);
-        } else if (workingMetrics.length > 0 && currentSum === 0) { // if all became 0, re-distribute equally
-             const equalWeight = Math.floor(100 / workingMetrics.length);
-             workingMetrics = workingMetrics.map(m => ({ ...m, weight: equalWeight }));
-             currentSum = workingMetrics.reduce((sum, m) => sum + m.weight, 0);
-             if(workingMetrics.length > 0 && currentSum !== 100) workingMetrics[0].weight += (100-currentSum);
+        if (adjustIndex === -1) { // If no suitable "other" metric, try any metric
+             adjustIndex = mutableMetrics.findIndex(m => (m.weight + diff) >= 0 && (m.weight + diff) <= 100);
+             if (adjustIndex === -1 && mutableMetrics.length > 0) { // Fallback to first if no ideal candidate
+                adjustIndex = 0;
+             }
+        }
+        
+        if (adjustIndex !== -1 && mutableMetrics[adjustIndex]) {
+             mutableMetrics[adjustIndex].weight += diff;
+        } else if (mutableMetrics.length > 0 && diff !== 0) { 
+            // If still not 100 and couldn't adjust nicely, force adjustment on the first element
+            // This handles cases where all other items are 0 or 100.
+            mutableMetrics[0].weight = Math.max(0, Math.min(100, mutableMetrics[0].weight + diff));
+            // If this made sum not 100 again (because first item was clamped), re-distribute the small error.
+            let reSum = mutableMetrics.reduce((s,m) => s + m.weight, 0);
+            if (mutableMetrics.length > 1 && reSum !== 100) {
+                const reDiff = 100 - reSum;
+                if (mutableMetrics[1]) mutableMetrics[1].weight += reDiff; // Add to second if exists
+                else mutableMetrics[0].weight += reDiff; // Or back to first
+            }
         }
     }
-    return workingMetrics.map(m => ({...m, weight: Math.max(0, Math.min(100, Math.round(m.weight)))})); // Final clamp & round
+    // Final clamp on all weights after adjustments
+    return mutableMetrics.map(m => ({...m, weight: Math.max(0, Math.min(100, Math.round(m.weight)))}));
 };
 
 
 export function ScatterScoreProPage() {
   const { currentUserTier } = useFilters();
 
-  const [activeTemplateName, setActiveTemplateName] = useState<string | null>(() => 
+  const [activeTemplateName, setActiveTemplateName] = useState<string | null>(
     PREDEFINED_TEMPLATES.length > 0 ? PREDEFINED_TEMPLATES[0].name : null
   );
   
@@ -298,7 +300,7 @@ export function ScatterScoreProPage() {
     setSelectedXMetrics(normalizeWeights(mapAndFilterMetrics(template.xMetricsConfig)));
     setSelectedYMetrics(normalizeWeights(mapAndFilterMetrics(template.yMetricsConfig)));
     
-    const zMetricIsAccessible = template.zMetricKey ? accessibleMetrics.some(am => am.key === template.zMetricKey) : true;
+    const zMetricIsAccessible = template.zMetricKey ? accessibleMetrics.some(am => am.key === template.zMetricKey) : false; // Fixed: check accessibleMetrics
     setSelectedZMetricKey(zMetricIsAccessible && template.zMetricKey ? template.zMetricKey : null);
     
     setZScale(template.zScale || 'log');
@@ -314,14 +316,15 @@ export function ScatterScoreProPage() {
     }
   }, [loadTemplate, activeTemplateName]);
   
-  useEffect(() => { // Re-load/re-filter template if accessibleMetrics change (e.g. tier change)
-    if(activeTemplateName) {
+  useEffect(() => {
+    if(activeTemplateName) { // If a template is active, reload it if accessible metrics change
         loadTemplate(activeTemplateName);
-    } else if (PREDEFINED_TEMPLATES.length > 0) {
+    } else if (PREDEFINED_TEMPLATES.length > 0 && (selectedXMetrics.length === 0 && selectedYMetrics.length === 0)){ // If no template active and axes empty, load default
         loadTemplate(PREDEFINED_TEMPLATES[0].name);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [accessibleMetrics]); // Only re-load if accessibleMetrics array instance changes
+  }, [accessibleMetrics]); // Re-evaluate template metrics when accessibleMetrics list changes (due to tier change)
+
 
   const handleTemplateChange = (newTemplateName: string) => {
     loadTemplate(newTemplateName);
@@ -335,7 +338,7 @@ export function ScatterScoreProPage() {
   ) => {
     const setSelectedMetrics = axisType === 'X' ? setSelectedXMetrics : setSelectedYMetrics;
     setSelectedMetrics(prevMetrics => {
-      let newMetricsArray = JSON.parse(JSON.stringify(prevMetrics)) as AxisMetricConfig[]; // Deep clone for safety
+      let newMetricsArray = JSON.parse(JSON.stringify(prevMetrics)) as AxisMetricConfig[];
       const existingIndex = newMetricsArray.findIndex(m => m.key === metricKey);
 
       if (action === 'add') {
@@ -357,15 +360,14 @@ export function ScatterScoreProPage() {
         return normalizeWeights(newMetricsArray);
       } else if (existingIndex !== -1) {
         if (action === 'updateWeight') {
-          const newWeight = Math.max(0, Math.min(100, Number(value) || 0));
-          newMetricsArray[existingIndex].weight = newWeight;
+          const newWeight = Number(value); // Ensure value is treated as number
           return normalizeWeights(newMetricsArray, metricKey, newWeight);
         } else if (action === 'toggleHLB') {
           newMetricsArray[existingIndex].userHigherIsBetter = !!value;
-          return newMetricsArray; // No weight normalization needed for HLB toggle
+          return newMetricsArray; 
         }
       }
-      return prevMetrics; // Return previous if no change
+      return prevMetrics; 
     });
     setActiveTemplateName(null);
   };
@@ -389,7 +391,7 @@ export function ScatterScoreProPage() {
         normalizationMode, imputationMode,
       });
     }
-    // TODO: Trigger score calculation and chart update (Mini PRD-SS-2, SS-3)
+    // TODO: Trigger actual score calculation and chart data update (Mini PRD-SS-2, SS-3)
   };
 
   // AvailableMetricsSelector sub-component defined within ScatterScoreProPage
@@ -501,7 +503,7 @@ export function ScatterScoreProPage() {
                 ))}
             </div>
             <div className={cn("text-xs mt-2 font-medium", currentTotalWeight !== 100 && currentSelectedMetrics.length > 0 ? "text-destructive" : currentTotalWeight === 100 ? "text-green-400" : "text-muted-foreground")}>
-                Total {axisType}-Axis Weight: {currentTotalWeight}% {currentSelectedMetrics.length > 0 && currentTotalWeight !==100 && "(Must be 100%)"}
+                Total {axisType}-Axis Weight: {currentTotalWeight}% {currentSelectedMetrics.length > 0 && currentTotalWeight !==100 && "(Must sum to 100%)"}
             </div>
         </CardContent>
       </Card>
@@ -627,6 +629,7 @@ export function ScatterScoreProPage() {
             </div>
         </motion.div>
 
+        {/* Chart Display Area */}
         <div className="flex-grow bg-navy-800/30 p-4 rounded-lg border border-navy-700 backdrop-blur-sm flex items-center justify-center min-h-[400px] lg:min-h-0">
           <p className="text-center text-gray-400">
             Scatter plot and score results will appear here.
