@@ -10,7 +10,7 @@ import { Checkbox } from '../../components/ui/checkbox';
 import { Input } from '../../components/ui/input';
 import { Label } from '../../components/ui/label';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../../components/ui/tooltip';
-import { Info, Lock, ArrowUp, ArrowDown, Settings, RefreshCw, ListPlus, X } from 'lucide-react';
+import { Info, Lock, ArrowUp, ArrowDown, Settings, RefreshCw, ListPlus, X, Loader2 } from 'lucide-react';
 import { MetricSelector } from '../../components/metric-selector';
 import {
   metrics as allMetrics, // CORRECTED: Import 'metrics' and alias it to 'allMetrics'
