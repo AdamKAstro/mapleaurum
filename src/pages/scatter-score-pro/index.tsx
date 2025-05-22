@@ -1,5 +1,6 @@
 // src/pages/scatter-score-pro/index.tsx
 import React, { useState, useCallback, useMemo, useEffect } from 'react';
+
 import { motion } from 'framer-motion';
 import { useFilters } from '../../contexts/filter-context';
 import { PageContainer } from '../../components/ui/page-container';
@@ -10,17 +11,19 @@ import { Checkbox } from '../../components/ui/checkbox';
 import { Input } from '../../components/ui/input';
 import { Label } from '../../components/ui/label';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../../components/ui/tooltip';
-import { Info, Lock, ArrowUp, ArrowDown, Settings, RefreshCw, ListPlus, X, Loader2 } from 'lucide-react';
+import { LoadingIndicator } from '../../components/ui/loading-indicator'; // <-- ADD THIS IMPORT
+import { Info, Lock, ArrowUp, ArrowDown, Settings, RefreshCw, ListPlus, X, Loader2 } from 'lucide-react'; // Loader2 was added previously
 import { MetricSelector } from '../../components/metric-selector';
 import {
-  metrics as allMetrics, // CORRECTED: Import 'metrics' and alias it to 'allMetrics'
+  metrics as allMetrics,
   metricCategories,
   getAccessibleMetrics,
   type MetricConfig
 } from '../../lib/metric-types';
 import type { ColumnTier, NormalizationMode, ImputationMode } from '../../lib/types';
 import { cn, isValidNumber, getNestedValue } from '../../lib/utils';
-import { calculateAxisSpecificScore, calculateDatasetMetricStats, type MetricDatasetStats } from '../../lib/scoringUtils'; // Ensure correct import
+import { calculateAxisSpecificScore, calculateDatasetMetricStats, type MetricDatasetStats } from '../../lib/scoringUtils';
+
 
 // --- Local Type Definitions ---
 interface AxisMetricConfig {
