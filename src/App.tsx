@@ -26,7 +26,7 @@ import { SubscribePage } from './pages/subscribe';
 import { ScatterChartPage } from './pages/scatter-chart';
 import { FilterPage } from './pages/filter';
 import ScoringPage from './pages/scoring';
-import { ScatterScoreProPage } from './pages/scatter-score-pro'; // Adjust path if needed
+import { ScatterScoreProPage } from './pages/scatter-score-pro'; // <-- NEW IMPORT
 import { HelpLandingPage } from './pages/help/index';
 import { HelpMetricsPage } from './pages/help/metrics';
 import { HelpFiltersPage } from './pages/help/filters-guide';
@@ -34,12 +34,7 @@ import { HelpScoringPage } from './pages/help/scoring-guide';
 import { HelpScatterPage } from './pages/help/scatter-guide';
 import { HelpTiersPage } from './pages/help/tiers';
 import { HelpGeneralPage } from './pages/help/general';
-import { AdminSendEmailPage } from './pages/admin/send-email'; // Added admin email page
-
-// Commented out unused imports for clarity
-// import TestIcons from './components/TestIcons';
-// import { SuccessPage } from './pages/success';
-// import { DebugTierSelector } from './components/ui/DebugTierSelector';
+import { AdminSendEmailPage } from './pages/admin/send-email';
 
 function NotFoundPage() {
   return (
@@ -75,7 +70,7 @@ function App() {
     },
   };
 
-  const showDebugSelector = false; // Disabled unless explicitly needed
+  const showDebugSelector = false; 
 
   return (
     <Router>
@@ -94,7 +89,7 @@ function App() {
                   <Helmet>
                     <title>MapleAurum | Canadian Mining Analytics</title>
                     <meta name="description" content={jsonLd.description} />
-                    <link rel="preload" href="/assets/css/index.css" as="style" /> {/* Preload CSS to reduce FOUC */}
+                    <link rel="preload" href="/assets/css/index.css" as="style" />
                     <script type="application/ld+json">{JSON.stringify(jsonLd)}</script>
                   </Helmet>
                   <div className="flex flex-col min-h-screen bg-navy-900">
@@ -119,9 +114,9 @@ function App() {
                             <Route path="/onboarding" element={<OnboardingPage />} />
                             <Route path="/companies" element={<CompaniesPage />} />
                             <Route path="/scatter-chart" element={<ScatterChartPage />} />
+                            <Route path="/scatter-score-pro" element={<ScatterScoreProPage />} /> {/* <-- NEW ROUTE ADDED --> */}
                             <Route path="/filter" element={<FilterPage />} />
                             <Route path="/scoring" element={<ScoringPage />} />
-							<Route path="/scatter-score-pro" element={<ScatterScoreProPage />} /> 
                             <Route path="/help" element={<HelpLandingPage />} />
                             <Route path="/help/metrics" element={<HelpMetricsPage />} />
                             <Route path="/help/filters" element={<HelpFiltersPage />} />
@@ -129,7 +124,7 @@ function App() {
                             <Route path="/help/scatter-chart" element={<HelpScatterPage />} />
                             <Route path="/help/tiers" element={<HelpTiersPage />} />
                             <Route path="/help/general" element={<HelpGeneralPage />} />
-                            <Route path="/admin/send-email" element={<AdminSendEmailPage />} /> {/* Added admin route */}
+                            <Route path="/admin/send-email" element={<AdminSendEmailPage />} />
                             <Route path="*" element={<NotFoundPage />} />
                           </Routes>
                         </ErrorBoundary>
