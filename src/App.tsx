@@ -26,6 +26,7 @@ import { SubscribePage } from './pages/subscribe';
 import { ScatterChartPage } from './pages/scatter-chart';
 import { FilterPage } from './pages/filter';
 import ScoringPage from './pages/scoring';
+import { ScatterScoreProPage } from './pages/scatter-score-pro'; // Adjust path if needed
 import { HelpLandingPage } from './pages/help/index';
 import { HelpMetricsPage } from './pages/help/metrics';
 import { HelpFiltersPage } from './pages/help/filters-guide';
@@ -120,6 +121,7 @@ function App() {
                             <Route path="/scatter-chart" element={<ScatterChartPage />} />
                             <Route path="/filter" element={<FilterPage />} />
                             <Route path="/scoring" element={<ScoringPage />} />
+							<Route path="/scatter-score-pro" element={<ScatterScoreProPage />} /> 
                             <Route path="/help" element={<HelpLandingPage />} />
                             <Route path="/help/metrics" element={<HelpMetricsPage />} />
                             <Route path="/help/filters" element={<HelpFiltersPage />} />
