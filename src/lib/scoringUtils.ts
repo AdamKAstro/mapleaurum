@@ -1,33 +1,34 @@
 // src/lib/scoringUtils.ts
-import type { Company, ColumnTier, CompanyStatus, MetricConfig } from './types'; // Ensured MetricConfig is imported
-import { getNestedValue, isValidNumber, logDebug as utilsLogDebug } from './utils'; // Assuming logDebug is EXPORTED from ./utils
+import type { Company, ColumnTier, CompanyStatus, MetricConfig, NormalizationMode, ImputationMode } from './types'; // Ensured MetricConfig, NormalizationMode, ImputationMode are imported
+import { getNestedValue, isValidNumber, logDebug as utilsLogDebug } from './utils';
 
-// Helper function to convert string to Title Case (already present)
+// Helper function to convert string to Title Case
 function toTitleCase(str: string | null | undefined): string {
   if (!str) return '';
   return str.toLowerCase().replace(/\b\w/g, char => char.toUpperCase());
 }
 
-// Normalization & Imputation Types (already present)
-export type NormalizationMode = 'global_min_max' | 'dataset_min_max' | 'dataset_rank_percentile' | 'dataset_z_score';
-export type ImputationMode = 'zero_worst' | 'dataset_mean' | 'dataset_median';
+// Export Normalization & Imputation Types if they are defined here and used elsewhere,
+// or ensure they are imported from './types' if defined there.
+// Your provided snippet already exports them.
+export type { NormalizationMode, ImputationMode };
 
-// Interfaces (already present)
+// Interfaces
 export interface CompanyScore {
   companyId: number;
   companyName: string;
-  code: string | null; // Changed from string to string | null to match Company.tsx_code
+  code: string | null;
   status?: CompanyStatus | null;
   headquarters?: string | null;
   description?: string | null;
   score: number | null;
-  breakdown: Record<string, ScoreComponent>; // Keyed by metricConfig.db_column
+  breakdown: Record<string, ScoreComponent>; // Keyed by metricConfig.db_column (in original calculateScores) or metricConfig.key (in calculateAxisSpecificScore)
   debugLogs: string[];
 }
 
 export interface ScoreComponent {
   metricLabel: string;
-  rawValue: number | string | null | undefined; // Made undefined possible as getNestedValue can return it
+  rawValue: number | string | null | undefined;
   processedValue: number | null;
   imputedValue?: number | null;
   valueUsedForNormalization: number | null;
@@ -35,41 +36,44 @@ export interface ScoreComponent {
   weight: number;
   weightedScore: number | null;
   isIncludedInScore: boolean;
-  isAccessible: boolean;
-  hasValidRange: boolean; // Indicates if the range (global or dataset) used for normalization was valid
-  hasUsableValue: boolean; // Indicates if a finite numeric value was available/imputed for normalization
+  isAccessible: boolean; // Specific to original calculateScores context
+  hasValidRange: boolean;
+  hasUsableValue: boolean;
   normalizationMethod?: string;
   imputationMethodApplied?: string;
   error?: string;
   log: string[];
 }
 
-interface MetricFullRanges { [db_column: string]: [number, number] | undefined; }
-interface MetricDatasetStats {
+// Local type alias for clarity within this module if needed, or use imported MetricFullRanges directly
+type ScoringMetricFullRanges = Record<string, [number, number] | undefined>; // This matches MetricFullRanges from your original scoringUtils
+
+export interface MetricDatasetStats { // Ensure this is exported if ScatterScoreProPage needs to type its state
   min?: number;
   max?: number;
   mean?: number;
   median?: number;
   stdDev?: number;
-  validValues: number[]; // Storing all valid numeric values for ranking/percentile
+  validValues: number[];
 }
 
 const logScoringDebug = (message: string, data?: any) => {
-  utilsLogDebug(`[ScoringUtil] ${message}`, data);
+  if (process.env.NODE_ENV === 'development') {
+    utilsLogDebug(`[ScoringUtil] ${message}`, data);
+  }
 };
 
-// calculateDatasetMetricStats function (remains as provided by user, verified for robustness)
-// Minor refinement: Added fieldNameForError to logDebug in case of parsing issues.
-export function calculateDatasetMetricStats( // <--- ADD 'export' KEYWORD HERE
+export function calculateDatasetMetricStats( // EXPORT keyword added
   companies: Company[],
   metricConfig: MetricConfig,
-  allCompanyDebugLogs: Map<number, string[]> // For logging specific company issues during stats calculation
+  allCompanyDebugLogs?: Map<number, string[]>
 ): MetricDatasetStats {
   const stats: MetricDatasetStats = { validValues: [] };
-  const metricKeyForLog = metricConfig.label || metricConfig.db_column; // Use label for logs if available
-  const firstCompanyId = companies.length > 0 ? companies[0].company_id : undefined;
+  const metricKeyForLog = metricConfig.label || metricConfig.db_column;
+  const firstCompanyId = companies.length > 0 ? companies[0]?.company_id : undefined;
 
   for (const company of companies) {
+    if (!company) continue;
     const rawValueFromPath = getNestedValue(company, metricConfig.nested_path);
     let numericValue: number | null = null;
 
@@ -89,11 +93,10 @@ export function calculateDatasetMetricStats( // <--- ADD 'export' KEYWORD HERE
     if (isValidNumber(numericValue)) {
       stats.validValues.push(numericValue);
     } else {
-        // Log only once per metric for the first company if an issue occurs, to avoid flooding logs
-        if (company.company_id === firstCompanyId && firstCompanyId !== undefined && (rawValueFromPath !== null && rawValueFromPath !== undefined)) {
+        if (allCompanyDebugLogs && company.company_id === firstCompanyId && firstCompanyId !== undefined && (rawValueFromPath !== null && rawValueFromPath !== undefined)) {
              const companyLog = allCompanyDebugLogs.get(firstCompanyId);
-             const logMsg = `[Stats][${metricKeyForLog}] Raw value '${rawValueFromPath}' (type: ${typeof rawValueFromPath}) for company ${firstCompanyId} is not a valid finite number; excluded from dataset stats for ${metricKeyForLog}.`;
-             if (companyLog && !companyLog.some(l => l.includes(`excluded from dataset stats for ${metricKeyForLog}`))) { // Log only once
+             const logMsg = `[Stats][${metricKeyForLog}] Raw value '${rawValueFromPath}' (type: ${typeof rawValueFromPath}) for company ${firstCompanyId} is not valid finite; excluded from dataset stats for ${metricKeyForLog}.`;
+             if (companyLog && !companyLog.some(l => l.includes(`excluded from dataset stats for ${metricKeyForLog}`))) {
                 companyLog.push(logMsg);
              }
         }
@@ -101,7 +104,7 @@ export function calculateDatasetMetricStats( // <--- ADD 'export' KEYWORD HERE
   }
 
   if (stats.validValues.length > 0) {
-    stats.validValues.sort((a, b) => a - b); // Sort for median and rank percentile
+    stats.validValues.sort((a, b) => a - b);
     stats.min = stats.validValues[0];
     stats.max = stats.validValues[stats.validValues.length - 1];
     stats.mean = stats.validValues.reduce((sum, val) => sum + val, 0) / stats.validValues.length;
@@ -113,261 +116,433 @@ export function calculateDatasetMetricStats( // <--- ADD 'export' KEYWORD HERE
       const variance = stats.validValues.reduce((sumSqDiff, val) => sumSqDiff + Math.pow(val - (stats.mean as number), 2), 0) / (stats.validValues.length - 1);
       stats.stdDev = Math.sqrt(variance);
     } else {
-      stats.stdDev = 0; // StdDev is 0 if only one value
+      stats.stdDev = 0;
     }
-    if (process.env.NODE_ENV === 'development') { // Conditional logging
-        logScoringDebug(`Dataset stats for ${metricKeyForLog}: Min=${stats.min?.toFixed(2)}, Max=${stats.max?.toFixed(2)}, Mean=${stats.mean?.toFixed(2)}, Median=${stats.median?.toFixed(2)}, StdDev=${stats.stdDev?.toFixed(2)}, Count=${stats.validValues.length}`);
-    }
+    logScoringDebug(`Dataset stats for ${metricKeyForLog}: Min=${stats.min?.toFixed(2)}, Max=${stats.max?.toFixed(2)}, Mean=${stats.mean?.toFixed(2)}, Median=${stats.median?.toFixed(2)}, StdDev=${stats.stdDev?.toFixed(2)}, Count=${stats.validValues.length}`);
   } else {
-     if (process.env.NODE_ENV === 'development') {
-        logScoringDebug(`Dataset stats for ${metricKeyForLog}: No valid finite values found in dataset.`);
-     }
+     logScoringDebug(`Dataset stats for ${metricKeyForLog}: No valid finite values found in dataset.`);
   }
   return stats;
 }
 
+// --- NEW FUNCTION for ScatterScore Page ---
+export interface AxisMetricScoreInput { // Export this interface if ScatterScoreProPage needs it
+  key: string; // MetricConfig.key
+  weight: number; // Percentage 0-100
+  userHigherIsBetter: boolean; // User's override for MetricConfig.higherIsBetter for this axis
+}
+
+export function calculateAxisSpecificScore( // EXPORT keyword added
+  company: Company,
+  axisMetricsInputs: AxisMetricScoreInput[],
+  allMetricDefinitions: MetricConfig[],
+  normalizationMode: NormalizationMode,
+  imputationMode: ImputationMode,
+  globalFullRanges: ScoringMetricFullRanges, // Using local alias
+  datasetStatsByMetricKey: Map<string, MetricDatasetStats>, // Keyed by MetricConfig.key
+  parentCompanyLog?: string[]
+): { score: number | null; breakdown: Record<string, Partial<ScoreComponent>> } {
+  
+  let totalWeightedScoreSum = 0;
+  let totalEffectiveWeight = 0; // Sum of weights (should be 1 if weights are normalized 0-100%)
+  const scoreBreakdown: Record<string, Partial<ScoreComponent>> = {}; // Keyed by metric key
+
+  if (!company || typeof company.company_id !== 'number') {
+    parentCompanyLog?.push("Error: Invalid company object provided to calculateAxisSpecificScore.");
+    return { score: null, breakdown };
+  }
+  
+  parentCompanyLog?.push(`--- Calculating Axis Score for Company ID: ${company.company_id} ---`);
+  parentCompanyLog?.push(`Normalization: ${normalizationMode}, Imputation: ${imputationMode}`);
+
+  for (const axisMetricInput of axisMetricsInputs) {
+    const metricConfig = allMetricDefinitions.find(m => m.key === axisMetricInput.key);
+    const componentLog: string[] = [];
+    const metricKeyForLog = metricConfig?.label || axisMetricInput.key;
+
+    componentLog.push(`-- Metric: ${metricKeyForLog} (Key: ${axisMetricInput.key}, Weight: ${axisMetricInput.weight}%, User HLB: ${axisMetricInput.userHigherIsBetter}) --`);
+
+    const component: Partial<ScoreComponent> = {
+      metricLabel: metricKeyForLog,
+      weight: axisMetricInput.weight, // Store the percentage weight
+      isIncludedInScore: false,
+      log: componentLog,
+    };
+
+    if (!metricConfig) {
+      component.error = "Metric configuration not found.";
+      component.log.push(`Error: ${component.error}`);
+      scoreBreakdown[axisMetricInput.key] = component;
+      parentCompanyLog?.push(...component.log);
+      continue;
+    }
+
+    component.rawValue = getNestedValue(company, metricConfig.nested_path);
+    component.log.push(`Raw value from '${metricConfig.nested_path}': ${JSON.stringify(component.rawValue)}`);
+
+    if (typeof component.rawValue === 'string') {
+      const strVal = component.rawValue.toLowerCase();
+      if (strVal === 'infinity') component.processedValue = Infinity;
+      else if (strVal === '-infinity') component.processedValue = -Infinity;
+      else if (strVal === 'nan') component.processedValue = NaN;
+      else { const parsed = parseFloat(component.rawValue); component.processedValue = isValidNumber(parsed) ? parsed : null; }
+    } else if (typeof component.rawValue === 'number') {
+      component.processedValue = component.rawValue;
+    } else { component.processedValue = null; }
+    component.log.push(`Processed value: ${component.processedValue}`);
+    component.valueUsedForNormalization = component.processedValue;
+
+    if (!isValidNumber(component.valueUsedForNormalization)) {
+      component.log.push(`Value unusable. Attempting imputation (Mode: ${imputationMode})`);
+      component.imputationMethodApplied = imputationMode;
+      const stats = datasetStatsByMetricKey.get(metricConfig.key);
+      let imputed = false;
+      if (imputationMode === 'dataset_mean' && stats && isValidNumber(stats.mean)) {
+        component.valueUsedForNormalization = stats.mean; imputed = true;
+      } else if (imputationMode === 'dataset_median' && stats && isValidNumber(stats.median)) {
+        component.valueUsedForNormalization = stats.median; imputed = true;
+      }
+      if (imputed) {
+        component.imputedValue = component.valueUsedForNormalization;
+        component.log.push(`Imputed with ${imputationMode}: ${component.imputedValue?.toFixed(3)}`);
+      } else {
+        component.log.push(`Could not impute with ${imputationMode}.`);
+      }
+    }
+    component.hasUsableValue = isValidNumber(component.valueUsedForNormalization);
+    component.log.push(`Value for normalization: ${component.valueUsedForNormalization}, Usable: ${component.hasUsableValue}`);
+
+    if (!component.hasUsableValue && imputationMode !== 'zero_worst') {
+      component.error = "Value unusable after imputation attempts.";
+      component.log.push(`Error: ${component.error}`);
+      scoreBreakdown[axisMetricInput.key] = component;
+      parentCompanyLog?.push(...component.log);
+      continue;
+    }
+
+    let normalizedScore: number | null = null;
+    const valueToNorm = component.valueUsedForNormalization;
+    const useHigherIsBetterForThisMetric = axisMetricInput.userHigherIsBetter;
+    component.normalizationMethod = normalizationMode;
+
+    if (component.hasUsableValue) {
+      const finiteValueToNorm = valueToNorm as number;
+      switch (normalizationMode) {
+        case 'global_min_max':
+          const gRange = globalFullRanges[metricConfig.db_column];
+          if (gRange && isValidNumber(gRange[0]) && isValidNumber(gRange[1])) {
+            const [min, max] = gRange; component.hasValidRange = true;
+            normalizedScore = (max - min) > 1e-9 ? (finiteValueToNorm - min) / (max - min) : 0.5;
+          } else { component.error = `Global range for ${metricConfig.db_column} unavailable/invalid.`; component.log.push(`Error: ${component.error}`);}
+          break;
+        case 'dataset_min_max':
+          const dStatsMM = datasetStatsByMetricKey.get(metricConfig.key); // Keyed by metricConfig.key
+          if (dStatsMM && isValidNumber(dStatsMM.min) && isValidNumber(dStatsMM.max)) {
+            const { min, max } = dStatsMM; component.hasValidRange = true;
+            normalizedScore = (max! - min!) > 1e-9 ? (finiteValueToNorm - min!) / (max! - min!) : 0.5;
+          } else { component.error = "Dataset Min-Max stats unavailable/invalid."; component.log.push(`Error: ${component.error}`);}
+          break;
+        case 'dataset_rank_percentile':
+          const dStatsRank = datasetStatsByMetricKey.get(metricConfig.key);
+          if (dStatsRank && dStatsRank.validValues.length > 0) {
+            component.hasValidRange = true; 
+            const sorted = dStatsRank.validValues;
+            let rank = sorted.findIndex(v => v >= finiteValueToNorm);
+            if (rank === -1) rank = finiteValueToNorm > sorted[sorted.length -1] ? sorted.length -1 : 0;
+            normalizedScore = sorted.length > 1 ? rank / (sorted.length - 1) : 0.5;
+          } else { component.error = "Dataset Rank/Percentile stats unavailable/invalid."; component.log.push(`Error: ${component.error}`);}
+          break;
+        case 'dataset_z_score':
+          const dStatsZ = datasetStatsByMetricKey.get(metricConfig.key);
+          if (dStatsZ && isValidNumber(dStatsZ.mean) && isValidNumber(dStatsZ.stdDev)) {
+            component.hasValidRange = true; 
+            const { mean, stdDev } = dStatsZ;
+            normalizedScore = stdDev! > 1e-9 ? Math.min(1, Math.max(0, ((finiteValueToNorm - mean!) / stdDev! + 3) / 6)) : 0.5;
+          } else { component.error = "Dataset Z-Score stats unavailable/invalid."; component.log.push(`Error: ${component.error}`);}
+          break;
+      }
+      component.log.push(`Initial normalized score: ${normalizedScore?.toFixed(4)}`);
+    } else if (imputationMode === 'zero_worst') {
+        normalizedScore = useHigherIsBetterForThisMetric ? 0 : 1;
+        component.imputationMethodApplied = 'zero_worst (applied as normalized score)';
+        component.log.push(`Applied 'zero_worst' as normalized score: ${normalizedScore}`);
+    }
+
+    if (isValidNumber(normalizedScore)) {
+      normalizedScore = Math.max(0, Math.min(1, normalizedScore as number));
+      if (!useHigherIsBetterForThisMetric) { 
+        normalizedScore = 1 - normalizedScore; 
+        component.log.push(`Reversed for 'userHigherIsBetter=false'. New norm score: ${normalizedScore.toFixed(4)}`);
+      }
+      component.normalizedValue = normalizedScore;
+      component.weightedScore = normalizedScore * (axisMetricInput.weight / 100.0); // Weight is 0-100
+      totalWeightedScoreSum += component.weightedScore;
+      totalEffectiveWeight += (axisMetricInput.weight / 100.0); // Sum of fractional weights
+      component.isIncludedInScore = true;
+      component.log.push(`Final Normalized: ${normalizedScore.toFixed(4)}, Weighted Component: ${component.weightedScore.toFixed(4)}.`);
+    } else {
+      if (!component.error) component.error = "Normalization failed or value unusable.";
+      component.log.push(`Error: ${component.error}`);
+    }
+    scoreBreakdown[axisMetricInput.key] = component; // Key breakdown by metric.key
+    parentCompanyLog?.push(...component.log);
+  }
+  
+  // If totalEffectiveWeight is close to 1 (e.g., weights sum to 100%),
+  // then totalWeightedScoreSum is already effectively the normalized score (0-1).
+  // If weights don't sum to 100%, dividing by totalEffectiveWeight re-normalizes the sum.
+  // The scaling by 1000 is arbitrary for display.
+  const finalAxisScore = totalEffectiveWeight > 1e-6 ? (totalWeightedScoreSum / totalEffectiveWeight) * 1000 : null;
+  
+  parentCompanyLog?.push(`--- Axis Score Calculated: ${finalAxisScore !== null ? finalAxisScore.toFixed(2) : 'N/A'} (SumWeightedScores: ${totalWeightedScoreSum.toFixed(4)}, TotalEffectiveWeightFactor: ${totalEffectiveWeight.toFixed(2)}) ---`);
+  
+  return { score: isValidNumber(finalAxisScore) ? Math.round(finalAxisScore as number) : null, breakdown: scoreBreakdown };
+}
+
+// calculateScores function (user's existing, for main scoring page)
 export function calculateScores(
   companies: Company[],
-  weights: Record<string, number>, // Keyed by MetricConfig.db_column
-  globalFullRanges: MetricFullRanges, // Keyed by MetricConfig.db_column
-  metricConfigsMap: Record<string, MetricConfig>, // Keyed by MetricConfig.db_column
+  weights: Record<string, number>, // Keyed by db_column
+  globalFullRanges: ScoringMetricFullRanges, // Keyed by db_column
+  metricConfigsMap: Record<string, MetricConfig>, // Keyed by db_column
   currentUserTier: ColumnTier,
   normalizationMode: NormalizationMode,
   imputationMode: ImputationMode
 ): CompanyScore[] {
   const results: CompanyScore[] = [];
-  // UPDATED tierLevels for consistency
   const tierLevels: Record<ColumnTier, number> = { free: 0, pro: 1, premium: 2 };
-  const userTierLevel = tierLevels[currentUserTier] ?? tierLevels.free; // Default to free if tier is undefined
+  const userTierLevel = tierLevels[currentUserTier] ?? tierLevels.free;
 
   if (process.env.NODE_ENV === 'development') {
-    logScoringDebug(`Initiating scoring for ${companies.length} companies. Mode: ${normalizationMode}, Impute: ${imputationMode}, Tier: ${currentUserTier} (Level: ${userTierLevel})`);
+    logScoringDebug(`Initiating ORIGINAL calculateScores for ${companies.length} companies. Mode: ${normalizationMode}, Impute: ${imputationMode}, Tier: ${currentUserTier}`);
   }
 
   if (!Array.isArray(companies) || companies.length === 0) {
-    logScoringDebug("No companies provided. Returning empty scores.");
+    logScoringDebug("No companies provided to original calculateScores. Returning empty scores.");
     return [];
   }
 
   const perCompanyAllLogs = new Map<number, string[]>();
-  companies.forEach(c => perCompanyAllLogs.set(c.company_id, [`Scoring Log for ${c.company_name} (ID: ${c.company_id}):`]));
+  companies.forEach(c => {
+    if (c && typeof c.company_id === 'number') {
+        perCompanyAllLogs.set(c.company_id, [`Scoring Log for ${c.company_name || 'Unnamed Company'} (ID: ${c.company_id})`]);
+    }
+  });
 
   const datasetStatsCache = new Map<string, MetricDatasetStats>();
   if (normalizationMode.startsWith('dataset_') || imputationMode.startsWith('dataset_')) {
     if (process.env.NODE_ENV === 'development') {
-        logScoringDebug("Pre-calculating dataset statistics for relevant metrics...");
+        logScoringDebug("Pre-calculating dataset statistics for relevant metrics (original calculateScores)...");
     }
-    for (const db_column in weights) { // weights are keyed by db_column
+    for (const db_column in weights) {
       if ((weights[db_column] ?? 0) > 0) {
         const metricConfig = metricConfigsMap[db_column];
         if (metricConfig) {
+          // Pass perCompanyAllLogs to calculateDatasetMetricStats
           datasetStatsCache.set(db_column, calculateDatasetMetricStats(companies, metricConfig, perCompanyAllLogs));
         } else {
-            if (process.env.NODE_ENV === 'development') {
-                logScoringDebug(`Warning: No MetricConfig found for weighted db_column '${db_column}' during dataset stats pre-calculation.`);
-            }
+           if (process.env.NODE_ENV === 'development') {
+               logScoringDebug(`Warning: No MetricConfig found for weighted db_column '${db_column}' in original calculateScores during dataset stats pre-calculation.`);
+           }
         }
       }
     }
   }
 
   for (const company of companies) {
+    if (!company || typeof company.company_id !== 'number') continue;
     const companyId = company.company_id;
-    const companyLog = perCompanyAllLogs.get(companyId); // Should always exist due to pre-population
-
-    if (!companyLog) { // Should not happen
-        console.error(`[ScoringUtil] CRITICAL: Log array missing for companyId ${companyId}`);
+    const companyLog = perCompanyAllLogs.get(companyId);
+    if (!companyLog) {
+        console.error(`[ScoringUtil] CRITICAL: Log array missing for companyId ${companyId} in original calculateScores.`);
         continue;
     }
 
     let totalWeightedScoreSum = 0;
     let totalEffectiveWeight = 0;
-    const scoreBreakdown: Record<string, ScoreComponent> = {}; // Keyed by db_column
+    const scoreBreakdown: Record<string, ScoreComponent> = {};
 
-    for (const [db_column, userWeight] of Object.entries(weights)) {
-      if (!isValidNumber(userWeight) || userWeight <= 0) continue;
+    for (const [db_column, userWeightPercentage] of Object.entries(weights)) { // userWeight is 0-100
+        const userWeight = userWeightPercentage / 100.0; // Convert to 0-1 for calculation if original code expected that, or adjust component.weightedScore calculation
+                                                      // Your original ScoreComponent had `weight: number` and `weightedScore = normalizedScore * userWeight;`
+                                                      // If userWeight in the `weights` Record is 0-100, then it should be divided by 100.
+                                                      // The original calculateScores seems to treat weights as direct multipliers on a 0-1 normalized score,
+                                                      // then divides by sum of weights. So if weights are 0-100, they effectively are % contributions.
 
-      const metricConfig = metricConfigsMap[db_column];
-      const componentLog: string[] = []; // Log for this specific component/metric
-      const metricKeyForLog = metricConfig?.label || db_column;
-      
-      componentLog.push(`--- Processing Metric: ${metricKeyForLog} (DB: ${db_column}, Weight: ${userWeight}%) ---`);
+        if (!isValidNumber(userWeight) || userWeight <= 0) continue;
 
-      const component: ScoreComponent = {
-        metricLabel: metricKeyForLog,
-        rawValue: undefined, processedValue: null, valueUsedForNormalization: null,
-        weight: userWeight, weightedScore: null, isIncludedInScore: false,
-        isAccessible: false, hasValidRange: false, hasUsableValue: false,
-        log: componentLog, // Reference the specific log array for this component
-      };
-
-      if (!metricConfig || !metricConfig.nested_path) {
-        component.error = "Metric config or nested_path missing.";
-        component.log.push(`Error: ${component.error}`);
-        scoreBreakdown[db_column] = component;
-        continue;
-      }
-
-      const requiredTierLevel = tierLevels[metricConfig.tier] ?? 99; // Default to a high level if tier is unknown
-      component.isAccessible = userTierLevel >= requiredTierLevel;
-
-      if (!component.isAccessible) {
-        component.error = `Access denied (Required Tier: ${metricConfig.tier}, User Tier: ${currentUserTier})`;
-        component.log.push(component.error);
-        scoreBreakdown[db_column] = component;
-        continue;
-      }
-
-      component.rawValue = getNestedValue(company, metricConfig.nested_path);
-      component.log.push(`Raw value from path '${metricConfig.nested_path}': ${JSON.stringify(component.rawValue)} (Type: ${typeof component.rawValue})`);
-
-      if (typeof component.rawValue === 'string') {
-        const strVal = component.rawValue.toLowerCase();
-        if (strVal === 'infinity') component.processedValue = Infinity;
-        else if (strVal === '-infinity') component.processedValue = -Infinity;
-        else if (strVal === 'nan') component.processedValue = NaN;
-        else { const parsed = parseFloat(component.rawValue); component.processedValue = isValidNumber(parsed) ? parsed : null; }
-      } else if (typeof component.rawValue === 'number') {
-        component.processedValue = component.rawValue;
-      } else { component.processedValue = null; }
-      component.log.push(`Processed value (attempted numeric conversion): ${component.processedValue}`);
-      component.valueUsedForNormalization = component.processedValue;
-
-      if (!isValidNumber(component.valueUsedForNormalization)) {
-        component.log.push(`Value '${component.valueUsedForNormalization}' is not finite/numeric. Attempting imputation (Mode: ${imputationMode}).`);
-        component.imputationMethodApplied = imputationMode;
-        const stats = datasetStatsCache.get(db_column);
-        let imputed = false;
-
-        if (imputationMode === 'dataset_mean' && stats && isValidNumber(stats.mean)) {
-          component.valueUsedForNormalization = stats.mean; imputed = true;
-        } else if (imputationMode === 'dataset_median' && stats && isValidNumber(stats.median)) {
-          component.valueUsedForNormalization = stats.median; imputed = true;
-        }
+        const metricConfig = metricConfigsMap[db_column];
+        const componentLogLocal: string[] = [];
+        const metricKeyForLog = metricConfig?.label || db_column;
         
-        if (imputed) {
-            component.imputedValue = component.valueUsedForNormalization; // Store the imputed value
-            component.log.push(`Successfully imputed with dataset ${imputationMode}: ${component.valueUsedForNormalization?.toFixed(3)}`);
-        } else {
-            component.log.push(`Could not impute with ${imputationMode} (stats unavailable or invalid). Fallback depends on 'zero_worst'.`);
-            // valueUsedForNormalization remains null or non-finite here if imputation failed
+        componentLogLocal.push(`--- Metric: ${metricKeyForLog} (DB: ${db_column}, Weight: ${userWeightPercentage}) ---`);
+
+        const component: ScoreComponent = { /* ... as in your original file, with log: componentLogLocal ... */ 
+            metricLabel: metricKeyForLog,
+            rawValue: undefined, processedValue: null, valueUsedForNormalization: null,
+            weight: userWeightPercentage, // Store as 0-100
+            weightedScore: null, isIncludedInScore: false,
+            isAccessible: false, hasValidRange: false, hasUsableValue: false,
+            log: componentLogLocal,
+        };
+
+
+        if (!metricConfig || !metricConfig.nested_path) {
+            component.error = "Metric config or path missing.";
+            component.log.push(`Error: ${component.error}`);
+            scoreBreakdown[db_column] = component;
+            companyLog.push(...component.log);
+            continue;
         }
-      }
-      
-      component.hasUsableValue = isValidNumber(component.valueUsedForNormalization);
-      component.log.push(`Value for normalization (after potential imputation): ${component.valueUsedForNormalization}, Is Usable: ${component.hasUsableValue}`);
+
+        const requiredTierLevel = tierLevels[metricConfig.tier] ?? 99;
+        component.isAccessible = userTierLevel >= requiredTierLevel;
+
+        if (!component.isAccessible) {
+            component.error = `Access denied (Tier: ${metricConfig.tier} vs User: ${currentUserTier})`;
+            component.log.push(component.error);
+            scoreBreakdown[db_column] = component;
+            companyLog.push(...component.log);
+            continue;
+        }
+
+        component.rawValue = getNestedValue(company, metricConfig.nested_path);
+        component.log.push(`Raw value from path '${metricConfig.nested_path}': ${JSON.stringify(component.rawValue)}`);
+
+        if (typeof component.rawValue === 'string') {
+            const strVal = component.rawValue.toLowerCase();
+            if (strVal === 'infinity') component.processedValue = Infinity;
+            else if (strVal === '-infinity') component.processedValue = -Infinity;
+            else if (strVal === 'nan') component.processedValue = NaN;
+            else { const parsed = parseFloat(component.rawValue); component.processedValue = isValidNumber(parsed) ? parsed : null; }
+        } else if (typeof component.rawValue === 'number') {
+            component.processedValue = component.rawValue;
+        } else { component.processedValue = null; }
+        component.log.push(`Processed value: ${component.processedValue}`);
+        component.valueUsedForNormalization = component.processedValue;
+
+        if (!isValidNumber(component.valueUsedForNormalization)) {
+            component.log.push(`Value '${component.valueUsedForNormalization}' invalid. Impute Mode: ${imputationMode}`);
+            component.imputationMethodApplied = imputationMode;
+            const stats = datasetStatsCache.get(db_column);
+            let imputed = false;
+            if (imputationMode === 'dataset_mean' && stats && isValidNumber(stats.mean)) {
+                component.valueUsedForNormalization = stats.mean; imputed = true;
+            } else if (imputationMode === 'dataset_median' && stats && isValidNumber(stats.median)) {
+                component.valueUsedForNormalization = stats.median; imputed = true;
+            }
+            if (imputed) component.log.push(`Imputed: ${component.valueUsedForNormalization?.toFixed(3)}`);
+            else if (imputationMode !== 'zero_worst') component.log.push(`Could not impute with ${imputationMode}.`);
+            component.imputedValue = imputed ? component.valueUsedForNormalization : null;
+        }
+
+        component.hasUsableValue = isValidNumber(component.valueUsedForNormalization);
+
+        if (!component.hasUsableValue && imputationMode !== 'zero_worst') {
+            component.error = `Value '${component.valueUsedForNormalization}' unusable.`;
+            component.log.push(`Error: ${component.error} Metric not scored.`);
+            scoreBreakdown[db_column] = component;
+            companyLog.push(...component.log);
+            continue;
+        }
+
+        let normalizedScore: number | null = null;
+        const valueToNorm = component.valueUsedForNormalization; // This is now a number or null
+        const higherIsBetter = metricConfig.higherIsBetter;
+        component.normalizationMethod = normalizationMode;
+        // Ensure valueToNorm is treated as number if hasUsableValue is true
+        const logValueToNorm = component.hasUsableValue ? (valueToNorm as number).toFixed(3) : String(valueToNorm);
+        component.log.push(`Normalizing: ${logValueToNorm}. Mode: ${normalizationMode}. HigherIsBetter: ${higherIsBetter}`);
 
 
-      if (!component.hasUsableValue && imputationMode !== 'zero_worst') {
-        component.error = `Value after processing & imputation ('${component.valueUsedForNormalization}') remains unusable. Metric not scored.`;
-        component.log.push(`Error: ${component.error}`);
-        scoreBreakdown[db_column] = component;
-        continue;
-      }
-
-      let normalizedScore: number | null = null;
-      const valueToNorm = component.valueUsedForNormalization; // This is now either the original valid number or an imputed valid number
-      const higherIsBetter = metricConfig.higherIsBetter; // Removed !== false, as boolean is direct.
-
-      component.normalizationMethod = normalizationMode;
-      component.log.push(`Normalizing: ${valueToNorm?.toFixed(3)}. Mode: ${normalizationMode}. HigherIsBetter: ${higherIsBetter}`);
-
-      try {
-        if (component.hasUsableValue) { // valueToNorm is guaranteed to be a finite number here
-          const finiteValueToNorm = valueToNorm as number;
-          switch (normalizationMode) {
-            case 'global_min_max':
-              const gRange = globalFullRanges[db_column];
-              if (gRange && isValidNumber(gRange[0]) && isValidNumber(gRange[1])) {
-                const [min, max] = gRange; component.hasValidRange = true;
-                normalizedScore = (max - min) > 1e-9 ? (finiteValueToNorm - min) / (max - min) : (finiteValueToNorm === min ? 0.5 : (finiteValueToNorm > min ? 1 : 0));
-              } else { component.error = "Global range for normalization invalid or missing."; component.log.push(`Error: ${component.error}`); }
-              break;
-            case 'dataset_min_max':
-              const dStatsMM = datasetStatsCache.get(db_column);
-              if (dStatsMM && isValidNumber(dStatsMM.min) && isValidNumber(dStatsMM.max)) {
-                const { min, max } = dStatsMM; component.hasValidRange = true;
-                normalizedScore = (max! - min!) > 1e-9 ? (finiteValueToNorm - min!) / (max! - min!) : (finiteValueToNorm === min! ? 0.5 : (finiteValueToNorm > min! ? 1 : 0));
-              } else { component.error = "Dataset range for Min-Max normalization invalid or missing."; component.log.push(`Error: ${component.error}`);}
-              break;
-            case 'dataset_rank_percentile':
-              const dStatsRank = datasetStatsCache.get(db_column);
-              if (dStatsRank && dStatsRank.validValues.length > 0) {
-                component.hasValidRange = true; 
-                const sorted = dStatsRank.validValues; // Already sorted in calculateDatasetMetricStats
-                let rank = sorted.findIndex(v => v >= finiteValueToNorm); // Find first rank equal or greater
-                if (rank === -1) { // If value is greater than all in sorted list
-                    rank = finiteValueToNorm > sorted[sorted.length -1] ? sorted.length -1 : 0; // Assign highest or lowest rank
+        try {
+            if (component.hasUsableValue) {
+                const finiteValueToNorm = valueToNorm as number; // Safe due to hasUsableValue
+                switch (normalizationMode) {
+                    case 'global_min_max':
+                        const gRange = globalFullRanges[db_column];
+                        if (gRange && isValidNumber(gRange[0]) && isValidNumber(gRange[1])) {
+                            const [min, max] = gRange; component.hasValidRange = true;
+                            normalizedScore = (max - min) > 1e-9 ? (finiteValueToNorm - min) / (max - min) : (finiteValueToNorm === min ? 0.5 : (finiteValueToNorm > min ? 1 : 0));
+                        } else { component.error = "Global range invalid."; component.log.push(`Normalization Note: ${component.error}`);}
+                        break;
+                    case 'dataset_min_max':
+                        const dStatsMM = datasetStatsCache.get(db_column);
+                        if (dStatsMM && isValidNumber(dStatsMM.min) && isValidNumber(dStatsMM.max)) {
+                            const { min, max } = dStatsMM; component.hasValidRange = true;
+                            normalizedScore = (max! - min!) > 1e-9 ? (finiteValueToNorm - min!) / (max! - min!) : (finiteValueToNorm === min! ? 0.5 : (finiteValueToNorm > min! ? 1 : 0));
+                        } else { component.error = "Dataset range invalid."; component.log.push(`Normalization Note: ${component.error}`);}
+                        break;
+                    case 'dataset_rank_percentile':
+                        const dStatsRank = datasetStatsCache.get(db_column);
+                        if (dStatsRank && dStatsRank.validValues.length > 0) {
+                            component.hasValidRange = true; const sorted = dStatsRank.validValues;
+                            let rank = sorted.findIndex(v => v >= finiteValueToNorm);
+                            if (rank === -1) rank = finiteValueToNorm > sorted[sorted.length -1] ? sorted.length -1 : 0;
+                            normalizedScore = sorted.length > 1 ? rank / (sorted.length - 1) : 0.5;
+                        } else { component.error = "Dataset empty for ranking."; component.log.push(`Normalization Note: ${component.error}`);}
+                        break;
+                    case 'dataset_z_score':
+                        const dStatsZ = datasetStatsCache.get(db_column);
+                        if (dStatsZ && isValidNumber(dStatsZ.mean) && isValidNumber(dStatsZ.stdDev)) {
+                            component.hasValidRange = true; const { mean, stdDev } = dStatsZ;
+                            if (stdDev! > 1e-9) { const z = (finiteValueToNorm - mean!) / stdDev!; normalizedScore = (z + 3) / 6; } // Scale to ~0-1
+                            else normalizedScore = 0.5; // All values are the same
+                        } else { component.error = "Dataset mean/stdDev invalid for Z-score."; component.log.push(`Normalization Note: ${component.error}`);}
+                        break;
                 }
-                normalizedScore = sorted.length > 1 ? rank / (sorted.length - 1) : 0.5; // Percentile
-              } else { component.error = "Dataset empty or invalid for rank percentile normalization."; component.log.push(`Error: ${component.error}`);}
-              break;
-            case 'dataset_z_score':
-              const dStatsZ = datasetStatsCache.get(db_column);
-              if (dStatsZ && isValidNumber(dStatsZ.mean) && isValidNumber(dStatsZ.stdDev)) {
-                component.hasValidRange = true; 
-                const { mean, stdDev } = dStatsZ;
-                if (stdDev! > 1e-9) { 
-                    const z = (finiteValueToNorm - mean!) / stdDev!;
-                    normalizedScore = Math.min(1, Math.max(0, (z + 3) / 6)); // Clamp Z-score to 0-1 (assuming +/- 3 std dev covers most)
-                } else { normalizedScore = 0.5; } // All values are the same if stdDev is 0
-              } else { component.error = "Dataset mean/stdDev invalid for Z-score normalization."; component.log.push(`Error: ${component.error}`);}
-              break;
-          }
-           component.log.push(`Initial normalized score (before higherIsBetter adjust): ${normalizedScore?.toFixed(4)}`);
-        } else if (imputationMode === 'zero_worst') { // Only apply zero_worst if value was NOT usable and this mode is selected
-            normalizedScore = higherIsBetter ? 0 : 1; // This is the normalized score
-            component.imputationMethodApplied = 'zero_worst (applied as normalized score)';
-            component.log.push(`Applied 'zero_worst' directly as normalized score: ${normalizedScore}`);
-        }
+                 component.log.push(`Initial norm score: ${normalizedScore?.toFixed(4)}`);
+            }
 
+            if (!isValidNumber(normalizedScore) && imputationMode === 'zero_worst') {
+                normalizedScore = higherIsBetter ? 0 : 1;
+                component.imputationMethodApplied = 'zero_worst (post-norm fallback)';
+                component.log.push(`Applied 'zero_worst' fallback. Norm score: ${normalizedScore}`);
+            }
 
-        if (isValidNumber(normalizedScore)) {
-          normalizedScore = Math.max(0, Math.min(1, normalizedScore as number)); // Clamp 0-1
-          if (!higherIsBetter) { 
-            normalizedScore = 1 - normalizedScore; 
-            component.log.push(`Reversed for 'lower is better'. New norm score: ${normalizedScore.toFixed(4)}`);
-          }
-          component.normalizedValue = normalizedScore;
-          component.weightedScore = normalizedScore * userWeight;
-          totalWeightedScoreSum += component.weightedScore;
-          totalEffectiveWeight += userWeight;
-          component.isIncludedInScore = true;
-          component.log.push(`Final Normalized: ${normalizedScore.toFixed(4)}, Weighted Score: ${component.weightedScore.toFixed(3)}. Added to score totals.`);
-        } else {
-          if (!component.error) component.error = "Normalization resulted in unusable value, and not 'zero_worst'.";
-          component.log.push(`Error: ${component.error} Metric not included in final score calculation.`);
+            if (isValidNumber(normalizedScore)) {
+                normalizedScore = Math.max(0, Math.min(1, normalizedScore as number));
+                if (!higherIsBetter) { normalizedScore = 1 - normalizedScore; component.log.push(`Reversed for 'lower is better': ${normalizedScore.toFixed(4)}`);}
+                component.normalizedValue = normalizedScore;
+                component.weightedScore = normalizedScore * userWeightPercentage; // Use original 0-100 weight for this calculation
+                totalWeightedScoreSum += component.weightedScore;
+                totalEffectiveWeight += userWeightPercentage; // Sum of original 0-100 weights
+                component.isIncludedInScore = true;
+                component.log.push(`Final Norm: ${normalizedScore.toFixed(4)}, Weighted: ${component.weightedScore.toFixed(3)}. Added to totals.`);
+            } else {
+                if (!component.error) component.error = "Normalization resulted in unusable value.";
+                component.log.push(`Error: ${component.error} Metric not included.`);
+            }
+        } catch (e: any) {
+            component.error = `Normalization critical error: ${e.message}`;
+            component.log.push(`CRITICAL: ${component.error}`);
         }
-      } catch (e: any) {
-        component.error = `CRITICAL Normalization/Scoring error: ${e.message}`;
-        component.log.push(component.error);
-         if (process.env.NODE_ENV === 'development') {
-            console.error(`[ScoringUtil] Critical error during normalization for ${metricKeyForLog}, company ${companyId}:`, e);
-         }
-      }
-      
-      scoreBreakdown[db_column] = component;
-      companyLog.push(...component.log); // Add component-specific logs to the main company log
+        if(component.error && !component.isIncludedInScore) {
+             const companySpecificLog = perCompanyAllLogs.get(companyId);
+             companySpecificLog?.push(`[${db_column}] Metric excluded for company ${companyId}. Error: ${component.error}`);
+        }
+        scoreBreakdown[db_column] = component;
+        const companySpecificLogForComponent = perCompanyAllLogs.get(companyId);
+        companySpecificLogForComponent?.push(...component.log);
     }
 
     const finalScoreValue = totalEffectiveWeight > 0 ? (totalWeightedScoreSum / totalEffectiveWeight) * 1000 : null;
-    companyLog.push(`--- Company Score Summary for ${company.company_name} ---`);
-    companyLog.push(`Total Weighted Score Sum: ${totalWeightedScoreSum.toFixed(3)}, Total Effective Weight Used: ${totalEffectiveWeight.toFixed(0)}`);
-    companyLog.push(`Final Calculated Score (0-1000): ${finalScoreValue !== null ? Math.round(finalScoreValue) : 'N/A'}`);
+    const companySpecificLogFinal = perCompanyAllLogs.get(companyId);
+    companySpecificLogFinal?.push(`--- Company Score Summary ---`);
+    companySpecificLogFinal?.push(`Total Weighted Score Sum (based on 0-100 weights): ${totalWeightedScoreSum.toFixed(3)}, Total Effective Weight (sum of 0-100 weights): ${totalEffectiveWeight.toFixed(0)}`);
+    companySpecificLogFinal?.push(`Final Calculated Score: ${finalScoreValue !== null ? finalScoreValue.toFixed(2) : 'N/A'}`);
 
     results.push({
-      companyId,
-      companyName: toTitleCase(company.company_name) || 'Unknown Company',
-      code: company.tsx_code ?? 'N/A', // Use nullish coalescing
-      status: company.status, headquarters: company.headquarters, description: company.description,
-      score: isValidNumber(finalScoreValue) ? Math.round(finalScoreValue as number) : null,
-      breakdown: scoreBreakdown, debugLogs: companyLog,
+        companyId,
+        companyName: toTitleCase(company.company_name) || 'Unknown Company',
+        code: company.tsx_code ?? 'N/A',
+        status: company.status, headquarters: company.headquarters, description: company.description,
+        score: isValidNumber(finalScoreValue) ? Math.round(finalScoreValue as number) : null,
+        breakdown: scoreBreakdown, debugLogs: companySpecificLogFinal || [],
     });
   }
 
-  results.sort((a, b) => (b.score ?? -Infinity) - (a.score ?? -Infinity)); // Sort by score descending
-  if (process.env.NODE_ENV === 'development') {
-    logScoringDebug(`Scoring complete. Processed ${results.length} companies. Example result:`, results.slice(0,1));
-  }
+  results.sort((a, b) => (b.score ?? -Infinity) - (a.score ?? -Infinity));
+  logScoringDebug(`Original calculateScores complete. Processed ${results.length} companies.`);
   return results;
 }
