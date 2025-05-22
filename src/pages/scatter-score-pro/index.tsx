@@ -13,10 +13,10 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../../
 import { Info, Lock, ArrowUp, ArrowDown, Settings, RefreshCw, ListPlus, X } from 'lucide-react';
 import { MetricSelector } from '../../components/metric-selector';
 import {
-  metrics as allMetrics, // Corrected: import 'metrics' and alias to 'allMetrics'
+  metrics as allMetrics,
   metricCategories,
   getAccessibleMetrics,
-  type MetricConfig // Corrected to type import
+  type MetricConfig
 } from '../../lib/metric-types';
 import type { ColumnTier, NormalizationMode, ImputationMode } from '../../lib/types';
 import { cn, isValidNumber } from '../../lib/utils';
@@ -43,7 +43,7 @@ interface ScatterScoreTemplate {
 
 const DEBUG_SCATTER_SCORE = process.env.NODE_ENV === 'development';
 
-// --- PRE-DEFINED TEMPLATES ---
+// --- PRE-DEFINED TEMPLATES --- (Keep the full 5 templates as before)
 const PREDEFINED_TEMPLATES: ScatterScoreTemplate[] = [
   {
     name: "Value Hunter",
@@ -148,119 +148,15 @@ const ScaleToggle: React.FC<{ scale: 'linear' | 'log'; onChange: (newScale: 'lin
     </div>
 );
 
-const normalizeWeights = (
-    metrics: AxisMetricConfig[],
-    changedMetricKey?: string,
-    userSetWeightForChangedMetric?: number
-): AxisMetricConfig[] => {
-    if (!Array.isArray(metrics)) return []; // Should not happen with proper typing
-    let workingMetrics = metrics.map(m => ({ ...m, weight: Number(m.weight) || 0 })); // Ensure weights are numbers
-
-    if (workingMetrics.length === 0) return [];
-    if (workingMetrics.length === 1) {
-        workingMetrics[0].weight = 100;
-        return workingMetrics;
-    }
-
-    let totalTargetWeight = 100;
-    let sumOfFixedWeights = 0;
-    let countOfFixedMetrics = 0; // Metrics whose weights are considered "fixed" by user input or are already 100/0
-
-    // Apply user-set weight for the changed metric
-    if (changedMetricKey && userSetWeightForChangedMetric !== undefined) {
-        const idx = workingMetrics.findIndex(m => m.key === changedMetricKey);
-        if (idx !== -1) {
-            workingMetrics[idx].weight = Math.max(0, Math.min(100, userSetWeightForChangedMetric));
-        }
-    }
-
-    // Identify metrics that are effectively fixed (the one just changed, or any already at 0 or 100)
-    const adjustableMetrics: AxisMetricConfig[] = [];
-    workingMetrics.forEach(m => {
-        if (m.key === changedMetricKey || m.weight === 0 || m.weight === 100) {
-            sumOfFixedWeights += m.weight;
-            countOfFixedMetrics++;
-        } else {
-            adjustableMetrics.push(m);
-        }
-    });
-    
-    const remainingWeightToDistribute = totalTargetWeight - sumOfFixedWeights;
-    const sumOfAdjustableOriginalWeights = adjustableMetrics.reduce((sum, m) => sum + m.weight, 0);
-
-    if (adjustableMetrics.length > 0) {
-        if (remainingWeightToDistribute <= 0) { // No room left, set adjustable to 0
-            adjustableMetrics.forEach(m => m.weight = 0);
-        } else if (sumOfAdjustableOriginalWeights === 0) { // Distribute remaining equally if all adjustable were 0
-            const equalShare = remainingWeightToDistribute / adjustableMetrics.length;
-            adjustableMetrics.forEach(m => m.weight = equalShare);
-        } else { // Distribute remaining proportionally
-            const scaleFactor = remainingWeightToDistribute / sumOfAdjustableOriginalWeights;
-            adjustableMetrics.forEach(m => m.weight = m.weight * scaleFactor);
-        }
-        // Update workingMetrics with adjusted weights
-        adjustableMetrics.forEach(adjM => {
-            const idx = workingMetrics.findIndex(wm => wm.key === adjM.key);
-            if (idx !== -1) workingMetrics[idx].weight = adjM.weight;
-        });
-    } else if (workingMetrics.length > 0 && countOfFixedMetrics === workingMetrics.length && sumOfFixedWeights !== 100) {
-        // All metrics are fixed (e.g. user set all to specific values), but they don't sum to 100
-        // This state should ideally be prevented by UI, or indicated as an error.
-        // For now, we don't auto-adjust if all are considered fixed and sum is off.
-        // The "Apply" button will catch this.
-    } else if (workingMetrics.length > 0 && !changedMetricKey) {
-        // This case is for initial load or add/remove (no specific metric changed by user)
-        const equalWeight = 100 / workingMetrics.length;
-        workingMetrics = workingMetrics.map(m => ({ ...m, weight: equalWeight }));
-    }
-    
-    // Round all weights and perform a final sum adjustment
-    let roundedMetrics = workingMetrics.map(m => ({ ...m, weight: Math.max(0, Math.min(100, Math.round(m.weight))) }));
-    let currentSum = roundedMetrics.reduce((sum, m) => sum + m.weight, 0);
-
-    if (roundedMetrics.length > 0 && currentSum !== 100) {
-        const diff = 100 - currentSum;
-        // Try to adjust the largest weight metric that isn't the one manually changed by the user
-        let metricToAdjust = roundedMetrics
-            .filter(m => m.key !== changedMetricKey)
-            .sort((a,b) => b.weight - a.weight)[0];
-        
-        if (!metricToAdjust && roundedMetrics.length > 0) { // Fallback to first metric if no "other" available
-            metricToAdjust = roundedMetrics[0];
-        }
-
-        if (metricToAdjust) {
-            const currentWeight = metricToAdjust.weight;
-            const newWeight = Math.max(0, Math.min(100, currentWeight + diff));
-            metricToAdjust.weight = newWeight;
-            
-            // If after this adjustment, the sum is STILL not 100 (due to clamping),
-            // distribute any tiny remaining difference to the first metric if multiple exist
-            currentSum = roundedMetrics.reduce((sum, m) => sum + m.weight, 0);
-            if (roundedMetrics.length > 0 && currentSum !== 100) {
-                const finalDiff = 100 - currentSum;
-                roundedMetrics[0].weight = Math.max(0, Math.min(100, roundedMetrics[0].weight + finalDiff));
-            }
-        }
-    }
-    // One last check for the sum after all adjustments
-    currentSum = roundedMetrics.reduce((sum, m) => sum + m.weight, 0);
-    if(roundedMetrics.length > 0 && currentSum !== 100 && Math.abs(100 - currentSum) < roundedMetrics.length) {
-        // If very small diff remains (e.g. due to multiple roundings), adjust the first item
-        roundedMetrics[0].weight += (100 - currentSum);
-        roundedMetrics[0].weight = Math.max(0, Math.min(100, Math.round(roundedMetrics[0].weight)));
-    }
-
-    return roundedMetrics;
-};
 
 
 export function ScatterScoreProPage() {
   const { currentUserTier } = useFilters();
   
-  const [activeTemplateName, setActiveTemplateName] = useState<string | null>(() => 
-    PREDEFINED_TEMPLATES.length > 0 ? PREDEFINED_TEMPLATES[0].name : null
-  );
+  const [activeTemplateName, setActiveTemplateName] = useState<string | null>(() => {
+    if (DEBUG_SCATTER_SCORE) console.log("[ScatterScoreProPage] Initializing activeTemplateName state.");
+    return PREDEFINED_TEMPLATES.length > 0 ? PREDEFINED_TEMPLATES[0].name : null;
+  });
   
   const [selectedXMetrics, setSelectedXMetrics] = useState<AxisMetricConfig[]>([]);
   const [selectedYMetrics, setSelectedYMetrics] = useState<AxisMetricConfig[]>([]);
@@ -272,21 +168,28 @@ export function ScatterScoreProPage() {
 
   const [isConfigPanelOpen, setIsConfigPanelOpen] = useState(true);
 
-  const accessibleMetrics = useMemo(() => getAccessibleMetrics(currentUserTier || 'free'), [currentUserTier]);
+  const accessibleMetrics = useMemo(() => {
+    const metrics = getAccessibleMetrics(currentUserTier || 'free');
+    if (DEBUG_SCATTER_SCORE) console.log("[ScatterScoreProPage] Accessible metrics updated:", metrics.length, "for tier:", currentUserTier);
+    return metrics;
+  }, [currentUserTier]);
 
   const getMetricConfigDetails = useCallback((key: string): MetricConfig | undefined => {
     return allMetrics.find(m => m.key === key);
-  }, []);
+  }, []); // allMetrics is stable from import
 
   const loadTemplate = useCallback((templateName: string | null) => {
+    if (DEBUG_SCATTER_SCORE) console.log(`[ScatterScoreProPage] loadTemplate called for: '${templateName}'`);
     const template = PREDEFINED_TEMPLATES.find(t => t.name === templateName) || PREDEFINED_TEMPLATES[0];
+
     if (!template) {
-        if (DEBUG_SCATTER_SCORE && templateName) console.warn(`[ScatterScoreProPage] Template '${templateName}' not found or no templates exist.`);
+        if (DEBUG_SCATTER_SCORE) console.warn(`[ScatterScoreProPage] No templates available or specified one not found.`);
         setSelectedXMetrics([]); setSelectedYMetrics([]); setSelectedZMetricKey(null);
         setActiveTemplateName(null);
         return;
     }
 
+    if (DEBUG_SCATTER_SCORE) console.log(`[ScatterScoreProPage] Loading template config:`, template);
     setActiveTemplateName(template.name);
 
     const mapAndFilterMetrics = (configs: Array<{ key: string; weight: number; userHigherIsBetter?: boolean }>): AxisMetricConfig[] => {
@@ -312,8 +215,11 @@ export function ScatterScoreProPage() {
         .filter(m => m !== null) as AxisMetricConfig[];
     };
 
-    setSelectedXMetrics(normalizeWeights(mapAndFilterMetrics(template.xMetricsConfig)));
-    setSelectedYMetrics(normalizeWeights(mapAndFilterMetrics(template.yMetricsConfig)));
+    const newXMetrics = normalizeWeights(mapAndFilterMetrics(template.xMetricsConfig));
+    const newYMetrics = normalizeWeights(mapAndFilterMetrics(template.yMetricsConfig));
+
+    setSelectedXMetrics(newXMetrics);
+    setSelectedYMetrics(newYMetrics);
     
     const zMetricIsAccessible = template.zMetricKey ? accessibleMetrics.some(am => am.key === template.zMetricKey) : false;
     setSelectedZMetricKey(zMetricIsAccessible && template.zMetricKey ? template.zMetricKey : null);
@@ -322,26 +228,28 @@ export function ScatterScoreProPage() {
     setNormalizationMode(template.defaultNormalizationMode || 'dataset_rank_percentile');
     setImputationMode(template.defaultImputationMode || 'dataset_median');
 
-    if (DEBUG_SCATTER_SCORE) console.log(`[ScatterScoreProPage] Loaded template: ${template.name}`);
+    if (DEBUG_SCATTER_SCORE) console.log(`[ScatterScoreProPage] Template '${template.name}' loaded. X Metrics:`, newXMetrics, "Y Metrics:", newYMetrics);
   }, [accessibleMetrics, currentUserTier, getMetricConfigDetails]);
 
   useEffect(() => {
-    // Load default template on initial mount if nothing is selected, or if tier changes making current selection invalid.
-    const currentXKeys = new Set(selectedXMetrics.map(m => m.key));
-    const currentYKeys = new Set(selectedYMetrics.map(m => m.key));
-    const currentXMetricsStillAccessible = selectedXMetrics.every(m => accessibleMetrics.some(am => am.key === m.key));
-    const currentYMetricsStillAccessible = selectedYMetrics.every(m => accessibleMetrics.some(am => am.key === m.key));
-
-    if (PREDEFINED_TEMPLATES.length > 0) {
-        if (!activeTemplateName || !currentXMetricsStillAccessible || !currentYMetricsStillAccessible) {
-             if (DEBUG_SCATTER_SCORE) console.log("[ScatterScoreProPage] Initializing or re-initializing default template due to tier change or empty selection.");
-             loadTemplate(PREDEFINED_TEMPLATES[0].name);
+    if (DEBUG_SCATTER_SCORE) console.log("[ScatterScoreProPage] Mount/accessibleMetrics effect. Current activeTemplateName:", activeTemplateName);
+    // Load default template when accessibleMetrics are first available or change,
+    // but only if a template isn't already considered active or axes are empty.
+    if (accessibleMetrics.length > 0) { // Ensure accessibleMetrics is populated
+        if (!activeTemplateName || (selectedXMetrics.length === 0 && selectedYMetrics.length === 0 && PREDEFINED_TEMPLATES.length > 0)) {
+            if (DEBUG_SCATTER_SCORE) console.log("[ScatterScoreProPage] No active template or axes empty, loading default.");
+            loadTemplate(PREDEFINED_TEMPLATES[0]?.name || null);
+        } else if (activeTemplateName) {
+            // Re-load active template to re-filter metrics by accessibility
+            if (DEBUG_SCATTER_SCORE) console.log("[ScatterScoreProPage] Re-loading active template to filter by new accessibleMetrics.");
+            loadTemplate(activeTemplateName);
         }
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [accessibleMetrics]); // Key dependency is accessibleMetrics changing
+  }, [accessibleMetrics]); // Trigger when accessibleMetrics (derived from currentUserTier) changes. loadTemplate is memoized.
 
   const handleTemplateChange = (newTemplateName: string) => {
+    if (DEBUG_SCATTER_SCORE) console.log(`[ScatterScoreProPage] handleTemplateChange: ${newTemplateName}`);
     loadTemplate(newTemplateName);
   };
   
@@ -349,17 +257,19 @@ export function ScatterScoreProPage() {
     axisType: 'X' | 'Y',
     metricKey: string,
     action: 'add' | 'remove' | 'updateWeight' | 'toggleHLB',
-    value?: any // number for weight, boolean for HLB
+    value?: any
   ) => {
+    if (DEBUG_SCATTER_SCORE) console.log(`[ScatterScoreProPage] handleAxisMetricChange: Axis=${axisType}, Key=${metricKey}, Action=${action}, Value=`, value);
     const setSelectedMetrics = axisType === 'X' ? setSelectedXMetrics : setSelectedYMetrics;
+    
     setSelectedMetrics(prevMetrics => {
-      let newMetricsArray = prevMetrics.map(m => ({...m})); // Ensure new array for state update
+      let newMetricsArray = prevMetrics.map(m => ({...m})); // Create a new array for immutability
       const existingIndex = newMetricsArray.findIndex(m => m.key === metricKey);
 
       if (action === 'add') {
         if (existingIndex === -1) {
           const metricConfig = getMetricConfigDetails(metricKey);
-          if (metricConfig && accessibleMetrics.some(am => am.key === metricKey)) { // Check accessibility before adding
+          if (metricConfig && accessibleMetrics.some(am => am.key === metricKey)) {
             newMetricsArray.push({
               key: metricKey,
               metricLabel: metricConfig.label,
@@ -368,6 +278,8 @@ export function ScatterScoreProPage() {
               originalHigherIsBetter: metricConfig.higherIsBetter,
             });
             return normalizeWeights(newMetricsArray);
+          } else {
+            if (DEBUG_SCATTER_SCORE) console.warn(`[ScatterScoreProPage] Add failed: Metric ${metricKey} not found or not accessible.`);
           }
         }
       } else if (action === 'remove') {
@@ -376,43 +288,49 @@ export function ScatterScoreProPage() {
       } else if (existingIndex !== -1) {
         if (action === 'updateWeight') {
           const newWeight = Math.max(0, Math.min(100, Number(value) || 0));
-          newMetricsArray[existingIndex].weight = newWeight; // Update weight directly
-          return normalizeWeights(newMetricsArray, metricKey, newWeight); // Then normalize
+          newMetricsArray[existingIndex].weight = newWeight;
+          return normalizeWeights(newMetricsArray, metricKey, newWeight);
         } else if (action === 'toggleHLB') {
           newMetricsArray[existingIndex].userHigherIsBetter = !!value;
-          return newMetricsArray; 
+          return newMetricsArray; // Return the modified array directly
         }
       }
-      return prevMetrics; // No change made
+      return prevMetrics; // If no relevant action or metric not found for update/remove
     });
-    setActiveTemplateName(null); // Any manual change means it's a custom setup
-    if (DEBUG_SCATTER_SCORE) console.log(`[ScatterScoreProPage] Metric change: Axis=${axisType}, Key=${metricKey}, Action=${action}, Value=${value}`);
+    setActiveTemplateName(null); // Any manual change deselects the template
   };
   
   const xTotalWeight = useMemo(() => Math.round(selectedXMetrics.reduce((sum, m) => sum + m.weight, 0)), [selectedXMetrics]);
   const yTotalWeight = useMemo(() => Math.round(selectedYMetrics.reduce((sum, m) => sum + m.weight, 0)), [selectedYMetrics]);
 
   const handleApplyConfiguration = () => {
-    // Re-normalize weights on apply, in case manual inputs didn't perfectly sum to 100
+    // Re-normalize weights on apply to ensure sum is 100, in case of direct input issues
     const finalXMetrics = normalizeWeights(selectedXMetrics);
     const finalYMetrics = normalizeWeights(selectedYMetrics);
-    setSelectedXMetrics(finalXMetrics);
-    setSelectedYMetrics(finalYMetrics);
+    
+    // Update state only if normalization changed something, to avoid unnecessary re-renders
+    if (JSON.stringify(finalXMetrics) !== JSON.stringify(selectedXMetrics)) {
+        setSelectedXMetrics(finalXMetrics);
+    }
+    if (JSON.stringify(finalYMetrics) !== JSON.stringify(selectedYMetrics)) {
+        setSelectedYMetrics(finalYMetrics);
+    }
 
+    // Use the totals from the freshly normalized metrics for validation
     const currentXTotal = finalXMetrics.reduce((sum, m) => sum + m.weight, 0);
     const currentYTotal = finalYMetrics.reduce((sum, m) => sum + m.weight, 0);
 
     if (finalXMetrics.length > 0 && Math.round(currentXTotal) !== 100) {
-        alert("Total weight for X-Axis metrics must sum to 100%. Please adjust further or remove/add metrics to auto-rebalance.");
+        alert("Total weight for X-Axis metrics must sum to 100%. Please adjust weights or remove/add metrics to auto-rebalance.");
         return;
     }
     if (finalYMetrics.length > 0 && Math.round(currentYTotal) !== 100) {
-        alert("Total weight for Y-Axis metrics must sum to 100%. Please adjust further or remove/add metrics to auto-rebalance.");
+        alert("Total weight for Y-Axis metrics must sum to 100%. Please adjust weights or remove/add metrics to auto-rebalance.");
         return;
     }
 
     if (DEBUG_SCATTER_SCORE) {
-      console.log("[ScatterScoreProPage] Applying configuration (triggering score calculation):", {
+      console.log("[ScatterScoreProPage] APPLYING CONFIGURATION (scores/chart would update):", {
         activeTemplateName, 
         xMetrics: finalXMetrics, xTotalWeight: currentXTotal,
         yMetrics: finalYMetrics, yTotalWeight: currentYTotal, 
@@ -420,24 +338,22 @@ export function ScatterScoreProPage() {
         normalizationMode, imputationMode,
       });
     }
-    // TODO: Set a state here that triggers the actual score calculation and chart data update (Mini PRD-SS-2, SS-3)
-    // e.g., setChartParams({xMetrics: finalXMetrics, yMetrics: finalYMetrics, ...etc })
+    // TODO: Mini PRD-SS-2 & SS-3: Trigger score calculation and chart data update using finalXMetrics, finalYMetrics, etc.
   };
 
-  // Sub-component for selecting metrics to add to an axis
   const AvailableMetricsSelector: React.FC<{
     axisLabel: 'X' | 'Y';
     onMetricSelect: (metricKey: string) => void;
     currentSelectedKeys: string[];
   }> = ({ axisLabel, onMetricSelect, currentSelectedKeys }) => {
     return (
-      <div className="mb-3">
+      <div className="my-3">
         <Label className="text-xs font-medium text-muted-foreground">Add Metric to {axisLabel}-Axis</Label>
         <Select onValueChange={(value) => { if(value && value !== "__placeholder__") onMetricSelect(value); }}>
           <SelectTrigger className="text-xs h-9 bg-navy-600/50 border-navy-500 mt-1">
             <SelectValue placeholder={`Select metric to add...`} />
           </SelectTrigger>
-          <SelectContent className="max-h-72 z-[60]"> {/* Ensure dropdown is on top */}
+          <SelectContent className="max-h-72 z-[60]">
             <SelectItem value="__placeholder__" disabled className="text-xs hidden">Select metric...</SelectItem>
             {Object.entries(metricCategories)
               .sort(([, labelA], [, labelB]) => labelA.localeCompare(labelB))
@@ -466,12 +382,11 @@ export function ScatterScoreProPage() {
     );
   };
 
-  // Sub-component to render the configuration for selected metrics of an axis
   const renderAxisMetricConfigurator = (
     axisTitle: 'X-Axis Score Metrics' | 'Y-Axis Score Metrics',
-    currentSelectedMetrics: AxisMetricConfig[],
+    currentSelectedMetricsForAxis: AxisMetricConfig[], // Renamed for clarity
     axisType: 'X' | 'Y',
-    currentTotalWeight: number
+    currentTotalWeightForAxis: number // Renamed
   ) => {
     return (
       <Card className="p-3 md:p-4 bg-navy-700/50 border-navy-600">
@@ -482,11 +397,11 @@ export function ScatterScoreProPage() {
             <AvailableMetricsSelector
                 axisLabel={axisType}
                 onMetricSelect={(metricKey) => handleAxisMetricChange(axisType, metricKey, 'add')}
-                currentSelectedKeys={currentSelectedMetrics.map(m => m.key)}
+                currentSelectedKeys={currentSelectedMetricsForAxis.map(m => m.key)}
             />
             <div className="space-y-2 max-h-48 overflow-y-auto pr-1 mt-2 scrollbar-thin scrollbar-thumb-navy-500 scrollbar-track-navy-700/30">
-            {currentSelectedMetrics.length === 0 && <p className="text-xs text-muted-foreground italic py-2 text-center">No metrics selected for this axis.</p>}
-            {currentSelectedMetrics.map((sm) => (
+            {currentSelectedMetricsForAxis.length === 0 && <p className="text-xs text-muted-foreground italic py-2 text-center">No metrics selected for this axis.</p>}
+            {currentSelectedMetricsForAxis.map((sm) => (
                 <div key={sm.key} className="p-2.5 border rounded-md bg-navy-600/40 border-navy-500/70 space-y-1.5">
                     <div className="flex justify-between items-center">
                     <Label htmlFor={`weight-${axisType}-${sm.key}`} className="text-xs font-medium text-surface-white truncate flex-grow mr-2" title={sm.metricLabel}>{sm.metricLabel}</Label>
@@ -502,8 +417,13 @@ export function ScatterScoreProPage() {
                             <Input
                                 id={`weight-${axisType}-${sm.key}`}
                                 type="number"
-                                value={sm.weight}
-                                onChange={(e) => handleAxisMetricChange(axisType, sm.key, 'updateWeight', parseInt(e.target.value, 10))}
+                                value={sm.weight} // Direct value binding
+                                onChange={(e) => {
+                                    const newWeight = e.target.value === '' ? 0 : parseInt(e.target.value, 10);
+                                    if (!isNaN(newWeight)) {
+                                        handleAxisMetricChange(axisType, sm.key, 'updateWeight', newWeight)
+                                    }
+                                }}
                                 className="h-7 text-xs w-16 bg-navy-800 border-navy-500 px-1.5"
                                 min={0} max={100} step={1}
                             />
@@ -532,13 +452,14 @@ export function ScatterScoreProPage() {
                 </div>
                 ))}
             </div>
-            <div className={cn("text-xs mt-2 font-medium", currentTotalWeight !== 100 && currentSelectedMetrics.length > 0 ? "text-destructive" : currentTotalWeight === 100 ? "text-green-400" : "text-muted-foreground")}>
-                Total {axisType}-Axis Weight: {currentTotalWeight}% {currentSelectedMetrics.length > 0 && currentTotalWeight !==100 && "(Must sum to 100%)"}
+            <div className={cn("text-xs mt-2 font-medium", currentTotalWeightForAxis !== 100 && currentSelectedMetricsForAxis.length > 0 ? "text-destructive" : currentTotalWeightForAxis === 100 ? "text-green-400" : "text-muted-foreground")}>
+                Total {axisType}-Axis Weight: {currentTotalWeightForAxis}% {currentSelectedMetricsForAxis.length > 0 && currentTotalWeightForAxis !==100 && "(Must sum to 100%)"}
             </div>
         </CardContent>
       </Card>
     );
   };
+
 
   return (
     <PageContainer
@@ -659,6 +580,7 @@ export function ScatterScoreProPage() {
             </div>
         </motion.div>
 
+        {/* Chart Display Area */}
         <div className="flex-grow bg-navy-800/30 p-4 rounded-lg border border-navy-700 backdrop-blur-sm flex items-center justify-center min-h-[400px] lg:min-h-0">
           <p className="text-center text-gray-400">
             Scatter plot and score results will appear here.
