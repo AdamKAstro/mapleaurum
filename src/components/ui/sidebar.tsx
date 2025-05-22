@@ -1,7 +1,23 @@
-//src/components/ui/sidebar.tsx
+// src/components/ui/sidebar.tsx
 import React, { useState } from 'react';
 import { NavLink } from 'react-router-dom';
-import { Home, Table2, LineChart, Filter, Crown, ChevronLeft, ChevronRight, Calculator, HelpCircle, BookOpen, Target, Gauge, ScatterChart as Scatter, Award } from 'lucide-react';
+import {
+  Home,
+  Table2,
+  LineChart, // Used for Analytics Tools
+  Filter,
+  Crown,
+  ChevronLeft,
+  ChevronRight,
+  Calculator,
+  HelpCircle,
+  BookOpen,
+  Target,
+  Gauge,
+  ScatterChart as Scatter, // Lucide's ScatterChart icon
+  Award,
+  TrendingUp, // <-- NEW ICON IMPORT
+} from 'lucide-react';
 import { motion } from 'framer-motion';
 import { cn } from '../../lib/utils';
 
@@ -12,6 +28,7 @@ export function Sidebar() {
     { path: "/", label: "Home", icon: Home },
     { path: "/companies", label: "Companies", icon: Table2 },
     { path: "/scatter-chart", label: "Scatter Chart", icon: Scatter },
+    { path: "/scatter-score-pro", label: "ScatterScore", icon: TrendingUp }, // <-- NEW ITEM
     { path: "/filter", label: "Filters", icon: Filter },
     { path: "/scoring", label: "Scoring", icon: Calculator },
     { path: "/subscribe", label: "Subscribe", icon: Crown },
@@ -22,7 +39,7 @@ export function Sidebar() {
     { path: "/help/metrics", label: "Metrics Guide", icon: Gauge },
     { path: "/help/filters", label: "Filters Guide", icon: Filter },
     { path: "/help/scoring", label: "Scoring Guide", icon: Target },
-    { path: "/help/scatter-chart", label: "Scatter Guide", icon: Scatter },
+    { path: "/help/scatter-chart", label: "Scatter Guide", icon: Scatter }, // Consider if this needs update for ScatterScore or a new help page
     { path: "/help/tiers", label: "Subscription Tiers", icon: Award },
     { path: "/help/general", label: "General & FAQ", icon: BookOpen },
   ];
@@ -48,6 +65,7 @@ export function Sidebar() {
           "text-surface-white/70 hover:text-surface-white",
           "transition-colors hover:bg-navy-300"
         )}
+        title={isCollapsed ? "Expand Sidebar" : "Collapse Sidebar"} // Added title for accessibility
       >
         {isCollapsed ? (
           <ChevronRight className="h-4 w-4" />
@@ -56,13 +74,13 @@ export function Sidebar() {
         )}
       </button>
 
-      <div className="flex h-full flex-col gap-4">
+      <div className="flex h-full flex-col gap-4 overflow-y-auto scrollbar-thin scrollbar-thumb-navy-400 scrollbar-track-navy-600"> {/* Added overflow & scrollbar */}
         {/* Main Navigation */}
         <nav className="flex-1 space-y-1 p-4">
           <div className="mb-4">
             <h3 className={cn(
-              "px-2 text-xs font-medium uppercase tracking-wider text-surface-white/50",
-              isCollapsed && "opacity-0"
+              "px-2 text-xs font-medium uppercase tracking-wider text-surface-white/50 transition-opacity duration-200", // Added transition
+              isCollapsed ? "opacity-0" : "opacity-100"
             )}>
               Navigation
             </h3>
@@ -93,8 +111,8 @@ export function Sidebar() {
           {/* Help Navigation Section */}
           <div className="mt-8 pt-4 border-t border-navy-400/30">
             <h3 className={cn(
-              "px-2 text-xs font-medium uppercase tracking-wider text-surface-white/50 mb-4",
-              isCollapsed && "opacity-0"
+              "px-2 text-xs font-medium uppercase tracking-wider text-surface-white/50 mb-4 transition-opacity duration-200",
+              isCollapsed ? "opacity-0" : "opacity-100"
             )}>
               Help & Support
             </h3>
@@ -103,7 +121,7 @@ export function Sidebar() {
               <NavLink
                 key={item.path}
                 to={item.path}
-                end={item.path === '/help'}
+                end={item.path === '/help'} // Specific end for /help overview
                 className={({ isActive }) =>
                   cn(
                     "flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors",
@@ -125,17 +143,17 @@ export function Sidebar() {
 
         {/* Footer */}
         <div className={cn(
-          "border-t border-navy-300/20 p-4",
+          "border-t border-navy-300/20 p-4 mt-auto", // Added mt-auto to push to bottom
           isCollapsed && "flex justify-center"
         )}>
           <div className={cn(
             "flex items-center gap-2 px-2",
             isCollapsed && "px-0"
           )}>
-            <div className="h-2 w-2 rounded-full bg-accent-teal/80" />
+            <div className="h-2 w-2 rounded-full bg-accent-teal/80 flex-shrink-0" /> {/* Added flex-shrink-0 */}
             {!isCollapsed && (
-              <span className="text-xs text-surface-white/50">
-                Mining Analytics v1.0
+              <span className="text-xs text-surface-white/50 transition-opacity duration-200 opacity-100"> {/* Ensure visible when not collapsed */}
+                MapleAurum v1.0
               </span>
             )}
           </div>
