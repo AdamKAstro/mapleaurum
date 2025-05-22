@@ -1,5 +1,6 @@
 // src/pages/scatter-score-pro/index.tsx
 import React, { useState, useCallback, useMemo, useEffect } from 'react';
+import { motion } from 'framer-motion'; // <-- ADD THIS IMPORT
 import { useFilters } from '../../contexts/filter-context';
 import { useCurrency } from '../../contexts/currency-context';
 import { PageContainer } from '../../components/ui/page-container';
