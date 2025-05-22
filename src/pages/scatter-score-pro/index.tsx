@@ -624,7 +624,7 @@ export function ScatterScoreProPage() {
       </CardContent>
     </Card>
   );
-  };
+  
 
   return (
     <PageContainer
