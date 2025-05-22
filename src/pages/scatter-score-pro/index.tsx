@@ -1,5 +1,4 @@
 // src/pages/scatter-score-pro/index.tsx
-// Imports at the top remain the same as v2.6
 import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useFilters } from '../../contexts/filter-context';
@@ -14,15 +13,16 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../../
 import { Info, Lock, ArrowUp, ArrowDown, Settings, RefreshCw, ListPlus, X } from 'lucide-react';
 import { MetricSelector } from '../../components/metric-selector';
 import {
-  metrics as allMetrics,
+  metrics as allMetrics, // CORRECTED: Import 'metrics' and alias it to 'allMetrics'
   metricCategories,
   getAccessibleMetrics,
   type MetricConfig
 } from '../../lib/metric-types';
 import type { ColumnTier, NormalizationMode, ImputationMode } from '../../lib/types';
-import { cn, isValidNumber } from '../../lib/utils';
+import { cn, isValidNumber, getNestedValue } from '../../lib/utils';
+import { calculateAxisSpecificScore, calculateDatasetMetricStats, type MetricDatasetStats } from '../../lib/scoringUtils'; // Ensure correct import
 
-// --- Local Type Definitions --- (Keep as before)
+// --- Local Type Definitions ---
 interface AxisMetricConfig {
   key: string;
   metricLabel: string;
@@ -44,7 +44,7 @@ interface ScatterScoreTemplate {
 
 const DEBUG_SCATTER_SCORE = process.env.NODE_ENV === 'development';
 
-// --- PRE-DEFINED TEMPLATES --- (Full 5 templates as previously confirmed by user)
+// --- PRE-DEFINED TEMPLATES ---
 const PREDEFINED_TEMPLATES: ScatterScoreTemplate[] = [
   {
     name: "Value Hunter",
@@ -149,43 +149,35 @@ const ScaleToggle: React.FC<{ scale: 'linear' | 'log'; onChange: (newScale: 'lin
     </div>
 );
 
-/**
- * Normalizes an array of AxisMetricConfig to ensure their weights sum to 100%.
- * - If only one metric, it gets 100%.
- * - If multiple metrics and a specific one was just changed by user (changedMetricKey), that weight is respected (clamped 0-100).
- * The remaining (100 - changedMetricWeight) is distributed proportionally among other metrics.
- * - If no specific metric was changed (e.g., on add/remove or template load), weights are distributed equally.
- * - Handles edge cases and ensures a final sum of 100 by adjusting one item.
- */
 const normalizeWeights = (
     metrics: AxisMetricConfig[],
     changedMetricKey?: string,
-    userSetWeightForChangedMetric?: number // The new weight the user set for changedMetricKey
+    userSetWeightForChangedMetric?: number
 ): AxisMetricConfig[] => {
-    if (!Array.isArray(metrics) || metrics.length === 0) {
-        if (DEBUG_SCATTER_SCORE) console.log("[normalizeWeights] Input is empty or not an array, returning empty.");
+    if (!Array.isArray(metrics)) {
+        if (DEBUG_SCATTER_SCORE) console.log("[normalizeWeights] Input is not an array, returning empty.");
         return [];
     }
-
     let workingMetrics = metrics.map(m => ({ ...m, weight: Math.max(0, Math.min(100, Number(m.weight) || 0)) }));
 
+    if (workingMetrics.length === 0) {
+        if (DEBUG_SCATTER_SCORE) console.log("[normalizeWeights] Input array is empty, returning empty.");
+        return [];
+    }
     if (workingMetrics.length === 1) {
         workingMetrics[0].weight = 100;
         if (DEBUG_SCATTER_SCORE) console.log("[normalizeWeights] Single metric, set weight to 100:", workingMetrics);
         return workingMetrics;
     }
 
-    const totalTargetWeight = 100;
+    let totalTargetWeight = 100;
     let sumOfManuallySetWeights = 0;
-    let countOfManuallySetMetrics = 0;
     
-    // Apply user-set weight first if a specific metric was changed
     if (changedMetricKey && userSetWeightForChangedMetric !== undefined) {
         const idx = workingMetrics.findIndex(m => m.key === changedMetricKey);
         if (idx !== -1) {
-            workingMetrics[idx].weight = Math.max(0, Math.min(100, userSetWeightForChangedMetric));
+            workingMetrics[idx].weight = userSetWeightForChangedMetric; // Already clamped by caller
             sumOfManuallySetWeights = workingMetrics[idx].weight;
-            countOfManuallySetMetrics = 1;
         }
     }
 
@@ -194,75 +186,71 @@ const normalizeWeights = (
     let weightToDistributeToAdjustable = totalTargetWeight - sumOfManuallySetWeights;
 
     if (adjustableMetrics.length > 0) {
-        if (weightToDistributeToAdjustable <= 0) { // No room left for others, or negative room
-            adjustableMetrics.forEach(m => {
-                const idx = workingMetrics.findIndex(wm => wm.key === m.key);
-                if (idx !== -1) workingMetrics[idx].weight = 0;
-            });
-        } else if (sumOfOriginalAdjustableWeights === 0 && changedMetricKey) { // If user set one, and others were 0, distribute remaining equally
+        if (weightToDistributeToAdjustable < 0) weightToDistributeToAdjustable = 0; // Don't distribute negative weight
+
+        if (sumOfOriginalAdjustableWeights === 0 || (changedMetricKey && userSetWeightForChangedMetric !== undefined)) { 
             const equalShare = weightToDistributeToAdjustable / adjustableMetrics.length;
             adjustableMetrics.forEach(m => {
                 const idx = workingMetrics.findIndex(wm => wm.key === m.key);
-                if (idx !== -1) workingMetrics[idx].weight = Math.max(0, equalShare); // equalShare can be rounded later
+                if (idx !== -1) workingMetrics[idx].weight = equalShare; // Will be rounded later
             });
-        } else if (sumOfOriginalAdjustableWeights > 0 && changedMetricKey) { // Distribute proportionally based on their previous share
+        } else { 
             const scaleFactor = weightToDistributeToAdjustable / sumOfOriginalAdjustableWeights;
             adjustableMetrics.forEach(m => {
                 const idx = workingMetrics.findIndex(wm => wm.key === m.key);
-                if (idx !== -1) workingMetrics[idx].weight = Math.max(0, m.weight * scaleFactor);
+                if (idx !== -1) workingMetrics[idx].weight = m.weight * scaleFactor;
             });
-        } else { // No specific metric changed (add/remove/initial template load with multiple items) -> distribute equally
-            const equalShare = totalTargetWeight / workingMetrics.length;
-            workingMetrics = workingMetrics.map(m => ({ ...m, weight: equalShare }));
         }
-    } else if (workingMetrics.length > 0 && countOfManuallySetMetrics === workingMetrics.length && sumOfManuallySetWeights !== 100) {
-      // All metrics were "manually set" (e.g., only one metric existed and its weight was changed)
-      // If it's a single metric, its weight should just become 100. This is handled by the first check.
+    } else if (changedMetricKey && workingMetrics.length === 1) { // Only one metric overall, and it was the one changed
+         workingMetrics[0].weight = 100;
+    } else if (workingMetrics.length > 0 && !changedMetricKey) { // Initial equal distribution for add/remove/template load
+        const equalShare = 100 / workingMetrics.length;
+        workingMetrics = workingMetrics.map(m => ({ ...m, weight: equalWeight }));
     }
-
-
-    // Round all weights and make a final pass to ensure sum is exactly 100
+    
     let roundedMetrics = workingMetrics.map(m => ({ ...m, weight: Math.round(m.weight) }));
     let currentSum = roundedMetrics.reduce((sum, m) => sum + m.weight, 0);
 
     if (roundedMetrics.length > 0 && currentSum !== 100) {
         const diff = 100 - currentSum;
-        // Prioritize adjusting a metric that was NOT the one manually changed by the user,
-        // or one that has some weight already if possible.
-        let adjustIdx = -1;
-        if (changedMetricKey) {
-            const candidates = roundedMetrics.map((m,i) => ({m, i})).filter(item => item.m.key !== changedMetricKey);
-            if (candidates.length > 0) {
-                // Try to adjust the one with the largest weight among these "other" metrics
-                candidates.sort((a,b) => b.m.weight - a.m.weight);
-                if (candidates[0].m.weight + diff >= 0) adjustIdx = candidates[0].i;
+        let adjustIndex = -1;
+        if (changedMetricKey) { // Try to adjust a metric that wasn't the user-changed one
+            const candidates = roundedMetrics.map((m,i)=>({m,i})).filter(item => item.m.key !== changedMetricKey);
+            if(candidates.length > 0){
+                // Prefer adjusting one that can absorb the difference without going out of 0-100 bounds
+                let bestCandidateIndex = -1;
+                for(const cand of candidates){
+                    if(cand.m.weight + diff >= 0 && cand.m.weight + diff <= 100){
+                        bestCandidateIndex = cand.i;
+                        break;
+                    }
+                }
+                if(bestCandidateIndex !== -1) adjustIndex = bestCandidateIndex;
+                else if (candidates.length > 0) adjustIndex = candidates[0].i; // Fallback to first "other"
             }
         }
-        if (adjustIdx === -1) { // If no suitable "other" or no changedKey, find any suitable
-           adjustIdx = roundedMetrics.findIndex(m => (m.weight + diff) >=0 && (m.weight + diff) <=100);
-           if (adjustIdx === -1) adjustIdx = 0; // Fallback to first if no ideal candidate
-        }
+        if (adjustIndex === -1 && roundedMetrics.length > 0) adjustIndex = 0; // Fallback to the very first metric
 
-        if (roundedMetrics[adjustIdx]) {
-             roundedMetrics[adjustIdx].weight = Math.max(0, Math.min(100, roundedMetrics[adjustIdx].weight + diff));
+        if (roundedMetrics[adjustIndex]) {
+             roundedMetrics[adjustIndex].weight = Math.max(0, Math.min(100, roundedMetrics[adjustIndex].weight + diff));
         }
-
-        // If still not 100 (e.g., primary adjustment was clamped), distribute to remaining if possible
+       
         currentSum = roundedMetrics.reduce((sum, m) => sum + m.weight, 0);
         if (roundedMetrics.length > 0 && currentSum !== 100) {
             const finalDiff = 100 - currentSum;
-            // Simple distribution of tiny remainder to first element if it won't make it invalid
-            if (roundedMetrics[0].weight + finalDiff >= 0 && roundedMetrics[0].weight + finalDiff <= 100) {
-                 roundedMetrics[0].weight += finalDiff;
-            } else if (roundedMetrics.length > 1 && roundedMetrics[1].weight + finalDiff >= 0 && roundedMetrics[1].weight + finalDiff <= 100) {
-                 roundedMetrics[1].weight += finalDiff; // try second
+            // Distribute any tiny remaining diff to the first metric that can take it
+            for (let i = 0; i < roundedMetrics.length; i++) {
+                if (roundedMetrics[i].weight + finalDiff >= 0 && roundedMetrics[i].weight + finalDiff <= 100) {
+                    roundedMetrics[i].weight += finalDiff;
+                    break;
+                }
             }
-            // Ensure final sum is 100 by adjusting first metric if really needed (can lead to slight non-proportionality but ensures sum)
-            currentSum = roundedMetrics.reduce((sum, m) => sum + m.weight, 0);
-            if (roundedMetrics.length > 0 && currentSum !== 100) {
-                 roundedMetrics[0].weight += (100 - currentSum);
-                 roundedMetrics[0].weight = Math.max(0, Math.min(100, roundedMetrics[0].weight)); // Clamp again
-            }
+            // If still not 100 (e.g. all others are 0 or 100), force it on the first one and clamp.
+             currentSum = roundedMetrics.reduce((sum, m) => sum + m.weight, 0);
+             if (roundedMetrics.length > 0 && currentSum !== 100) {
+                 roundedMetrics[0].weight += (100-currentSum);
+                 roundedMetrics[0].weight = Math.max(0, Math.min(100, Math.round(roundedMetrics[0].weight)));
+             }
         }
     }
     if (DEBUG_SCATTER_SCORE) console.log("[normalizeWeights] Output:", roundedMetrics.map(m=> ({key:m.key, weight: m.weight})));
@@ -271,11 +259,12 @@ const normalizeWeights = (
 
 
 export function ScatterScoreProPage() {
-  const { currentUserTier } = useFilters();
+  const { currentUserTier, filteredCompanyIds, fetchCompaniesByIds, metricFullRanges: globalMetricRangesFromContext } = useFilters();
   
-  const [activeTemplateName, setActiveTemplateName] = useState<string | null>(() => 
-    PREDEFINED_TEMPLATES.length > 0 ? PREDEFINED_TEMPLATES[0].name : null
-  );
+  const [activeTemplateName, setActiveTemplateName] = useState<string | null>(() => {
+    if (DEBUG_SCATTER_SCORE) console.log("[ScatterScoreProPage] Initializing activeTemplateName state.");
+    return PREDEFINED_TEMPLATES.length > 0 ? PREDEFINED_TEMPLATES[0].name : null;
+  });
   
   const [selectedXMetrics, setSelectedXMetrics] = useState<AxisMetricConfig[]>([]);
   const [selectedYMetrics, setSelectedYMetrics] = useState<AxisMetricConfig[]>([]);
@@ -284,8 +273,13 @@ export function ScatterScoreProPage() {
   
   const [normalizationMode, setNormalizationMode] = useState<NormalizationMode>('dataset_rank_percentile');
   const [imputationMode, setImputationMode] = useState<ImputationMode>('dataset_median');
-
   const [isConfigPanelOpen, setIsConfigPanelOpen] = useState(true);
+
+  const [chartCompanyData, setChartCompanyData] = useState<Company[]>([]);
+  const [plotData, setPlotData] = useState<Array<{ company: Company; xScore: number | null; yScore: number | null; zValue?: number | null }>>([]);
+  const [isCalculatingScores, setIsCalculatingScores] = useState(false);
+  const [datasetStatsCache, setDatasetStatsCache] = useState<Map<string, MetricDatasetStats>>(new Map());
+  const [axisScoreError, setAxisScoreError] = useState<string | null>(null);
 
   const accessibleMetrics = useMemo(() => {
     const metrics = getAccessibleMetrics(currentUserTier || 'free');
@@ -298,7 +292,7 @@ export function ScatterScoreProPage() {
   }, []);
 
   const loadTemplate = useCallback((templateName: string | null) => {
-    if (DEBUG_SCATTER_SCORE) console.log(`[ScatterScoreProPage] loadTemplate called for: '${templateName}'`);
+    if (DEBUG_SCATTER_SCORE) console.log(`[ScatterScoreProPage] loadTemplate attempting for: '${templateName}'`);
     const template = PREDEFINED_TEMPLATES.find(t => t.name === templateName) || PREDEFINED_TEMPLATES[0];
 
     if (!template) {
@@ -308,7 +302,7 @@ export function ScatterScoreProPage() {
         return;
     }
 
-    if (DEBUG_SCATTER_SCORE) console.log(`[ScatterScoreProPage] Loading template config:`, template);
+    if (DEBUG_SCATTER_SCORE) console.log(`[ScatterScoreProPage] Loading template config:`, template.name, template);
     setActiveTemplateName(template.name);
 
     const mapAndFilterMetrics = (configs: Array<{ key: string; weight: number; userHigherIsBetter?: boolean }>): AxisMetricConfig[] => {
@@ -334,8 +328,11 @@ export function ScatterScoreProPage() {
         .filter(m => m !== null) as AxisMetricConfig[];
     };
 
-    setSelectedXMetrics(normalizeWeights(mapAndFilterMetrics(template.xMetricsConfig)));
-    setSelectedYMetrics(normalizeWeights(mapAndFilterMetrics(template.yMetricsConfig)));
+    const xMetrics = mapAndFilterMetrics(template.xMetricsConfig);
+    const yMetrics = mapAndFilterMetrics(template.yMetricsConfig);
+
+    setSelectedXMetrics(normalizeWeights(xMetrics));
+    setSelectedYMetrics(normalizeWeights(yMetrics));
     
     const zMetricIsAccessible = template.zMetricKey ? accessibleMetrics.some(am => am.key === template.zMetricKey) : false;
     setSelectedZMetricKey(zMetricIsAccessible && template.zMetricKey ? template.zMetricKey : null);
@@ -344,18 +341,22 @@ export function ScatterScoreProPage() {
     setNormalizationMode(template.defaultNormalizationMode || 'dataset_rank_percentile');
     setImputationMode(template.defaultImputationMode || 'dataset_median');
 
-    if (DEBUG_SCATTER_SCORE) console.log(`[ScatterScoreProPage] Template '${template.name}' loaded. X Metrics:`, selectedXMetrics, "Y Metrics:", selectedYMetrics);
-  }, [accessibleMetrics, currentUserTier, getMetricConfigDetails]); // Removed selectedX/YMetrics from deps of loadTemplate itself
+    if (DEBUG_SCATTER_SCORE) console.log(`[ScatterScoreProPage] Template '${template.name}' loaded. X Metrics Count:`, xMetrics.length, "Y Metrics Count:", yMetrics.length);
+  }, [accessibleMetrics, currentUserTier, getMetricConfigDetails]);
 
   useEffect(() => {
-    if (DEBUG_SCATTER_SCORE) console.log("[ScatterScoreProPage] accessibleMetrics or currentUserTier changed, considering template reload.");
-    if (PREDEFINED_TEMPLATES.length > 0) {
-        // Always reload the active template (or default) when accessibleMetrics changes,
-        // as it needs to re-filter based on new tier accessibility.
-        loadTemplate(activeTemplateName || PREDEFINED_TEMPLATES[0].name);
+    if (DEBUG_SCATTER_SCORE) console.log("[ScatterScoreProPage] Mount/accessibleMetrics effect. Current activeTemplateName:", activeTemplateName);
+    if (accessibleMetrics.length > 0) { // Only load if accessibleMetrics are available
+        if (!activeTemplateName && PREDEFINED_TEMPLATES.length > 0) {
+            if (DEBUG_SCATTER_SCORE) console.log("[ScatterScoreProPage] No active template, loading default.");
+            loadTemplate(PREDEFINED_TEMPLATES[0].name);
+        } else if (activeTemplateName) {
+            if (DEBUG_SCATTER_SCORE) console.log("[ScatterScoreProPage] Re-loading active template due to accessibleMetrics change.");
+            loadTemplate(activeTemplateName); // Re-load to filter by new accessible metrics
+        }
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [accessibleMetrics]); // Re-load template when accessible metrics change
+  }, [accessibleMetrics]); // Key dependency for re-evaluating template metrics based on tier
 
   const handleTemplateChange = (newTemplateName: string) => {
     if (DEBUG_SCATTER_SCORE) console.log(`[ScatterScoreProPage] handleTemplateChange: ${newTemplateName}`);
@@ -388,8 +389,8 @@ export function ScatterScoreProPage() {
             });
             return normalizeWeights(newMetricsArray);
           } else {
-            if (DEBUG_SCATTER_SCORE) console.warn(`[ScatterScoreProPage] Add failed: Metric ${metricKey} not found or not accessible.`);
-             return prevMetrics; // No change if metric can't be added
+             if (DEBUG_SCATTER_SCORE) console.warn(`[ScatterScoreProPage] Add failed: Metric ${metricKey} not found or not accessible.`);
+             return prevMetrics;
           }
         }
       } else if (action === 'remove') {
@@ -413,39 +414,113 @@ export function ScatterScoreProPage() {
   const xTotalWeight = useMemo(() => selectedXMetrics.reduce((sum, m) => sum + m.weight, 0), [selectedXMetrics]);
   const yTotalWeight = useMemo(() => selectedYMetrics.reduce((sum, m) => sum + m.weight, 0), [selectedYMetrics]);
 
-  const handleApplyConfiguration = () => {
+  const handleApplyConfigurationAndCalculateScores = useCallback(async () => {
+    if (DEBUG_SCATTER_SCORE) console.log("[ScatterScoreProPage] 'Apply & Plot Scores' clicked.");
+    
     const finalXMetrics = normalizeWeights(selectedXMetrics);
     const finalYMetrics = normalizeWeights(selectedYMetrics);
     
-    // Update state with the potentially re-normalized weights before validation
-    setSelectedXMetrics(finalXMetrics);
+    // It's better to set state and then use the state values for validation if other effects depend on them.
+    // However, for immediate validation and use in this callback, using the normalized vars directly is fine.
+    setSelectedXMetrics(finalXMetrics); 
     setSelectedYMetrics(finalYMetrics);
 
     const currentXTotalOnApply = finalXMetrics.reduce((sum, m) => sum + m.weight, 0);
     const currentYTotalOnApply = finalYMetrics.reduce((sum, m) => sum + m.weight, 0);
 
     if (finalXMetrics.length > 0 && Math.round(currentXTotalOnApply) !== 100) {
-        alert(`X-Axis weights sum to ${currentXTotalOnApply}%, but must sum to 100%. Please adjust.`);
-        return;
+        alert(`X-Axis weights sum to ${currentXTotalOnApply}%, but must sum to 100%. Please adjust.`); return;
     }
     if (finalYMetrics.length > 0 && Math.round(currentYTotalOnApply) !== 100) {
-        alert(`Y-Axis weights sum to ${currentYTotalOnApply}%, but must sum to 100%. Please adjust.`);
-        return;
+        alert(`Y-Axis weights sum to ${currentYTotalOnApply}%, but must sum to 100%. Please adjust.`); return;
+    }
+    if (finalXMetrics.length === 0 && finalYMetrics.length === 0) {
+        alert("Please select at least one metric for either X or Y axis.");
+        setPlotData([]); return;
     }
 
-    if (DEBUG_SCATTER_SCORE) {
-      console.log("[ScatterScoreProPage] APPLYING CONFIGURATION (triggering score calc & chart update):", {
-        activeTemplateName, 
-        xMetrics: finalXMetrics, xTotalWeight: currentXTotalOnApply,
-        yMetrics: finalYMetrics, yTotalWeight: currentYTotalOnApply, 
-        selectedZMetricKey, zScale,
-        normalizationMode, imputationMode,
-      });
-    }
-    // TODO: Set a state here that triggers the actual score calculation (Mini PRD-SS-2)
-    // and chart data update (Mini PRD-SS-3)
-  };
+    setIsCalculatingScores(true);
+    setAxisScoreError(null);
+    setPlotData([]); 
 
+    try {
+        if (DEBUG_SCATTER_SCORE) console.log("[ScatterScoreProPage] Fetching company data. Filtered IDs:", filteredCompanyIds.length);
+        const companiesToScore = await fetchCompaniesByIds(filteredCompanyIds); 
+        if (!companiesToScore || companiesToScore.length === 0) {
+            if (DEBUG_SCATTER_SCORE) console.log("[ScatterScoreProPage] No companies returned to score.");
+            setPlotData([]); setIsCalculatingScores(false); return;
+        }
+        setChartCompanyData(companiesToScore);
+
+        const uniqueMetricKeysForStats = new Set<string>();
+        if(normalizationMode.startsWith('dataset_') || imputationMode.startsWith('dataset_')) {
+            finalXMetrics.forEach(m => { const conf = getMetricConfigDetails(m.key); if(conf) uniqueMetricKeysForStats.add(conf.key); });
+            finalYMetrics.forEach(m => { const conf = getMetricConfigDetails(m.key); if(conf) uniqueMetricKeysForStats.add(conf.key); });
+        }
+        
+        const newDatasetStatsCache = new Map<string, MetricDatasetStats>();
+        if (uniqueMetricKeysForStats.size > 0 && companiesToScore.length > 0) {
+            if (DEBUG_SCATTER_SCORE) console.log(`[ScatterScoreProPage] Calculating dataset stats for ${uniqueMetricKeysForStats.size} unique metrics.`);
+            for (const metricKey of uniqueMetricKeysForStats) {
+                const metricConfig = getMetricConfigDetails(metricKey);
+                if (metricConfig) {
+                    newDatasetStatsCache.set(metricKey, calculateDatasetMetricStats(companiesToScore, metricConfig));
+                }
+            }
+        }
+        setDatasetStatsCache(newDatasetStatsCache);
+        if (DEBUG_SCATTER_SCORE) console.log("[ScatterScoreProPage] Dataset stats cache populated:", newDatasetStatsCache.size > 0 ? newDatasetStatsCache : "Empty (no dataset norm/impute or no metrics)");
+
+        if (DEBUG_SCATTER_SCORE) console.log("[ScatterScoreProPage] Calculating axis scores...");
+        const newPlotData = companiesToScore.map(company => {
+            const companySpecificLogs: string[] = [];
+            const axisXInputs: AxisMetricScoreInput[] = finalXMetrics.map(m => ({key: m.key, weight: m.weight, userHigherIsBetter: m.userHigherIsBetter}));
+            const axisYInputs: AxisMetricScoreInput[] = finalYMetrics.map(m => ({key: m.key, weight: m.weight, userHigherIsBetter: m.userHigherIsBetter}));
+
+            let xScoreResult = { score: null, breakdown: {} };
+            if (axisXInputs.length > 0) {
+                xScoreResult = calculateAxisSpecificScore(
+                    company, axisXInputs, allMetrics, normalizationMode, imputationMode,
+                    globalMetricRangesFromContext, newDatasetStatsCache, companySpecificLogs
+                );
+            }
+
+            let yScoreResult = { score: null, breakdown: {} };
+            if (axisYInputs.length > 0) {
+                yScoreResult = calculateAxisSpecificScore(
+                    company, axisYInputs, allMetrics, normalizationMode, imputationMode,
+                    globalMetricRangesFromContext, newDatasetStatsCache, companySpecificLogs
+                );
+            }
+            
+            let zValueForPlot: number | null = null; // Ensure it's null if not valid
+            if (selectedZMetricKey) {
+                const zMetricConfig = getMetricConfigDetails(selectedZMetricKey);
+                if (zMetricConfig) {
+                    const rawZ = getNestedValue(company, zMetricConfig.nested_path);
+                    if (isValidNumber(rawZ)) zValueForPlot = rawZ as number;
+                }
+            }
+            if (DEBUG_SCATTER_SCORE && company.company_id === companiesToScore[0]?.company_id) {
+                console.log(`[ScatterScoreProPage] Scoring Company ID: ${company.company_id}`, { xScore: xScoreResult.score, yScore: yScoreResult.score, zValueForPlot, logs: companySpecificLogs.join('\n') });
+            }
+
+            return { company, xScore: xScoreResult.score, yScore: yScoreResult.score, zValue: zValueForPlot };
+        });
+
+        setPlotData(newPlotData);
+        if (DEBUG_SCATTER_SCORE) console.log("[ScatterScoreProPage] Plot data calculated:", newPlotData.length > 0 ? newPlotData.slice(0,2) : "No plot data");
+
+    } catch (error: any) {
+        console.error("[ScatterScoreProPage] Error during 'Apply & Plot Scores':", error);
+        setAxisScoreError(`Failed to calculate scores: ${error.message || 'Unknown error'}`);
+        setPlotData([]);
+    } finally {
+        setIsCalculatingScores(false);
+    }
+  }, [selectedXMetrics, selectedYMetrics, normalizationMode, imputationMode, fetchCompaniesByIds, filteredCompanyIds, getMetricConfigDetails, globalMetricRangesFromContext, activeTemplateName, selectedZMetricKey, zScale]);
+
+  // --- Sub-components (AvailableMetricsSelector & renderAxisMetricConfigurator) DEFINED HERE ---
   const AvailableMetricsSelector: React.FC<{
     axisLabel: 'X' | 'Y';
     onMetricSelect: (metricKey: string) => void;
@@ -522,13 +597,8 @@ export function ScatterScoreProPage() {
                             <Input
                                 id={`weight-${axisType}-${sm.key}`}
                                 type="number"
-                                value={sm.weight} // Direct value binding
-                                onChange={(e) => {
-                                    const newWeight = e.target.value === '' ? 0 : parseInt(e.target.value, 10);
-                                    if (!isNaN(newWeight)) {
-                                        handleAxisMetricChange(axisType, sm.key, 'updateWeight', newWeight)
-                                    }
-                                }}
+                                value={sm.weight}
+                                onChange={(e) => handleAxisMetricChange(axisType, sm.key, 'updateWeight', parseInt(e.target.value, 10))}
                                 className="h-7 text-xs w-16 bg-navy-800 border-navy-500 px-1.5"
                                 min={0} max={100} step={1}
                             />
@@ -558,13 +628,13 @@ export function ScatterScoreProPage() {
                 ))}
             </div>
             <div className={cn("text-xs mt-2 font-medium", currentTotalWeightForAxis !== 100 && currentSelectedMetricsForAxis.length > 0 ? "text-destructive" : currentTotalWeightForAxis === 100 ? "text-green-400" : "text-muted-foreground")}>
-                Total {axisType}-Axis Weight: {currentTotalWeightForAxis}% {currentSelectedMetricsForAxis.length > 0 && currentTotalWeightForAxis !==100 && "(Must sum to 100%)"}
+                Total {axisType}-Axis Weight: {Math.round(currentTotalWeightForAxis)}% {currentSelectedMetricsForAxis.length > 0 && Math.round(currentTotalWeightForAxis) !==100 && "(Must sum to 100%)"}
             </div>
         </CardContent>
       </Card>
     );
   };
-
+  // --- END: Sub-components ---
 
   return (
     <PageContainer
@@ -604,7 +674,7 @@ export function ScatterScoreProPage() {
                 </Button>
             </div>
           
-            <div className="px-1 space-y-4 pb-4">
+            <div className="px-1 space-y-4 pb-4"> {/* Content wrapper for padding below sticky header */}
                 <div>
                   <Label htmlFor="template-selector" className="text-xs font-semibold text-muted-foreground block mb-1">Load Template</Label>
                   <Select value={activeTemplateName || ""} onValueChange={handleTemplateChange}>
@@ -679,18 +749,40 @@ export function ScatterScoreProPage() {
                     </CardContent>
                 </Card>
 
-                <Button onClick={handleApplyConfiguration} className="w-full mt-3 bg-accent-teal hover:bg-accent-teal/90 text-sm font-semibold py-2.5">
-                  <RefreshCw size={16} className="mr-2"/> Apply & Plot Scores
+                <Button 
+                    onClick={handleApplyConfigurationAndCalculateScores} 
+                    className="w-full mt-3 bg-accent-teal hover:bg-accent-teal/90 text-sm font-semibold py-2.5"
+                    disabled={isCalculatingScores || (selectedXMetrics.length === 0 && selectedYMetrics.length === 0)}
+                >
+                  {isCalculatingScores ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <RefreshCw size={16} className="mr-2"/>}
+                  Apply & Plot Scores
                 </Button>
             </div>
         </motion.div>
 
         {/* Chart Display Area */}
-        <div className="flex-grow bg-navy-800/30 p-4 rounded-lg border border-navy-700 backdrop-blur-sm flex items-center justify-center min-h-[400px] lg:min-h-0">
-          <p className="text-center text-gray-400">
-            Scatter plot and score results will appear here.
-            <br /> (Implementation in Mini PRD-SS-2 & SS-3)
-          </p>
+        <div className="flex-grow bg-navy-800/30 p-4 rounded-lg border border-navy-700 backdrop-blur-sm flex items-center justify-center min-h-[400px] lg:min-h-0 relative">
+          {isCalculatingScores && <div className="absolute inset-0 bg-background/50 flex items-center justify-center z-10"><LoadingIndicator message="Calculating scores..."/></div>}
+          {!isCalculatingScores && axisScoreError && <p className="text-destructive text-center">{axisScoreError}</p>}
+          {!isCalculatingScores && !axisScoreError && plotData.length === 0 && 
+            (selectedXMetrics.length > 0 || selectedYMetrics.length > 0) &&  
+            <p className="text-center text-gray-400">No data to plot. <br/>Possible reasons: no companies match global filters, or selected metrics have no valid data for any filtered companies. <br/>Try adjusting global filters or click "Apply & Plot Scores" again.</p>
+          }
+          {!isCalculatingScores && !axisScoreError && plotData.length === 0 && 
+            selectedXMetrics.length === 0 && selectedYMetrics.length === 0 &&
+             <p className="text-center text-gray-400">Please select metrics for at least one axis and click "Apply & Plot Scores".</p>
+          }
+          {!isCalculatingScores && !axisScoreError && plotData.length > 0 && (
+            <div className="text-center text-green-400">
+                <p>Plot data is ready! Chart rendering (Mini PRD-SS-3) is next.</p>
+                {DEBUG_SCATTER_SCORE && (
+                    <pre className="mt-4 text-xs text-left whitespace-pre-wrap bg-navy-900/50 p-2 rounded max-h-60 overflow-auto">
+                        {JSON.stringify(plotData.slice(0,3), null, 2)}
+                    </pre>
+                )}
+            </div>
+          )}
+          {/* TODO: Chart component will go here (Mini PRD-SS-3) */}
         </div>
       </div>
     </PageContainer>
