@@ -1,8 +1,7 @@
 // src/pages/scatter-score-pro/index.tsx
 import React, { useState, useCallback, useMemo, useEffect } from 'react';
-import { motion } from 'framer-motion'; // <-- ADD THIS IMPORT
+import { motion } from 'framer-motion'; // Ensured import
 import { useFilters } from '../../contexts/filter-context';
-import { useCurrency } from '../../contexts/currency-context';
 import { PageContainer } from '../../components/ui/page-container';
 import { Button } from '../../components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
@@ -14,21 +13,21 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../../
 import { Info, Lock, ArrowUp, ArrowDown, Settings, RefreshCw, ListPlus, X, ChevronDown, ChevronUp } from 'lucide-react';
 import { MetricSelector } from '../../components/metric-selector';
 import {
-  metrics as allMetrics, // Correctly import 'metrics' and alias it to 'allMetrics'
+  allMetricsFromTypes as allMetrics,
   metricCategories,
   getAccessibleMetrics,
   MetricConfig
 } from '../../lib/metric-types';
-import type { ColumnTier, NormalizationMode, ImputationMode } from '../../lib/types'; // Removed unused Currency import
+import type { ColumnTier, NormalizationMode, ImputationMode } from '../../lib/types';
 import { cn, isValidNumber } from '../../lib/utils';
 
-// Local Type Definitions
+// --- Local Type Definitions ---
 interface AxisMetricConfig {
-  key: string; // MetricConfig.key
+  key: string;
   metricLabel: string;
-  weight: number; // Percentage 0-100
+  weight: number;
   userHigherIsBetter: boolean;
-  originalHigherIsBetter: boolean; // From MetricConfig, for reference
+  originalHigherIsBetter: boolean;
 }
 
 interface ScatterScoreTemplate {
@@ -44,7 +43,7 @@ interface ScatterScoreTemplate {
 
 const DEBUG_SCATTER_SCORE = process.env.NODE_ENV === 'development';
 
-// --- START: PRE-DEFINED TEMPLATES ---
+// --- PRE-DEFINED TEMPLATES ---
 const PREDEFINED_TEMPLATES: ScatterScoreTemplate[] = [
   {
     name: "Value Hunter",
@@ -139,7 +138,6 @@ const PREDEFINED_TEMPLATES: ScatterScoreTemplate[] = [
 ];
 // --- END: PRE-DEFINED TEMPLATES ---
 
-// Simple ScaleToggle (can be moved to a shared UI component later)
 const ScaleToggle: React.FC<{ scale: 'linear' | 'log'; onChange: (newScale: 'linear' | 'log') => void; label: string }> = ({ scale, onChange, label }) => (
     <div className="flex items-center gap-2 text-xs mt-1">
       <span className="text-muted-foreground">{label}:</span>
@@ -151,64 +149,47 @@ const ScaleToggle: React.FC<{ scale: 'linear' | 'log'; onChange: (newScale: 'lin
 );
 
 export function ScatterScoreProPage() {
-  const { currentUserTier } = useFilters(); // Only need tier for accessibleMetrics
-  // const { currency } = useCurrency(); // Not directly needed if scores are unitless and tooltips handle raw values
-
+  const { currentUserTier } = useFilters();
   const [activeTemplateName, setActiveTemplateName] = useState<string | null>(
     PREDEFINED_TEMPLATES.length > 0 ? PREDEFINED_TEMPLATES[0].name : null
   );
-  
   const [selectedXMetrics, setSelectedXMetrics] = useState<AxisMetricConfig[]>([]);
   const [selectedYMetrics, setSelectedYMetrics] = useState<AxisMetricConfig[]>([]);
   const [selectedZMetricKey, setSelectedZMetricKey] = useState<string | null>(null);
   const [zScale, setZScale] = useState<'linear' | 'log'>('log');
-  
   const [normalizationMode, setNormalizationMode] = useState<NormalizationMode>('dataset_rank_percentile');
   const [imputationMode, setImputationMode] = useState<ImputationMode>('dataset_median');
-
-  const [isConfigPanelOpen, setIsConfigPanelOpen] = useState(true); // Default open for desktop
+  const [isConfigPanelOpen, setIsConfigPanelOpen] = useState(true);
 
   const accessibleMetrics = useMemo(() => getAccessibleMetrics(currentUserTier || 'free'), [currentUserTier]);
 
   const getMetricConfigDetails = useCallback((key: string): MetricConfig | undefined => {
     return allMetrics.find(m => m.key === key);
-  }, []);
+  }, []); // allMetrics is stable
 
   const loadTemplate = useCallback((templateName: string | null) => {
     const template = PREDEFINED_TEMPLATES.find(t => t.name === templateName);
-    if (!template) {
-      if (DEBUG_SCATTER_SCORE && templateName) console.warn(`[ScatterScoreProPage] Template '${templateName}' not found.`);
-      const firstTemplate = PREDEFINED_TEMPLATES[0];
-      if (!firstTemplate) {
+    const targetTemplate = template || PREDEFINED_TEMPLATES[0]; // Fallback to first if named one not found or null
+
+    if (!targetTemplate) { // If still no template (e.g., PREDEFINED_TEMPLATES is empty)
+        if (DEBUG_SCATTER_SCORE) console.warn(`[ScatterScoreProPage] No templates available to load.`);
         setSelectedXMetrics([]); setSelectedYMetrics([]); setSelectedZMetricKey(null);
         setActiveTemplateName(null);
         return;
-      }
-      // Fallback to loading the first template
-      setActiveTemplateName(firstTemplate.name);
-      templateName = firstTemplate.name; // Use the name of the first template for the rest of the logic
-      // This recursive call might be problematic if firstTemplate is also somehow invalid.
-      // A direct load of firstTemplate logic is safer:
-      // loadTemplate(firstTemplate.name); // Be careful with recursion here
-      // Instead, let's directly process the firstTemplate if current templateName fails
-      if (!PREDEFINED_TEMPLATES.find(t => t.name === templateName)) return; // Guard if still no valid template
     }
-    
-    const currentTemplate = template || PREDEFINED_TEMPLATES[0]; // Use selected or first as fallback
-    if (!currentTemplate) return; // Should not happen if PREDEFINED_TEMPLATES is not empty
 
-    setActiveTemplateName(currentTemplate.name);
+    setActiveTemplateName(targetTemplate.name);
 
     const mapAndFilterMetrics = (configs: Array<{ key: string; weight: number; userHigherIsBetter?: boolean }>): AxisMetricConfig[] => {
       return configs
         .map(m => {
           const metricConfig = getMetricConfigDetails(m.key);
           if (!metricConfig) {
-            if (DEBUG_SCATTER_SCORE) console.warn(`[ScatterScoreProPage] Metric config not found for key: ${m.key} in template '${currentTemplate.name}'`);
+            if (DEBUG_SCATTER_SCORE) console.warn(`[ScatterScoreProPage] Metric config not found for key: ${m.key} in template '${targetTemplate.name}'`);
             return null;
           }
           if (!accessibleMetrics.some(am => am.key === m.key)) {
-            if (DEBUG_SCATTER_SCORE) console.log(`[ScatterScoreProPage] Metric ${metricConfig.label} from template '${currentTemplate.name}' not accessible for tier ${currentUserTier}. Skipping.`);
+            if (DEBUG_SCATTER_SCORE) console.log(`[ScatterScoreProPage] Metric ${metricConfig.label} from template '${targetTemplate.name}' not accessible for tier ${currentUserTier}. Skipping.`);
             return null;
           }
           return {
@@ -222,26 +203,24 @@ export function ScatterScoreProPage() {
         .filter(m => m !== null) as AxisMetricConfig[];
     };
 
-    setSelectedXMetrics(mapAndFilterMetrics(currentTemplate.xMetricsConfig));
-    setSelectedYMetrics(mapAndFilterMetrics(currentTemplate.yMetricsConfig));
+    setSelectedXMetrics(mapAndFilterMetrics(targetTemplate.xMetricsConfig));
+    setSelectedYMetrics(mapAndFilterMetrics(targetTemplate.yMetricsConfig));
     
-    const zMetricIsAccessible = currentTemplate.zMetricKey ? accessibleMetrics.some(am => am.key === currentTemplate.zMetricKey) : true; // Allow null zMetricKey
-    setSelectedZMetricKey(zMetricIsAccessible && currentTemplate.zMetricKey ? currentTemplate.zMetricKey : null);
+    const zMetricIsAccessible = targetTemplate.zMetricKey ? accessibleMetrics.some(am => am.key === targetTemplate.zMetricKey) : true;
+    setSelectedZMetricKey(zMetricIsAccessible && targetTemplate.zMetricKey ? targetTemplate.zMetricKey : null);
     
-    setZScale(currentTemplate.zScale || 'log');
-    setNormalizationMode(currentTemplate.defaultNormalizationMode || 'dataset_rank_percentile');
-    setImputationMode(currentTemplate.defaultImputationMode || 'dataset_median');
+    setZScale(targetTemplate.zScale || 'log');
+    setNormalizationMode(targetTemplate.defaultNormalizationMode || 'dataset_rank_percentile');
+    setImputationMode(targetTemplate.defaultImputationMode || 'dataset_median');
 
-    if (DEBUG_SCATTER_SCORE) console.log(`[ScatterScoreProPage] Loaded template: ${currentTemplate.name}`);
-
+    if (DEBUG_SCATTER_SCORE) console.log(`[ScatterScoreProPage] Loaded template: ${targetTemplate.name}`);
   }, [accessibleMetrics, currentUserTier, getMetricConfigDetails]);
 
   useEffect(() => {
-    if (PREDEFINED_TEMPLATES.length > 0 && !selectedXMetrics.length && !selectedYMetrics.length) { // Load default only if nothing is selected yet
+    if (PREDEFINED_TEMPLATES.length > 0 && !activeTemplateName) { // Load default on initial mount if no active template
         loadTemplate(PREDEFINED_TEMPLATES[0].name);
     }
-  }, [loadTemplate, selectedXMetrics, selectedYMetrics]);
-
+  }, [loadTemplate, activeTemplateName]);
 
   const handleTemplateChange = (newTemplateName: string) => {
     loadTemplate(newTemplateName);
@@ -251,7 +230,7 @@ export function ScatterScoreProPage() {
     axisType: 'X' | 'Y',
     metricKey: string,
     action: 'add' | 'remove' | 'updateWeight' | 'toggleHLB',
-    value?: any // For weight or HLB boolean
+    value?: any
   ) => {
     const setSelectedMetrics = axisType === 'X' ? setSelectedXMetrics : setSelectedYMetrics;
     setSelectedMetrics(prevMetrics => {
@@ -265,7 +244,7 @@ export function ScatterScoreProPage() {
             newMetrics.push({
               key: metricKey,
               metricLabel: metricConfig.label,
-              weight: 0, // Start with 0 weight, user needs to adjust sum to 100
+              weight: newMetrics.length === 0 ? 100 : 0, // Default weight, user to adjust
               userHigherIsBetter: metricConfig.higherIsBetter,
               originalHigherIsBetter: metricConfig.higherIsBetter,
             });
@@ -281,36 +260,22 @@ export function ScatterScoreProPage() {
           newMetrics[existingIndex] = { ...newMetrics[existingIndex], userHigherIsBetter: !!value };
         }
       }
-      // Auto-normalize weights to sum to 100 if there are metrics
-      if (newMetrics.length > 0) {
-        const currentTotalWeight = newMetrics.reduce((sum, m) => sum + m.weight, 0);
-        if (currentTotalWeight === 0 && newMetrics.length > 0) { // Initial add, distribute equally
-            const equalWeight = Math.floor(100 / newMetrics.length);
-            newMetrics = newMetrics.map(m => ({...m, weight: equalWeight}));
-            let sum = newMetrics.reduce((s,m)=> s+m.weight, 0);
-            if (newMetrics.length > 0 && sum !== 100) newMetrics[0].weight += (100-sum); // Adjust first to hit 100
-        }
-        // Note: More sophisticated auto-balancing when a weight changes might be needed,
-        // or clear UI indication that total must be 100%. For now, this is a basic distribution on add.
+      // Simple auto-distribution if only one metric remains or becomes the first metric
+      if (newMetrics.length === 1 && newMetrics[0].weight !== 100) {
+          newMetrics[0].weight = 100;
+      } else if (action === 'remove' && newMetrics.length > 0) {
+          // If removing, and weights no longer sum to 100, user needs to manually adjust
+          // Or implement more complex re-distribution. For now, manual adjustment is implied.
       }
       return newMetrics;
     });
-    setActiveTemplateName(null); // Switched to custom configuration
+    setActiveTemplateName(null);
   };
   
   const xTotalWeight = useMemo(() => Math.round(selectedXMetrics.reduce((sum, m) => sum + m.weight, 0)), [selectedXMetrics]);
   const yTotalWeight = useMemo(() => Math.round(selectedYMetrics.reduce((sum, m) => sum + m.weight, 0)), [selectedYMetrics]);
 
   const handleApplyConfiguration = () => {
-    if (DEBUG_SCATTER_SCORE) {
-      console.log("[ScatterScoreProPage] Applying configuration:", {
-        template: activeTemplateName,
-        xMetrics: selectedXMetrics, xTotalWeight,
-        yMetrics: selectedYMetrics, yTotalWeight,
-        zMetric: selectedZMetricKey, zScale,
-        normalizationMode, imputationMode,
-      });
-    }
     if (selectedXMetrics.length > 0 && xTotalWeight !== 100) {
         alert("Total weight for X-Axis metrics must sum to 100%. Please adjust.");
         return;
@@ -319,30 +284,74 @@ export function ScatterScoreProPage() {
         alert("Total weight for Y-Axis metrics must sum to 100%. Please adjust.");
         return;
     }
-    if (DEBUG_SCATTER_SCORE) console.log("[ScatterScoreProPage] Configuration applied. Score calculation and chart update would be triggered here.");
-    // TODO: Implement actual score calculation and chart data update (Mini PRD-SS-2, SS-3)
+    if (DEBUG_SCATTER_SCORE) {
+      console.log("[ScatterScoreProPage] Applying configuration:", {
+        template: activeTemplateName,
+        xMetrics: selectedXMetrics, xTotalWeight,
+        yMetrics: selectedYMetrics, yTotalWeight,
+        zMetric: selectedZMetricKey, zScale,
+        normalizationMode, imputationMode,
+      });
+      console.log("[ScatterScoreProPage] Recalculation logic to be implemented (Mini PRD-SS-2 & SS-3).");
+    }
+    // TODO: Trigger score calculation and chart update
   };
 
-  const AxisMetricConfigurator: React.FC<{
-    axisTitle: string;
-    axisType: 'X' | 'Y';
-    selectedMetrics: AxisMetricConfig[];
-    setSelectedMetrics: React.Dispatch<React.SetStateAction<AxisMetricConfig[]>>;
-    totalWeight: number;
-  }> = ({ axisTitle, axisType, selectedMetrics, setSelectedMetrics, totalWeight }) => {
+  // Moved AvailableMetricsSelector inside the component so it can access `accessibleMetrics`
+  const AvailableMetricsSelector: React.FC<{
+    axisLabel: 'X' | 'Y';
+    onMetricSelect: (metricKey: string) => void;
+    currentSelectedKeys: string[];
+  }> = ({ axisLabel, onMetricSelect, currentSelectedKeys }) => {
+    return (
+      <div className="my-2">
+        <Select onValueChange={(value) => { if(value) onMetricSelect(value); }}>
+          <SelectTrigger className="text-xs h-9 bg-navy-700 border-navy-600">
+            <SelectValue placeholder={`Add Metric to ${axisLabel}-Axis...`} />
+          </SelectTrigger>
+          <SelectContent>
+            {Object.entries(metricCategories).map(([catKey, catLabel]) => {
+                const metricsInCat = accessibleMetrics.filter(
+                    m => m.category === catKey && !currentSelectedKeys.includes(m.key)
+                );
+                if (metricsInCat.length === 0) return null;
+                return (
+                    <React.Fragment key={catKey}>
+                        <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">{catLabel}</div>
+                        {metricsInCat.map(m => (
+                            <SelectItem key={m.key} value={m.key} className="text-xs pl-4">
+                                {m.label}
+                            </SelectItem>
+                        ))}
+                    </React.Fragment>
+                );
+            })}
+          </SelectContent>
+        </Select>
+      </div>
+    );
+  };
+
+  // Moved renderAxisMetricConfigurator inside so it can use handleAxisMetricChange and other component scope
+  const renderAxisMetricConfigurator = (
+    axisTitle: 'X-Axis Score Metrics' | 'Y-Axis Score Metrics',
+    currentSelectedMetrics: AxisMetricConfig[], // Changed prop name for clarity
+    axisType: 'X' | 'Y',
+    currentTotalWeight: number // Changed prop name
+  ) => {
     return (
       <Card className="p-4 bg-navy-700/50 border-navy-600">
         <CardTitle className="text-md mb-3">{axisTitle}</CardTitle>
         <AvailableMetricsSelector
             axisLabel={axisType}
             onMetricSelect={(metricKey) => handleAxisMetricChange(axisType, metricKey, 'add')}
-            currentSelectedKeys={selectedMetrics.map(m => m.key)}
-            accessibleMetrics={accessibleMetrics} // Pass accessible metrics
+            currentSelectedKeys={currentSelectedMetrics.map(m => m.key)}
+            accessibleMetrics={accessibleMetrics} 
         />
         <div className="space-y-2 max-h-48 overflow-y-auto pr-1 mt-2 scrollbar-thin scrollbar-thumb-navy-500 scrollbar-track-navy-800">
-          {selectedMetrics.length === 0 && <p className="text-xs text-muted-foreground italic py-2">No metrics selected for this axis.</p>}
-          {selectedMetrics.map((sm) => (
-              <div key={sm.key} className="p-2 border rounded-md bg-navy-600/40 border-navy-500/70 space-y-1.5">
+          {currentSelectedMetrics.length === 0 && <p className="text-xs text-muted-foreground italic py-2">No metrics selected for this axis.</p>}
+          {currentSelectedMetrics.map((sm) => (
+              <div key={sm.key} className="p-2.5 border rounded-md bg-navy-600/40 border-navy-500/70 space-y-1.5">
                 <div className="flex justify-between items-center">
                   <Label htmlFor={`weight-${axisType}-${sm.key}`} className="text-xs font-medium text-surface-white truncate flex-grow mr-2" title={sm.metricLabel}>{sm.metricLabel}</Label>
                   <Button variant="ghost" size="icon" className="p-0 h-5 w-5 text-red-500 hover:text-red-400 flex-shrink-0" onClick={() => 
@@ -379,7 +388,7 @@ export function ScatterScoreProPage() {
                             <TooltipTrigger asChild>
                                 <Info size={12} className="text-muted-foreground hover:text-accent-teal"/>
                             </TooltipTrigger>
-                            <TooltipContent side="top" className="text-xs max-w-xs">
+                            <TooltipContent side="top" className="text-xs max-w-xs p-2">
                                 <p>Check if a higher value of this metric should contribute positively to this axis's score. Uncheck if a lower value is better for this axis's theme. Default is based on the metric's general definition.</p>
                             </TooltipContent>
                         </Tooltip>
@@ -389,46 +398,10 @@ export function ScatterScoreProPage() {
               </div>
             ))}
         </div>
-        <div className={cn("text-xs mt-2 font-medium", totalWeight !== 100 && selectedMetrics.length > 0 ? "text-destructive" : totalWeight === 100 ? "text-green-400" : "text-muted-foreground")}>
-            Total {axisType}-Axis Weight: {totalWeight}% {selectedMetrics.length > 0 && totalWeight !==100 && "(Must be 100%)"}
+        <div className={cn("text-xs mt-2 font-medium", currentTotalWeight !== 100 && currentSelectedMetrics.length > 0 ? "text-destructive" : currentTotalWeight === 100 ? "text-green-400" : "text-muted-foreground")}>
+            Total {axisType}-Axis Weight: {currentTotalWeight}% {currentSelectedMetrics.length > 0 && currentTotalWeight !==100 && "(Must be 100%)"}
         </div>
       </Card>
-    );
-  };
-  
-  // Simplified metric selector for "Add Metric" functionality
-  const AvailableMetricsSelector: React.FC<{
-    axisLabel: 'X' | 'Y';
-    onMetricSelect: (metricKey: string) => void;
-    currentSelectedKeys: string[];
-    accessibleMetrics: MetricConfig[];
-  }> = ({ axisLabel, onMetricSelect, currentSelectedKeys, accessibleMetrics }) => {
-    return (
-      <div className="mb-3">
-        <Select onValueChange={(value) => { if(value) onMetricSelect(value); }}>
-          <SelectTrigger className="text-xs h-9 bg-navy-700 border-navy-600">
-            <SelectValue placeholder={`Add Metric to ${axisLabel}-Axis...`} />
-          </SelectTrigger>
-          <SelectContent>
-            {Object.entries(metricCategories).map(([catKey, catLabel]) => {
-                const metricsInCat = accessibleMetrics.filter(
-                    m => m.category === catKey && !currentSelectedKeys.includes(m.key)
-                );
-                if (metricsInCat.length === 0) return null;
-                return (
-                    <React.Fragment key={catKey}>
-                        <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">{catLabel}</div>
-                        {metricsInCat.map(m => (
-                            <SelectItem key={m.key} value={m.key} className="text-xs pl-4">
-                                {m.label}
-                            </SelectItem>
-                        ))}
-                    </React.Fragment>
-                );
-            })}
-          </SelectContent>
-        </Select>
-      </div>
     );
   };
 
@@ -439,11 +412,10 @@ export function ScatterScoreProPage() {
       description="Configure multi-metric axes for custom scatter plots and derived scores."
     >
       <div className="flex flex-col lg:flex-row gap-4 md:gap-6 p-2 md:p-4 h-full overflow-hidden">
-        {/* Configuration Panel */}
         <Button 
             onClick={() => setIsConfigPanelOpen(!isConfigPanelOpen)} 
             variant="outline" 
-            className="lg:hidden fixed bottom-4 right-4 z-50 bg-navy-700 border-navy-600 p-2 h-auto"
+            className="lg:hidden fixed bottom-4 right-4 z-50 bg-navy-700 border-navy-600 p-2 h-auto shadow-lg"
             aria-label="Toggle Configuration Panel"
         >
             <Settings size={20}/>
@@ -456,108 +428,105 @@ export function ScatterScoreProPage() {
                 open: { opacity: 1, x: 0, display: 'flex' },
                 closed: { opacity: 0, x: "-100%", transitionEnd: { display: 'none' } }
             }}
-            transition={{ duration: 0.3, ease: "easeInOut" }}
+            transition={{ type: "tween", duration: 0.3, ease: "easeInOut" }}
             className={cn(
-                "flex-col lg:flex lg:sticky lg:top-[calc(var(--header-height,64px)+1.5rem)] space-y-4 overflow-y-auto bg-navy-800/60 border border-navy-700 backdrop-blur-md rounded-lg p-3 md:p-4 flex-shrink-0 lg:w-[400px] xl:w-[450px] scrollbar-thin scrollbar-thumb-navy-600 scrollbar-track-navy-700/50",
-                "fixed inset-0 z-30 lg:relative lg:inset-auto lg:h-[calc(100vh-var(--header-height,64px)-3rem)]" // Fullscreen on mobile, sticky on desktop
+                "flex-col lg:flex space-y-4 overflow-y-auto bg-navy-800/80 border border-navy-700/70 backdrop-blur-lg rounded-xl p-3 md:p-4 flex-shrink-0 lg:w-[400px] xl:w-[450px] scrollbar-thin scrollbar-thumb-navy-600 scrollbar-track-navy-700/50",
+                "fixed inset-0 z-40 lg:relative lg:inset-auto lg:h-[calc(100vh-var(--header-height,64px)-3rem)]" 
             )}
+            style={{'--header-height': '64px'} as React.CSSProperties} // Define CSS variable for header height
         >
-            <div className="flex justify-between items-center mb-1">
+            <div className="flex justify-between items-center mb-1 sticky top-0 bg-navy-800/80 backdrop-blur-sm py-2 -mx-3 md:-mx-4 px-3 md:px-4 z-10 border-b border-navy-700">
                 <h2 className="text-xl font-semibold text-surface-white">Chart Configuration</h2>
                 <Button variant="ghost" size="icon" onClick={() => setIsConfigPanelOpen(false)} className="lg:hidden text-muted-foreground hover:text-surface-white">
                     <X size={20}/>
                 </Button>
             </div>
           
-            <div>
-              <Label htmlFor="template-selector" className="text-xs font-semibold text-muted-foreground block mb-1">Load Template</Label>
-              <Select value={activeTemplateName || ""} onValueChange={handleTemplateChange}>
-                <SelectTrigger id="template-selector" className="w-full h-9 text-xs bg-navy-700 border-navy-600">
-                  <SelectValue placeholder="Select a template..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {PREDEFINED_TEMPLATES.map(t => (
-                    <SelectItem key={t.name} value={t.name} className="text-xs">
-                        {t.name} 
-                        <TooltipProvider delayDuration={100}>
-                            <Tooltip>
-                                <TooltipTrigger asChild>
-                                    <Info size={12} className="inline ml-2 text-muted-foreground opacity-50"/>
-                                </TooltipTrigger>
-                                <TooltipContent side="right" className="text-xs max-w-xs p-2">
-                                    <p>{t.description}</p>
-                                </TooltipContent>
-                            </Tooltip>
-                        </TooltipProvider>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+            <div className="px-1 space-y-4"> {/* Inner padding for content below sticky header */}
+                <div>
+                  <Label htmlFor="template-selector" className="text-xs font-semibold text-muted-foreground block mb-1">Load Template</Label>
+                  <Select value={activeTemplateName || ""} onValueChange={handleTemplateChange}>
+                    <SelectTrigger id="template-selector" className="w-full h-9 text-xs bg-navy-700 border-navy-600">
+                      <SelectValue placeholder="Select a template..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {PREDEFINED_TEMPLATES.map(t => (
+                        <SelectItem key={t.name} value={t.name} className="text-xs">
+                            {t.name} 
+                            <TooltipProvider delayDuration={100}>
+                                <Tooltip>
+                                    <TooltipTrigger asChild><button type="button" className="ml-2 opacity-50 hover:opacity-100" onClick={(e) => e.stopPropagation()}><Info size={12}/></button></TooltipTrigger>
+                                    <TooltipContent side="right" className="text-xs max-w-xs p-2 z-50">
+                                        <p>{t.description}</p>
+                                    </TooltipContent>
+                                </Tooltip>
+                            </TooltipProvider>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                {renderAxisMetricConfigurator("X-Axis Score Metrics", selectedXMetrics, setSelectedXMetrics, xTotalWeight)}
+                {renderAxisMetricConfigurator("Y-Axis Score Metrics", selectedYMetrics, setSelectedYMetrics, yTotalWeight)}
+
+                <Card className="p-4 bg-navy-700/50 border-navy-600">
+                  <CardTitle className="text-md mb-2">Z-Axis (Bubble Size)</CardTitle>
+                  <MetricSelector
+                      label=""
+                      selectedMetric={selectedZMetricKey}
+                      onMetricChange={setSelectedZMetricKey}
+                      currentTier={currentUserTier}
+                      availableMetrics={accessibleMetrics}
+                      filterForNumericOnly={true} 
+                      placeholder="Select Z-Axis Metric..."
+                  />
+                  {selectedZMetricKey && <ScaleToggle scale={zScale} onChange={setZScale} label="Bubble Scale" />}
+                </Card>
+
+                <Card className="p-4 bg-navy-700/50 border-navy-600">
+                  <CardTitle className="text-md mb-2">Scoring Settings</CardTitle>
+                  <div className="space-y-3">
+                      <div>
+                          <Label htmlFor="norm-mode" className="text-xs font-medium text-muted-foreground">Normalization Mode</Label>
+                          <Select value={normalizationMode} onValueChange={(val) => setNormalizationMode(val as NormalizationMode)}>
+                              <SelectTrigger id="norm-mode" className="h-9 text-xs bg-navy-700 border-navy-600 mt-1"><SelectValue /></SelectTrigger>
+                              <SelectContent>
+                                  <SelectItem value="dataset_min_max" className="text-xs">Dataset Min-Max (0-1)</SelectItem>
+                                  <SelectItem value="global_min_max" className="text-xs">Global Min-Max (0-1)</SelectItem>
+                                  <SelectItem value="dataset_rank_percentile" className="text-xs">Dataset Rank/Percentile (0-1)</SelectItem>
+                                  <SelectItem value="dataset_z_score" className="text-xs">Dataset Z-Score (approx 0-1)</SelectItem>
+                              </SelectContent>
+                          </Select>
+                      </div>
+                      <div>
+                          <Label htmlFor="impute-mode" className="text-xs font-medium text-muted-foreground">Imputation (Missing Values)</Label>
+                          <Select value={imputationMode} onValueChange={(val) => setImputationMode(val as ImputationMode)}>
+                              <SelectTrigger id="impute-mode" className="h-9 text-xs bg-navy-700 border-navy-600 mt-1"><SelectValue /></SelectTrigger>
+                              <SelectContent>
+                                  <SelectItem value="zero_worst" className="text-xs">Zero / Worst Case</SelectItem>
+                                  <SelectItem value="dataset_mean" className="text-xs">Dataset Mean</SelectItem>
+                                  <SelectItem value="dataset_median" className="text-xs">Dataset Median</SelectItem>
+                              </SelectContent>
+                          </Select>
+                      </div>
+                  </div>
+                </Card>
+
+                <Button onClick={handleApplyConfiguration} className="w-full mt-3 bg-accent-teal hover:bg-accent-teal/90 text-sm font-semibold py-2.5">
+                  <RefreshCw size={16} className="mr-2"/> Apply & Plot Scores
+                </Button>
             </div>
-            
-            {renderAxisMetricConfigurator("X-Axis Score Metrics", selectedXMetrics, (updater) => handleAxisMetricChange('X', '', 'updateWeight', updater), xTotalWeight)}
-            {renderAxisMetricConfigurator("Y-Axis Score Metrics", selectedYMetrics, (updater) => handleAxisMetricChange('Y', '', 'updateWeight', updater), yTotalWeight)}
-
-            <Card className="p-4 bg-navy-700/50 border-navy-600">
-              <CardTitle className="text-md mb-2">Z-Axis (Bubble Size)</CardTitle>
-              <MetricSelector
-                  label=""
-                  selectedMetric={selectedZMetricKey}
-                  onMetricChange={setSelectedZMetricKey}
-                  currentTier={currentUserTier}
-                  availableMetrics={accessibleMetrics}
-                  filterForNumericOnly={true} 
-                  placeholder="Select Z-Axis Metric..."
-              />
-              {selectedZMetricKey && <ScaleToggle scale={zScale} onChange={setZScale} label="Bubble Scale" />}
-            </Card>
-
-            <Card className="p-4 bg-navy-700/50 border-navy-600">
-              <CardTitle className="text-md mb-2">Scoring Settings</CardTitle>
-              <div className="space-y-3">
-                  <div>
-                      <Label htmlFor="norm-mode" className="text-xs font-medium text-muted-foreground">Normalization Mode</Label>
-                      <Select value={normalizationMode} onValueChange={(val) => setNormalizationMode(val as NormalizationMode)}>
-                          <SelectTrigger id="norm-mode" className="h-9 text-xs bg-navy-700 border-navy-600 mt-1"><SelectValue /></SelectTrigger>
-                          <SelectContent>
-                              <SelectItem value="dataset_min_max" className="text-xs">Dataset Min-Max (0-1)</SelectItem>
-                              <SelectItem value="global_min_max" className="text-xs">Global Min-Max (0-1)</SelectItem>
-                              <SelectItem value="dataset_rank_percentile" className="text-xs">Dataset Rank/Percentile (0-1)</SelectItem>
-                              <SelectItem value="dataset_z_score" className="text-xs">Dataset Z-Score (approx 0-1)</SelectItem>
-                          </SelectContent>
-                      </Select>
-                  </div>
-                  <div>
-                      <Label htmlFor="impute-mode" className="text-xs font-medium text-muted-foreground">Imputation (Missing Values)</Label>
-                      <Select value={imputationMode} onValueChange={(val) => setImputationMode(val as ImputationMode)}>
-                          <SelectTrigger id="impute-mode" className="h-9 text-xs bg-navy-700 border-navy-600 mt-1"><SelectValue /></SelectTrigger>
-                          <SelectContent>
-                              <SelectItem value="zero_worst" className="text-xs">Zero / Worst Case</SelectItem>
-                              <SelectItem value="dataset_mean" className="text-xs">Dataset Mean</SelectItem>
-                              <SelectItem value="dataset_median" className="text-xs">Dataset Median</SelectItem>
-                          </SelectContent>
-                      </Select>
-                  </div>
-              </div>
-            </Card>
-
-            <Button onClick={handleApplyConfiguration} className="w-full mt-3 bg-accent-teal hover:bg-accent-teal/90 text-sm font-semibold py-2.5">
-              <RefreshCw size={16} className="mr-2"/> Apply & Plot Scores
-            </Button>
         </motion.div>
 
         {/* Chart Display Area */}
-        <div className="flex-grow bg-navy-800/30 p-4 rounded-lg border border-navy-700 backdrop-blur-sm flex items-center justify-center min-h-[400px] lg:min-h-0"> {/* Ensure min-h for mobile */}
+        <div className="flex-grow bg-navy-800/30 p-4 rounded-lg border border-navy-700 backdrop-blur-sm flex items-center justify-center min-h-[400px] lg:min-h-0">
           <p className="text-center text-gray-400">
             Scatter plot and score results will appear here.
             <br /> (Implementation in Mini PRD-SS-2 & SS-3)
           </p>
-          {/* Placeholder for the scatter chart itself */}
         </div>
       </div>
     </PageContainer>
   );
 }
-
-// It's good practice to define component-specific types or interfaces near the component
-// or in a dedicated types file for that feature if it grows complex.
