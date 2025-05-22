@@ -13,7 +13,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../../
 import { Info, Lock, ArrowUp, ArrowDown, Settings, RefreshCw, ListPlus, X, ChevronDown, ChevronUp } from 'lucide-react';
 import { MetricSelector } from '../../components/metric-selector';
 import {
-  allMetricsFromTypes as allMetrics,
+  metrics as allMetrics, // Correctly import 'metrics' and alias it to 'allMetrics'
   metricCategories,
   getAccessibleMetrics,
   MetricConfig
