@@ -11,7 +11,7 @@ export type ColumnTier = 'free' | 'pro' | 'premium';
 export type SubscriptionTier = 'free' | 'pro' | 'premium';
 
 export type Currency = 'USD' | 'CAD' | 'AUD' | 'EUR' | 'GBP';
-export type CompanyStatus = 'Producer' | 'Developer' | 'Explorer' | 'Royalty' | 'Other';
+export type CompanyStatus = 'Producer' | 'Developer' | 'Explorer' | 'Royalty';
 
 // --- Interface for augmented share price details ---
 export interface AugmentedPriceInfo {
@@ -395,3 +395,18 @@ export interface ScatterPoint {
   normalizedZ: number;
   company: Company;
 }
+
+export interface ExchangeRate {
+  rate_id: number; // Or whatever your primary key is
+  from_currency: Currency;
+  to_currency: Currency;
+  rate: number;
+  fetch_date: string; // Assuming timestamptz comes as ISO string
+  rate_date: string;  // Assuming date comes as YYYY-MM-DD string
+}
+
+export type ExchangeRateMap = {
+  [from_currency_code in Currency]?: { // from_currency is the key for the outer map
+    [to_currency_code in Currency]?: number; // to_currency is the key for the inner map, value is the rate
+  };
+};
