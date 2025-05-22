@@ -60,7 +60,7 @@ const logScoringDebug = (message: string, data?: any) => {
 
 // calculateDatasetMetricStats function (remains as provided by user, verified for robustness)
 // Minor refinement: Added fieldNameForError to logDebug in case of parsing issues.
-function calculateDatasetMetricStats(
+export function calculateDatasetMetricStats( // <--- ADD 'export' KEYWORD HERE
   companies: Company[],
   metricConfig: MetricConfig,
   allCompanyDebugLogs: Map<number, string[]> // For logging specific company issues during stats calculation
