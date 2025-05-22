@@ -13,10 +13,10 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../../
 import { Info, Lock, ArrowUp, ArrowDown, Settings, RefreshCw, ListPlus, X } from 'lucide-react';
 import { MetricSelector } from '../../components/metric-selector';
 import {
-  metrics as allMetrics, // CORRECTED IMPORT ALIAS
+  metrics as allMetrics,
   metricCategories,
   getAccessibleMetrics,
-  type MetricConfig // Corrected to type import
+  type MetricConfig
 } from '../../lib/metric-types';
 import type { ColumnTier, NormalizationMode, ImputationMode } from '../../lib/types';
 import { cn, isValidNumber } from '../../lib/utils';
@@ -43,7 +43,7 @@ interface ScatterScoreTemplate {
 
 const DEBUG_SCATTER_SCORE = process.env.NODE_ENV === 'development';
 
-// --- PRE-DEFINED TEMPLATES --- (Keep the full 5 templates as previously defined)
+// --- PRE-DEFINED TEMPLATES ---
 const PREDEFINED_TEMPLATES: ScatterScoreTemplate[] = [
   {
     name: "Value Hunter",
@@ -148,64 +148,52 @@ const ScaleToggle: React.FC<{ scale: 'linear' | 'log'; onChange: (newScale: 'lin
     </div>
 );
 
-/**
- * Normalizes an array of AxisMetricConfig to ensure their weights sum to 100%.
- * - If only one metric, it gets 100%.
- * - If multiple metrics and a specific one was just changed by user, that weight is respected (clamped 0-100).
- * The remaining 100 - newWeight is distributed proportionally among other metrics.
- * - If adding/removing or no specific metric changed, weights are distributed equally.
- * - Handles edge cases like all other metrics being 0 weight.
- */
 const normalizeWeights = (
     metrics: AxisMetricConfig[],
-    changedMetricKey?: string, // The key of the metric whose weight was explicitly set by the user
-    userSetWeightForChangedMetric?: number // The weight the user set for the changedMetricKey
+    changedMetricKey?: string,
+    userSetWeightForChangedMetric?: number
 ): AxisMetricConfig[] => {
     if (!metrics || metrics.length === 0) return [];
 
-    let workingMetrics = metrics.map(m => ({ ...m })); // Create a mutable copy
+    let workingMetrics = metrics.map(m => ({ ...m }));
 
     if (workingMetrics.length === 1) {
         workingMetrics[0].weight = 100;
         return workingMetrics;
     }
 
-    let totalWeightTarget = 100;
-    let sumOfManuallySetWeights = 0;
+    let fixedWeightTotal = 0;
     let countOfManuallySetMetrics = 0;
-    let sumOfAutoAdjustableWeights = 0;
-    let countOfAutoAdjustableMetrics = 0;
-
+    
+    // Apply user-set weight first if provided
     if (changedMetricKey && userSetWeightForChangedMetric !== undefined) {
         const idx = workingMetrics.findIndex(m => m.key === changedMetricKey);
         if (idx !== -1) {
             workingMetrics[idx].weight = Math.max(0, Math.min(100, userSetWeightForChangedMetric));
-            sumOfManuallySetWeights = workingMetrics[idx].weight;
+            fixedWeightTotal = workingMetrics[idx].weight;
             countOfManuallySetMetrics = 1;
         }
     }
     
-    // Calculate current sum of non-changed metrics for proportional distribution
-    workingMetrics.forEach(m => {
-        if (m.key !== changedMetricKey) {
-            sumOfAutoAdjustableWeights += m.weight;
-            countOfAutoAdjustableMetrics++;
-        }
-    });
+    const sumOfOtherWeights = workingMetrics.reduce((sum, m) => {
+        if (m.key !== changedMetricKey) return sum + m.weight;
+        return sum;
+    },0);
 
-    const remainingWeightToDistribute = totalWeightTarget - sumOfManuallySetWeights;
+    const countOfOtherMetrics = workingMetrics.length - countOfManuallySetMetrics;
+    const remainingTargetWeight = 100 - fixedWeightTotal;
 
-    if (countOfAutoAdjustableMetrics > 0) {
-        if (sumOfAutoAdjustableWeights === 0) { // If all other weights are 0, distribute equally
-            const equalShare = remainingWeightToDistribute / countOfAutoAdjustableMetrics;
+    if (countOfOtherMetrics > 0) {
+        if (sumOfOtherWeights === 0 || changedMetricKey ) { // Distribute remaining equally if others were 0 or one was changed
+            const equalShare = remainingTargetWeight / countOfOtherMetrics;
             workingMetrics = workingMetrics.map(m => {
                 if (m.key !== changedMetricKey) {
                     return { ...m, weight: Math.max(0, Math.round(equalShare)) };
                 }
                 return m;
             });
-        } else { // Distribute proportionally based on their previous share of the non-manual part
-            const scaleFactor = remainingWeightToDistribute / sumOfAutoAdjustableWeights;
+        } else { // Distribute proportionally
+            const scaleFactor = remainingWeightToDistribute / sumOfOtherWeights;
             workingMetrics = workingMetrics.map(m => {
                 if (m.key !== changedMetricKey) {
                     return { ...m, weight: Math.max(0, Math.round(m.weight * scaleFactor)) };
@@ -213,51 +201,47 @@ const normalizeWeights = (
                 return m;
             });
         }
-    } else if (countOfManuallySetMetrics === 1 && workingMetrics.length > 0) {
-      // Only one metric was manually set, and it's the only one, or all others were removed.
-      // Ensure this one metric gets 100 if it's the only one.
-       const idx = workingMetrics.findIndex(m => m.key === changedMetricKey);
-       if (idx !== -1 && workingMetrics.length === 1) {
-         workingMetrics[idx].weight = 100;
-       } else if (idx !== -1) {
-         // If it's not the only metric, its weight is already set. Others are 0.
-         // This case should be handled by user ensuring total is 100%.
-         // For now, the user-set weight is respected.
-       }
-    } else if (metrics.length > 0 && changedMetricKey === undefined ) { // Initial equal distribution
-        const equalWeight = Math.floor(100 / metrics.length);
-        workingMetrics = metrics.map(m => ({ ...m, weight: equalWeight }));
+    } else if (countOfManuallySetMetrics === 1 && workingMetrics.length === 1) { // Only one metric, and it was set
+        workingMetrics[0].weight = 100;
+    } else if (workingMetrics.length > 0 && !changedMetricKey) { // Initial distribution for add/remove or template load
+        const equalWeight = Math.floor(100 / workingMetrics.length);
+         workingMetrics = workingMetrics.map(m => ({ ...m, weight: equalWeight }));
     }
 
 
-    // Final pass to ensure sum is exactly 100 due to rounding, adjusting the largest or first auto-adjusted item
+    // Final pass to ensure sum is exactly 100 due to rounding
     let currentSum = workingMetrics.reduce((sum, m) => sum + m.weight, 0);
     if (workingMetrics.length > 0 && currentSum !== 100) {
         const diff = 100 - currentSum;
-        let targetAdjustIndex = -1;
-        // Try to adjust a metric that wasn't the one the user just changed
-        if (changedMetricKey) {
-            targetAdjustIndex = workingMetrics.findIndex(m => m.key !== changedMetricKey && (m.weight + diff) >= 0);
-        }
-        // If no such metric or no metric was changed, adjust the first one (or largest one that can take the diff)
-        if (targetAdjustIndex === -1) {
-             targetAdjustIndex = workingMetrics.findIndex(m => (m.weight + diff) >= 0);
-             if(targetAdjustIndex === -1 && workingMetrics.length > 0) targetAdjustIndex = 0; // fallback to first
-        }
+        // Try to adjust a metric that wasn't the one the user just changed, or the first if none changed
+        let adjustIndex = changedMetricKey ? workingMetrics.findIndex(m => m.key !== changedMetricKey) : -1;
+        if (adjustIndex === -1 && workingMetrics.length > 0) adjustIndex = 0; // Fallback to first
 
-        if (targetAdjustIndex !== -1) {
-            workingMetrics[targetAdjustIndex].weight += diff;
+        if (adjustIndex !== -1 && workingMetrics[adjustIndex]) {
+             workingMetrics[adjustIndex].weight = Math.max(0, workingMetrics[adjustIndex].weight + diff);
+        }
+        // If still not 100 (e.g. if previous adjustment made weight < 0), re-distribute more simply
+        currentSum = workingMetrics.reduce((sum, m) => sum + m.weight, 0);
+        if(workingMetrics.length > 0 && currentSum !== 100 && currentSum !== 0) { // avoid div by zero if sum is 0
+            const scale = 100 / currentSum;
+            workingMetrics = workingMetrics.map(m => ({...m, weight: Math.round(m.weight * scale)}));
+            currentSum = workingMetrics.reduce((sum, m) => sum + m.weight, 0);
+            if(workingMetrics.length > 0 && currentSum !== 100) workingMetrics[0].weight += (100-currentSum);
+        } else if (workingMetrics.length > 0 && currentSum === 0) { // if all became 0, re-distribute equally
+             const equalWeight = Math.floor(100 / workingMetrics.length);
+             workingMetrics = workingMetrics.map(m => ({ ...m, weight: equalWeight }));
+             currentSum = workingMetrics.reduce((sum, m) => sum + m.weight, 0);
+             if(workingMetrics.length > 0 && currentSum !== 100) workingMetrics[0].weight += (100-currentSum);
         }
     }
-    // Final clamp to ensure no weight is outside 0-100
-    return workingMetrics.map(m => ({...m, weight: Math.max(0, Math.min(100, m.weight))}));
+    return workingMetrics.map(m => ({...m, weight: Math.max(0, Math.min(100, Math.round(m.weight)))})); // Final clamp & round
 };
 
 
 export function ScatterScoreProPage() {
   const { currentUserTier } = useFilters();
 
-  const [activeTemplateName, setActiveTemplateName] = useState<string | null>(
+  const [activeTemplateName, setActiveTemplateName] = useState<string | null>(() => 
     PREDEFINED_TEMPLATES.length > 0 ? PREDEFINED_TEMPLATES[0].name : null
   );
   
@@ -275,7 +259,7 @@ export function ScatterScoreProPage() {
 
   const getMetricConfigDetails = useCallback((key: string): MetricConfig | undefined => {
     return allMetrics.find(m => m.key === key);
-  }, []); // allMetrics is stable
+  }, []);
 
   const loadTemplate = useCallback((templateName: string | null) => {
     const template = PREDEFINED_TEMPLATES.find(t => t.name === templateName) || PREDEFINED_TEMPLATES[0];
@@ -303,7 +287,7 @@ export function ScatterScoreProPage() {
           return {
             key: m.key,
             metricLabel: metricConfig.label,
-            weight: m.weight, // Initial weight from template
+            weight: m.weight,
             userHigherIsBetter: m.userHigherIsBetter ?? metricConfig.higherIsBetter,
             originalHigherIsBetter: metricConfig.higherIsBetter,
           };
@@ -325,11 +309,19 @@ export function ScatterScoreProPage() {
   }, [accessibleMetrics, currentUserTier, getMetricConfigDetails]);
 
   useEffect(() => {
-    if (PREDEFINED_TEMPLATES.length > 0 && (!activeTemplateName || (selectedXMetrics.length === 0 && selectedYMetrics.length === 0) )) {
+    if (PREDEFINED_TEMPLATES.length > 0 && !activeTemplateName) {
         loadTemplate(PREDEFINED_TEMPLATES[0].name);
     }
-  }, [loadTemplate, activeTemplateName, selectedXMetrics.length, selectedYMetrics.length]);
-
+  }, [loadTemplate, activeTemplateName]);
+  
+  useEffect(() => { // Re-load/re-filter template if accessibleMetrics change (e.g. tier change)
+    if(activeTemplateName) {
+        loadTemplate(activeTemplateName);
+    } else if (PREDEFINED_TEMPLATES.length > 0) {
+        loadTemplate(PREDEFINED_TEMPLATES[0].name);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [accessibleMetrics]); // Only re-load if accessibleMetrics array instance changes
 
   const handleTemplateChange = (newTemplateName: string) => {
     loadTemplate(newTemplateName);
@@ -343,7 +335,7 @@ export function ScatterScoreProPage() {
   ) => {
     const setSelectedMetrics = axisType === 'X' ? setSelectedXMetrics : setSelectedYMetrics;
     setSelectedMetrics(prevMetrics => {
-      let newMetricsArray = [...prevMetrics]; // Make a mutable copy
+      let newMetricsArray = JSON.parse(JSON.stringify(prevMetrics)) as AxisMetricConfig[]; // Deep clone for safety
       const existingIndex = newMetricsArray.findIndex(m => m.key === metricKey);
 
       if (action === 'add') {
@@ -353,28 +345,27 @@ export function ScatterScoreProPage() {
             newMetricsArray.push({
               key: metricKey,
               metricLabel: metricConfig.label,
-              weight: 0, // Initial weight, will be normalized
+              weight: 0, 
               userHigherIsBetter: metricConfig.higherIsBetter,
               originalHigherIsBetter: metricConfig.higherIsBetter,
             });
+            return normalizeWeights(newMetricsArray);
           }
         }
       } else if (action === 'remove') {
         newMetricsArray = newMetricsArray.filter(m => m.key !== metricKey);
+        return normalizeWeights(newMetricsArray);
       } else if (existingIndex !== -1) {
         if (action === 'updateWeight') {
           const newWeight = Math.max(0, Math.min(100, Number(value) || 0));
-          newMetricsArray[existingIndex] = { ...newMetricsArray[existingIndex], weight: newWeight };
-          // Pass the changed metric key and its new weight to normalizeWeights
+          newMetricsArray[existingIndex].weight = newWeight;
           return normalizeWeights(newMetricsArray, metricKey, newWeight);
         } else if (action === 'toggleHLB') {
-          newMetricsArray[existingIndex] = { ...newMetricsArray[existingIndex], userHigherIsBetter: !!value };
-          // No weight normalization needed for HLB toggle, return as is
-          return newMetricsArray;
+          newMetricsArray[existingIndex].userHigherIsBetter = !!value;
+          return newMetricsArray; // No weight normalization needed for HLB toggle
         }
       }
-      // For add/remove, normalize all weights
-      return normalizeWeights(newMetricsArray);
+      return prevMetrics; // Return previous if no change
     });
     setActiveTemplateName(null);
   };
@@ -397,11 +388,11 @@ export function ScatterScoreProPage() {
         selectedYMetrics, yTotalWeight, selectedZMetricKey, zScale,
         normalizationMode, imputationMode,
       });
-      console.log("[ScatterScoreProPage] Recalculation logic to be implemented (Mini PRD-SS-2 & SS-3).");
     }
-    // TODO: Trigger actual score calculation and chart data update
+    // TODO: Trigger score calculation and chart update (Mini PRD-SS-2, SS-3)
   };
 
+  // AvailableMetricsSelector sub-component defined within ScatterScoreProPage
   const AvailableMetricsSelector: React.FC<{
     axisLabel: 'X' | 'Y';
     onMetricSelect: (metricKey: string) => void;
@@ -410,13 +401,14 @@ export function ScatterScoreProPage() {
     return (
       <div className="my-3">
         <Label className="text-xs font-medium text-muted-foreground">Add Metric to {axisLabel}-Axis</Label>
-        <Select onValueChange={(value) => { if(value) onMetricSelect(value); }}>
+        <Select onValueChange={(value) => { if(value && value !== "__placeholder__") onMetricSelect(value); }}>
           <SelectTrigger className="text-xs h-9 bg-navy-600/50 border-navy-500 mt-1">
             <SelectValue placeholder={`Select metric to add...`} />
           </SelectTrigger>
-          <SelectContent className="max-h-72 z-[60]"> {/* Ensure dropdown is on top */}
+          <SelectContent className="max-h-72 z-[60]">
+            <SelectItem value="__placeholder__" disabled className="text-xs hidden">Select metric...</SelectItem>
             {Object.entries(metricCategories)
-              .sort(([keyA, labelA], [keyB, labelB]) => labelA.localeCompare(labelB))
+              .sort(([, labelA], [, labelB]) => labelA.localeCompare(labelB))
               .map(([catKey, catLabel]) => {
                 const metricsInCat = accessibleMetrics.filter(
                     m => m.category === catKey && !currentSelectedKeys.includes(m.key)
@@ -442,13 +434,13 @@ export function ScatterScoreProPage() {
     );
   };
 
-  const AxisMetricConfigurator: React.FC<{
-    axisTitle: 'X-Axis Score Metrics' | 'Y-Axis Score Metrics';
-    axisType: 'X' | 'Y';
-    selectedMetrics: AxisMetricConfig[];
-    // setSelectedMetrics: React.Dispatch<React.SetStateAction<AxisMetricConfig[]>>; // No longer needed, use handleAxisMetricChange
-    totalWeight: number;
-  }> = ({ axisTitle, axisType, selectedMetrics, totalWeight }) => {
+  // renderAxisMetricConfigurator sub-component defined within ScatterScoreProPage
+  const renderAxisMetricConfigurator = (
+    axisTitle: 'X-Axis Score Metrics' | 'Y-Axis Score Metrics',
+    currentSelectedMetrics: AxisMetricConfig[],
+    axisType: 'X' | 'Y',
+    currentTotalWeight: number
+  ) => {
     return (
       <Card className="p-3 md:p-4 bg-navy-700/50 border-navy-600">
         <CardHeader className="p-0 mb-2">
@@ -458,11 +450,11 @@ export function ScatterScoreProPage() {
             <AvailableMetricsSelector
                 axisLabel={axisType}
                 onMetricSelect={(metricKey) => handleAxisMetricChange(axisType, metricKey, 'add')}
-                currentSelectedKeys={selectedMetrics.map(m => m.key)}
+                currentSelectedKeys={currentSelectedMetrics.map(m => m.key)}
             />
             <div className="space-y-2 max-h-48 overflow-y-auto pr-1 mt-2 scrollbar-thin scrollbar-thumb-navy-500 scrollbar-track-navy-700/30">
-            {selectedMetrics.length === 0 && <p className="text-xs text-muted-foreground italic py-2 text-center">No metrics selected for this axis.</p>}
-            {selectedMetrics.map((sm) => (
+            {currentSelectedMetrics.length === 0 && <p className="text-xs text-muted-foreground italic py-2 text-center">No metrics selected for this axis.</p>}
+            {currentSelectedMetrics.map((sm) => (
                 <div key={sm.key} className="p-2.5 border rounded-md bg-navy-600/40 border-navy-500/70 space-y-1.5">
                     <div className="flex justify-between items-center">
                     <Label htmlFor={`weight-${axisType}-${sm.key}`} className="text-xs font-medium text-surface-white truncate flex-grow mr-2" title={sm.metricLabel}>{sm.metricLabel}</Label>
@@ -498,7 +490,7 @@ export function ScatterScoreProPage() {
                         <TooltipProvider delayDuration={100}>
                             <Tooltip>
                                 <TooltipTrigger asChild><button type="button" className="cursor-help"><Info size={12} className="text-muted-foreground hover:text-accent-teal"/></button></TooltipTrigger>
-                                <TooltipContent side="top" className="text-xs max-w-xs p-2 z-[60]">
+                                <TooltipContent side="top" className="text-xs max-w-xs p-2 z-[70]">
                                     <p>Check if a HIGHER value of this metric is better for this axis score. Default: {sm.originalHigherIsBetter ? 'Higher is better' : 'Lower is better'}.</p>
                                 </TooltipContent>
                             </Tooltip>
@@ -508,8 +500,8 @@ export function ScatterScoreProPage() {
                 </div>
                 ))}
             </div>
-            <div className={cn("text-xs mt-2 font-medium", totalWeight !== 100 && selectedMetrics.length > 0 ? "text-destructive" : totalWeight === 100 ? "text-green-400" : "text-muted-foreground")}>
-                Total {axisType}-Axis Weight: {totalWeight}% {selectedMetrics.length > 0 && totalWeight !==100 && "(Must be 100%)"}
+            <div className={cn("text-xs mt-2 font-medium", currentTotalWeight !== 100 && currentSelectedMetrics.length > 0 ? "text-destructive" : currentTotalWeight === 100 ? "text-green-400" : "text-muted-foreground")}>
+                Total {axisType}-Axis Weight: {currentTotalWeight}% {currentSelectedMetrics.length > 0 && currentTotalWeight !==100 && "(Must be 100%)"}
             </div>
         </CardContent>
       </Card>
@@ -520,8 +512,8 @@ export function ScatterScoreProPage() {
     <PageContainer
       title="Advanced ScatterScore Analysis"
       description="Configure multi-metric axes for custom scatter plots and derived scores."
-      className="flex flex-col h-full" 
-      contentClassName="flex flex-col flex-grow min-h-0" 
+      className="flex flex-col h-full"
+      contentClassName="flex flex-col flex-grow min-h-0"
     >
       <div className="flex flex-col lg:flex-row gap-4 md:gap-6 p-2 md:p-4 flex-grow overflow-hidden">
         <Button 
@@ -590,7 +582,7 @@ export function ScatterScoreProPage() {
                         selectedMetric={selectedZMetricKey}
                         onMetricChange={setSelectedZMetricKey}
                         currentTier={currentUserTier}
-                        availableMetrics={accessibleMetrics}
+                        availableMetrics={accessibleMetrics} 
                         filterForNumericOnly={true} 
                         placeholder="Select Z-Axis Metric..."
                     />
