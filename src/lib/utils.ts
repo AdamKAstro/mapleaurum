@@ -4,7 +4,7 @@ import { twMerge } from "tailwind-merge";
 
 // Debug logging configuration
 const DEBUG = process.env.NODE_ENV === 'development';
-// Add 'export' here
+
 export const logDebug = (message: string, data?: any) => {
   if (DEBUG) {
     console.debug(`[Utils] ${message}`, data);
@@ -34,8 +34,8 @@ export function getNestedValue(obj: any, key: string): any {
     return null;
   }
 
-  if (!key) {
-    logDebug('getNestedValue: Empty key provided', { obj });
+  if (!key || typeof key !== 'string') {
+    logDebug('getNestedValue: Invalid key provided', { key, obj });
     return null;
   }
 
@@ -45,6 +45,7 @@ export function getNestedValue(obj: any, key: string): any {
     
     for (let i = 0; i < path.length; i++) {
       const segment = path[i];
+      
       if (current === null || current === undefined) {
         logDebug(`getNestedValue: Null/undefined encountered at path segment ${segment}`, {
           fullPath: key,
@@ -54,10 +55,12 @@ export function getNestedValue(obj: any, key: string): any {
         return null;
       }
 
-      if (!(segment in current)) {
+      // Check if property exists using Object.prototype.hasOwnProperty for safety
+      if (!Object.prototype.hasOwnProperty.call(current, segment)) {
         logDebug(`getNestedValue: Property ${segment} not found`, {
           fullPath: key,
           currentPath: path.slice(0, i).join('.'),
+          availableKeys: Object.keys(current),
           currentValue: current
         });
         return null;
@@ -79,15 +82,13 @@ export function getNestedValue(obj: any, key: string): any {
 
 export function toTitleCase(str: string | null | undefined): string {
   if (!str) return '';
+  
   return str
-    .replace(/_/g, ' ')
-    .replace(/-/g, ' ')
+    .replace(/[_-]/g, ' ') // Combined regex for both underscore and hyphen
     .toLowerCase()
-    .replace(/\b\w/g, char => char.toUpperCase());
+    .replace(/\b\w/g, char => char.toUpperCase())
+    .trim(); // Added trim to remove any extra whitespace
 }
-
-
-
 
 // Number formatting with enhanced options and validation
 interface NumberFormatOptions {
@@ -97,9 +98,13 @@ interface NumberFormatOptions {
   prefix?: string;
   allowNegative?: boolean;
   roundingMethod?: 'floor' | 'ceil' | 'round';
+  locale?: string; // Added locale support
 }
 
-export function formatNumber(value: number | null | undefined, options: NumberFormatOptions = {}): string {
+export function formatNumber(
+  value: number | null | undefined, 
+  options: NumberFormatOptions = {}
+): string {
   // Validate input
   if (!isValidNumber(value)) {
     logDebug('formatNumber: Invalid value provided', { value, options });
@@ -112,7 +117,8 @@ export function formatNumber(value: number | null | undefined, options: NumberFo
     suffix = '',
     prefix = '',
     allowNegative = true,
-    roundingMethod = 'round'
+    roundingMethod = 'round',
+    locale = 'en-US'
   } = options;
 
   try {
@@ -123,38 +129,47 @@ export function formatNumber(value: number | null | undefined, options: NumberFo
     }
 
     // For small numbers (less than 1), always show more decimal places
-    const effectiveDecimals = Math.abs(value) < 1 ? Math.max(decimals, 3) : decimals;
+    const effectiveDecimals = Math.abs(value) < 1 && Math.abs(value) > 0 
+      ? Math.max(decimals, 3) 
+      : decimals;
 
     // Apply rounding method
     let roundedValue = value;
+    const multiplier = Math.pow(10, effectiveDecimals);
+    
     switch (roundingMethod) {
       case 'floor':
-        roundedValue = Math.floor(value * Math.pow(10, effectiveDecimals)) / Math.pow(10, effectiveDecimals);
+        roundedValue = Math.floor(value * multiplier) / multiplier;
         break;
       case 'ceil':
-        roundedValue = Math.ceil(value * Math.pow(10, effectiveDecimals)) / Math.pow(10, effectiveDecimals);
+        roundedValue = Math.ceil(value * multiplier) / multiplier;
         break;
       default:
-        roundedValue = Number(value.toFixed(effectiveDecimals));
+        roundedValue = Math.round(value * multiplier) / multiplier;
     }
 
     let formattedValue: string;
+    
     if (compact) {
       const absValue = Math.abs(roundedValue);
-      if (absValue >= 1e9) {
-        formattedValue = (roundedValue / 1e9).toFixed(effectiveDecimals) + 'B';
+      const sign = roundedValue < 0 ? '-' : '';
+      
+      if (absValue >= 1e12) {
+        formattedValue = `${sign}${(absValue / 1e12).toFixed(effectiveDecimals)}T`;
+      } else if (absValue >= 1e9) {
+        formattedValue = `${sign}${(absValue / 1e9).toFixed(effectiveDecimals)}B`;
       } else if (absValue >= 1e6) {
-        formattedValue = (roundedValue / 1e6).toFixed(effectiveDecimals) + 'M';
+        formattedValue = `${sign}${(absValue / 1e6).toFixed(effectiveDecimals)}M`;
       } else if (absValue >= 1e3) {
-        formattedValue = (roundedValue / 1e3).toFixed(effectiveDecimals) + 'k';
+        formattedValue = `${sign}${(absValue / 1e3).toFixed(effectiveDecimals)}k`;
       } else {
-        formattedValue = new Intl.NumberFormat('en-US', {
+        formattedValue = new Intl.NumberFormat(locale, {
           minimumFractionDigits: effectiveDecimals,
           maximumFractionDigits: effectiveDecimals,
         }).format(roundedValue);
       }
     } else {
-      formattedValue = new Intl.NumberFormat('en-US', {
+      formattedValue = new Intl.NumberFormat(locale, {
         minimumFractionDigits: effectiveDecimals,
         maximumFractionDigits: effectiveDecimals,
       }).format(roundedValue);
@@ -174,6 +189,7 @@ interface CurrencyFormatOptions {
   showSymbol?: boolean;
   roundToWhole?: boolean;
   decimals?: number;
+  locale?: string;
 }
 
 export function formatCurrency(
@@ -190,7 +206,8 @@ export function formatCurrency(
     compact = true,
     showSymbol = true,
     roundToWhole = false,
-    decimals = undefined
+    decimals = undefined,
+    locale = 'en-US'
   } = options;
 
   try {
@@ -202,12 +219,14 @@ export function formatCurrency(
     if (effectiveDecimals === undefined) {
       if (roundToWhole) {
         effectiveDecimals = 0;
-      } else if (absValue < 0.001) {
+      } else if (absValue < 0.001 && absValue > 0) {
         effectiveDecimals = 4; // Show 4 decimals for very small values
       } else if (absValue < 1) {
         effectiveDecimals = 3; // Show 3 decimals for small values
+      } else if (absValue >= 1000000) {
+        effectiveDecimals = 1; // Less precision for large numbers in compact mode
       } else {
-        effectiveDecimals = 3; // Standard 3 decimals for normal values
+        effectiveDecimals = 2; // Standard 2 decimals for normal values
       }
     }
 
@@ -215,11 +234,12 @@ export function formatCurrency(
       return formatNumber(value, {
         decimals: effectiveDecimals,
         compact: true,
-        suffix: ` ${currencySymbol}`,
+        suffix: showSymbol ? ` ${currencySymbol}` : '',
+        locale
       });
     }
 
-    return new Intl.NumberFormat('en-US', {
+    return new Intl.NumberFormat(locale, {
       style: showSymbol ? 'currency' : 'decimal',
       currency,
       maximumFractionDigits: effectiveDecimals,
@@ -227,7 +247,7 @@ export function formatCurrency(
     }).format(value);
   } catch (error) {
     console.error('formatCurrency: Error formatting value', { value, options, error });
-    return formatNumber(value, { decimals: 3 }) + ` ${currency}`;
+    return formatNumber(value, { decimals: 2, locale }) + (showSymbol ? ` ${currency}` : '');
   }
 }
 
@@ -236,6 +256,7 @@ interface PercentFormatOptions {
   decimals?: number;
   showSymbol?: boolean;
   multiplyBy100?: boolean;
+  locale?: string;
 }
 
 export function formatPercent(
@@ -250,16 +271,21 @@ export function formatPercent(
   const {
     decimals = 1,
     showSymbol = true,
-    multiplyBy100 = false
+    multiplyBy100 = false,
+    locale = 'en-US'
   } = options;
 
   try {
     const adjustedValue = multiplyBy100 ? value * 100 : value;
-    const formatted = new Intl.NumberFormat('en-US', {
+    
+    // Clamp percentage values to reasonable bounds
+    const clampedValue = Math.max(-9999, Math.min(9999, adjustedValue));
+    
+    const formatted = new Intl.NumberFormat(locale, {
       style: 'decimal',
       minimumFractionDigits: decimals,
       maximumFractionDigits: decimals,
-    }).format(adjustedValue);
+    }).format(clampedValue);
 
     return showSymbol ? `${formatted}%` : formatted;
   } catch (error) {
@@ -272,6 +298,7 @@ export function formatPercent(
 interface MozFormatOptions {
   decimals?: number;
   showUnit?: boolean;
+  locale?: string;
 }
 
 export function formatMoz(
@@ -283,15 +310,16 @@ export function formatMoz(
     return '-';
   }
 
-  const { decimals = 2, showUnit = true } = options;
+  const { decimals = 2, showUnit = true, locale = 'en-US' } = options;
   const suffix = showUnit ? ' Moz' : '';
-  return formatNumber(value, { decimals, suffix });
+  return formatNumber(value, { decimals, suffix, locale });
 }
 
 // Enhanced Koz (Thousand ounces) formatting
 interface KozFormatOptions {
   decimals?: number;
   showUnit?: boolean;
+  locale?: string;
 }
 
 export function formatKoz(
@@ -303,19 +331,21 @@ export function formatKoz(
     return '-';
   }
 
-  const { decimals = 0, showUnit = true } = options;
+  const { decimals = 0, showUnit = true, locale = 'en-US' } = options;
   const suffix = showUnit ? ' koz' : '';
-  return formatNumber(value, { decimals, suffix });
+  return formatNumber(value, { decimals, suffix, locale });
 }
 
-// Data validation utilities
+// Data validation utilities with improved type safety
 export const validators = {
   isValidEmail: (email: string): boolean => {
+    if (!email || typeof email !== 'string') return false;
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailRegex.test(email);
+    return emailRegex.test(email.trim());
   },
   
   isValidUrl: (url: string): boolean => {
+    if (!url || typeof url !== 'string') return false;
     try {
       new URL(url);
       return true;
@@ -324,9 +354,9 @@ export const validators = {
     }
   },
   
-  isValidDate: (date: any): boolean => {
+  isValidDate: (date: any): date is Date => {
     if (date instanceof Date) return !isNaN(date.getTime());
-    if (typeof date === 'string') {
+    if (typeof date === 'string' || typeof date === 'number') {
       const parsed = new Date(date);
       return !isNaN(parsed.getTime());
     }
@@ -334,14 +364,30 @@ export const validators = {
   }
 };
 
-// Array utilities
+// Improved array utilities with better type safety
 export const arrayUtils = {
-  unique: <T>(arr: T[]): T[] => [...new Set(arr)],
+  unique: <T>(arr: T[]): T[] => {
+    if (!Array.isArray(arr)) return [];
+    return [...new Set(arr)];
+  },
   
-  sortBy: <T>(arr: T[], key: keyof T, direction: 'asc' | 'desc' = 'asc'): T[] => {
+  sortBy: <T>(
+    arr: T[], 
+    key: keyof T, 
+    direction: 'asc' | 'desc' = 'asc'
+  ): T[] => {
+    if (!Array.isArray(arr) || arr.length === 0) return [];
+    
     return [...arr].sort((a, b) => {
       const aVal = a[key];
       const bVal = b[key];
+      
+      // Handle null/undefined values
+      if (aVal == null && bVal == null) return 0;
+      if (aVal == null) return direction === 'asc' ? -1 : 1;
+      if (bVal == null) return direction === 'asc' ? 1 : -1;
+      
+      // Compare values
       if (aVal < bVal) return direction === 'asc' ? -1 : 1;
       if (aVal > bVal) return direction === 'asc' ? 1 : -1;
       return 0;
@@ -349,11 +395,26 @@ export const arrayUtils = {
   },
   
   groupBy: <T>(arr: T[], key: keyof T): Record<string, T[]> => {
+    if (!Array.isArray(arr)) return {};
+    
     return arr.reduce((acc, item) => {
-      const groupKey = String(item[key]);
-      if (!acc[groupKey]) acc[groupKey] = [];
-      acc[groupKey].push(item);
+      if (item && key in item) {
+        const groupKey = String(item[key]);
+        if (!acc[groupKey]) acc[groupKey] = [];
+        acc[groupKey].push(item);
+      }
       return acc;
     }, {} as Record<string, T[]>);
+  },
+  
+  // New utility: chunk array into smaller arrays
+  chunk: <T>(arr: T[], size: number): T[][] => {
+    if (!Array.isArray(arr) || size <= 0) return [];
+    
+    const chunks: T[][] = [];
+    for (let i = 0; i < arr.length; i += size) {
+      chunks.push(arr.slice(i, i + size));
+    }
+    return chunks;
   }
 };
