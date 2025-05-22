@@ -77,6 +77,18 @@ export function getNestedValue(obj: any, key: string): any {
   }
 }
 
+export function toTitleCase(str: string | null | undefined): string {
+  if (!str) return '';
+  return str
+    .replace(/_/g, ' ')
+    .replace(/-/g, ' ')
+    .toLowerCase()
+    .replace(/\b\w/g, char => char.toUpperCase());
+}
+
+
+
+
 // Number formatting with enhanced options and validation
 interface NumberFormatOptions {
   decimals?: number;
@@ -190,12 +202,12 @@ export function formatCurrency(
     if (effectiveDecimals === undefined) {
       if (roundToWhole) {
         effectiveDecimals = 0;
-      } else if (absValue < 0.01) {
+      } else if (absValue < 0.001) {
         effectiveDecimals = 4; // Show 4 decimals for very small values
       } else if (absValue < 1) {
         effectiveDecimals = 3; // Show 3 decimals for small values
       } else {
-        effectiveDecimals = 2; // Standard 2 decimals for normal values
+        effectiveDecimals = 3; // Standard 3 decimals for normal values
       }
     }
 
@@ -215,7 +227,7 @@ export function formatCurrency(
     }).format(value);
   } catch (error) {
     console.error('formatCurrency: Error formatting value', { value, options, error });
-    return formatNumber(value, { decimals: 2 }) + ` ${currency}`;
+    return formatNumber(value, { decimals: 3 }) + ` ${currency}`;
   }
 }
 
