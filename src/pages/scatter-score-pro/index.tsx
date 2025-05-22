@@ -148,7 +148,89 @@ const ScaleToggle: React.FC<{ scale: 'linear' | 'log'; onChange: (newScale: 'lin
     </div>
 );
 
+// Place this utility function OUTSIDE your ScatterScoreProPage component
+const normalizeWeights = (
+    metrics: AxisMetricConfig[],
+    changedMetricKey?: string,
+    userSetWeightForChangedMetric?: number
+): AxisMetricConfig[] => {
+    if (!Array.isArray(metrics)) return [];
+    let workingMetrics = metrics.map(m => ({ ...m, weight: Number(m.weight) || 0 }));
 
+    if (workingMetrics.length === 0) return [];
+    if (workingMetrics.length === 1) {
+        workingMetrics[0].weight = 100;
+        return workingMetrics;
+    }
+
+    let totalTargetWeight = 100;
+    let sumOfManuallySetPortion = 0;
+    
+    // Apply user-set weight if a specific metric was changed
+    if (changedMetricKey && userSetWeightForChangedMetric !== undefined) {
+        const idx = workingMetrics.findIndex(m => m.key === changedMetricKey);
+        if (idx !== -1) {
+            workingMetrics[idx].weight = Math.max(0, Math.min(100, userSetWeightForChangedMetric));
+            sumOfManuallySetPortion = workingMetrics[idx].weight;
+        }
+    }
+
+    const adjustableMetrics = workingMetrics.filter(m => m.key !== changedMetricKey);
+    const sumOfOtherOriginalWeights = adjustableMetrics.reduce((sum, m) => sum + m.weight, 0);
+    const weightToDistributeToOthers = totalTargetWeight - sumOfManuallySetPortion;
+
+    if (adjustableMetrics.length > 0) {
+        if (sumOfOtherOriginalWeights === 0 || weightToDistributeToOthers === 0) { 
+            // If other metrics have no weight or no room to distribute, distribute equally
+            const equalShare = weightToDistributeToOthers / adjustableMetrics.length;
+            adjustableMetrics.forEach(m => {
+                const idx = workingMetrics.findIndex(wm => wm.key === m.key);
+                if (idx !== -1) workingMetrics[idx].weight = Math.max(0, equalShare);
+            });
+        } else { // Distribute proportionally
+            const scaleFactor = weightToDistributeToOthers / sumOfOtherOriginalWeights;
+            adjustableMetrics.forEach(m => {
+                const idx = workingMetrics.findIndex(wm => wm.key === m.key);
+                if (idx !== -1) workingMetrics[idx].weight = Math.max(0, m.weight * scaleFactor);
+            });
+        }
+    } else if (changedMetricKey && workingMetrics.length === 1) { // Only one metric overall, it was changed
+        workingMetrics[0].weight = 100;
+    } else if (workingMetrics.length > 0 && !changedMetricKey) { // Initial equal distribution (add/remove, template load)
+        const equalWeight = 100 / workingMetrics.length;
+        workingMetrics = workingMetrics.map(m => ({ ...m, weight: equalWeight }));
+    }
+
+    // Round all weights and make a final pass to ensure sum is exactly 100
+    let roundedMetrics = workingMetrics.map(m => ({ ...m, weight: Math.round(m.weight) }));
+    let currentSum = roundedMetrics.reduce((sum, m) => sum + m.weight, 0);
+
+    if (roundedMetrics.length > 0 && currentSum !== 100) {
+        const diff = 100 - currentSum;
+        // Try to adjust the metric that was NOT just manually changed (if applicable), or the first one
+        let adjustIndex = changedMetricKey ? roundedMetrics.findIndex(m => m.key !== changedMetricKey) : 0;
+        if (adjustIndex === -1 && roundedMetrics.length > 0) adjustIndex = 0; // Fallback
+
+        if (adjustIndex !== -1 && roundedMetrics[adjustIndex]) {
+            roundedMetrics[adjustIndex].weight += diff;
+            // Clamp again after adjustment
+            roundedMetrics[adjustIndex].weight = Math.max(0, Math.min(100, roundedMetrics[adjustIndex].weight));
+        }
+        // One last check if still not 100 (e.g., first metric was clamped at 0 or 100)
+        currentSum = roundedMetrics.reduce((sum, m) => sum + m.weight, 0);
+        if (roundedMetrics.length > 0 && currentSum !== 100) {
+            const finalDiff = 100 - currentSum;
+            // Try to distribute tiny diffs to avoid a single metric taking a large hit/gain
+            for (let i = 0; i < Math.abs(finalDiff); ++i) {
+                if (roundedMetrics[i % roundedMetrics.length]) {
+                     roundedMetrics[i % roundedMetrics.length].weight += Math.sign(finalDiff);
+                }
+            }
+            roundedMetrics = roundedMetrics.map(m => ({...m, weight: Math.max(0, Math.min(100, m.weight))}));
+        }
+    }
+    return roundedMetrics;
+};
 
 export function ScatterScoreProPage() {
   const { currentUserTier } = useFilters();
