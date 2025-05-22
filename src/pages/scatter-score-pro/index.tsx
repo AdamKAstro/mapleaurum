@@ -14,7 +14,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../../
 import { Info, Lock, ArrowUp, ArrowDown, Settings, RefreshCw, ListPlus, X } from 'lucide-react'; // ChevronDown/Up removed if not used
 import { MetricSelector } from '../../components/metric-selector';
 import {
-  allMetricsFromTypes as allMetrics,
+  metrics as allMetrics,
   metricCategories,
   getAccessibleMetrics,
   MetricConfig
