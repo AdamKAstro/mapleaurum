@@ -61,6 +61,8 @@ interface ScatterScoreTemplate {
   zScale?: 'linear' | 'log';
   defaultNormalizationMode?: NormalizationMode;
   defaultImputationMode?: ImputationMode;
+  xAxisThemeLabel?: string;
+  yAxisThemeLabel?: string;
 }
 
 interface ScatterScorePlotPoint {
@@ -80,9 +82,8 @@ interface ScatterScorePlotPointData extends ScatterDataPoint {
 }
 
 const DEBUG_SCATTER_SCORE = process.env.NODE_ENV === 'development';
-const DEFAULT_WEIGHT_FOR_NEW_METRIC = 5; // 5% default weight for new metrics
+const DEFAULT_WEIGHT_FOR_NEW_METRIC = 5;
 
-// **Match status colors from scatter-chart page**
 const statusColors: Record<string, { background: string; border: string }> = {
   producer: { background: 'rgba(34,197,94,0.7)', border: 'rgb(12,163,74)' },
   developer: { background: 'rgba(59,130,246,0.7)', border: 'rgb(37,99,195)' },
@@ -92,7 +93,6 @@ const statusColors: Record<string, { background: string; border: string }> = {
   default: { background: 'rgba(107,114,128,0.7)', border: 'rgb(75,85,99)' }
 };
 
-// **Match chart settings from scatter-chart page**
 const chartSettingsFunctions = {
   pointRadius: (n: number): number => 6 + (Math.max(0, Math.min(1, n || 0)) * 35),
   pointHoverRadius: (n: number): number => 8 + (Math.max(0, Math.min(1, n || 0)) * 48)
@@ -102,102 +102,182 @@ const PREDEFINED_TEMPLATES: ScatterScoreTemplate[] = [
   {
     name: "Value Hunter",
     description: "Focuses on undervalued companies with strong fundamentals and asset backing.",
-    xMetricsConfig: [ 
-      { key: 'financials.price_to_book', weight: 20, userHigherIsBetter: false },
-      { key: 'financials.price_to_sales', weight: 20, userHigherIsBetter: false },
-      { key: 'financials.enterprise_to_ebitda', weight: 20, userHigherIsBetter: false },
-      { key: 'valuation_metrics.vm_mkt_cap_per_reserve_oz_all', weight: 20, userHigherIsBetter: false },
-      { key: 'valuation_metrics.vm_ev_per_reserve_oz_all', weight: 20, userHigherIsBetter: false },
+    xAxisThemeLabel: "Valuation Efficiency",
+    yAxisThemeLabel: "Asset Quality",
+    xMetricsConfig: [
+      { key: 'financials.market_cap_value', weight: 10, userHigherIsBetter: false },
+      { key: 'financials.price_to_book', weight: 9, userHigherIsBetter: false },
+      { key: 'financials.price_to_sales', weight: 9, userHigherIsBetter: false },
+      { key: 'financials.enterprise_to_ebitda', weight: 9, userHigherIsBetter: false },
+      { key: 'valuation_metrics.mkt_cap_per_reserve_oz_all', weight: 9, userHigherIsBetter: false },
+      { key: 'valuation_metrics.ev_per_reserve_oz_all', weight: 9, userHigherIsBetter: false },
+      { key: 'financials.trailing_pe', weight: 9, userHigherIsBetter: false },
+      { key: 'financials.forward_pe', weight: 9, userHigherIsBetter: false },
+      { key: 'financials.peg_ratio', weight: 9, userHigherIsBetter: false },
+      { key: 'valuation_metrics.mkt_cap_per_resource_oz_all', weight: 9, userHigherIsBetter: false },
+      { key: 'valuation_metrics.ev_per_resource_oz_all', weight: 9, userHigherIsBetter: false }
     ],
-    yMetricsConfig: [ 
-      { key: 'financials.net_financial_assets', weight: 25, userHigherIsBetter: true },
-      { key: 'financials.debt_value', weight: 25, userHigherIsBetter: false }, 
-      { key: 'financials.free_cash_flow', weight: 25, userHigherIsBetter: true },
-      { key: 'mineral_estimates.me_reserves_total_aueq_moz', weight: 25, userHigherIsBetter: true },
+    yMetricsConfig: [
+      { key: 'financials.enterprise_value_value', weight: 10, userHigherIsBetter: true },
+      { key: 'financials.net_financial_assets', weight: 9, userHigherIsBetter: true },
+      { key: 'financials.debt_value', weight: 9, userHigherIsBetter: false },
+      { key: 'financials.free_cash_flow', weight: 9, userHigherIsBetter: true },
+      { key: 'mineral_estimates.reserves_total_aueq_moz', weight: 9, userHigherIsBetter: true },
+      { key: 'financials.revenue_value', weight: 9, userHigherIsBetter: true },
+      { key: 'financials.gross_profit', weight: 9, userHigherIsBetter: true },
+      { key: 'financials.operating_income', weight: 9, userHigherIsBetter: true },
+      { key: 'financials.ebitda', weight: 9, userHigherIsBetter: true },
+      { key: 'production.current_production_total_aueq_koz', weight: 9, userHigherIsBetter: true },
+      { key: 'production.reserve_life_years', weight: 9, userHigherIsBetter: true }
     ],
     zMetricKey: 'financials.market_cap_value',
     zScale: 'log',
     defaultNormalizationMode: 'dataset_rank_percentile',
-    defaultImputationMode: 'dataset_median',
+    defaultImputationMode: 'dataset_median'
   },
   {
     name: "Growth Catalyst Seeker",
     description: "Targets companies with high resource expansion and production growth potential.",
-    xMetricsConfig: [ 
-      { key: 'mineral_estimates.me_potential_total_aueq_moz', weight: 30, userHigherIsBetter: true },
-      { key: 'mineral_estimates.me_resources_total_aueq_moz', weight: 25, userHigherIsBetter: true },
-      { key: 'mineral_estimates.me_measured_indicated_total_aueq_moz', weight: 25, userHigherIsBetter: true },
-      { key: 'mineral_estimates.me_potential_non_precious_aueq_moz', weight: 20, userHigherIsBetter: true },
+    xAxisThemeLabel: "Resource Potential",
+    yAxisThemeLabel: "Growth Metrics",
+    xMetricsConfig: [
+      { key: 'financials.market_cap_value', weight: 10, userHigherIsBetter: true },
+      { key: 'mineral_estimates.potential_total_aueq_moz', weight: 9, userHigherIsBetter: true },
+      { key: 'mineral_estimates.resources_total_aueq_moz', weight: 9, userHigherIsBetter: true },
+      { key: 'mineral_estimates.measured_indicated_total_aueq_moz', weight: 9, userHigherIsBetter: true },
+      { key: 'mineral_estimates.potential_non_precious_aueq_moz', weight: 9, userHigherIsBetter: true },
+      { key: 'mineral_estimates.reserves_total_aueq_moz', weight: 9, userHigherIsBetter: true },
+      { key: 'mineral_estimates.mineable_total_aueq_moz', weight: 9, userHigherIsBetter: true },
+      { key: 'mineral_estimates.reserves_precious_aueq_moz', weight: 9, userHigherIsBetter: true },
+      { key: 'mineral_estimates.measured_indicated_precious_aueq_moz', weight: 9, userHigherIsBetter: true },
+      { key: 'mineral_estimates.resources_precious_aueq_moz', weight: 9, userHigherIsBetter: true },
+      { key: 'mineral_estimates.mineable_precious_aueq_moz', weight: 9, userHigherIsBetter: true }
     ],
-    yMetricsConfig: [ 
-      { key: 'production.p_future_production_total_aueq_koz', weight: 40, userHigherIsBetter: true },
-      { key: 'financials.peg_ratio', weight: 30, userHigherIsBetter: false },
-      { key: 'financials.forward_pe', weight: 30, userHigherIsBetter: false },
+    yMetricsConfig: [
+      { key: 'financials.enterprise_value_value', weight: 10, userHigherIsBetter: true },
+      { key: 'production.future_production_total_aueq_koz', weight: 9, userHigherIsBetter: true },
+      { key: 'financials.peg_ratio', weight: 9, userHigherIsBetter: false },
+      { key: 'financials.forward_pe', weight: 9, userHigherIsBetter: false },
+      { key: 'production.current_production_total_aueq_koz', weight: 9, userHigherIsBetter: true },
+      { key: 'mineral_estimates.potential_total_aueq_moz', weight: 9, userHigherIsBetter: true },
+      { key: 'mineral_estimates.resources_total_aueq_moz', weight: 9, userHigherIsBetter: true },
+      { key: 'financials.revenue_value', weight: 9, userHigherIsBetter: true },
+      { key: 'financials.ebitda', weight: 9, userHigherIsBetter: true },
+      { key: 'financials.free_cash_flow', weight: 9, userHigherIsBetter: true },
+      { key: 'costs.aisc_future', weight: 9, userHigherIsBetter: false }
     ],
     zMetricKey: 'financials.enterprise_value_value',
     zScale: 'log',
     defaultNormalizationMode: 'dataset_min_max',
-    defaultImputationMode: 'dataset_mean',
+    defaultImputationMode: 'dataset_mean'
   },
   {
     name: "Producer Profitability Focus",
     description: "For analyzing currently producing companies, emphasizing profitability and operational efficiency.",
-    xMetricsConfig: [ 
-      { key: 'costs.c_aisc_last_year', weight: 30, userHigherIsBetter: false },
-      { key: 'costs.c_aisc_last_quarter', weight: 30, userHigherIsBetter: false },
-      { key: 'costs.c_tco_current', weight: 20, userHigherIsBetter: false },
-      { key: 'costs.c_aic_last_year', weight: 20, userHigherIsBetter: false },
+    xAxisThemeLabel: "Cost Efficiency",
+    yAxisThemeLabel: "Profitability",
+    xMetricsConfig: [
+      { key: 'financials.market_cap_value', weight: 10, userHigherIsBetter: false },
+      { key: 'costs.aisc_last_year', weight: 9, userHigherIsBetter: false },
+      { key: 'costs.aisc_last_quarter', weight: 9, userHigherIsBetter: false },
+      { key: 'costs.tco_current', weight: 9, userHigherIsBetter: false },
+      { key: 'costs.aic_last_year', weight: 9, userHigherIsBetter: false },
+      { key: 'costs.aisc_future', weight: 9, userHigherIsBetter: false },
+      { key: 'costs.tco_future', weight: 9, userHigherIsBetter: false },
+      { key: 'costs.aic_last_quarter', weight: 9, userHigherIsBetter: false },
+      { key: 'financials.cost_of_revenue', weight: 9, userHigherIsBetter: false },
+      { key: 'financials.operating_expense', weight: 9, userHigherIsBetter: false },
+      { key: 'costs.construction_costs', weight: 9, userHigherIsBetter: false }
     ],
-    yMetricsConfig: [ 
-      { key: 'financials.ebitda', weight: 25, userHigherIsBetter: true },
-      { key: 'financials.net_income_value', weight: 25, userHigherIsBetter: true },
-      { key: 'financials.free_cash_flow', weight: 25, userHigherIsBetter: true },
-      { key: 'production.p_current_production_total_aueq_koz', weight: 25, userHigherIsBetter: true },
+    yMetricsConfig: [
+      { key: 'financials.enterprise_value_value', weight: 10, userHigherIsBetter: true },
+      { key: 'financials.ebitda', weight: 9, userHigherIsBetter: true },
+      { key: 'financials.net_income_value', weight: 9, userHigherIsBetter: true },
+      { key: 'financials.free_cash_flow', weight: 9, userHigherIsBetter: true },
+      { key: 'production.current_production_total_aueq_koz', weight: 9, userHigherIsBetter: true },
+      { key: 'financials.gross_profit', weight: 9, userHigherIsBetter: true },
+      { key: 'financials.operating_income', weight: 9, userHigherIsBetter: true },
+      { key: 'financials.revenue_value', weight: 9, userHigherIsBetter: true },
+      { key: 'production.current_production_precious_aueq_koz', weight: 9, userHigherIsBetter: true },
+      { key: 'production.reserve_life_years', weight: 9, userHigherIsBetter: true },
+      { key: 'financials.cash_value', weight: 9, userHigherIsBetter: true }
     ],
     zMetricKey: 'financials.revenue_value',
     zScale: 'log',
     defaultNormalizationMode: 'dataset_rank_percentile',
-    defaultImputationMode: 'dataset_median',
+    defaultImputationMode: 'dataset_median'
   },
   {
     name: "Financial Stability & Low Risk",
     description: "For risk-averse investors prioritizing companies with strong balance sheets and low debt.",
+    xAxisThemeLabel: "Financial Strength",
+    yAxisThemeLabel: "Operational Stability",
     xMetricsConfig: [
-      { key: 'financials.cash_value', weight: 25, userHigherIsBetter: true },
-      { key: 'financials.debt_value', weight: 25, userHigherIsBetter: false },
-      { key: 'financials.net_financial_assets', weight: 25, userHigherIsBetter: true },
-      { key: 'financials.liabilities', weight: 25, userHigherIsBetter: false },
+      { key: 'financials.market_cap_value', weight: 10, userHigherIsBetter: true },
+      { key: 'financials.cash_value', weight: 9, userHigherIsBetter: true },
+      { key: 'financials.debt_value', weight: 9, userHigherIsBetter: false },
+      { key: 'financials.net_financial_assets', weight: 9, userHigherIsBetter: true },
+      { key: 'financials.liabilities', weight: 9, userHigherIsBetter: false },
+      { key: 'capital_structure.existing_shares', weight: 9, userHigherIsBetter: false },
+      { key: 'capital_structure.fully_diluted_shares', weight: 9, userHigherIsBetter: false },
+      { key: 'financials.shares_outstanding', weight: 9, userHigherIsBetter: false },
+      { key: 'capital_structure.in_the_money_options', weight: 9, userHigherIsBetter: false },
+      { key: 'capital_structure.options_revenue', weight: 9, userHigherIsBetter: true },
+      { key: 'capital_structure.options_revenue', weight: 10, userHigherIsBetter: false }
     ],
-    yMetricsConfig: [ 
-      { key: 'production.p_reserve_life_years', weight: 35, userHigherIsBetter: true },
-      { key: 'costs.c_aisc_last_year', weight: 35, userHigherIsBetter: false },
-      { key: 'financials.gross_profit', weight: 30, userHigherIsBetter: true },
+    yMetricsConfig: [
+      { key: 'financials.enterprise_value_value', weight: 10, userHigherIsBetter: true },
+      { key: 'production.reserve_life_years', weight: 9, userHigherIsBetter: true },
+      { key: 'costs.aisc_last_year', weight: 9, userHigherIsBetter: false },
+      { key: 'financials.gross_profit', weight: 9, userHigherIsBetter: true },
+      { key: 'financials.revenue_value', weight: 9, userHigherIsBetter: true },
+      { key: 'financials.net_income_value', weight: 9, userHigherIsBetter: true },
+      { key: 'financials.ebitda', weight: 9, userHigherIsBetter: true },
+      { key: 'financials.free_cash_flow', weight: 9, userHigherIsBetter: true },
+      { key: 'production.current_production_total_aueq_koz', weight: 9, userHigherIsBetter: true },
+      { key: 'mineral_estimates.reserves_total_aueq_moz', weight: 9, userHigherIsBetter: true },
+      { key: 'costs.tco_current', weight: 9, userHigherIsBetter: false }
     ],
-    zMetricKey: 'production.p_reserve_life_years',
+    zMetricKey: 'production.reserve_life_years',
     zScale: 'linear',
     defaultNormalizationMode: 'global_min_max',
-    defaultImputationMode: 'zero_worst',
+    defaultImputationMode: 'zero_worst'
   },
   {
     name: "Precious Metals Pure Play",
     description: "Focusing on companies with high exposure to gold/silver, their precious resources, and related valuations.",
-    xMetricsConfig: [ 
-      { key: 'mineral_estimates.me_reserves_precious_aueq_moz', weight: 25, userHigherIsBetter: true },
-      { key: 'mineral_estimates.me_measured_indicated_precious_aueq_moz', weight: 25, userHigherIsBetter: true },
-      { key: 'mineral_estimates.me_resources_precious_aueq_moz', weight: 20, userHigherIsBetter: true },
-      { key: 'company-overview.percent_gold', weight: 15, userHigherIsBetter: true },
-      { key: 'company-overview.percent_silver', weight: 15, userHigherIsBetter: true },
+    xAxisThemeLabel: "Precious Metals Resources",
+    yAxisThemeLabel: "Precious Metals Valuation",
+    xMetricsConfig: [
+      { key: 'financials.market_cap_value', weight: 10, userHigherIsBetter: true },
+      { key: 'mineral_estimates.reserves_precious_aueq_moz', weight: 9, userHigherIsBetter: true },
+      { key: 'mineral_estimates.measured_indicated_precious_aueq_moz', weight: 9, userHigherIsBetter: true },
+      { key: 'mineral_estimates.resources_precious_aueq_moz', weight: 9, userHigherIsBetter: true },
+      { key: 'mineral_estimates.mineable_precious_aueq_moz', weight: 9, userHigherIsBetter: true },
+      { key: 'production.current_production_precious_aueq_koz', weight: 9, userHigherIsBetter: true },
+      { key: 'company-overview.percent_gold', weight: 9, userHigherIsBetter: true },
+      { key: 'company-overview.percent_silver', weight: 9, userHigherIsBetter: true },
+      { key: 'mineral_estimates.potential_total_aueq_moz', weight: 9, userHigherIsBetter: true },
+      { key: 'production.future_production_total_aueq_koz', weight: 9, userHigherIsBetter: true },
+      { key: 'mineral_estimates.reserves_total_aueq_moz', weight: 10, userHigherIsBetter: true }
     ],
-    yMetricsConfig: [ 
-      { key: 'valuation_metrics.vm_mkt_cap_per_reserve_oz_precious', weight: 25, userHigherIsBetter: false },
-      { key: 'valuation_metrics.vm_ev_per_reserve_oz_precious', weight: 25, userHigherIsBetter: false },
-      { key: 'valuation_metrics.vm_mkt_cap_per_mi_oz_precious', weight: 25, userHigherIsBetter: false },
-      { key: 'valuation_metrics.vm_ev_per_mi_oz_precious', weight: 25, userHigherIsBetter: false },
+    yMetricsConfig: [
+      { key: 'financials.enterprise_value_value', weight: 10, userHigherIsBetter: false },
+      { key: 'valuation_metrics.mkt_cap_per_reserve_oz_precious', weight: 9, userHigherIsBetter: false },
+      { key: 'valuation_metrics.ev_per_reserve_oz_precious', weight: 9, userHigherIsBetter: false },
+      { key: 'valuation_metrics.mkt_cap_per_mi_oz_precious', weight: 9, userHigherIsBetter: false },
+      { key: 'valuation_metrics.ev_per_mi_oz_precious', weight: 9, userHigherIsBetter: false },
+      { key: 'valuation_metrics.mkt_cap_per_resource_oz_precious', weight: 9, userHigherIsBetter: false },
+      { key: 'valuation_metrics.ev_per_resource_oz_precious', weight: 9, userHigherIsBetter: false },
+      { key: 'valuation_metrics.mkt_cap_per_mineable_oz_precious', weight: 9, userHigherIsBetter: false },
+      { key: 'valuation_metrics.ev_per_mineable_oz_precious', weight: 9, userHigherIsBetter: false },
+      { key: 'valuation_metrics.mkt_cap_per_production_oz', weight: 9, userHigherIsBetter: false },
+      { key: 'valuation_metrics.ev_per_production_oz', weight: 9, userHigherIsBetter: false }
     ],
-    zMetricKey: 'production.p_current_production_precious_aueq_koz',
+    zMetricKey: 'production.current_production_precious_aueq_koz',
     zScale: 'log',
     defaultNormalizationMode: 'dataset_min_max',
-    defaultImputationMode: 'dataset_median',
+    defaultImputationMode: 'dataset_median'
   }
 ];
 
@@ -262,7 +342,6 @@ const normalizeWeights = (
   let totalTargetWeight = 100;
   let sumOfFixedWeights = 0;
   
-  // If this is a new metric being added, ensure it gets the default weight
   if (isNewMetric && changedMetricKey) {
     const idx = workingMetrics.findIndex(m => m.key === changedMetricKey);
     if (idx !== -1) {
@@ -287,7 +366,6 @@ const normalizeWeights = (
     if (weightToDistributeToAdjustable < 0) weightToDistributeToAdjustable = 0;
 
     if (sumOfOriginalAdjustableWeights === 0 || isNewMetric) {
-      // Distribute remaining weight proportionally among existing metrics
       if (sumOfOriginalAdjustableWeights > 0 && !isNewMetric) {
         const scaleFactor = weightToDistributeToAdjustable / sumOfOriginalAdjustableWeights;
         adjustableMetrics.forEach(m => {
@@ -295,7 +373,6 @@ const normalizeWeights = (
           if (idx !== -1) workingMetrics[idx].weight = m.weight * scaleFactor;
         });
       } else {
-        // Equal distribution if no original weights
         const equalShare = weightToDistributeToAdjustable / adjustableMetrics.length;
         adjustableMetrics.forEach(m => {
           const idx = workingMetrics.findIndex(wm => wm.key === m.key);
@@ -313,7 +390,6 @@ const normalizeWeights = (
     workingMetrics[0].weight = 100;
   }
   
-  // Rounding and final adjustment
   let roundedMetrics = workingMetrics.map(m => ({ 
     ...m, 
     weight: Math.round(m.weight) 
@@ -325,30 +401,25 @@ const normalizeWeights = (
     const diff = 100 - currentSum;
     let adjustIdx = -1;
 
-    // Try to find the best metric to adjust
     if (changedMetricKey) {
-      // Find the highest weighted metric that isn't the changed one
       const candidates = roundedMetrics
         .map((m, i) => ({ m, i, weight: m.weight }))
         .filter(item => item.m.key !== changedMetricKey)
         .sort((a, b) => b.weight - a.weight);
       
       if (candidates.length > 0) {
-        // Find a candidate that can handle the adjustment
         for (const cand of candidates) {
           if (cand.m.weight + diff >= 0 && cand.m.weight + diff <= 100) {
             adjustIdx = cand.i;
             break;
           }
         }
-        // If no suitable candidate found, use the one with highest weight
         if (adjustIdx === -1 && candidates.length > 0) {
           adjustIdx = candidates[0].i;
         }
       }
     }
 
-    // If still no adjustment index, find the metric with the highest weight
     if (adjustIdx === -1 && roundedMetrics.length > 0) {
       const maxWeightIdx = roundedMetrics.reduce((maxIdx, m, i) => 
         m.weight > roundedMetrics[maxIdx].weight ? i : maxIdx, 0
@@ -356,7 +427,6 @@ const normalizeWeights = (
       adjustIdx = maxWeightIdx;
     }
 
-    // Apply the adjustment
     if (adjustIdx !== -1 && roundedMetrics[adjustIdx]) {
       roundedMetrics[adjustIdx].weight += diff;
     }
@@ -368,7 +438,6 @@ const normalizeWeights = (
   }));
 };
 
-// Component for Available Metrics Selector
 const AvailableMetricsSelector: React.FC<{
   axisLabel: 'X' | 'Y';
   onMetricSelect: (metricKey: string) => void;
@@ -420,7 +489,6 @@ const AvailableMetricsSelector: React.FC<{
   </div>
 );
 
-// Component for Axis Metric Configurator
 const AxisMetricConfigurator: React.FC<{
   axisTitle: 'X-Axis Score Metrics' | 'Y-Axis Score Metrics';
   currentSelectedMetricsForAxis: AxisMetricConfig[];
@@ -522,7 +590,7 @@ const AxisMetricConfigurator: React.FC<{
                         <Info size={12} className="text-muted-foreground hover:text-accent-teal"/>
                       </button>
                     </TooltipTrigger>
-                    <TooltipContent side="top" className="text-xs max-w-xs p-2 z-[70]">
+                    <TooltipContent side="left" className="text-xs max-w-[200px] p-2 z-[70]">
                       <p>
                         Check if a HIGHER value of this metric is better for this axis score. 
                         Default: {sm.originalHigherIsBetter ? 'Higher is better' : 'Lower is better'}.
@@ -577,6 +645,10 @@ export function ScatterScoreProPage() {
     PREDEFINED_TEMPLATES[0]?.defaultImputationMode || 'dataset_median'
   );
   const [isConfigPanelOpen, setIsConfigPanelOpen] = useState(true);
+  const [currentTemplateConfig, setCurrentTemplateConfig] = useState<{
+    xAxisThemeLabel?: string;
+    yAxisThemeLabel?: string;
+  }>({});
 
   const [chartDataSource, setChartDataSource] = useState<Company[]>([]);
   const [plotData, setPlotData] = useState<ScatterScorePlotPoint[]>([]);
@@ -612,10 +684,15 @@ export function ScatterScoreProPage() {
       setSelectedYMetrics([]);
       setSelectedZMetricKey(null);
       setActiveTemplateName(null);
+      setCurrentTemplateConfig({});
       return;
     }
     
     setActiveTemplateName(template.name);
+    setCurrentTemplateConfig({
+      xAxisThemeLabel: template.xAxisThemeLabel,
+      yAxisThemeLabel: template.yAxisThemeLabel
+    });
     
     const mapAndFilter = (configs: Array<{ key: string; weight: number; userHigherIsBetter?: boolean }>): AxisMetricConfig[] => 
       configs.map(m => {
@@ -646,7 +723,7 @@ export function ScatterScoreProPage() {
     if (accessibleMetrics.length > 0) {
       loadTemplate(activeTemplateName || (PREDEFINED_TEMPLATES.length > 0 ? PREDEFINED_TEMPLATES[0].name : null));
     }
-  }, [accessibleMetrics, loadTemplate]);
+  }, [accessibleMetrics, loadTemplate, activeTemplateName]);
 
   const handleTemplateChange = (newTemplateName: string) => {
     loadTemplate(newTemplateName);
@@ -671,11 +748,10 @@ export function ScatterScoreProPage() {
             newMetricsArray.push({
               key: metricKey,
               metricLabel: metricConfig.label,
-              weight: DEFAULT_WEIGHT_FOR_NEW_METRIC, // Set default weight for new metrics
+              weight: DEFAULT_WEIGHT_FOR_NEW_METRIC,
               userHigherIsBetter: metricConfig.higherIsBetter,
               originalHigherIsBetter: metricConfig.higherIsBetter,
             });
-            // Normalize with isNewMetric flag
             return normalizeWeights(newMetricsArray, metricKey, DEFAULT_WEIGHT_FOR_NEW_METRIC, true);
           }
         }
@@ -856,7 +932,6 @@ export function ScatterScoreProPage() {
     allMetrics
   ]);
 
-  // Chart Datasets and Options
   const chartDatasets = useMemo(() => {
     if (isCalculatingScores || plotData.length === 0) return [];
     
@@ -884,7 +959,7 @@ export function ScatterScoreProPage() {
       const status = point.company.status?.toLowerCase() || 'default';
       if (!dataPointsByStatus[status]) dataPointsByStatus[status] = [];
       
-      let r_normalized = 0.3; // Default if no Z or Z is invalid for this point
+      let r_normalized = 0.3;
       if (selectedZMetricKey && zMetricConfig && isValidNumber(point.zValue)) {
         const originalZIndex = zValuesForNormalization.indexOf(point.zValue as number);
         if (originalZIndex !== -1 && originalZIndex < normalizedZArray.length) {
@@ -961,10 +1036,12 @@ export function ScatterScoreProPage() {
         position: 'bottom',
         title: {
           display: true,
-          text: `X-Axis Score (${selectedXMetrics.length > 0 
-            ? selectedXMetrics.map(m => m.metricLabel).slice(0, 1).join(', ') + 
-              (selectedXMetrics.length > 1 ? ' & others' : '') 
-            : 'Not Set'})`,
+          text: currentTemplateConfig.xAxisThemeLabel 
+            ? `X-Axis Score: ${currentTemplateConfig.xAxisThemeLabel}`
+            : `X-Axis Score (${selectedXMetrics.length > 0 
+              ? selectedXMetrics.map(m => m.metricLabel).slice(0, 1).join(', ') + 
+                (selectedXMetrics.length > 1 ? ' & others' : '') 
+              : 'Not Set'})`,
           color: '#94A3B8',
           font: { size: 12 }
         },
@@ -988,10 +1065,12 @@ export function ScatterScoreProPage() {
         position: 'left',
         title: {
           display: true,
-          text: `Y-Axis Score (${selectedYMetrics.length > 0 
-            ? selectedYMetrics.map(m => m.metricLabel).slice(0, 1).join(', ') + 
-              (selectedYMetrics.length > 1 ? ' & others' : '') 
-            : 'Not Set'})`,
+          text: currentTemplateConfig.yAxisThemeLabel 
+            ? `Y-Axis Score: ${currentTemplateConfig.yAxisThemeLabel}`
+            : `Y-Axis Score (${selectedYMetrics.length > 0 
+              ? selectedYMetrics.map(m => m.metricLabel).slice(0, 1).join(', ') + 
+                (selectedYMetrics.length > 1 ? ' & others' : '') 
+              : 'Not Set'})`,
           color: '#94A3B8',
           font: { size: 12 }
         },
@@ -1059,9 +1138,8 @@ export function ScatterScoreProPage() {
       zoom: {
         pan: {
           enabled: true,
-          mode: 'xy',
-          threshold: 5,
-          modifierKey: 'ctrl' as const
+          mode: 'xy' as const,
+          threshold: 5
         },
         zoom: {
           wheel: {
@@ -1071,14 +1149,14 @@ export function ScatterScoreProPage() {
           pinch: {
             enabled: true
           },
-          mode: 'xy'
+          mode: 'xy' as const
         }
       },
       datalabels: {
-        display: false // Will be overridden per dataset
+        display: false
       }
     }
-  }), [selectedXMetrics, selectedYMetrics, zMetricConfig, selectedDisplayCurrency]);
+  }), [selectedXMetrics, selectedYMetrics, zMetricConfig, selectedDisplayCurrency, currentTemplateConfig]);
 
   const handleZoomIn = useCallback(() => {
     chartRef.current?.zoom(1.2);
@@ -1092,7 +1170,6 @@ export function ScatterScoreProPage() {
     chartRef.current?.resetZoom();
   }, []);
 
-  // Cleanup on unmount
   useEffect(() => {
     return () => {
       if (chartRef.current) {
@@ -1115,7 +1192,7 @@ export function ScatterScoreProPage() {
     >
       <div 
         className="absolute inset-0 bg-cover bg-center bg-no-repeat bg-fixed -z-10 opacity-[0.03]"
-        style={{ backgroundImage: "url('/Background2.jpg')" }}
+        style={{ backgroundImage: `url(data:image/svg+xml,${encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 600"><defs><linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:rgb(241,196,15);stop-opacity:0.1" /><stop offset="100%" style="stop-color:rgb(34,197,94);stop-opacity:0.1" /></linearGradient></defs><rect width="1200" height="600" fill="url(#g)" /><circle cx="200" cy="150" r="100" fill="rgba(241,196,15,0.05)" /><circle cx="1000" cy="450" r="150" fill="rgba(34,197,94,0.05)" /></svg>')})` }}
         aria-hidden="true"
       />
 
@@ -1179,7 +1256,11 @@ export function ScatterScoreProPage() {
                               <Info size={12}/>
                             </button>
                           </TooltipTrigger>
-                          <TooltipContent side="right" className="text-xs max-w-xs p-2 z-[70]">
+                          <TooltipContent 
+                            side="left" 
+                            align="center" 
+                            className="text-xs max-w-[300px] p-2 z-[100]"
+                          >
                             <p>{t.description}</p>
                           </TooltipContent>
                         </Tooltip>
@@ -1215,7 +1296,7 @@ export function ScatterScoreProPage() {
               <CardContent className="p-0">
                 <MetricSelector
                   label=""
-                  selectedMetric={selectedZMetricKey}
+                  selectedMetric={selectedZMetricKey || ""}
                   onMetricChange={setSelectedZMetricKey}
                   currentTier={currentUserTier}
                   availableMetrics={accessibleMetrics}
@@ -1290,7 +1371,6 @@ export function ScatterScoreProPage() {
           </div>
         </motion.div>
 
-        {/* Chart Display Area - Matching scatter-chart page styling */}
         <div className="flex-grow relative bg-navy-800/70 backdrop-blur-sm rounded-lg p-4 shadow-lg border border-navy-700/50 flex flex-col min-h-[400px] lg:min-h-0">
           {(plotData.length > 0 || isCalculatingScores) && !axisScoreError && (
             <div className="absolute top-3 right-3 flex items-center gap-1.5 z-10">
