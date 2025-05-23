@@ -102,7 +102,7 @@ const PREDEFINED_TEMPLATES: ScatterScoreTemplate[] = [
   {
     name: "Value Hunter",
     description: "Focuses on undervalued companies with strong fundamentals and asset backing.",
-    xAxisThemeLabel: "Valuation Efficiency",
+    xAxisThemeLabel: "Valuation Hybrid Score",
     yAxisThemeLabel: "Asset Quality",
     xMetricsConfig: [
       { key: 'financials.market_cap_value', weight: 10, userHigherIsBetter: false },
@@ -138,7 +138,7 @@ const PREDEFINED_TEMPLATES: ScatterScoreTemplate[] = [
   {
     name: "Growth Catalyst Seeker",
     description: "Targets companies with high resource expansion and production growth potential.",
-    xAxisThemeLabel: "Resource Potential",
+    xAxisThemeLabel: "Resource Potential Hybrid Score",
     yAxisThemeLabel: "Growth Metrics",
     xMetricsConfig: [
       { key: 'financials.market_cap_value', weight: 10, userHigherIsBetter: true },
@@ -174,7 +174,7 @@ const PREDEFINED_TEMPLATES: ScatterScoreTemplate[] = [
   {
     name: "Producer Profitability Focus",
     description: "For analyzing currently producing companies, emphasizing profitability and operational efficiency.",
-    xAxisThemeLabel: "Cost Efficiency",
+    xAxisThemeLabel: "Cost Hybrid Score",
     yAxisThemeLabel: "Profitability",
     xMetricsConfig: [
       { key: 'financials.market_cap_value', weight: 10, userHigherIsBetter: false },
@@ -223,7 +223,7 @@ const PREDEFINED_TEMPLATES: ScatterScoreTemplate[] = [
       { key: 'financials.shares_outstanding', weight: 9, userHigherIsBetter: false },
       { key: 'capital_structure.in_the_money_options', weight: 9, userHigherIsBetter: false },
       { key: 'capital_structure.options_revenue', weight: 9, userHigherIsBetter: true },
-      { key: 'capital_structure.options_revenue', weight: 10, userHigherIsBetter: false }
+      { key: 'financials.total_assets', weight: 10, userHigherIsBetter: true }
     ],
     yMetricsConfig: [
       { key: 'financials.enterprise_value_value', weight: 10, userHigherIsBetter: true },
@@ -246,8 +246,8 @@ const PREDEFINED_TEMPLATES: ScatterScoreTemplate[] = [
   {
     name: "Precious Metals Pure Play",
     description: "Focusing on companies with high exposure to gold/silver, their precious resources, and related valuations.",
-    xAxisThemeLabel: "Precious Metals Resources",
-    yAxisThemeLabel: "Precious Metals Valuation",
+    xAxisThemeLabel: "Precious Metals Resources Hybrid Score",
+    yAxisThemeLabel: "Precious Metals Valuation Hybrid Score",
     xMetricsConfig: [
       { key: 'financials.market_cap_value', weight: 10, userHigherIsBetter: true },
       { key: 'mineral_estimates.reserves_precious_aueq_moz', weight: 9, userHigherIsBetter: true },
@@ -448,7 +448,9 @@ const AvailableMetricsSelector: React.FC<{
     <Label className="text-xs font-medium text-muted-foreground">Add Metric to {axisLabel}-Axis</Label>
     <Select 
       onValueChange={(value) => { 
-        if (value && value !== "__placeholder__") onMetricSelect(value); 
+        if (value && value !== "__placeholder__") {
+          onMetricSelect(value);
+        }
       }}
       value=""
     >
@@ -503,7 +505,7 @@ const AxisMetricConfigurator: React.FC<{
   ) => void;
 }> = ({
   axisTitle,
-  currentSelectedMetricsForAxis,
+  currentSelectedMetricsForAxis = [],
   axisType,
   currentTotalWeightForAxis,
   accessibleMetrics,
@@ -539,7 +541,7 @@ const AxisMetricConfigurator: React.FC<{
               <Button 
                 variant="ghost" 
                 size="icon" 
-                className="p-0 h-5 w-5 text-red-500 hover:text-red-400 flex-shrink-0" 
+                className="p-0 h-5 w-5 text-red-500 hover:text-red-400 hover:bg-transparent flex-shrink-0" 
                 onClick={() => handleAxisMetricChange(axisType, sm.key, 'remove')}
               >
                 <X size={14} />
@@ -554,12 +556,12 @@ const AxisMetricConfigurator: React.FC<{
                   id={`weight-${axisType}-${sm.key}`} 
                   type="number" 
                   value={sm.weight}
-                  onChange={(e) => handleAxisMetricChange(
-                    axisType, 
-                    sm.key, 
-                    'updateWeight', 
-                    parseInt(e.target.value, 10)
-                  )}
+                  onChange={(e) => {
+                    const value = parseInt(e.target.value, 10);
+                    if (!isNaN(value)) {
+                      handleAxisMetricChange(axisType, sm.key, 'updateWeight', value);
+                    }
+                  }}
                   className="h-7 text-xs w-16 bg-navy-800 border-navy-500 px-1.5"
                   min={0} 
                   max={100} 
@@ -729,7 +731,7 @@ export function ScatterScoreProPage() {
     loadTemplate(newTemplateName);
   };
   
-  const handleAxisMetricChange = (
+  const handleAxisMetricChange = useCallback((
     axisType: 'X' | 'Y',
     metricKey: string,
     action: 'add' | 'remove' | 'updateWeight' | 'toggleHLB',
@@ -773,7 +775,7 @@ export function ScatterScoreProPage() {
     });
     
     setActiveTemplateName(null);
-  };
+  }, [getMetricConfigDetails, accessibleMetrics]);
   
   const xTotalWeight = useMemo(() => 
     selectedXMetrics.reduce((sum, m) => sum + m.weight, 0), 
@@ -1234,9 +1236,36 @@ export function ScatterScoreProPage() {
           
           <div className="px-1 space-y-4 pb-4">
             <div>
-              <Label htmlFor="template-selector" className="text-xs font-semibold text-muted-foreground block mb-1">
-                Load Template
-              </Label>
+              <TooltipProvider delayDuration={100}>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Label 
+                      htmlFor="template-selector" 
+                      className="text-xs font-semibold text-muted-foreground block mb-1 cursor-help inline-flex items-center gap-1"
+                    >
+                      Load Template
+                      <Info size={12} className="opacity-50" />
+                    </Label>
+                  </TooltipTrigger>
+                  <TooltipContent 
+                    side="bottom" 
+                    align="center" 
+                    className="text-xs max-w-[350px] p-3 z-[100] bg-navy-700/95 border border-navy-600/80"
+                  >
+                    <div className="space-y-2">
+                      {PREDEFINED_TEMPLATES.map((t, index) => (
+                        <div key={t.name} className={cn(
+                          "pb-2",
+                          index < PREDEFINED_TEMPLATES.length - 1 && "border-b border-navy-600/50"
+                        )}>
+                          <p className="font-semibold text-accent-teal mb-1">{t.name}</p>
+                          <p className="text-surface-white/80">{t.description}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
               <Select value={activeTemplateName || ""} onValueChange={handleTemplateChange}>
                 <SelectTrigger id="template-selector" className="w-full h-9 text-xs bg-navy-700 border-navy-600">
                   <SelectValue placeholder="Select a template..." />
@@ -1244,27 +1273,7 @@ export function ScatterScoreProPage() {
                 <SelectContent className="z-[60]">
                   {PREDEFINED_TEMPLATES.map(t => (
                     <SelectItem key={t.name} value={t.name} className="text-xs">
-                      {t.name} 
-                      <TooltipProvider delayDuration={100}>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <button 
-                              type="button" 
-                              className="ml-2 opacity-50 hover:opacity-100" 
-                              onClick={(e) => e.stopPropagation()}
-                            >
-                              <Info size={12}/>
-                            </button>
-                          </TooltipTrigger>
-                          <TooltipContent 
-                            side="left" 
-                            align="center" 
-                            className="text-xs max-w-[300px] p-2 z-[100]"
-                          >
-                            <p>{t.description}</p>
-                          </TooltipContent>
-                        </Tooltip>
-                      </TooltipProvider>
+                      {t.name}
                     </SelectItem>
                   ))}
                 </SelectContent>
