@@ -23,7 +23,7 @@ import {
   TrendingUp,
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
-import backgroundImageUrl from '../../assets/Background2.jpg'; // Import image
+import backgroundImageUrl from '../../assets/Background2.jpg'; // Adjust path if in public/
 
 export function HelpScatterScorePage() {
   // Component for mathematical formula display
@@ -78,8 +78,8 @@ export function HelpScatterScorePage() {
             <CardContent className="space-y-4 text-sm">
               <p>
                 The ScatterScore Pro page is an advanced analytical tool that combines the visual power of scatter charts with
-                the sophistication of weighted composite scoring. Unlike standard scatter charts that display raw metric values,
-                ScatterScore transforms multiple weighted metrics into normalized composite scores for each axis.
+                the sophistication of weighted composite scoring. Unlike standard scatter charts that display raw metric
+                values, ScatterScore transforms multiple weighted metrics into normalized composite scores for each axis.
               </p>
               <p>
                 This approach allows you to analyze companies across{' '}
@@ -106,7 +106,9 @@ export function HelpScatterScorePage() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4 text-sm">
-              <p>ScatterScore includes five professionally-designed templates, each targeting specific investment strategies:</p>
+              <p>
+                ScatterScore includes five professionally-designed templates, each targeting specific investment strategies:
+              </p>
 
               <div className="space-y-3">
                 <div className="bg-navy-900/40 p-3 rounded-md">
@@ -375,8 +377,8 @@ Axis Score = (Σ WeightedScore_i / Σ (W_i / 100)) × 1000`}
                   relationships.
                 </p>
                 <p>
-                  <strong className="text-gray-200">Empty Regions:</strong> Areas with no companies might represent
-                  impossible combinations (e.g., high profitability with high costs) or market opportunities.
+                  <strong className="text-gray-200">Empty Regions:</strong> Areas with no companies might represent impossible
+                  combinations (e.g., high profitability with high costs) or market opportunities.
                 </p>
               </div>
 
@@ -385,7 +387,7 @@ Axis Score = (Σ WeightedScore_i / Σ (W_i / 100)) × 1000`}
                 <div className="bg-navy-900/40 p-3 rounded-md">
                   <p className="font-semibold text-surface-white mb-1">Peer Comparison</p>
                   <p className="text-xs">
-                    Filter to specific company types (e.g., "Gold Producers > $1B Market Cap") then use Producer
+                    Filter to specific company types (e.g., "Gold Producers &gt; $1B Market Cap") then use Producer
                     Profitability template to identify operational leaders and laggards.
                   </p>
                 </div>
@@ -408,8 +410,8 @@ Axis Score = (Σ WeightedScore_i / Σ (W_i / 100)) × 1000`}
               <h4 className="text-md font-semibold text-accent-teal mt-4">Customization Strategies</h4>
               <ul className="list-disc pl-5 space-y-2 text-xs">
                 <li>
-                  <strong>Sector-Specific Scoring:</strong> Modify templates for specific commodities - emphasize copper
-                  grades for base metal focus, or silver percentages for silver plays.
+                  <strong>Sector-Specific Scoring:</strong> Modify templates for specific commodities - emphasize copper grades
+                  for base metal focus, or silver percentages for silver plays.
                 </li>
                 <li>
                   <strong>Market Condition Adaptation:</strong> In bear markets, weight financial stability higher; in bulls,
@@ -451,8 +453,8 @@ Axis Score = (Σ WeightedScore_i / Σ (W_i / 100)) × 1000`}
                 <div className="bg-yellow-900/20 border border-yellow-700/30 p-3 rounded-md">
                   <p className="font-semibold text-yellow-400 mb-1">Caution: Normalization Impact</p>
                   <p className="text-xs">
-                    Dataset normalization makes scores relative to current filter. A company scoring 800 among junior
-                    explorers might score 400 among major producers. Document your filters for context.
+                    Dataset normalization makes scores relative to current filter. A company scoring 800 among junior explorers
+                    might score 400 among major producers. Document your filters for context.
                   </p>
                 </div>
 
@@ -467,8 +469,8 @@ Axis Score = (Σ WeightedScore_i / Σ (W_i / 100)) × 1000`}
                 <div className="bg-red-900/20 border border-red-700/30 p-3 rounded-md">
                   <p className="font-semibold text-red-400 mb-1">Avoid: Single Metric Dominance</p>
                   <p className="text-xs">
-                    Don't assign 80%+ weight to one metric unless intentionally creating a single-factor analysis. The power
-                    of ScatterScore lies in balanced multi-factor scoring.
+                    Don't assign 80%+ weight to one metric unless intentionally creating a single-factor analysis. The power of
+                    ScatterScore lies in balanced multi-factor scoring.
                   </p>
                 </div>
               </div>
@@ -539,8 +541,8 @@ Axis Score = (Σ WeightedScore_i / Σ (W_i / 100)) × 1000`}
                   <strong>5. Z-Axis:</strong> Set to "Cash Value" to identify well-funded opportunities
                 </p>
                 <p>
-                  <strong>6. Analysis:</strong> Look for companies in the top-right with large bubbles - high growth
-                  potential, attractive valuation, and strong cash position to execute.
+                  <strong>6. Analysis:</strong> Look for companies in the top-right with large bubbles - high growth potential,
+                  attractive valuation, and strong cash position to execute.
                 </p>
               </div>
 
