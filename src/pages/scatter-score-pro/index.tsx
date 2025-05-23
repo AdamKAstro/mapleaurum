@@ -80,20 +80,22 @@ interface ScatterScorePlotPointData extends ScatterDataPoint {
 }
 
 const DEBUG_SCATTER_SCORE = process.env.NODE_ENV === 'development';
+const DEFAULT_WEIGHT_FOR_NEW_METRIC = 5; // 5% default weight for new metrics
 
-// **Color configuration for company status**
+// **Match status colors from scatter-chart page**
 const statusColors: Record<string, { background: string; border: string }> = {
-  producer: { background: 'rgba(34, 197, 94, 0.6)', border: 'rgba(34, 197, 94, 1)' },
-  developer: { background: 'rgba(59, 130, 246, 0.6)', border: 'rgba(59, 130, 246, 1)' },
-  explorer: { background: 'rgba(239, 68, 68, 0.6)', border: 'rgba(239, 68, 68, 1)' },
-  royalty: { background: 'rgba(168, 85, 247, 0.6)', border: 'rgba(168, 85, 247, 1)' },
-  default: { background: 'rgba(156, 163, 175, 0.6)', border: 'rgba(156, 163, 175, 1)' }
+  producer: { background: 'rgba(34,197,94,0.7)', border: 'rgb(12,163,74)' },
+  developer: { background: 'rgba(59,130,246,0.7)', border: 'rgb(37,99,195)' },
+  explorer: { background: 'rgba(168,85,247,0.7)', border: 'rgb(147,51,194)' },
+  royalty: { background: 'rgba(244,162,97,0.7)', border: 'rgb(217,119,6)' },
+  other: { background: 'rgba(107,114,128,0.7)', border: 'rgb(75,85,99)' },
+  default: { background: 'rgba(107,114,128,0.7)', border: 'rgb(75,85,99)' }
 };
 
-// **Chart settings functions**
+// **Match chart settings from scatter-chart page**
 const chartSettingsFunctions = {
-  pointRadius: (r: number = 0.3) => 5 + r * 20,
-  pointHoverRadius: (r: number = 0.3) => (5 + r * 20) + 2,
+  pointRadius: (n: number): number => 6 + (Math.max(0, Math.min(1, n || 0)) * 35),
+  pointHoverRadius: (n: number): number => 8 + (Math.max(0, Math.min(1, n || 0)) * 48)
 };
 
 const PREDEFINED_TEMPLATES: ScatterScoreTemplate[] = [
@@ -205,24 +207,32 @@ const ScaleToggle: React.FC<{
   label: string;
 }> = ({ scale, onChange, label }) => (
   <div className="flex items-center gap-2 text-xs mt-1">
-    <span className="text-muted-foreground">{label}:</span>
-    <div className="flex bg-muted rounded-md p-0.5">
-      <Button
-        variant={scale === 'linear' ? 'secondary' : 'ghost'}
-        size="xs"
+    <span className="text-surface-white/70">{label}:</span>
+    <div className="flex bg-navy-400/20 rounded-lg overflow-hidden p-0.5 gap-0.5">
+      <button
+        className={cn(
+          "px-3 py-1.5 text-xs font-medium rounded-md transition-all duration-200",
+          scale === 'linear' 
+            ? "bg-navy-400 text-surface-white shadow-lg shadow-navy-300/30 ring-1 ring-navy-300/30" 
+            : "text-surface-white/70 hover:bg-navy-400/30"
+        )}
         onClick={() => onChange('linear')}
-        className={cn("px-2 py-0.5 h-7 text-xs", scale === 'linear' && "shadow-md")}
+        aria-pressed={scale === 'linear'}
       >
         Linear
-      </Button>
-      <Button
-        variant={scale === 'log' ? 'secondary' : 'ghost'}
-        size="xs"
+      </button>
+      <button
+        className={cn(
+          "px-3 py-1.5 text-xs font-medium rounded-md transition-all duration-200",
+          scale === 'log' 
+            ? "bg-navy-400 text-surface-white shadow-lg shadow-navy-300/30 ring-1 ring-navy-300/30" 
+            : "text-surface-white/70 hover:bg-navy-400/30"
+        )}
         onClick={() => onChange('log')}
-        className={cn("px-2 py-0.5 h-7 text-xs", scale === 'log' && "shadow-md")}
+        aria-pressed={scale === 'log'}
       >
         Log
-      </Button>
+      </button>
     </div>
   </div>
 );
@@ -230,7 +240,8 @@ const ScaleToggle: React.FC<{
 const normalizeWeights = (
   metrics: AxisMetricConfig[],
   changedMetricKey?: string,
-  userSetWeightForChangedMetric?: number
+  userSetWeightForChangedMetric?: number,
+  isNewMetric: boolean = false
 ): AxisMetricConfig[] => {
   if (!Array.isArray(metrics) || metrics.length === 0) {
     if (DEBUG_SCATTER_SCORE) console.log("[normalizeWeights] Input is not an array or is empty, returning empty.");
@@ -251,6 +262,15 @@ const normalizeWeights = (
   let totalTargetWeight = 100;
   let sumOfFixedWeights = 0;
   
+  // If this is a new metric being added, ensure it gets the default weight
+  if (isNewMetric && changedMetricKey) {
+    const idx = workingMetrics.findIndex(m => m.key === changedMetricKey);
+    if (idx !== -1) {
+      workingMetrics[idx].weight = DEFAULT_WEIGHT_FOR_NEW_METRIC;
+      userSetWeightForChangedMetric = DEFAULT_WEIGHT_FOR_NEW_METRIC;
+    }
+  }
+  
   if (changedMetricKey && userSetWeightForChangedMetric !== undefined) {
     const idx = workingMetrics.findIndex(m => m.key === changedMetricKey);
     if (idx !== -1) {
@@ -266,12 +286,22 @@ const normalizeWeights = (
   if (adjustableMetrics.length > 0) {
     if (weightToDistributeToAdjustable < 0) weightToDistributeToAdjustable = 0;
 
-    if (sumOfOriginalAdjustableWeights === 0 || (changedMetricKey && userSetWeightForChangedMetric !== undefined)) {
-      const equalShare = weightToDistributeToAdjustable / adjustableMetrics.length;
-      adjustableMetrics.forEach(m => {
-        const idx = workingMetrics.findIndex(wm => wm.key === m.key);
-        if (idx !== -1) workingMetrics[idx].weight = equalShare;
-      });
+    if (sumOfOriginalAdjustableWeights === 0 || isNewMetric) {
+      // Distribute remaining weight proportionally among existing metrics
+      if (sumOfOriginalAdjustableWeights > 0 && !isNewMetric) {
+        const scaleFactor = weightToDistributeToAdjustable / sumOfOriginalAdjustableWeights;
+        adjustableMetrics.forEach(m => {
+          const idx = workingMetrics.findIndex(wm => wm.key === m.key);
+          if (idx !== -1) workingMetrics[idx].weight = m.weight * scaleFactor;
+        });
+      } else {
+        // Equal distribution if no original weights
+        const equalShare = weightToDistributeToAdjustable / adjustableMetrics.length;
+        adjustableMetrics.forEach(m => {
+          const idx = workingMetrics.findIndex(wm => wm.key === m.key);
+          if (idx !== -1) workingMetrics[idx].weight = equalShare;
+        });
+      }
     } else {
       const scaleFactor = weightToDistributeToAdjustable / sumOfOriginalAdjustableWeights;
       adjustableMetrics.forEach(m => {
@@ -281,9 +311,6 @@ const normalizeWeights = (
     }
   } else if (changedMetricKey && workingMetrics.length === 1) {
     workingMetrics[0].weight = 100;
-  } else if (workingMetrics.length > 0 && !changedMetricKey) {
-    const equalWeight = 100 / workingMetrics.length;
-    workingMetrics = workingMetrics.map(m => ({ ...m, weight: equalWeight }));
   }
   
   // Rounding and final adjustment
@@ -298,11 +325,13 @@ const normalizeWeights = (
     const diff = 100 - currentSum;
     let adjustIdx = -1;
 
-    // Try to find a suitable metric to adjust
+    // Try to find the best metric to adjust
     if (changedMetricKey) {
+      // Find the highest weighted metric that isn't the changed one
       const candidates = roundedMetrics
-        .map((m, i) => ({ m, i }))
-        .filter(item => item.m.key !== changedMetricKey);
+        .map((m, i) => ({ m, i, weight: m.weight }))
+        .filter(item => item.m.key !== changedMetricKey)
+        .sort((a, b) => b.weight - a.weight);
       
       if (candidates.length > 0) {
         // Find a candidate that can handle the adjustment
@@ -312,16 +341,19 @@ const normalizeWeights = (
             break;
           }
         }
-        // If no suitable candidate found, use the first one
+        // If no suitable candidate found, use the one with highest weight
         if (adjustIdx === -1 && candidates.length > 0) {
           adjustIdx = candidates[0].i;
         }
       }
     }
 
-    // If still no adjustment index, use the first metric
+    // If still no adjustment index, find the metric with the highest weight
     if (adjustIdx === -1 && roundedMetrics.length > 0) {
-      adjustIdx = 0;
+      const maxWeightIdx = roundedMetrics.reduce((maxIdx, m, i) => 
+        m.weight > roundedMetrics[maxIdx].weight ? i : maxIdx, 0
+      );
+      adjustIdx = maxWeightIdx;
     }
 
     // Apply the adjustment
@@ -336,7 +368,7 @@ const normalizeWeights = (
   }));
 };
 
-// **Component for Available Metrics Selector**
+// Component for Available Metrics Selector
 const AvailableMetricsSelector: React.FC<{
   axisLabel: 'X' | 'Y';
   onMetricSelect: (metricKey: string) => void;
@@ -349,6 +381,7 @@ const AvailableMetricsSelector: React.FC<{
       onValueChange={(value) => { 
         if (value && value !== "__placeholder__") onMetricSelect(value); 
       }}
+      value=""
     >
       <SelectTrigger className="text-xs h-9 bg-navy-600/50 border-navy-500 mt-1">
         <SelectValue placeholder={`Select metric to add...`} />
@@ -387,7 +420,7 @@ const AvailableMetricsSelector: React.FC<{
   </div>
 );
 
-// **Component for Axis Metric Configurator**
+// Component for Axis Metric Configurator
 const AxisMetricConfigurator: React.FC<{
   axisTitle: 'X-Axis Score Metrics' | 'Y-Axis Score Metrics';
   currentSelectedMetricsForAxis: AxisMetricConfig[];
@@ -638,11 +671,12 @@ export function ScatterScoreProPage() {
             newMetricsArray.push({
               key: metricKey,
               metricLabel: metricConfig.label,
-              weight: 0,
+              weight: DEFAULT_WEIGHT_FOR_NEW_METRIC, // Set default weight for new metrics
               userHigherIsBetter: metricConfig.higherIsBetter,
               originalHigherIsBetter: metricConfig.higherIsBetter,
             });
-            return normalizeWeights(newMetricsArray);
+            // Normalize with isNewMetric flag
+            return normalizeWeights(newMetricsArray, metricKey, DEFAULT_WEIGHT_FOR_NEW_METRIC, true);
           }
         }
       } else if (action === 'remove') {
@@ -652,7 +686,7 @@ export function ScatterScoreProPage() {
         if (action === 'updateWeight') {
           const newWeight = Math.max(0, Math.min(100, Number(value) || 0));
           newMetricsArray[existingIndex].weight = newWeight;
-          return normalizeWeights(newMetricsArray, metricKey, newWeight);
+          return normalizeWeights(newMetricsArray, metricKey, newWeight, false);
         } else if (action === 'toggleHLB') {
           newMetricsArray[existingIndex].userHigherIsBetter = !!value;
           return newMetricsArray;
@@ -877,22 +911,32 @@ export function ScatterScoreProPage() {
       borderWidth: 1,
       hoverBorderWidth: 2,
       pointRadius: (ctx: ScriptableContext<'scatter'>) => 
-        chartSettingsFunctions.pointRadius((ctx.raw as ScatterScorePlotPointData)?.r_normalized),
+        chartSettingsFunctions.pointRadius((ctx.raw as ScatterScorePlotPointData)?.r_normalized || 0),
       pointHoverRadius: (ctx: ScriptableContext<'scatter'>) => 
-        chartSettingsFunctions.pointHoverRadius((ctx.raw as ScatterScorePlotPointData)?.r_normalized),
+        chartSettingsFunctions.pointHoverRadius((ctx.raw as ScatterScorePlotPointData)?.r_normalized || 0),
       datalabels: {
-        display: (ctx: DataLabelsContext) => 
-          ((ctx.dataset?.data?.[ctx.dataIndex] as ScatterScorePlotPointData)?.r_normalized ?? 0) > 0.65,
-        formatter: (_v: any, ctx: DataLabelsContext) => 
-          ((ctx.dataset?.data?.[ctx.dataIndex] as ScatterScorePlotPointData)?.company?.tsx_code || null),
-        color: '#f0fdf4',
-        font: { size: 9, weight: '500' as const },
-        align: 'center' as const,
-        anchor: 'center' as const,
-        offset: 0,
-        backgroundColor: 'rgba(15, 23, 42, 0.75)',
+        display: (ctx: DataLabelsContext) => {
+          const dp = ctx.dataset?.data?.[ctx.dataIndex] as ScatterScorePlotPointData;
+          return dp?.r_normalized > 0.1;
+        },
+        formatter: (_v: any, ctx: DataLabelsContext) => {
+          const dp = ctx.dataset?.data?.[ctx.dataIndex] as ScatterScorePlotPointData;
+          return dp?.company?.tsx_code || null;
+        },
+        backgroundColor: 'rgba(30,41,59,0.75)',
         borderRadius: 3,
-        padding: { top: 2, bottom: 1, left: 4, right: 4 }
+        padding: { top: 2, bottom: 1, left: 4, right: 4 },
+        color: '#F8FAFC',
+        font: { 
+          size: 9, 
+          weight: '500' as const, 
+          family: "'Inter', sans-serif" 
+        },
+        textAlign: 'center' as const,
+        anchor: 'center' as const,
+        align: 'center' as const,
+        offset: 0,
+        clamp: true
       }
     }));
   }, [plotData, isCalculatingScores, selectedZMetricKey, zMetricConfig, zScale]);
@@ -900,7 +944,17 @@ export function ScatterScoreProPage() {
   const chartOptions = useMemo((): ChartOptions<'scatter'> => ({
     responsive: true,
     maintainAspectRatio: false,
-    animation: { duration: 300 },
+    animation: false,
+    elements: {
+      point: {
+        radius: (ctx: ScriptableContext<'scatter'>) => 
+          chartSettingsFunctions.pointRadius((ctx.raw as any)?.r_normalized ?? 0),
+        hoverRadius: (ctx: ScriptableContext<'scatter'>) => 
+          chartSettingsFunctions.pointHoverRadius((ctx.raw as any)?.r_normalized ?? 0),
+        hitRadius: 5,
+        hoverBorderWidth: 2,
+      }
+    },
     scales: {
       x: {
         type: 'linear',
@@ -912,20 +966,21 @@ export function ScatterScoreProPage() {
               (selectedXMetrics.length > 1 ? ' & others' : '') 
             : 'Not Set'})`,
           color: '#94A3B8',
-          font: { size: 11 }
+          font: { size: 12 }
         },
         ticks: {
           color: '#64748B',
           font: { size: 9 },
           maxTicksLimit: 8,
           precision: 0,
+          autoSkipPadding: 15,
           callback: function(value) {
             if (Number.isInteger(value)) return value;
           }
         },
         grid: {
-          color: 'rgba(51,65,85,0.3)',
-          borderColor: 'rgba(51,65,85,0.6)'
+          color: 'rgba(51,65,85,0.2)',
+          borderColor: 'rgba(51,65,85,0.5)'
         }
       },
       y: {
@@ -938,20 +993,21 @@ export function ScatterScoreProPage() {
               (selectedYMetrics.length > 1 ? ' & others' : '') 
             : 'Not Set'})`,
           color: '#94A3B8',
-          font: { size: 11 }
+          font: { size: 12 }
         },
         ticks: {
           color: '#64748B',
           font: { size: 9 },
           maxTicksLimit: 8,
           precision: 0,
+          autoSkipPadding: 15,
           callback: function(value) {
             if (Number.isInteger(value)) return value;
           }
         },
         grid: {
-          color: 'rgba(51,65,85,0.3)',
-          borderColor: 'rgba(51,65,85,0.6)'
+          color: 'rgba(51,65,85,0.2)',
+          borderColor: 'rgba(51,65,85,0.5)'
         }
       }
     },
@@ -962,16 +1018,15 @@ export function ScatterScoreProPage() {
           color: '#CBD5E1',
           usePointStyle: true,
           pointStyle: 'circle',
-          padding: 15,
-          font: { size: 10 }
+          padding: 20,
+          font: { size: 11 }
         }
       },
       tooltip: {
         enabled: true,
-        backgroundColor: 'rgba(15,23,42,0.95)',
-        titleFont: { weight: 'bold' },
-        titleColor: '#93c5fd',
-        bodyColor: '#e2e8f0',
+        backgroundColor: 'rgba(15,23,42,0.9)',
+        titleColor: '#5EEAD4',
+        bodyColor: '#E2E8F0',
         borderColor: 'rgba(51,65,85,0.7)',
         borderWidth: 1,
         padding: 10,
@@ -979,19 +1034,22 @@ export function ScatterScoreProPage() {
         boxPadding: 4,
         usePointStyle: true,
         callbacks: {
-          title: (tooltipItems: any[]) => 
-            tooltipItems[0]?.raw?.company?.company_name || '',
+          title: (tooltipItems: any[]) => {
+            const dp = tooltipItems[0]?.raw as ScatterScorePlotPointData;
+            return dp?.company?.company_name || '';
+          },
           label: (ctx: any) => {
             const dp = ctx.raw as ScatterScorePlotPointData;
             if (!dp || !dp.company) return '';
-            const lines = [];
+            const company = dp.company;
+            const lines = [` ${company.tsx_code || 'N/A'}`];
             lines.push(` X-Score: ${dp.xScore?.toFixed(0) ?? 'N/A'}`);
             lines.push(` Y-Score: ${dp.yScore?.toFixed(0) ?? 'N/A'}`);
             if (zMetricConfig && dp.zRawValue !== undefined && dp.zRawValue !== null) {
               lines.push(` ${zMetricConfig.label}: ${formatValueWrapper(
                 dp.zRawValue,
                 zMetricConfig.format,
-                selectedDisplayCurrency
+                selectedDisplayCurrency as Currency
               )}`);
             }
             return lines;
@@ -1017,7 +1075,7 @@ export function ScatterScoreProPage() {
         }
       },
       datalabels: {
-        display: true
+        display: false // Will be overridden per dataset
       }
     }
   }), [selectedXMetrics, selectedYMetrics, zMetricConfig, selectedDisplayCurrency]);
@@ -1034,6 +1092,15 @@ export function ScatterScoreProPage() {
     chartRef.current?.resetZoom();
   }, []);
 
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (chartRef.current) {
+        chartRef.current.destroy();
+      }
+    };
+  }, []);
+
   return (
     <PageContainer
       title="Advanced ScatterScore Analysis"
@@ -1043,9 +1110,15 @@ export function ScatterScoreProPage() {
         ? `Displaying ${plotData.length} companies.` 
         : "Configure axes and apply to plot scores."
       }
-      className="flex flex-col h-full"
+      className="relative isolate flex flex-col flex-grow"
       contentClassName="flex flex-col flex-grow min-h-0"
     >
+      <div 
+        className="absolute inset-0 bg-cover bg-center bg-no-repeat bg-fixed -z-10 opacity-[0.03]"
+        style={{ backgroundImage: "url('/Background2.jpg')" }}
+        aria-hidden="true"
+      />
+
       <div className="flex flex-col lg:flex-row gap-4 md:gap-6 p-2 md:p-4 flex-grow overflow-hidden">
         <Button 
           onClick={() => setIsConfigPanelOpen(!isConfigPanelOpen)} 
@@ -1217,8 +1290,8 @@ export function ScatterScoreProPage() {
           </div>
         </motion.div>
 
-        {/* Chart Display Area */}
-        <div className="flex-grow bg-navy-800/30 p-4 rounded-lg border border-navy-700 backdrop-blur-sm flex flex-col items-center justify-center min-h-[400px] lg:min-h-0 relative">
+        {/* Chart Display Area - Matching scatter-chart page styling */}
+        <div className="flex-grow relative bg-navy-800/70 backdrop-blur-sm rounded-lg p-4 shadow-lg border border-navy-700/50 flex flex-col min-h-[400px] lg:min-h-0">
           {(plotData.length > 0 || isCalculatingScores) && !axisScoreError && (
             <div className="absolute top-3 right-3 flex items-center gap-1.5 z-10">
               <Button 
@@ -1251,51 +1324,59 @@ export function ScatterScoreProPage() {
             </div>
           )}
           
-          {isCalculatingScores && (
-            <div className="absolute inset-0 bg-background/50 flex items-center justify-center z-20">
-              <LoadingIndicator message="Calculating scores & preparing chart..."/>
-            </div>
-          )}
-          
-          {!isCalculatingScores && axisScoreError && (
-            <p className="text-destructive text-center p-4">{axisScoreError}</p>
-          )}
-          
-          {!isCalculatingScores && !axisScoreError && plotData.length === 0 && 
-           (selectedXMetrics.length > 0 || selectedYMetrics.length > 0) && (
-            <p className="text-center text-gray-400">
-              No data to plot. <br/>
-              This can happen if no companies match global filters, or if selected metrics resulted in no valid scores for any company. <br/>
-              Try adjusting global filters or click "Apply & Plot Scores" again.
-            </p>
-          )}
-          
-          {!isCalculatingScores && !axisScoreError && plotData.length === 0 && 
-           selectedXMetrics.length === 0 && selectedYMetrics.length === 0 && (
-            <p className="text-center text-gray-400">
-              Please select metrics for at least one axis and click "Apply & Plot Scores".
-            </p>
-          )}
+          <div className="flex-grow min-h-[400px] sm:min-h-[500px]">
+            {isCalculatingScores && (
+              <div className="h-full flex flex-col items-center justify-center text-center">
+                <LoadingIndicator message="Calculating scores & preparing chart..." />
+              </div>
+            )}
+            
+            {!isCalculatingScores && axisScoreError && (
+              <div className="h-full flex items-center justify-center">
+                <p className="text-destructive text-center p-4">{axisScoreError}</p>
+              </div>
+            )}
+            
+            {!isCalculatingScores && !axisScoreError && plotData.length === 0 && 
+             (selectedXMetrics.length > 0 || selectedYMetrics.length > 0) && (
+              <div className="h-full flex items-center justify-center">
+                <p className="text-center text-gray-400 p-4">
+                  No data to plot. <br/>
+                  This can happen if no companies match global filters, or if selected metrics resulted in no valid scores for any company. <br/>
+                  Try adjusting global filters or click "Apply & Plot Scores" again.
+                </p>
+              </div>
+            )}
+            
+            {!isCalculatingScores && !axisScoreError && plotData.length === 0 && 
+             selectedXMetrics.length === 0 && selectedYMetrics.length === 0 && (
+              <div className="h-full flex items-center justify-center">
+                <p className="text-center text-gray-400">
+                  Please select metrics for at least one axis and click "Apply & Plot Scores".
+                </p>
+              </div>
+            )}
 
-          {!isCalculatingScores && !axisScoreError && plotData.length > 0 && 
-           chartDatasets.length > 0 && (
-            <div className="w-full h-full min-h-[400px] sm:min-h-[500px]">
+            {!isCalculatingScores && !axisScoreError && plotData.length > 0 && 
+             chartDatasets.length > 0 && (
               <Scatter 
                 ref={chartRef} 
                 data={{ datasets: chartDatasets }} 
                 options={chartOptions} 
               />
-            </div>
-          )}
-          
-          {!isCalculatingScores && !axisScoreError && plotData.length > 0 && 
-           chartDatasets.length === 0 && (
-            <p className="text-center text-gray-400 p-4">
-              Scores were calculated for {plotData.length} companies, but no valid data points could be generated for the chart 
-              (e.g., all X or Y scores were null, or Z-axis data was problematic). 
-              Please check your metric selections and try again.
-            </p>
-          )}
+            )}
+            
+            {!isCalculatingScores && !axisScoreError && plotData.length > 0 && 
+             chartDatasets.length === 0 && (
+              <div className="h-full flex items-center justify-center">
+                <p className="text-center text-gray-400 p-4">
+                  Scores were calculated for {plotData.length} companies, but no valid data points could be generated for the chart 
+                  (e.g., all X or Y scores were null, or Z-axis data was problematic). 
+                  Please check your metric selections and try again.
+                </p>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </PageContainer>
