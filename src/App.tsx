@@ -26,12 +26,13 @@ import { SubscribePage } from './pages/subscribe';
 import { ScatterChartPage } from './pages/scatter-chart';
 import { FilterPage } from './pages/filter';
 import ScoringPage from './pages/scoring';
-import { ScatterScoreProPage } from './pages/scatter-score-pro'; // <-- NEW IMPORT
+import { ScatterScoreProPage } from './pages/scatter-score-pro';
 import { HelpLandingPage } from './pages/help/index';
 import { HelpMetricsPage } from './pages/help/metrics';
 import { HelpFiltersPage } from './pages/help/filters-guide';
 import { HelpScoringPage } from './pages/help/scoring-guide';
 import { HelpScatterPage } from './pages/help/scatter-guide';
+import { HelpScatterScorePage } from './pages/help/scatter-score-guide'; // New Import
 import { HelpTiersPage } from './pages/help/tiers';
 import { HelpGeneralPage } from './pages/help/general';
 import { AdminSendEmailPage } from './pages/admin/send-email';
@@ -70,7 +71,7 @@ function App() {
     },
   };
 
-  const showDebugSelector = false; 
+  const showDebugSelector = false;
 
   return (
     <Router>
@@ -114,7 +115,7 @@ function App() {
                             <Route path="/onboarding" element={<OnboardingPage />} />
                             <Route path="/companies" element={<CompaniesPage />} />
                             <Route path="/scatter-chart" element={<ScatterChartPage />} />
-                            <Route path="/scatter-score-pro" element={<ScatterScoreProPage />} /> {/* <-- NEW ROUTE ADDED --> */}
+                            <Route path="/scatter-score-pro" element={<ScatterScoreProPage />} />
                             <Route path="/filter" element={<FilterPage />} />
                             <Route path="/scoring" element={<ScoringPage />} />
                             <Route path="/help" element={<HelpLandingPage />} />
@@ -122,6 +123,7 @@ function App() {
                             <Route path="/help/filters" element={<HelpFiltersPage />} />
                             <Route path="/help/scoring" element={<HelpScoringPage />} />
                             <Route path="/help/scatter-chart" element={<HelpScatterPage />} />
+                            <Route path="/help/scatter-score-pro" element={<HelpScatterScorePage />} /> {/* New Route */}
                             <Route path="/help/tiers" element={<HelpTiersPage />} />
                             <Route path="/help/general" element={<HelpGeneralPage />} />
                             <Route path="/admin/send-email" element={<AdminSendEmailPage />} />

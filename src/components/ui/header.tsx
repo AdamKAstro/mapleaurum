@@ -3,12 +3,13 @@ import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/auth-context';
 import { useSubscription } from '../../contexts/subscription-context';
-import { CurrencySelector } from '../../components/currency-selector'; // Verify this path is correct
-import { Button } from './button'; // Assuming this exists in the same folder
-import { LogIn, LogOut, Loader2, ShieldCheck, Star, Gem, UserCircle } from 'lucide-react'; // Gem for premium badge
+import { CurrencySelector } from '../../components/currency-selector';
+import { Button } from './button';
+import { LogIn, LogOut, Loader2, ShieldCheck, Star, Gem, UserCircle, HelpCircle, ScatterChart as Scatter } from 'lucide-react';
 import type { SubscriptionTier } from '../../lib/types';
+import { cn } from '../../lib/utils';
 
-// TierBadge component (kept as it was used in your older version and is self-contained here)
+// TierBadge component
 const TierBadge: React.FC<{ tier: SubscriptionTier; isLoading?: boolean }> = ({ tier, isLoading }) => {
   if (isLoading) {
     return (
@@ -21,23 +22,27 @@ const TierBadge: React.FC<{ tier: SubscriptionTier; isLoading?: boolean }> = ({ 
 
   const getTierLabel = (t: SubscriptionTier): string => {
     switch (t) {
-      case 'free': return 'Free';
-      case 'pro': return 'Pro';
-      case 'premium': return 'Premium';
-      default: return 'User'; // Fallback
+      case 'free':
+        return 'Free';
+      case 'pro':
+        return 'Pro';
+      case 'premium':
+        return 'Premium';
+      default:
+        return 'User';
     }
   };
 
   const label = getTierLabel(tier);
   let IconComponent = ShieldCheck;
-  let colorClasses = "bg-gray-500/20 text-gray-300 border-gray-600";
+  let colorClasses = 'bg-gray-500/20 text-gray-300 border-gray-600';
 
   if (tier === 'pro') {
     IconComponent = Star;
-    colorClasses = "bg-teal-500/10 text-teal-300 border-teal-700/50";
+    colorClasses = 'bg-teal-500/10 text-teal-300 border-teal-700/50';
   } else if (tier === 'premium') {
-    IconComponent = Gem; // Using Gem for Premium badge
-    colorClasses = "bg-yellow-500/10 text-yellow-300 border-yellow-700/50";
+    IconComponent = Gem;
+    colorClasses = 'bg-yellow-500/10 text-yellow-300 border-yellow-700/50';
   }
 
   return (
@@ -59,10 +64,9 @@ export function Header() {
     const { error } = await signOut();
     setIsLoggingOut(false);
     if (error) {
-      console.error("Logout failed:", error.message);
-      // You might want to show a toast notification to the user here
+      console.error('Logout failed:', error.message);
     } else {
-      navigate('/'); // Redirect to homepage or login page after logout
+      navigate('/');
     }
   };
 
@@ -81,18 +85,81 @@ export function Header() {
 
         {/* Navigation Links */}
         <nav className="hidden md:flex items-center space-x-4 lg:space-x-6">
-          <Link to="/companies" className="text-sm font-medium text-gray-300 hover:text-white transition-colors">Companies</Link>
-          <Link to="/screener" className="text-sm font-medium text-gray-300 hover:text-white transition-colors">Screener</Link>
+          <Link to="/companies" className="text-sm font-medium text-gray-300 hover:text-white transition-colors">
+            Companies
+          </Link>
+          <Link to="/screener" className="text-sm font-medium text-gray-300 hover:text-white transition-colors">
+            Screener
+          </Link>
           {(!isAuthLoading && !isSubLoading && (currentEffectiveTier === 'pro' || currentEffectiveTier === 'premium')) && (
-             <Link to="/analytics-tools" className="text-sm font-medium text-gray-300 hover:text-white transition-colors">Analytics Tools</Link>
+            <Link to="/analytics-tools" className="text-sm font-medium text-gray-300 hover:text-white transition-colors">
+              Analytics Tools
+            </Link>
           )}
+          {/* Help Dropdown */}
+          <div className="relative group">
+            <button className="text-sm font-medium text-gray-300 hover:text-white transition-colors flex items-center gap-1">
+              Help
+              <HelpCircle className="h-4 w-4" />
+            </button>
+            <div className="absolute hidden group-hover:block bg-navy-800 border border-navy-700 rounded-md shadow-lg mt-2 z-50">
+              <Link
+                to="/help"
+                className="block px-4 py-2 text-sm text-gray-300 hover:bg-navy-700 hover:text-white"
+              >
+                Help Overview
+              </Link>
+              <Link
+                to="/help/metrics"
+                className="block px-4 py-2 text-sm text-gray-300 hover:bg-navy-700 hover:text-white"
+              >
+                Metrics Guide
+              </Link>
+              <Link
+                to="/help/filters"
+                className="block px-4 py-2 text-sm text-gray-300 hover:bg-navy-700 hover:text-white"
+              >
+                Filters Guide
+              </Link>
+              <Link
+                to="/help/scoring"
+                className="block px-4 py-2 text-sm text-gray-300 hover:bg-navy-700 hover:text-white"
+              >
+                Scoring Guide
+              </Link>
+              <Link
+                to="/help/scatter-chart"
+                className="block px-4 py-2 text-sm text-gray-300 hover:bg-navy-700 hover:text-white"
+              >
+                Scatter Guide
+              </Link>
+              <Link
+                to="/help/scatter-score-pro"
+                className="block px-4 py-2 text-sm text-gray-300 hover:bg-navy-700 hover:text-white"
+              >
+                ScatterScore Guide
+              </Link>
+              <Link
+                to="/help/tiers"
+                className="block px-4 py-2 text-sm text-gray-300 hover:bg-navy-700 hover:text-white"
+              >
+                Subscription Tiers
+              </Link>
+              <Link
+                to="/help/general"
+                className="block px-4 py-2 text-sm text-gray-300 hover:bg-navy-700 hover:text-white"
+              >
+                General & FAQ
+              </Link>
+            </div>
+          </div>
         </nav>
 
         {/* Right Side Items */}
         <div className="flex items-center gap-3 md:gap-4">
-          <CurrencySelector /> {/* Assuming this component path is correct and it exists */}
+          <CurrencySelector />
 
-          {/* Auth Section - Simplified */}
+          {/* Auth Section */}
           <div className="flex items-center gap-2 sm:gap-3">
             {isAuthLoading ? (
               <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
@@ -103,20 +170,23 @@ export function Header() {
                     <TierBadge tier={currentEffectiveTier} isLoading={isSubLoading} />
                   </Link>
                 )}
-                {isSubLoading && !isAuthLoading && ( // Show a placeholder if sub is loading but auth is done
-                    <span className="inline-flex items-center rounded-md border border-gray-600 bg-gray-700/50 px-2 py-0.5 text-xs font-medium text-gray-400">
-                        <Loader2 className="mr-1 h-3 w-3 animate-spin" /> User
-                    </span>
+                {isSubLoading && !isAuthLoading && (
+                  <span className="inline-flex items-center rounded-md border border-gray-600 bg-gray-700/50 px-2 py-0.5 text-xs font-medium text-gray-400">
+                    <Loader2 className="mr-1 h-3 w-3 animate-spin" /> User
+                  </span>
                 )}
 
-                {/* User Profile Icon/Link (Simple version) */}
-                <Link to="/account/profile" className="flex items-center gap-2 text-sm text-gray-300 hover:text-white" title={user.email || "User Account"}>
-                    <UserCircle className="h-6 w-6" />
-                    <span className="hidden sm:inline">
-                        {user.user_metadata?.full_name?.split(' ')[0] || user.email?.split('@')[0]}
-                    </span>
+                <Link
+                  to="/account/profile"
+                  className="flex items-center gap-2 text-sm text-gray-300 hover:text-white"
+                  title={user.email || 'User Account'}
+                >
+                  <UserCircle className="h-6 w-6" />
+                  <span className="hidden sm:inline">
+                    {user.user_metadata?.full_name?.split(' ')[0] || user.email?.split('@')[0]}
+                  </span>
                 </Link>
-                
+
                 <Button
                   variant="outline"
                   size="sm"
@@ -130,7 +200,7 @@ export function Header() {
               </>
             ) : (
               <Button
-                onClick={() => navigate('/auth')} // Navigate to your combined login/signup page
+                onClick={() => navigate('/auth')}
                 variant="outline"
                 size="sm"
                 className="border-cyan-700/50 text-cyan-300 hover:bg-cyan-900/20 hover:border-cyan-600 hover:text-cyan-200"
