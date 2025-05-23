@@ -1417,7 +1417,7 @@ export function ScatterScoreProPage() {
             {/* Apply Button */}
             <Button 
               onClick={handleApplyConfigurationAndCalculateScores} 
-              className="hidden lg:flex fixed right-2 top-1/2 -translate-y-1/2 z-100 bg-navy-800/95 border-navy-500 hover:bg-navy-700 shadow-xl w-14 h-14"
+              className="w-full mt-3 bg-accent-teal hover:bg-accent-teal/90 text-sm font-semibold py-2.5"
               disabled={isCalculatingScores || (selectedXMetrics.length === 0 && selectedYMetrics.length === 0)}
             >
               {isCalculatingScores ? (
@@ -1436,7 +1436,7 @@ export function ScatterScoreProPage() {
             onClick={() => setIsConfigPanelOpen(true)}
             variant="outline"
             size="icon"
-            className="hidden lg:flex fixed left-[calc(100%-80px)] top-[60px] z-50 bg-navy-800/95 border-navy-500 hover:bg-navy-700 shadow-xl rounded-full w-12 h-12"
+            className="hidden lg:flex fixed right-2 top-1/2 -translate-y-1/2 z-100 bg-navy-800/95 border-navy-500 hover:bg-navy-700 shadow-xl w-14 h-14"
             aria-label="Open configuration panel"
           >
             <Settings size={20} />
