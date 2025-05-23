@@ -23,7 +23,6 @@ import {
   TrendingUp,
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
-import backgroundImageUrl from '../../assets/Background2.jpg'; // Adjust path if in public/
 
 export function HelpScatterScorePage() {
   // Component for mathematical formula display
@@ -40,6 +39,8 @@ export function HelpScatterScorePage() {
     </div>
   );
 
+  const backgroundImageUrl = '/Background2.jpg'; // Use public path
+
   return (
     <PageContainer
       title="Guide: Advanced ScatterScore Analysis"
@@ -55,7 +56,7 @@ export function HelpScatterScorePage() {
       <div className="relative isolate">
         <div
           className="absolute inset-0 bg-cover bg-center bg-no-repeat bg-fixed -z-10 opacity-[0.03]"
-          style={{ backgroundImage: `url(${backgroundImageUrl})` }}
+          style={{ backgroundImage: `url('${backgroundImageUrl}')` }}
           aria-hidden="true"
         />
         <div
@@ -387,7 +388,7 @@ Axis Score = (Σ WeightedScore_i / Σ (W_i / 100)) × 1000`}
                 <div className="bg-navy-900/40 p-3 rounded-md">
                   <p className="font-semibold text-surface-white mb-1">Peer Comparison</p>
                   <p className="text-xs">
-                    Filter to specific company types (e.g., "Gold Producers &gt; $1B Market Cap") then use Producer
+                    Filter to specific company types (e.g., "Gold Producers > $1B Market Cap") then use Producer
                     Profitability template to identify operational leaders and laggards.
                   </p>
                 </div>
