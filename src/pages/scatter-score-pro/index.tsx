@@ -657,6 +657,7 @@ export function ScatterScoreProPage() {
   const [isCalculatingScores, setIsCalculatingScores] = useState(false);
   const [datasetStatsCache, setDatasetStatsCache] = useState<Map<string, MetricDatasetStats>>(new Map());
   const [axisScoreError, setAxisScoreError] = useState<string | null>(null);
+  const [isTemplateLoading, setIsTemplateLoading] = useState(false);
 
   const chartRef = useRef<ChartJS<'scatter', (ScatterDataPoint | null)[], unknown> | null>(null);
 
@@ -678,6 +679,8 @@ export function ScatterScoreProPage() {
   const loadTemplate = useCallback((templateName: string | null) => {
     if (DEBUG_SCATTER_SCORE) console.log(`[ScatterScoreProPage] loadTemplate attempting for: '${templateName}'`);
     
+    setIsTemplateLoading(true);
+    
     const template = PREDEFINED_TEMPLATES.find(t => t.name === templateName) || PREDEFINED_TEMPLATES[0];
     
     if (!template) {
@@ -687,6 +690,7 @@ export function ScatterScoreProPage() {
       setSelectedZMetricKey(null);
       setActiveTemplateName(null);
       setCurrentTemplateConfig({});
+      setIsTemplateLoading(false);
       return;
     }
     
@@ -718,14 +722,16 @@ export function ScatterScoreProPage() {
     setNormalizationMode(template.defaultNormalizationMode || 'dataset_rank_percentile');
     setImputationMode(template.defaultImputationMode || 'dataset_median');
     
+    setIsTemplateLoading(false);
+    
     if (DEBUG_SCATTER_SCORE) console.log(`[ScatterScoreProPage] Template '${template.name}' loaded.`);
   }, [accessibleMetrics, getMetricConfigDetails]);
 
   useEffect(() => {
-    if (accessibleMetrics.length > 0) {
-      loadTemplate(activeTemplateName || (PREDEFINED_TEMPLATES.length > 0 ? PREDEFINED_TEMPLATES[0].name : null));
+    if (accessibleMetrics.length > 0 && activeTemplateName && !isTemplateLoading) {
+      loadTemplate(activeTemplateName);
     }
-  }, [accessibleMetrics, loadTemplate, activeTemplateName]);
+  }, [accessibleMetrics]);
 
   const handleTemplateChange = (newTemplateName: string) => {
     loadTemplate(newTemplateName);
@@ -754,30 +760,32 @@ export function ScatterScoreProPage() {
               userHigherIsBetter: metricConfig.higherIsBetter,
               originalHigherIsBetter: metricConfig.higherIsBetter,
             });
+            setActiveTemplateName(null);
             return normalizeWeights(newMetricsArray, metricKey, DEFAULT_WEIGHT_FOR_NEW_METRIC, true);
           }
         }
       } else if (action === 'remove') {
         newMetricsArray = newMetricsArray.filter(m => m.key !== metricKey);
+        setActiveTemplateName(null);
         return normalizeWeights(newMetricsArray);
       } else if (existingIndex !== -1) {
         if (action === 'updateWeight') {
           const newWeight = Math.max(0, Math.min(100, Number(value) || 0));
           newMetricsArray[existingIndex].weight = newWeight;
+          setActiveTemplateName(null);
           return normalizeWeights(newMetricsArray, metricKey, newWeight, false);
         } else if (action === 'toggleHLB') {
           newMetricsArray[existingIndex] = {
             ...newMetricsArray[existingIndex],
             userHigherIsBetter: !!value
           };
+          setActiveTemplateName(null);
           return newMetricsArray;
         }
       }
       
       return prevMetrics;
     });
-    
-    setActiveTemplateName(null);
   }, [getMetricConfigDetails, accessibleMetrics]);
   
   const xTotalWeight = useMemo(() => 
@@ -1428,7 +1436,7 @@ export function ScatterScoreProPage() {
             onClick={() => setIsConfigPanelOpen(true)}
             variant="outline"
             size="icon"
-            className="hidden lg:flex fixed left-4 top-1/2 -translate-y-1/2 z-40 bg-navy-700/90 border-navy-600 hover:bg-navy-600/90 shadow-lg"
+            className="hidden lg:flex fixed left-[calc(100%-120px)] top-[120px] z-40 bg-navy-700/90 border-navy-600 hover:bg-navy-600/90 shadow-lg"
             aria-label="Open configuration panel"
           >
             <Settings size={20} />
