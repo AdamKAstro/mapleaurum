@@ -85,7 +85,7 @@ export const metrics: Readonly<MetricConfig[]> = Object.freeze([
     db_column: 'f_market_cap_value',
     nested_path: 'financials.market_cap_value',
     label: 'Market Cap',
-    description: 'Market capitalization, calculated as the share price multiplied by the number of shares outstanding, reported in millions of dollars ($M). This metric represents the total equity value of a company as perceived by the market. A higher market cap typically indicates scale, stability, and investor confidence, making it attractive for conservative investors. However, smaller market caps may offer higher growth potential, albeit with greater risk. In mining, market cap reflects resource quality, production capacity, and market sentiment. It's a key benchmark for comparing companies within the sector, though it should be paired with metrics like EV or P/B for valuation context.',
+    description: 'Market capitalization, calculated as the share price multiplied by the number of shares outstanding, reported in millions of dollars ($M). This metric represents the total equity value of a company as perceived by the market. A higher market cap typically indicates scale, stability, and investor confidence, making it attractive for conservative investors. However, smaller market caps may offer higher growth potential, albeit with greater risk. In mining, market cap reflects resource quality, production capacity, and market sentiment. It\'s a key benchmark for comparing companies within the sector, though it should be paired with metrics like EV or P/B for valuation context.',
     unit: '$M',
     higherIsBetter: true,
     category: 'financials',
@@ -97,7 +97,7 @@ export const metrics: Readonly<MetricConfig[]> = Object.freeze([
     db_column: 'f_enterprise_value_value',
     nested_path: 'financials.enterprise_value_value',
     label: 'Enterprise Value',
-    description: 'Enterprise value (EV), calculated as market capitalization plus total debt minus cash and cash equivalents, reported in millions of dollars ($M). EV provides a comprehensive measure of a company's total value, accounting for both equity and debt financing. A higher EV may reflect a larger, more established firm, but high debt levels can inflate EV, signaling financial risk. In mining, EV is widely used to assess acquisition potential, as it approximates the cost to buy the company outright. Investors should analyze EV alongside revenue or EBITDA to evaluate whether the market's valuation aligns with operational performance.',
+    description: 'Enterprise value (EV), calculated as market capitalization plus total debt minus cash and cash equivalents, reported in millions of dollars ($M). EV provides a comprehensive measure of a company\'s total value, accounting for both equity and debt financing. A higher EV may reflect a larger, more established firm, but high debt levels can inflate EV, signaling financial risk. In mining, EV is widely used to assess acquisition potential, as it approximates the cost to buy the company outright. Investors should analyze EV alongside revenue or EBITDA to evaluate whether the market\'s valuation aligns with operational performance.',
     unit: '$M',
     higherIsBetter: true,
     category: 'financials',
@@ -419,7 +419,7 @@ export const metrics: Readonly<MetricConfig[]> = Object.freeze([
     db_column: 'me_resources_total_aueq_moz',
     nested_path: 'mineral_estimates.resources_total_aueq_moz',
     label: 'Total Resources',
-    description: 'Total measured, indicated, and inferred gold-equivalent resources (Moz), encompassing all resource categories. A higher value is preferred for overall scale, but inferred resources carry significant uncertainty. This metric highlights a company's long-term potential, though only a fraction may become economically viable. Investors should focus on the proportion of measured/indicated resources for reliability.',
+    description: 'Total measured, indicated, and inferred gold-equivalent resources (Moz), encompassing all resource categories. A higher value is preferred for overall scale, but inferred resources carry significant uncertainty. This metric highlights a company\'s long-term potential, though only a fraction may become economically viable. Investors should focus on the proportion of measured/indicated resources for reliability.',
     unit: 'Moz',
     higherIsBetter: true,
     category: 'mineral-estimates',
@@ -484,7 +484,7 @@ export const metrics: Readonly<MetricConfig[]> = Object.freeze([
     category: 'mineral-estimates',
     tier: 'pro',
     format: 'moz',
-    description: 'Measured and indicated resources of non-precious metals in gold-equivalent ounces (Moz), representing deposits with high geological confidence but not yet reserves. A higher value is preferred, as it indicates potential for future reserve conversion, adding to a company's diversified asset base. Investors should assess conversion feasibility, extraction costs, and market demand for non-precious metals, as these resources may contribute to revenue stability but carry lower value than precious metals.'
+    description: 'Measured and indicated resources of non-precious metals in gold-equivalent ounces (Moz), representing deposits with high geological confidence but not yet reserves. A higher value is preferred, as it indicates potential for future reserve conversion, adding to a company\'s diversified asset base. Investors should assess conversion feasibility, extraction costs, and market demand for non-precious metals, as these resources may contribute to revenue stability but carry lower value than precious metals.'
   },
   {
     key: 'mineral_estimates.resources_non_precious_aueq_moz',
@@ -496,7 +496,7 @@ export const metrics: Readonly<MetricConfig[]> = Object.freeze([
     category: 'mineral-estimates',
     tier: 'pro',
     format: 'moz',
-    description: 'Total measured, indicated, and inferred resources of non-precious metals in gold-equivalent ounces (Moz). A higher value is preferred for overall scale, though inferred resources are speculative. This metric highlights a company's long-term potential in non-precious metals, which can diversify revenue but are subject to industrial market fluctuations. Investors should prioritize higher-confidence (measured/indicated) resources and evaluate extraction economics.'
+    description: 'Total measured, indicated, and inferred resources of non-precious metals in gold-equivalent ounces (Moz). A higher value is preferred for overall scale, though inferred resources are speculative. This metric highlights a company\'s long-term potential in non-precious metals, which can diversify revenue but are subject to industrial market fluctuations. Investors should prioritize higher-confidence (measured/indicated) resources and evaluate extraction economics.'
   },
   {
     key: 'mineral_estimates.mineable_total_aueq_moz',
@@ -541,7 +541,7 @@ export const metrics: Readonly<MetricConfig[]> = Object.freeze([
     db_column: 'me_potential_total_aueq_moz',
     nested_path: 'mineral_estimates.potential_total_aueq_moz',
     label: 'Total Potential',
-    description: 'Estimated exploration potential for additional gold-equivalent resources (Moz), based on geological studies but not yet classified as resources. A higher value is preferred for speculative upside, but it's highly uncertain. In mining, this metric appeals to growth-focused investors betting on exploration success. Investors should assess the company's exploration track record and funding capacity.',
+    description: 'Estimated exploration potential for additional gold-equivalent resources (Moz), based on geological studies but not yet classified as resources. A higher value is preferred for speculative upside, but it\'s highly uncertain. In mining, this metric appeals to growth-focused investors betting on exploration success. Investors should assess the company\'s exploration track record and funding capacity.',
     unit: 'Moz',
     higherIsBetter: true,
     category: 'mineral-estimates',
@@ -558,7 +558,7 @@ export const metrics: Readonly<MetricConfig[]> = Object.freeze([
     category: 'mineral-estimates',
     tier: 'premium',
     format: 'moz',
-    description: 'Estimated exploration potential for additional non-precious metal resources in gold-equivalent ounces (Moz), based on geological studies but not yet classified. A higher value is preferred for speculative upside, appealing to growth-focused investors betting on exploration success in base metals. However, this metric is highly uncertain, and realization depends on funding and drilling outcomes. Investors should review the company's exploration track record and market conditions for non-precious metals.'
+    description: 'Estimated exploration potential for additional non-precious metal resources in gold-equivalent ounces (Moz), based on geological studies but not yet classified. A higher value is preferred for speculative upside, appealing to growth-focused investors betting on exploration success in base metals. However, this metric is highly uncertain, and realization depends on funding and drilling outcomes. Investors should review the company\'s exploration track record and market conditions for non-precious metals.'
   },
 
   // === Valuation Metrics - Pro Tier ===
@@ -567,7 +567,7 @@ export const metrics: Readonly<MetricConfig[]> = Object.freeze([
     db_column: 'vm_mkt_cap_per_resource_oz_all',
     nested_path: 'valuation_metrics.mkt_cap_per_resource_oz_all',
     label: 'MC/Resource oz',
-    description: 'Market capitalization per total resource ounce ($/oz). A lower value suggests the market undervalues the company's resource base, appealing to value investors. This metric is useful for screening undervalued miners but requires context on resource quality.',
+    description: 'Market capitalization per total resource ounce ($/oz). A lower value suggests the market undervalues the company\'s resource base, appealing to value investors. This metric is useful for screening undervalued miners but requires context on resource quality.',
     unit: '$/oz',
     higherIsBetter: false,
     category: 'valuation-metrics',
@@ -579,7 +579,7 @@ export const metrics: Readonly<MetricConfig[]> = Object.freeze([
     db_column: 'vm_mkt_cap_per_reserve_oz_all',
     nested_path: 'valuation_metrics.mkt_cap_per_reserve_oz_all',
     label: 'MC/Reserve oz',
-    description: 'Market cap per reserve ounce ($/oz). A lower value indicates potential undervaluation of proven reserves, a key metric for conservative investors. It's more precise than market cap per resource due to reserves' certainty.',
+    description: 'Market cap per reserve ounce ($/oz). A lower value indicates potential undervaluation of proven reserves, a key metric for conservative investors. It\'s more precise than market cap per resource due to reserves\' certainty.',
     unit: '$/oz',
     higherIsBetter: false,
     category: 'valuation-metrics',
@@ -591,7 +591,7 @@ export const metrics: Readonly<MetricConfig[]> = Object.freeze([
     db_column: 'vm_mkt_cap_per_resource_oz_precious',
     nested_path: 'valuation_metrics.mkt_cap_per_resource_oz_precious',
     label: 'MC/Prec Resource oz',
-    description: 'Market cap per precious metal resource ounce ($/oz). A lower value suggests the market undervalues the company's precious resource base, appealing to value investors targeting gold and silver.',
+    description: 'Market cap per precious metal resource ounce ($/oz). A lower value suggests the market undervalues the company\'s precious resource base, appealing to value investors targeting gold and silver.',
     unit: '$/oz',
     higherIsBetter: false,
     category: 'valuation-metrics',
@@ -620,7 +620,7 @@ export const metrics: Readonly<MetricConfig[]> = Object.freeze([
     category: 'valuation-metrics',
     tier: 'pro',
     format: 'currency',
-    description: 'Market capitalization per total measured and indicated gold-equivalent ounce ($/oz). A lower value is preferred, suggesting the market undervalues the company's high-confidence resources relative to its equity value. This metric is useful for value investors screening for undervalued miners with strong resource bases. Investors should compare to peers and consider resource quality and conversion potential.'
+    description: 'Market capitalization per total measured and indicated gold-equivalent ounce ($/oz). A lower value is preferred, suggesting the market undervalues the company\'s high-confidence resources relative to its equity value. This metric is useful for value investors screening for undervalued miners with strong resource bases. Investors should compare to peers and consider resource quality and conversion potential.'
   },
   {
     key: 'valuation_metrics.mkt_cap_per_mi_oz_precious',
@@ -668,7 +668,7 @@ export const metrics: Readonly<MetricConfig[]> = Object.freeze([
     category: 'valuation-metrics',
     tier: 'pro',
     format: 'currency',
-    description: 'Market capitalization divided by current annual gold-equivalent production ($/oz). A lower value is preferred, as it suggests the market undervalues the company's operational output relative to its equity value. This metric is useful for assessing production efficiency and cash flow potential. Investors should pair with cost metrics (e.g., AISC) and compare to peers to evaluate value.'
+    description: 'Market capitalization divided by current annual gold-equivalent production ($/oz). A lower value is preferred, as it suggests the market undervalues the company\'s operational output relative to its equity value. This metric is useful for assessing production efficiency and cash flow potential. Investors should pair with cost metrics (e.g., AISC) and compare to peers to evaluate value.'
   },
 
   // === Valuation Metrics - Premium Tier ===
@@ -677,7 +677,7 @@ export const metrics: Readonly<MetricConfig[]> = Object.freeze([
     db_column: 'vm_ev_per_resource_oz_all',
     nested_path: 'valuation_metrics.ev_per_resource_oz_all',
     label: 'EV/Resource oz',
-    description: 'Enterprise value divided by total gold-equivalent resource ounces ($/oz). A lower value is often preferred, as it suggests the market undervalues the company's resources relative to its total value. This metric is widely used in mining to identify potential bargains. Investors should compare it to peers and consider resource quality.',
+    description: 'Enterprise value divided by total gold-equivalent resource ounces ($/oz). A lower value is often preferred, as it suggests the market undervalues the company\'s resources relative to its total value. This metric is widely used in mining to identify potential bargains. Investors should compare it to peers and consider resource quality.',
     unit: '$/oz',
     higherIsBetter: false,
     category: 'valuation-metrics',
@@ -689,7 +689,7 @@ export const metrics: Readonly<MetricConfig[]> = Object.freeze([
     db_column: 'vm_ev_per_reserve_oz_all',
     nested_path: 'valuation_metrics.ev_per_reserve_oz_all',
     label: 'EV/Reserve oz',
-    description: 'Enterprise value per proven and probable reserve ounce ($/oz). A lower value is preferred, indicating undervaluation of confirmed reserves. This metric is more reliable than EV per resource due to reserves' higher certainty. Investors should benchmark against industry averages.',
+    description: 'Enterprise value per proven and probable reserve ounce ($/oz). A lower value is preferred, indicating undervaluation of confirmed reserves. This metric is more reliable than EV per resource due to reserves\' higher certainty. Investors should benchmark against industry averages.',
     unit: '$/oz',
     higherIsBetter: false,
     category: 'valuation-metrics',
@@ -730,7 +730,7 @@ export const metrics: Readonly<MetricConfig[]> = Object.freeze([
     category: 'valuation-metrics',
     tier: 'premium',
     format: 'currency',
-    description: 'Enterprise value divided by total measured and indicated gold-equivalent ounces ($/oz). A lower value is preferred, as it suggests the market undervalues the company's high-confidence resources relative to its total value (equity + debt). This metric is more reliable than EV per total resources, as M&I ounces have greater geological certainty. Investors should compare to peers and consider resource quality (e.g., grade, location) to identify potential undervaluation.'
+    description: 'Enterprise value divided by total measured and indicated gold-equivalent ounces ($/oz). A lower value is preferred, as it suggests the market undervalues the company\'s high-confidence resources relative to its total value (equity + debt). This metric is more reliable than EV per total resources, as M&I ounces have greater geological certainty. Investors should compare to peers and consider resource quality (e.g., grade, location) to identify potential undervaluation.'
   },
   {
     key: 'valuation_metrics.ev_per_mi_oz_precious',
@@ -754,7 +754,7 @@ export const metrics: Readonly<MetricConfig[]> = Object.freeze([
     category: 'valuation-metrics',
     tier: 'premium',
     format: 'currency',
-    description: 'Enterprise value divided by total mineable gold-equivalent ounces ($/oz), reflecting economically viable assets. A lower value is preferred, as it suggests the market undervalues the company's immediately producible resources. This metric is highly reliable for assessing near-term value, as mineable ounces are typically a subset of reserves and high-confidence resources. Investors should compare to peers and check cost assumptions (e.g., AISC) for profitability context.'
+    description: 'Enterprise value divided by total mineable gold-equivalent ounces ($/oz), reflecting economically viable assets. A lower value is preferred, as it suggests the market undervalues the company\'s immediately producible resources. This metric is highly reliable for assessing near-term value, as mineable ounces are typically a subset of reserves and high-confidence resources. Investors should compare to peers and check cost assumptions (e.g., AISC) for profitability context.'
   },
   {
     key: 'valuation_metrics.ev_per_mineable_oz_precious',
@@ -778,7 +778,7 @@ export const metrics: Readonly<MetricConfig[]> = Object.freeze([
     category: 'valuation-metrics',
     tier: 'premium',
     format: 'currency',
-    description: 'Enterprise value divided by current annual gold-equivalent production ($/oz). A lower value is preferred, as it suggests the market undervalues the company's operational output relative to its total value. This metric highlights efficiency in converting assets to production, critical for cash flow generation. Investors should compare to peers and pair with cost metrics (e.g., AISC) to assess profitability and sustainability.'
+    description: 'Enterprise value divided by current annual gold-equivalent production ($/oz). A lower value is preferred, as it suggests the market undervalues the company\'s operational output relative to its total value. This metric highlights efficiency in converting assets to production, critical for cash flow generation. Investors should compare to peers and pair with cost metrics (e.g., AISC) to assess profitability and sustainability.'
   },
 
   // === Production - Free Tier ===
@@ -787,7 +787,7 @@ export const metrics: Readonly<MetricConfig[]> = Object.freeze([
     db_column: 'p_current_production_total_aueq_koz',
     nested_path: 'production.current_production_total_aueq_koz',
     label: 'Current Prod.',
-    description: 'Current annual production of gold-equivalent ounces, reported in thousand ounces (koz). A higher value is preferred, as it reflects strong operational output and revenue potential. This metric is a core indicator of a mining company's scale and efficiency. Investors should compare it to costs (e.g., AISC) to assess profitability.',
+    description: 'Current annual production of gold-equivalent ounces, reported in thousand ounces (koz). A higher value is preferred, as it reflects strong operational output and revenue potential. This metric is a core indicator of a mining company\'s scale and efficiency. Investors should compare it to costs (e.g., AISC) to assess profitability.',
     unit: 'koz',
     higherIsBetter: true,
     category: 'production',
@@ -813,7 +813,7 @@ export const metrics: Readonly<MetricConfig[]> = Object.freeze([
     db_column: 'p_current_production_precious_aueq_koz',
     nested_path: 'production.current_production_precious_aueq_koz',
     label: 'Precious Prod.',
-    description: 'Current annual production of precious metals (gold and silver equivalent, koz). A higher value is preferred, as precious metals typically offer higher margins and stability. This metric highlights a company's focus on high-value output. Investors should compare it to total production for diversification insights.',
+    description: 'Current annual production of precious metals (gold and silver equivalent, koz). A higher value is preferred, as precious metals typically offer higher margins and stability. This metric highlights a company\'s focus on high-value output. Investors should compare it to total production for diversification insights.',
     unit: 'koz',
     higherIsBetter: true,
     category: 'production',
