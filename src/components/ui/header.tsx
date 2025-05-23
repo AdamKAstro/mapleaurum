@@ -5,11 +5,10 @@ import { useAuth } from '../../contexts/auth-context';
 import { useSubscription } from '../../contexts/subscription-context';
 import { CurrencySelector } from '../../components/currency-selector';
 import { Button } from './button';
-import { LogIn, LogOut, Loader2, ShieldCheck, Star, Gem, UserCircle, HelpCircle, ScatterChart as Scatter } from 'lucide-react';
+import { LogIn, LogOut, Loader2, ShieldCheck, Star, Gem, UserCircle } from 'lucide-react';
 import type { SubscriptionTier } from '../../lib/types';
-import { cn } from '../../lib/utils';
 
-// TierBadge component
+// TierBadge component remains the same
 const TierBadge: React.FC<{ tier: SubscriptionTier; isLoading?: boolean }> = ({ tier, isLoading }) => {
   if (isLoading) {
     return (
@@ -76,84 +75,12 @@ export function Header() {
     <header className="sticky top-0 z-40 w-full border-b border-navy-300/20 bg-navy-500/95 backdrop-blur supports-[backdrop-filter]:bg-navy-500/60">
       <div className="container flex h-16 items-center justify-between mx-auto px-4 sm:px-6 lg:px-8 max-w-screen-2xl">
         {/* Logo Section */}
-        <div className="mr-4 flex">
-          <Link className="mr-6 flex items-center gap-2" to="/">
+        <div className="flex">
+          <Link className="flex items-center gap-2" to="/">
             <img src="/new-logo.png" alt="Maple Aurum Logo" className="h-8 w-8 object-contain" />
             <span className="font-bold text-xl text-surface-white hidden sm:inline-block">MapleAurum</span>
           </Link>
         </div>
-
-        {/* Navigation Links */}
-        <nav className="hidden md:flex items-center space-x-4 lg:space-x-6">
-          <Link to="/companies" className="text-sm font-medium text-gray-300 hover:text-white transition-colors">
-            Companies
-          </Link>
-          <Link to="/screener" className="text-sm font-medium text-gray-300 hover:text-white transition-colors">
-            Screener
-          </Link>
-          {(!isAuthLoading && !isSubLoading && (currentEffectiveTier === 'pro' || currentEffectiveTier === 'premium')) && (
-            <Link to="/analytics-tools" className="text-sm font-medium text-gray-300 hover:text-white transition-colors">
-              Analytics Tools
-            </Link>
-          )}
-          {/* Help Dropdown */}
-          <div className="relative group">
-            <button className="text-sm font-medium text-gray-300 hover:text-white transition-colors flex items-center gap-1">
-              Help
-              <HelpCircle className="h-4 w-4" />
-            </button>
-            <div className="absolute hidden group-hover:block bg-navy-800 border border-navy-700 rounded-md shadow-lg mt-2 z-50">
-              <Link
-                to="/help"
-                className="block px-4 py-2 text-sm text-gray-300 hover:bg-navy-700 hover:text-white"
-              >
-                Help Overview
-              </Link>
-              <Link
-                to="/help/metrics"
-                className="block px-4 py-2 text-sm text-gray-300 hover:bg-navy-700 hover:text-white"
-              >
-                Metrics Guide
-              </Link>
-              <Link
-                to="/help/filters"
-                className="block px-4 py-2 text-sm text-gray-300 hover:bg-navy-700 hover:text-white"
-              >
-                Filters Guide
-              </Link>
-              <Link
-                to="/help/scoring"
-                className="block px-4 py-2 text-sm text-gray-300 hover:bg-navy-700 hover:text-white"
-              >
-                Scoring Guide
-              </Link>
-              <Link
-                to="/help/scatter-chart"
-                className="block px-4 py-2 text-sm text-gray-300 hover:bg-navy-700 hover:text-white"
-              >
-                Scatter Guide
-              </Link>
-              <Link
-                to="/help/scatter-score-pro"
-                className="block px-4 py-2 text-sm text-gray-300 hover:bg-navy-700 hover:text-white"
-              >
-                ScatterScore Guide
-              </Link>
-              <Link
-                to="/help/tiers"
-                className="block px-4 py-2 text-sm text-gray-300 hover:bg-navy-700 hover:text-white"
-              >
-                Subscription Tiers
-              </Link>
-              <Link
-                to="/help/general"
-                className="block px-4 py-2 text-sm text-gray-300 hover:bg-navy-700 hover:text-white"
-              >
-                General & FAQ
-              </Link>
-            </div>
-          </div>
-        </nav>
 
         {/* Right Side Items */}
         <div className="flex items-center gap-3 md:gap-4">

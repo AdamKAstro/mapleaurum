@@ -6,6 +6,7 @@ import { CurrencySelector } from '../../components/currency-selector';
 import { LoadingIndicator } from '../../components/ui/loading-indicator';
 import { Button } from '../../components/ui/button';
 import { PageContainer } from '../../components/ui/page-container';
+import { StatusFilterButton } from '../../components/status-filter-button';
 import { cn } from '../../lib/utils';
 import type { Company, SortState, CompanyStatus } from '../../lib/types';
 import debounce from 'lodash/debounce';
@@ -96,6 +97,17 @@ export function CompaniesPage() {
         debouncedSearchRef.current?.(value);
     }, []);
 
+    const handleClearSearch = useCallback(() => {
+        setLocalSearchTerm('');
+        setSearchTerm('');
+    }, [setSearchTerm]);
+
+    const handleClearAllFilters = useCallback(() => {
+        setLocalSearchTerm('');
+        setSearchTerm('');
+        setDevelopmentStatusFilter([]);
+    }, [setSearchTerm, setDevelopmentStatusFilter]);
+
     const pageActions = (
         <CurrencySelector />
     );
@@ -137,11 +149,8 @@ export function CompaniesPage() {
                         />
                         {localSearchTerm && (
                             <button
-                                onClick={() => {
-                                    setLocalSearchTerm('');
-                                    setSearchTerm('');
-                                }}
-                                className="absolute right-2 top-1/2 -translate-y-1/2 text-surface-white/50 hover:text-surface-white"
+                                onClick={handleClearSearch}
+                                className="absolute right-2 top-1/2 -translate-y-1/2 text-surface-white/50 hover:text-surface-white transition-colors"
                                 aria-label="Clear search"
                             >
                                 ×
@@ -151,20 +160,12 @@ export function CompaniesPage() {
                     
                     <div className="flex items-center gap-2 flex-wrap">
                         {FILTERABLE_STATUSES.map(status => (
-                            <label 
-                                key={status} 
-                                className="flex items-center gap-1.5 sm:gap-2 cursor-pointer p-1 hover:bg-navy-400/30 rounded transition-colors"
-                            >
-                                <input
-                                    type="checkbox"
-                                    checked={selectedStatuses.includes(status)}
-                                    onChange={() => handleStatusChange(status)}
-                                    className="h-3.5 w-3.5 rounded border-gray-400 bg-navy-600 text-accent-teal focus:ring-accent-teal focus:ring-offset-navy-700"
-                                />
-                                <span className="text-xs sm:text-sm text-surface-white/90 capitalize select-none">
-                                    {status}
-                                </span>
-                            </label>
+                            <StatusFilterButton
+                                key={status}
+                                status={status}
+                                isSelected={selectedStatuses.includes(status)}
+                                onChange={() => handleStatusChange(status)}
+                            />
                         ))}
                     </div>
                 </div>
@@ -190,11 +191,7 @@ export function CompaniesPage() {
                         <div className="flex flex-col justify-center items-center h-64 p-4 text-surface-white/60">
                             <p className="text-center mb-2">No companies match the current filters.</p>
                             <Button 
-                                onClick={() => {
-                                    setLocalSearchTerm('');
-                                    setSearchTerm('');
-                                    setDevelopmentStatusFilter([]);
-                                }} 
+                                onClick={handleClearAllFilters} 
                                 variant="outline" 
                                 size="sm"
                                 className="mt-2"
@@ -210,7 +207,7 @@ export function CompaniesPage() {
                             currentTier={currentUserTier}
                             page={currentPage}
                             pageSize={pageSize}
-                            totalCount={totalCount}
+                            totalCount={effectiveTotalCount}
                             onPageChange={handlePageChange}
                             onPageSizeChange={handlePageSizeChange}
                             excludedCompanyIds={excludedCompanyIds instanceof Set ? excludedCompanyIds : new Set()}
