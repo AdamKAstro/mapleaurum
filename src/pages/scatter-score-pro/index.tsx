@@ -1436,7 +1436,7 @@ export function ScatterScoreProPage() {
             onClick={() => setIsConfigPanelOpen(true)}
             variant="outline"
             size="icon"
-            className="hidden lg:flex fixed right-2 top-1/2 -translate-y-1/2 z-100 bg-navy-800/95 border-navy-500 hover:bg-navy-700 shadow-xl w-14 h-14"
+            className="hidden lg:flex fixed left-3 bottom-3 z-100 bg-accent-teal/90 border-teal-600 hover:bg-accent-teal shadow-md rounded-lg w-12 h-12"
             aria-label="Open configuration panel"
           >
             <Settings size={20} />
