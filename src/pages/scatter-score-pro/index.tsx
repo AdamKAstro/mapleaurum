@@ -27,7 +27,7 @@ import { Input } from '../../components/ui/input';
 import { Label } from '../../components/ui/label';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../../components/ui/tooltip';
 import { LoadingIndicator } from '../../components/ui/loading-indicator';
-import { Info, Lock, ArrowUp, ArrowDown, Settings, RefreshCw, ListPlus, X, ZoomIn, ZoomOut, RotateCcw, Loader2 } from 'lucide-react';
+import { Info, Lock, ArrowUp, ArrowDown, Settings, RefreshCw, ListPlus, X, ZoomIn, ZoomOut, RotateCcw, Loader2, ChevronLeft } from 'lucide-react';
 import { MetricSelector } from '../../components/metric-selector';
 import {
   metrics as allMetrics,
@@ -740,8 +740,7 @@ export function ScatterScoreProPage() {
     const setSelectedMetrics = axisType === 'X' ? setSelectedXMetrics : setSelectedYMetrics;
     
     setSelectedMetrics(prevMetrics => {
-      // Create a deep copy to ensure React detects the change
-      let newMetricsArray = prevMetrics.map(m => ({ ...m }));
+      let newMetricsArray = [...prevMetrics];
       const existingIndex = newMetricsArray.findIndex(m => m.key === metricKey);
       
       if (action === 'add') {
@@ -764,10 +763,13 @@ export function ScatterScoreProPage() {
       } else if (existingIndex !== -1) {
         if (action === 'updateWeight') {
           const newWeight = Math.max(0, Math.min(100, Number(value) || 0));
-          newMetricsArray[existingIndex] = { ...newMetricsArray[existingIndex], weight: newWeight };
+          newMetricsArray[existingIndex].weight = newWeight;
           return normalizeWeights(newMetricsArray, metricKey, newWeight, false);
         } else if (action === 'toggleHLB') {
-          newMetricsArray[existingIndex] = { ...newMetricsArray[existingIndex], userHigherIsBetter: !!value };
+          newMetricsArray[existingIndex] = {
+            ...newMetricsArray[existingIndex],
+            userHigherIsBetter: !!value
+          };
           return newMetricsArray;
         }
       }
@@ -775,10 +777,7 @@ export function ScatterScoreProPage() {
       return prevMetrics;
     });
     
-    // Only reset template if action is not just toggling HLB
-    if (action !== 'toggleHLB') {
-      setActiveTemplateName(null);
-    }
+    setActiveTemplateName(null);
   }, [getMetricConfigDetails, accessibleMetrics]);
   
   const xTotalWeight = useMemo(() => 
@@ -1203,6 +1202,7 @@ export function ScatterScoreProPage() {
       />
 
       <div className="flex flex-col lg:flex-row gap-4 md:gap-6 p-2 md:p-4 flex-grow overflow-hidden">
+        {/* Mobile toggle button for config panel */}
         <Button 
           onClick={() => setIsConfigPanelOpen(!isConfigPanelOpen)} 
           variant="outline" 
@@ -1212,18 +1212,7 @@ export function ScatterScoreProPage() {
           <Settings size={20}/>
         </Button>
 
-        {/* Floating button to open panel when closed (desktop only) */}
-        {!isConfigPanelOpen && (
-          <Button 
-            onClick={() => setIsConfigPanelOpen(true)} 
-            variant="outline" 
-            className="fixed left-4 top-1/2 -translate-y-1/2 z-[60] bg-navy-700 border-navy-600 p-2 h-auto shadow-lg hidden lg:flex"
-            aria-label="Open Configuration Panel"
-          >
-            <Settings size={20}/>
-          </Button>
-        )}
-
+        {/* Configuration Panel */}
         <motion.div 
           initial={false}
           animate={isConfigPanelOpen ? "open" : "closed"}
@@ -1238,20 +1227,34 @@ export function ScatterScoreProPage() {
           )}
           style={{ '--header-height': '80px' } as React.CSSProperties}
         >
+          {/* Panel Header */}
           <div className="flex justify-between items-center mb-1 sticky top-0 bg-navy-800/90 backdrop-blur-sm py-2 -mx-3 md:-mx-4 px-3 md:px-4 z-10 border-b border-navy-700">
             <h2 className="text-lg xl:text-xl font-semibold text-surface-white">Chart Configuration</h2>
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              onClick={() => setIsConfigPanelOpen(false)} 
-              className="text-muted-foreground hover:text-surface-white"
-              aria-label="Collapse configuration panel"
-            >
-              <X size={20}/>
-            </Button>
+            <div className="flex items-center gap-2">
+              {/* Desktop collapse button */}
+              <Button 
+                variant="ghost" 
+                size="icon"
+                onClick={() => setIsConfigPanelOpen(false)} 
+                className="hidden lg:flex text-muted-foreground hover:text-surface-white"
+                aria-label="Collapse configuration panel"
+              >
+                <ChevronLeft size={20}/>
+              </Button>
+              {/* Mobile close button */}
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                onClick={() => setIsConfigPanelOpen(false)} 
+                className="lg:hidden text-muted-foreground hover:text-surface-white"
+              >
+                <X size={20}/>
+              </Button>
+            </div>
           </div>
           
           <div className="px-1 space-y-4 pb-4">
+            {/* Template Selector */}
             <div>
               <TooltipProvider delayDuration={100}>
                 <Tooltip>
@@ -1268,10 +1271,7 @@ export function ScatterScoreProPage() {
                     side="bottom" 
                     align="center" 
                     sideOffset={5}
-                    alignOffset={0}
                     className="text-xs max-w-[350px] p-3 z-[100] bg-navy-700/95 border border-navy-600/80"
-                    avoidCollisions={true}
-                    collisionPadding={10}
                   >
                     <div className="space-y-2">
                       {PREDEFINED_TEMPLATES.map((t, index) => (
@@ -1301,6 +1301,7 @@ export function ScatterScoreProPage() {
               </Select>
             </div>
             
+            {/* X-Axis Configuration */}
             <AxisMetricConfigurator
               axisTitle="X-Axis Score Metrics"
               currentSelectedMetricsForAxis={selectedXMetrics}
@@ -1310,6 +1311,7 @@ export function ScatterScoreProPage() {
               handleAxisMetricChange={handleAxisMetricChange}
             />
             
+            {/* Y-Axis Configuration */}
             <AxisMetricConfigurator
               axisTitle="Y-Axis Score Metrics"
               currentSelectedMetricsForAxis={selectedYMetrics}
@@ -1319,6 +1321,7 @@ export function ScatterScoreProPage() {
               handleAxisMetricChange={handleAxisMetricChange}
             />
 
+            {/* Z-Axis Configuration */}
             <Card className="p-3 md:p-4 bg-navy-700/50 border-navy-600">
               <CardHeader className="p-0 mb-2">
                 <CardTitle className="text-md font-semibold">Z-Axis (Bubble Size)</CardTitle>
@@ -1327,18 +1330,29 @@ export function ScatterScoreProPage() {
                 <MetricSelector
                   label=""
                   selectedMetric={selectedZMetricKey || ""}
-                  onMetricChange={setSelectedZMetricKey}
+                  onMetricChange={(value) => {
+                    setSelectedZMetricKey(value || null);
+                    setActiveTemplateName(null);
+                  }}
                   currentTier={currentUserTier}
                   availableMetrics={accessibleMetrics}
                   filterForNumericOnly={true}
                   placeholder="Select Z-Axis Metric..."
                 />
                 {selectedZMetricKey && (
-                  <ScaleToggle scale={zScale} onChange={setZScale} label="Bubble Scale" />
+                  <ScaleToggle 
+                    scale={zScale} 
+                    onChange={(newScale) => {
+                      setZScale(newScale);
+                      setActiveTemplateName(null);
+                    }} 
+                    label="Bubble Scale" 
+                  />
                 )}
               </CardContent>
             </Card>
 
+            {/* Scoring Settings */}
             <Card className="p-3 md:p-4 bg-navy-700/50 border-navy-600">
               <CardHeader className="p-0 mb-2">
                 <CardTitle className="text-md font-semibold">Scoring Settings</CardTitle>
@@ -1351,7 +1365,10 @@ export function ScatterScoreProPage() {
                     </Label>
                     <Select 
                       value={normalizationMode} 
-                      onValueChange={(val) => setNormalizationMode(val as NormalizationMode)}
+                      onValueChange={(val) => {
+                        setNormalizationMode(val as NormalizationMode);
+                        setActiveTemplateName(null);
+                      }}
                     >
                       <SelectTrigger id="norm-mode" className="h-9 text-xs bg-navy-700 border-navy-600 mt-1">
                         <SelectValue />
@@ -1370,7 +1387,10 @@ export function ScatterScoreProPage() {
                     </Label>
                     <Select 
                       value={imputationMode} 
-                      onValueChange={(val) => setImputationMode(val as ImputationMode)}
+                      onValueChange={(val) => {
+                        setImputationMode(val as ImputationMode);
+                        setActiveTemplateName(null);
+                      }}
                     >
                       <SelectTrigger id="impute-mode" className="h-9 text-xs bg-navy-700 border-navy-600 mt-1">
                         <SelectValue />
@@ -1386,6 +1406,7 @@ export function ScatterScoreProPage() {
               </CardContent>
             </Card>
 
+            {/* Apply Button */}
             <Button 
               onClick={handleApplyConfigurationAndCalculateScores} 
               className="w-full mt-3 bg-accent-teal hover:bg-accent-teal/90 text-sm font-semibold py-2.5"
@@ -1401,6 +1422,20 @@ export function ScatterScoreProPage() {
           </div>
         </motion.div>
 
+        {/* Desktop expand button when collapsed */}
+        {!isConfigPanelOpen && (
+          <Button
+            onClick={() => setIsConfigPanelOpen(true)}
+            variant="outline"
+            size="icon"
+            className="hidden lg:flex fixed left-4 top-1/2 -translate-y-1/2 z-40 bg-navy-700/90 border-navy-600 hover:bg-navy-600/90 shadow-lg"
+            aria-label="Open configuration panel"
+          >
+            <Settings size={20} />
+          </Button>
+        )}
+
+        {/* Chart Container */}
         <div className="flex-grow relative bg-navy-800/70 backdrop-blur-sm rounded-lg p-4 shadow-lg border border-navy-700/50 flex flex-col min-h-[400px] lg:min-h-0">
           {(plotData.length > 0 || isCalculatingScores) && !axisScoreError && (
             <div className="absolute top-3 right-3 flex items-center gap-1.5 z-10">
