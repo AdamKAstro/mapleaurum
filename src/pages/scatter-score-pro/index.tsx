@@ -740,7 +740,8 @@ export function ScatterScoreProPage() {
     const setSelectedMetrics = axisType === 'X' ? setSelectedXMetrics : setSelectedYMetrics;
     
     setSelectedMetrics(prevMetrics => {
-      let newMetricsArray = [...prevMetrics];
+      // Create a deep copy to ensure React detects the change
+      let newMetricsArray = prevMetrics.map(m => ({ ...m }));
       const existingIndex = newMetricsArray.findIndex(m => m.key === metricKey);
       
       if (action === 'add') {
@@ -763,10 +764,10 @@ export function ScatterScoreProPage() {
       } else if (existingIndex !== -1) {
         if (action === 'updateWeight') {
           const newWeight = Math.max(0, Math.min(100, Number(value) || 0));
-          newMetricsArray[existingIndex].weight = newWeight;
+          newMetricsArray[existingIndex] = { ...newMetricsArray[existingIndex], weight: newWeight };
           return normalizeWeights(newMetricsArray, metricKey, newWeight, false);
         } else if (action === 'toggleHLB') {
-          newMetricsArray[existingIndex].userHigherIsBetter = !!value;
+          newMetricsArray[existingIndex] = { ...newMetricsArray[existingIndex], userHigherIsBetter: !!value };
           return newMetricsArray;
         }
       }
@@ -774,7 +775,10 @@ export function ScatterScoreProPage() {
       return prevMetrics;
     });
     
-    setActiveTemplateName(null);
+    // Only reset template if action is not just toggling HLB
+    if (action !== 'toggleHLB') {
+      setActiveTemplateName(null);
+    }
   }, [getMetricConfigDetails, accessibleMetrics]);
   
   const xTotalWeight = useMemo(() => 
@@ -1208,6 +1212,18 @@ export function ScatterScoreProPage() {
           <Settings size={20}/>
         </Button>
 
+        {/* Floating button to open panel when closed (desktop only) */}
+        {!isConfigPanelOpen && (
+          <Button 
+            onClick={() => setIsConfigPanelOpen(true)} 
+            variant="outline" 
+            className="fixed left-4 top-1/2 -translate-y-1/2 z-[60] bg-navy-700 border-navy-600 p-2 h-auto shadow-lg hidden lg:flex"
+            aria-label="Open Configuration Panel"
+          >
+            <Settings size={20}/>
+          </Button>
+        )}
+
         <motion.div 
           initial={false}
           animate={isConfigPanelOpen ? "open" : "closed"}
@@ -1228,7 +1244,8 @@ export function ScatterScoreProPage() {
               variant="ghost" 
               size="icon" 
               onClick={() => setIsConfigPanelOpen(false)} 
-              className="lg:hidden text-muted-foreground hover:text-surface-white"
+              className="text-muted-foreground hover:text-surface-white"
+              aria-label="Collapse configuration panel"
             >
               <X size={20}/>
             </Button>
@@ -1250,7 +1267,11 @@ export function ScatterScoreProPage() {
                   <TooltipContent 
                     side="bottom" 
                     align="center" 
+                    sideOffset={5}
+                    alignOffset={0}
                     className="text-xs max-w-[350px] p-3 z-[100] bg-navy-700/95 border border-navy-600/80"
+                    avoidCollisions={true}
+                    collisionPadding={10}
                   >
                     <div className="space-y-2">
                       {PREDEFINED_TEMPLATES.map((t, index) => (
