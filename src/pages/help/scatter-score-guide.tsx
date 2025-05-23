@@ -388,7 +388,7 @@ Axis Score = (Σ WeightedScore_i / Σ (W_i / 100)) × 1000`}
                 <div className="bg-navy-900/40 p-3 rounded-md">
                   <p className="font-semibold text-surface-white mb-1">Peer Comparison</p>
                   <p className="text-xs">
-                    Filter to specific company types (e.g., "Gold Producers > $1B Market Cap") then use Producer
+                    Filter to specific company types (e.g., "Gold Producers Grt $1B Market Cap") then use Producer
                     Profitability template to identify operational leaders and laggards.
                   </p>
                 </div>
