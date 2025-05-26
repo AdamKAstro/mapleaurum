@@ -357,6 +357,227 @@ Stale Data: Data older than 90 days is common, especially for smaller companies.
 
 Royalty Misclassification: Companies like Franco-Nevada are flagged as producers when they should be royalty.
 
+AND ANOTHER GREAT UPDATER :
+-- Kuya Silver Corporation (KUYA.CN, company_id = 224) Rigorous Cautious Updater
+-- CRITICAL FIX for production data persistence using INSERT ... ON CONFLICT.
+-- Addresses "Missing Production" and re-confirms other data based on News, GSD, YF, and current DB state.
+
+BEGIN;
+
+-- Lock rows for Company ID 224 (locking tables involved in the transaction)
+SELECT * FROM public.companies WHERE company_id = 224 FOR UPDATE;
+SELECT * FROM public.financials WHERE company_id = 224 FOR UPDATE;
+SELECT * FROM public.capital_structure WHERE company_id = 224 FOR UPDATE;
+SELECT * FROM public.mineral_estimates WHERE company_id = 224 FOR UPDATE;
+-- Attempt to lock production row if it exists, won't fail if it doesn't for the UPSERT logic.
+SELECT * FROM public.production WHERE company_id = 224 FOR UPDATE NOWAIT; -- NOWAIT can be useful
+SELECT * FROM public.costs WHERE company_id = 224 FOR UPDATE;
+SELECT * FROM public.valuation_metrics WHERE company_id = 224 FOR UPDATE;
+
+-- Log pre-update state for companies
+INSERT INTO public.update_log (company_id, table_name, update_time, update_description)
+SELECT
+    224,
+    'companies',
+    NOW(),
+    'Pre-update state: company_name = ' || COALESCE(c.company_name::TEXT, 'NULL') ||
+    ', status = ' || COALESCE(c.status::TEXT, 'NULL') ||
+    ', minerals_of_interest = ' || COALESCE(c.minerals_of_interest::TEXT, 'NULL') ||
+    ', percent_silver = ' || COALESCE(c.percent_silver::TEXT, 'NULL') ||
+    ', percent_gold = ' || COALESCE(c.percent_gold::TEXT, 'NULL')
+FROM public.companies c
+WHERE c.company_id = 224;
+
+-- Update company information for Kuya Silver Corporation
+UPDATE public.companies
+SET
+    company_name = 'Kuya Silver Corporation',
+    tsx_code = 'KUYA.CN', -- CSE listing
+    status = 'producer', -- Ramping up
+    headquarters = 'Toronto, Canada',
+    description = 'Kuya Silver Corporation is an emerging silver producer, ramping up operations at its Bethania mine in Peru (re-started May 2024). Also holds exploration assets in Canada. Sold 8,888 AgEq oz in Q1 2025. Targeting 100 tpd by Q3 2025. [Data Source: YF, GSD, Company News, DB Snapshot Review, Updated: ' || CURRENT_DATE::text || ']',
+    minerals_of_interest = 'silver, lead, zinc, gold',
+    percent_silver = 76, -- Based on Q1 2025 news, proportion of AgEq from Ag metal
+    percent_gold = 1,
+    last_updated = NOW()
+WHERE company_id = 224;
+
+-- Log companies update
+INSERT INTO public.update_log (company_id, table_name, update_time, update_description)
+VALUES (224, 'companies', NOW(), 'Updated company details: status confirmed producer (ramping up), description updated, minerals & percentages aligned with DB/News.');
+
+-- Log pre-update state for financials
+INSERT INTO public.update_log (company_id, table_name, update_time, update_description)
+SELECT
+    224,
+    'financials',
+    NOW(),
+    'Pre-update state: MCap = ' || COALESCE(f.market_cap_value::TEXT, 'NULL') || ' ' || COALESCE(f.market_cap_currency,'') ||
+    ', Revenue = ' || COALESCE(f.revenue_value::TEXT, 'NULL') || ' ' || COALESCE(f.revenue_currency,'') ||
+    ', NI = ' || COALESCE(f.net_income_value::TEXT, 'NULL') || ' ' || COALESCE(f.net_income_currency,'') ||
+    ', Shares = ' || COALESCE(f.shares_outstanding::TEXT, 'NULL')
+FROM public.financials f
+WHERE f.company_id = 224;
+
+-- Update financial data for Kuya Silver Corporation
+UPDATE public.financials
+SET
+    cash_value = 765570,
+    cash_currency = 'CAD',
+    cash_date = '2025-03-31',
+    debt_value = 0,
+    debt_currency = 'CAD',
+    market_cap_value = 30391000,
+    market_cap_currency = 'CAD',
+    enterprise_value_value = (30391000 - 765570),
+    enterprise_value_currency = 'CAD',
+    revenue_value = ROUND(228630 * 4), -- USD (Annualized Q1 2025 revenue from Company News - $228.63k * 4)
+    revenue_currency = 'USD',
+    net_income_value = COALESCE(net_income_value, -6050000),
+    net_income_currency = COALESCE(net_income_currency, 'CAD'),
+    shares_outstanding = 106635087,
+    price_to_sales = ROUND((30391000 / 1.36) / NULLIF(228630 * 4,0), 2),
+    ebitda = COALESCE(ebitda, -6222985),
+    investments_json = jsonb_build_object(
+        'UpdateContext', 'Addressing production data persistence. Using annualized Q1 2025 AgEq sales for current production. Revenue set to USD from Q1 News.',
+        'ProductionNote', 'Current prod 0.444 AuEq koz from annualized Q1 2025 AgEq sales (8,888 AgEq oz * 4 / 80 ratio). Ramping up.',
+        'RevenueSource', 'Q1 2025 Company News (annualized USD $914,520).',
+        'DataSourceUsed', 'Yahoo Finance (May25) + GoldStockData (Oct24) + Company News (Q1 2025 Ops Report May25) + DB Snapshot Review'
+    ),
+    data_source = 'Yahoo Finance + GoldStockData + Company News + DB Snapshot Review',
+    last_updated = NOW()
+WHERE company_id = 224;
+
+-- Log financials update
+INSERT INTO public.update_log (company_id, table_name, update_time, update_description)
+VALUES (224, 'financials', NOW(), 'Updated financials: Revenue set to annualized Q1_25 USD. Other fields aligned with DB/latest YF. JSON notes updated.');
+
+-- Log pre-update state for capital_structure
+INSERT INTO public.update_log (company_id, table_name, update_time, update_description)
+SELECT 224, 'capital_structure', NOW(), 'Pre-update state: existing_shares = ' || COALESCE(cs.existing_shares::TEXT, 'NULL') || ', fully_diluted_shares = ' || COALESCE(cs.fully_diluted_shares::TEXT, 'NULL') FROM public.capital_structure cs WHERE cs.company_id = 224;
+UPDATE public.capital_structure
+SET
+    existing_shares = 106635087,
+    fully_diluted_shares = COALESCE(fully_diluted_shares, 152427266),
+    in_the_money_options = COALESCE(in_the_money_options, (152427266 - 106635087)),
+    last_updated = NOW()
+WHERE company_id = 224;
+INSERT INTO public.update_log (company_id, table_name, update_time, update_description) VALUES (224, 'capital_structure', NOW(), 'Confirmed/updated share counts based on YF derived and GSD.');
+
+-- Log pre-update state for mineral_estimates
+INSERT INTO public.update_log (company_id, table_name, update_time, update_description)
+SELECT 224, 'mineral_estimates', NOW(), 'Pre-update state: resources_total_aueq_moz = ' || COALESCE(me.resources_total_aueq_moz::TEXT, 'NULL') || ', measured_indicated_total_aueq_moz = ' || COALESCE(me.measured_indicated_total_aueq_moz::TEXT, 'NULL') FROM public.mineral_estimates me WHERE me.company_id = 224;
+UPDATE public.mineral_estimates
+SET
+    reserves_precious_aueq_moz = 0,
+    measured_indicated_precious_aueq_moz = 0,
+    resources_precious_aueq_moz = 0,
+    potential_precious_aueq_moz = 0,
+    reserves_non_precious_aueq_moz = 0,
+    measured_indicated_non_precious_aueq_moz = 0.075,
+    resources_non_precious_aueq_moz = 0.200,
+    potential_non_precious_aueq_moz = 0.125,
+    reserves_total_aueq_moz = 0,
+    measured_indicated_total_aueq_moz = 0.075,
+    resources_total_aueq_moz = 0.200,
+    potential_total_aueq_moz = 0.125,
+    last_updated = NOW()
+WHERE company_id = 224;
+INSERT INTO public.update_log (company_id, table_name, update_time, update_description) VALUES (224, 'mineral_estimates', NOW(), 'Confirmed mineral estimates (AuEq from GSD Ag resources) align with current DB.');
+
+-- Log pre-update state for production (if row exists)
+INSERT INTO public.update_log (company_id, table_name, update_time, update_description)
+SELECT 224, 'production', NOW(), 'Pre-UPSERT state: current_production_total_aueq_koz = ' || COALESCE(p.current_production_total_aueq_koz::TEXT, 'NULL') FROM public.production p WHERE p.company_id = 224;
+
+-- Upsert production data for Kuya Silver (CRITICAL FIX)
+INSERT INTO public.production (
+    company_id,
+    current_production_total_aueq_koz,
+    current_production_precious_aueq_koz,
+    current_production_non_precious_aueq_koz,
+    future_production_total_aueq_koz,
+    reserve_life_years,
+    protected,
+    last_updated
+) VALUES (
+    224, -- company_id
+    ROUND((8887.57 * 4)::numeric / 80 / 1000, 3), -- current_production_total_aueq_koz (0.444 AuEq koz)
+    ROUND((2.28 * 4)::numeric / 1000, 3),        -- current_production_precious_aueq_koz (0.009 Au koz from Q1 Au sold)
+    ROUND(((8887.57 * 4) - (2.28 * 4 * 80))::numeric / 80 / 1000, 3), -- current_production_non_precious_aueq_koz (0.435 AuEq koz from remaining AgEq)
+    ROUND(2000000::numeric / 80 / 1000, 3),      -- future_production_total_aueq_koz (GSD Future Ag Prod 2M oz -> 25 AuEq Koz)
+    0,                                           -- reserve_life_years (No reserves)
+    FALSE,                                       -- protected
+    NOW()                                        -- last_updated
+)
+ON CONFLICT (company_id) DO UPDATE SET
+    current_production_total_aueq_koz = EXCLUDED.current_production_total_aueq_koz,
+    current_production_precious_aueq_koz = EXCLUDED.current_production_precious_aueq_koz,
+    current_production_non_precious_aueq_koz = EXCLUDED.current_production_non_precious_aueq_koz,
+    future_production_total_aueq_koz = COALESCE(public.production.future_production_total_aueq_koz, EXCLUDED.future_production_total_aueq_koz), -- Keep existing DB future prod if not null
+    reserve_life_years = EXCLUDED.reserve_life_years,
+    protected = EXCLUDED.protected,
+    last_updated = EXCLUDED.last_updated;
+
+INSERT INTO public.update_log (company_id, table_name, update_time, update_description)
+VALUES (224, 'production', NOW(), 'CRITICAL FIX: UPSERTED production data. Current production set to 0.444 koz AuEq (Annualized Q1 2025 AgEq from Company News).');
+
+-- Log pre-update state for costs
+INSERT INTO public.update_log (company_id, table_name, update_time, update_description)
+SELECT 224, 'costs', NOW(), 'Pre-update state: aisc_last_year = ' || COALESCE(c.aisc_last_year::TEXT, 'NULL') || ', tco_current = ' || COALESCE(c.tco_current::TEXT, 'NULL') FROM public.costs c WHERE c.company_id = 224;
+UPDATE public.costs
+SET
+    tco_current = COALESCE(tco_current, (12 * 80)),
+    tco_current_currency = COALESCE(tco_current_currency, 'USD'),
+    aisc_last_year = COALESCE(aisc_last_year, (22 * 80)),
+    aisc_last_year_currency = COALESCE(aisc_last_year_currency, 'USD'),
+    tco_future = COALESCE(tco_future, (15*80)),
+    tco_future_currency = COALESCE(tco_future_currency, 'USD'),
+    aisc_future = COALESCE(aisc_future, ((15+10)*80)),
+    aisc_future_currency = COALESCE(aisc_future_currency, 'USD'),
+    last_updated = NOW()
+WHERE company_id = 224;
+INSERT INTO public.update_log (company_id, table_name, update_time, update_description) VALUES (224, 'costs', NOW(), 'Confirmed/updated cost data (AuEq from GSD Ag costs), preserving existing if present.');
+
+-- Update stock price
+INSERT INTO public.stock_prices (company_id, price_value, price_currency, price_date, data_source)
+VALUES (224, 0.2850, 'CAD', '2025-05-23', 'Yahoo Finance')
+ON CONFLICT (company_id, price_date, data_source)
+DO UPDATE SET price_value = EXCLUDED.price_value, price_currency = EXCLUDED.price_currency, last_updated = NOW();
+INSERT INTO public.update_log (company_id, table_name, update_time, update_description) VALUES (224, 'stock_prices', NOW(), 'Upserted stock price from Yahoo Finance (May 23, 2025).');
+
+-- Log pre-update state for valuation_metrics
+INSERT INTO public.update_log (company_id, table_name, update_time, update_description)
+SELECT 224, 'valuation_metrics', NOW(), 'Pre-update state: ev_per_production_oz = ' || COALESCE(vm.ev_per_production_oz::TEXT, 'NULL') || ', mkt_cap_per_production_oz = ' || COALESCE(vm.mkt_cap_per_production_oz::TEXT, 'NULL') FROM public.valuation_metrics vm WHERE vm.company_id = 224;
+-- Recalculate valuation metrics
+UPDATE public.valuation_metrics
+SET
+    ev_per_production_oz = ROUND( (29625430 / 1.36)::numeric / NULLIF( ((8887.57 * 4) / 80 / 1000) , 0), 2), -- EV_USD / Prod_AuEq_koz
+    mkt_cap_per_production_oz = ROUND( (30391000 / 1.36)::numeric / NULLIF( ((8887.57 * 4) / 80 / 1000) , 0), 2), -- MCap_USD / Prod_AuEq_koz
+    ev_per_reserve_oz_all = NULL,
+    mkt_cap_per_reserve_oz_all = NULL,
+    ev_per_mi_oz_all = ROUND( (29625430 / 1.36)::numeric / NULLIF( (6000000 / 80) , 0), 2), -- EV_USD / M&I_AuEq_oz (M&I is 0.075 Moz = 75000 oz)
+    mkt_cap_per_mi_oz_all = ROUND( (30391000 / 1.36)::numeric / NULLIF( (6000000 / 80) , 0), 2),
+    ev_per_resource_oz_all = ROUND( (29625430 / 1.36)::numeric / NULLIF( (16000000 / 80) , 0), 2), -- EV_USD / Resources_AuEq_oz (Res is 0.2 Moz = 200000 oz)
+    mkt_cap_per_resource_oz_all = ROUND( (30391000 / 1.36)::numeric / NULLIF( (16000000 / 80) , 0), 2),
+    last_updated = NOW()
+WHERE company_id = 224;
+INSERT INTO public.update_log (company_id, table_name, update_time, update_description) VALUES (224, 'valuation_metrics', NOW(), 'Recalculated valuation metrics based on updated production and financials.');
+
+-- Verify updates for KUYA.CN
+SELECT
+    c.company_id, c.tsx_code, c.status,
+    p.current_production_total_aueq_koz AS actual_prod_koz,
+    f.revenue_value AS f_rev_usd, f.revenue_currency AS f_rev_curr,
+    vm.ev_per_production_oz
+FROM public.companies c
+LEFT JOIN public.financials f ON c.company_id = f.company_id
+LEFT JOIN public.production p ON c.company_id = p.company_id
+LEFT JOIN public.valuation_metrics vm ON c.company_id = vm.company_id
+WHERE c.company_id = 224;
+
+COMMIT;
+
+
 Data Source Handling:
 Yahoo Finance: Provides reliable market cap, share counts, financials (revenue, EBITDA, etc.), and valuation ratios. Data is in CAD for market cap/EV and USD for income statements.
 
