@@ -1,4 +1,4 @@
-this is a good example of a sql updater for my supabase db.  Rigorous.
+this is a good example of a sql updater for my supabase db.  Rigorous.   **MUST BE AWARE : The INSERT ... ON CONFLICT DO UPDATE pattern for the production table to ensure that data sticks.
 -- Ensure update_log table exists
 CREATE TABLE IF NOT EXISTS public.update_log (
     log_id SERIAL PRIMARY KEY,
