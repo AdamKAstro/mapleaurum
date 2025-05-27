@@ -363,7 +363,7 @@ AND ANOTHER GREAT UPDATER :
 -- # Version: 1.0 (Safe, Rigorous, Reusable, Schema-Aligned)
 -- # Date: May 26, 2025
 -- # Notes: Excludes stock_prices (handled separately). Creates update_log if needed.
--- # Usage: Update COMPANY_ID and COMPANY_TICKER, then modify data values.
+-- # Usage: Update COMPANY_ID and COMPANY_TICKER in the DO block, then modify data values.
 -- #############################################################################
 
 -- Create update_log table if it doesn't exist
@@ -379,26 +379,30 @@ CREATE TABLE IF NOT EXISTS public.update_log (
 -- Begin transaction
 BEGIN;
 
--- Define constants (UPDATE THESE FOR EACH COMPANY)
+-- Define constants in a DO block
 DO $$
+DECLARE
+    COMPANY_ID_VAR BIGINT := 335; -- Renamed variable for absolute clarity, or qualify column
+    -- COMPANY_TICKER TEXT := 'PRYM.TO'; -- Not used in this specific block, but good for context
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM public.companies WHERE company_id = 6) THEN
-        RAISE EXCEPTION 'Company ID 6 does not exist in public.companies';
+    -- Option 1: Qualify with table name (public.companies.company_id)
+    -- IF NOT EXISTS (SELECT 1 FROM public.companies WHERE public.companies.company_id = COMPANY_ID_VAR) THEN
+
+    -- Option 2 (Preferred for brevity): Use a table alias
+    IF NOT EXISTS (SELECT 1 FROM public.companies c WHERE c.company_id = COMPANY_ID_VAR) THEN
+        RAISE EXCEPTION 'Company ID % does not exist in public.companies', COMPANY_ID_VAR;
     END IF;
 END $$;
--- Constants
-\SET COMPANY_ID 6
-\SET COMPANY_TICKER 'ABRA.TO'
 
 -- Lock rows for Company ID
-SELECT * FROM public.companies WHERE company_id = :COMPANY_ID FOR UPDATE NOWAIT;
-SELECT * FROM public.financials WHERE company_id = :COMPANY_ID FOR UPDATE NOWAIT;
-SELECT * FROM public.capital_structure WHERE company_id = :COMPANY_ID FOR UPDATE NOWAIT;
-SELECT * FROM public.mineral_estimates WHERE company_id = :COMPANY_ID FOR UPDATE NOWAIT;
-SELECT * FROM public.production WHERE company_id = :COMPANY_ID FOR UPDATE NOWAIT;
-SELECT * FROM public.costs WHERE company_id = :COMPANY_ID FOR UPDATE NOWAIT;
-SELECT * FROM public.company_urls WHERE company_id = :COMPANY_ID FOR UPDATE NOWAIT;
-SELECT * FROM public.valuation_metrics WHERE company_id = :COMPANY_ID FOR UPDATE NOWAIT;
+SELECT * FROM public.companies WHERE company_id = 335 FOR UPDATE NOWAIT;
+SELECT * FROM public.financials WHERE company_id = 335 FOR UPDATE NOWAIT;
+SELECT * FROM public.capital_structure WHERE company_id = 335 FOR UPDATE NOWAIT;
+SELECT * FROM public.mineral_estimates WHERE company_id = 335 FOR UPDATE NOWAIT;
+SELECT * FROM public.production WHERE company_id = 335 FOR UPDATE NOWAIT;
+SELECT * FROM public.costs WHERE company_id = 335 FOR UPDATE NOWAIT;
+SELECT * FROM public.company_urls WHERE company_id = 335 FOR UPDATE NOWAIT;
+SELECT * FROM public.valuation_metrics WHERE company_id = 335 FOR UPDATE NOWAIT;
 
 --------------------------------------------------------------------------
 -- Update public.companies
@@ -406,7 +410,7 @@ SELECT * FROM public.valuation_metrics WHERE company_id = :COMPANY_ID FOR UPDATE
 -- Log pre-update state
 INSERT INTO public.update_log (company_id, table_name, update_time, update_description)
 SELECT
-    :COMPANY_ID,
+    335,
     'companies',
     CURRENT_TIMESTAMP,
     'Pre-update state: company_name=' || COALESCE(c.company_name::TEXT, 'NULL') ||
@@ -417,25 +421,25 @@ SELECT
     ', percent_gold=' || COALESCE(c.percent_gold::TEXT, 'NULL') ||
     ', percent_silver=' || COALESCE(c.percent_silver::TEXT, 'NULL')
 FROM public.companies c
-WHERE c.company_id = :COMPANY_ID;
+WHERE c.company_id = 335;
 
 -- Update
 UPDATE public.companies
 SET
-    company_name = 'AbraSilver Resource Corp.',
-    tsx_code = :'COMPANY_TICKER',
+    company_name = 'Prime Mining Corp.',
+    tsx_code = 'PRYM.TO',
     status = 'developer',
-    headquarters = COALESCE(headquarters, 'Toronto, Canada'),
-    description = 'Advanced-stage exploration and development company focused on rapidly advancing its 100%-owned Diablillos silver-gold project in the mining-friendly Salta province, Argentina. [Data Source: Company Website, Yahoo Finance, Updated: 2025-05-26]',
-    minerals_of_interest = 'silver, gold',
-    percent_gold = 12.4,
-    percent_silver = 87.6,
+    headquarters = COALESCE(headquarters, 'Vancouver, Canada'),
+    description = 'Advanced-stage exploration company focused on developing its 100%-owned Los Reyes Gold-Silver Project in Sinaloa, Mexico. Updated mineral resource estimate (Oct 2024) reports 2.19 Moz AuEq indicated and 0.82 Moz AuEq inferred. [Data Source: Company Website, GlobeNewswire, Yahoo Finance, Updated: 2025-05-26]',
+    minerals_of_interest = 'gold, silver',
+    percent_gold = 75.0, -- Adjusted based on resource breakdown
+    percent_silver = 25.0,
     last_updated = CURRENT_TIMESTAMP
-WHERE company_id = :COMPANY_ID;
+WHERE company_id = 335;
 
 -- Log post-update
 INSERT INTO public.update_log (company_id, table_name, update_time, update_description)
-VALUES (:COMPANY_ID, 'companies', CURRENT_TIMESTAMP, 'Updated company details, status to developer, description, minerals, and percentages.');
+VALUES (335, 'companies', CURRENT_TIMESTAMP, 'Updated company details, description, and mineral percentages based on latest MRE and web data.');
 
 --------------------------------------------------------------------------
 -- Update public.financials
@@ -443,7 +447,7 @@ VALUES (:COMPANY_ID, 'companies', CURRENT_TIMESTAMP, 'Updated company details, s
 -- Log pre-update state
 INSERT INTO public.update_log (company_id, table_name, update_time, update_description)
 SELECT
-    :COMPANY_ID,
+    335,
     'financials',
     CURRENT_TIMESTAMP,
     'Pre-update state: market_cap_value=' || COALESCE(f.market_cap_value::TEXT, 'NULL') || ' ' || COALESCE(f.market_cap_currency, '') ||
@@ -452,9 +456,9 @@ SELECT
     ', debt_value=' || COALESCE(f.debt_value::TEXT, 'NULL') || ' ' || COALESCE(f.debt_currency, '') ||
     ', shares_outstanding=' || COALESCE(f.shares_outstanding::TEXT, 'NULL')
 FROM public.financials f
-WHERE f.company_id = :COMPANY_ID;
+WHERE f.company_id = 335;
 
--- Upsert (ensure record exists)
+-- Upsert
 INSERT INTO public.financials (
     company_id,
     market_cap_value,
@@ -479,29 +483,29 @@ INSERT INTO public.financials (
     investments_json,
     last_updated
 ) VALUES (
-    :COMPANY_ID,
-    480526208,
+    335,
+    221095000, -- Yahoo Finance
     'CAD',
-    13726498,
+    18199852, -- juniormining Q1 2025
     'CAD',
-    '2025-05-26',
-    0,
+    '2025-03-31',
+    76084, -- Calculated from 0.24% debt/equity ratio and equity of $31,660,084
     'CAD',
-    152548000,
-    466800832,
+    152478991, -- goldstockdata
+    202970000, -- Yahoo Finance
     'CAD',
-    -25096304,
+    -18790000, -- Yahoo Finance TTM
     'CAD',
-    -27741608,
-    14.125561,
-    -7425140,
-    -61.76471,
-    -15,
-    -16.827,
-    'Yahoo Finance May 2025',
+    -21749704, -- Retained from DB (no new data)
+    6.98, -- Yahoo Finance
+    -9250000, -- Yahoo Finance TTM
+    NULL, -- Not applicable (non-producing)
+    NULL, -- Not applicable (negative earnings)
+    -9.33, -- Calculated: 202,970,000 / -21,749,704
+    'Yahoo Finance, GlobeNewswire, goldstockdata May 2025',
     jsonb_build_object(
-        'note', 'Financials based on Yahoo Finance data as of May 2025. Enterprise value calculated as MCap - Cash + Debt.',
-        'data_source', 'Yahoo Finance',
+        'note', 'Financials updated with Yahoo Finance, GlobeNewswire Q1 2025, and goldstockdata. EV calculated as MCap - Cash + Debt.',
+        'data_source', 'Yahoo Finance, GlobeNewswire, goldstockdata',
         'last_reviewed', '2025-05-26'
     )::TEXT,
     CURRENT_TIMESTAMP
@@ -531,7 +535,7 @@ ON CONFLICT (company_id) DO UPDATE SET
 
 -- Log post-update
 INSERT INTO public.update_log (company_id, table_name, update_time, update_description)
-VALUES (:COMPANY_ID, 'financials', CURRENT_TIMESTAMP, 'Upserted financials with MCap, EV, Cash, Debt, and metrics from Yahoo Finance.');
+VALUES (335, 'financials', CURRENT_TIMESTAMP, 'Upserted financials with updated MCap, EV, Cash, Debt, and metrics from Yahoo Finance, GlobeNewswire, and goldstockdata.');
 
 --------------------------------------------------------------------------
 -- Update public.capital_structure
@@ -539,13 +543,13 @@ VALUES (:COMPANY_ID, 'financials', CURRENT_TIMESTAMP, 'Upserted financials with 
 -- Log pre-update state
 INSERT INTO public.update_log (company_id, table_name, update_time, update_description)
 SELECT
-    :COMPANY_ID,
+    335,
     'capital_structure',
     CURRENT_TIMESTAMP,
     'Pre-update state: existing_shares=' || COALESCE(cs.existing_shares::TEXT, 'NULL') ||
     ', fully_diluted_shares=' || COALESCE(cs.fully_diluted_shares::TEXT, 'NULL')
 FROM public.capital_structure cs
-WHERE cs.company_id = :COMPANY_ID;
+WHERE cs.company_id = 335;
 
 -- Upsert
 INSERT INTO public.capital_structure (
@@ -554,9 +558,9 @@ INSERT INTO public.capital_structure (
     fully_diluted_shares,
     last_updated
 ) VALUES (
-    :COMPANY_ID,
-    152548000,
-    160000000, -- Estimated based on typical warrants/options
+    335,
+    152478991, -- goldstockdata
+    175000000, -- goldstockdata
     CURRENT_TIMESTAMP
 )
 ON CONFLICT (company_id) DO UPDATE SET
@@ -566,7 +570,7 @@ ON CONFLICT (company_id) DO UPDATE SET
 
 -- Log post-update
 INSERT INTO public.update_log (company_id, table_name, update_time, update_description)
-VALUES (:COMPANY_ID, 'capital_structure', CURRENT_TIMESTAMP, 'Upserted share counts.');
+VALUES (335, 'capital_structure', CURRENT_TIMESTAMP, 'Upserted share counts based on goldstockdata.');
 
 --------------------------------------------------------------------------
 -- Update public.mineral_estimates
@@ -574,14 +578,14 @@ VALUES (:COMPANY_ID, 'capital_structure', CURRENT_TIMESTAMP, 'Upserted share cou
 -- Log pre-update state
 INSERT INTO public.update_log (company_id, table_name, update_time, update_description)
 SELECT
-    :COMPANY_ID,
+    335,
     'mineral_estimates',
     CURRENT_TIMESTAMP,
     'Pre-update state: reserves_total_aueq_moz=' || COALESCE(me.reserves_total_aueq_moz::TEXT, 'NULL') ||
     ', measured_indicated_total_aueq_moz=' || COALESCE(me.measured_indicated_total_aueq_moz::TEXT, 'NULL') ||
     ', resources_total_aueq_moz=' || COALESCE(me.resources_total_aueq_moz::TEXT, 'NULL')
 FROM public.mineral_estimates me
-WHERE me.company_id = :COMPANY_ID;
+WHERE me.company_id = 335;
 
 -- Upsert
 INSERT INTO public.mineral_estimates (
@@ -595,14 +599,14 @@ INSERT INTO public.mineral_estimates (
     resources_non_precious_aueq_moz,
     last_updated
 ) VALUES (
-    :COMPANY_ID,
-    2.695,
-    3.266,
-    3.365,
-    3.266,
-    3.365,
-    0,
-    0,
+    335,
+    0.0, -- No proven reserves (juniormining)
+    2.19, -- juniormining MRE: 2.19 Moz indicated
+    3.01, -- juniormining MRE: 2.19 Moz indicated + 0.82 Moz inferred
+    2.19, -- Gold and silver only
+    3.01, -- Gold and silver only
+    0, -- No non-precious metals
+    0, -- No non-precious metals
     CURRENT_TIMESTAMP
 )
 ON CONFLICT (company_id) DO UPDATE SET
@@ -617,7 +621,7 @@ ON CONFLICT (company_id) DO UPDATE SET
 
 -- Log post-update
 INSERT INTO public.update_log (company_id, table_name, update_time, update_description)
-VALUES (:COMPANY_ID, 'mineral_estimates', CURRENT_TIMESTAMP, 'Upserted mineral estimates based on company data.');
+VALUES (335, 'mineral_estimates', CURRENT_TIMESTAMP, 'Upserted mineral estimates based on Oct 2024 MRE from juniormining.');
 
 --------------------------------------------------------------------------
 -- Update public.production
@@ -625,13 +629,13 @@ VALUES (:COMPANY_ID, 'mineral_estimates', CURRENT_TIMESTAMP, 'Upserted mineral e
 -- Log pre-update state
 INSERT INTO public.update_log (company_id, table_name, update_time, update_description)
 SELECT
-    :COMPANY_ID,
+    335,
     'production',
     CURRENT_TIMESTAMP,
     'Pre-update state: current_production_total_aueq_koz=' || COALESCE(p.current_production_total_aueq_koz::TEXT, 'NULL') ||
     ', future_production_total_aueq_koz=' || COALESCE(p.future_production_total_aueq_koz::TEXT, 'NULL')
 FROM public.production p
-WHERE p.company_id = :COMPANY_ID;
+WHERE p.company_id = 335;
 
 -- Upsert
 INSERT INTO public.production (
@@ -643,11 +647,11 @@ INSERT INTO public.production (
     protected,
     last_updated
 ) VALUES (
-    :COMPANY_ID,
+    335,
+    0, -- Non-producing (juniormining, goldstockdata)
     0,
     0,
-    0,
-    150, -- Estimated from Diablillos PEA
+    100, -- juniormining, goldstockdata PEA
     FALSE,
     CURRENT_TIMESTAMP
 )
@@ -661,7 +665,7 @@ ON CONFLICT (company_id) DO UPDATE SET
 
 -- Log post-update
 INSERT INTO public.update_log (company_id, table_name, update_time, update_description)
-VALUES (:COMPANY_ID, 'production', CURRENT_TIMESTAMP, 'Upserted production data based on company PEA.');
+VALUES (335, 'production', CURRENT_TIMESTAMP, 'Upserted production data, setting current to 0 and future to 100 koz based on PEA.');
 
 --------------------------------------------------------------------------
 -- Update public.costs
@@ -669,33 +673,40 @@ VALUES (:COMPANY_ID, 'production', CURRENT_TIMESTAMP, 'Upserted production data 
 -- Log pre-update state
 INSERT INTO public.update_log (company_id, table_name, update_time, update_description)
 SELECT
-    :COMPANY_ID,
+    335,
     'costs',
     CURRENT_TIMESTAMP,
-    'Pre-update state: aisc_future=' || COALESCE(c.aisc_future::TEXT, 'NULL') || ' ' || COALESCE(c.aisc_future_currency, '')
+    'Pre-update state: aisc_future=' || COALESCE(c.aisc_future::TEXT, 'NULL') || ' ' || COALESCE(c.aisc_future_currency, '') ||
+    ', tco_future=' || COALESCE(c.tco_future::TEXT, 'NULL') || ' ' || COALESCE(c.tco_future_currency, '')
 FROM public.costs c
-WHERE c.company_id = :COMPANY_ID;
+WHERE c.company_id = 335;
 
 -- Upsert
 INSERT INTO public.costs (
     company_id,
     aisc_future,
     aisc_future_currency,
+    tco_future,
+    tco_future_currency,
     last_updated
 ) VALUES (
-    :COMPANY_ID,
-    1200, -- Estimated from Diablillos PEA
+    335,
+    950, -- goldstockdata PEA
+    'USD',
+    750, -- Retained from DB (no new data)
     'USD',
     CURRENT_TIMESTAMP
 )
 ON CONFLICT (company_id) DO UPDATE SET
     aisc_future = EXCLUDED.aisc_future,
     aisc_future_currency = EXCLUDED.aisc_future_currency,
+    tco_future = EXCLUDED.tco_future,
+    tco_future_currency = EXCLUDED.tco_future_currency,
     last_updated = EXCLUDED.last_updated;
 
 -- Log post-update
 INSERT INTO public.update_log (company_id, table_name, update_time, update_description)
-VALUES (:COMPANY_ID, 'costs', CURRENT_TIMESTAMP, 'Upserted future AISC based on PEA.');
+VALUES (335, 'costs', CURRENT_TIMESTAMP, 'Upserted future AISC and TCO based on PEA and existing DB data.');
 
 --------------------------------------------------------------------------
 -- Update public.company_urls
@@ -703,12 +714,12 @@ VALUES (:COMPANY_ID, 'costs', CURRENT_TIMESTAMP, 'Upserted future AISC based on 
 -- Log pre-update state
 INSERT INTO public.update_log (company_id, table_name, update_time, update_description)
 SELECT
-    :COMPANY_ID,
+    335,
     'company_urls',
     CURRENT_TIMESTAMP,
     'Pre-update state: url=' || COALESCE(cu.url::TEXT, 'NULL') || ', url_type=' || COALESCE(cu.url_type::TEXT, 'NULL')
 FROM public.company_urls cu
-WHERE cu.company_id = :COMPANY_ID AND cu.url_type = 'company_website';
+WHERE cu.company_id = 335 AND cu.url_type = 'company_website';
 
 -- Upsert
 INSERT INTO public.company_urls (
@@ -717,9 +728,9 @@ INSERT INTO public.company_urls (
     url,
     last_validated
 ) VALUES (
-    :COMPANY_ID,
+    335,
     'company_website',
-    'https://www.abrasilver.com',
+    'https://www.primeminingcorp.ca',
     CURRENT_TIMESTAMP
 )
 ON CONFLICT (company_id, url_type) DO UPDATE SET
@@ -728,7 +739,7 @@ ON CONFLICT (company_id, url_type) DO UPDATE SET
 
 -- Log post-update
 INSERT INTO public.update_log (company_id, table_name, update_time, update_description)
-VALUES (:COMPANY_ID, 'company_urls', CURRENT_TIMESTAMP, 'Upserted company website URL.');
+VALUES (335, 'company_urls', CURRENT_TIMESTAMP, 'Upserted company website URL.');
 
 --------------------------------------------------------------------------
 -- Update public.valuation_metrics
@@ -736,13 +747,13 @@ VALUES (:COMPANY_ID, 'company_urls', CURRENT_TIMESTAMP, 'Upserted company websit
 -- Log pre-update state
 INSERT INTO public.update_log (company_id, table_name, update_time, update_description)
 SELECT
-    :COMPANY_ID,
+    335,
     'valuation_metrics',
     CURRENT_TIMESTAMP,
     'Pre-update state: ev_per_mi_oz_all=' || COALESCE(vm.ev_per_mi_oz_all::TEXT, 'NULL') ||
     ', mkt_cap_per_reserve_oz_all=' || COALESCE(vm.mkt_cap_per_reserve_oz_all::TEXT, 'NULL')
 FROM public.valuation_metrics vm
-WHERE vm.company_id = :COMPANY_ID;
+WHERE vm.company_id = 335;
 
 -- Upsert
 INSERT INTO public.valuation_metrics (
@@ -760,41 +771,41 @@ INSERT INTO public.valuation_metrics (
     last_updated
 )
 SELECT
-    :COMPANY_ID,
+    335,
     CASE WHEN COALESCE(me.measured_indicated_total_aueq_moz, 0) = 0 THEN NULL
          ELSE ROUND((f.enterprise_value_value / NULLIF(me.measured_indicated_total_aueq_moz * 1000000, 0))::numeric, 2)
-    END,
+    END, -- 202,970,000 / 2.19M = 92.67
     CASE WHEN COALESCE(me.measured_indicated_total_aueq_moz, 0) = 0 THEN NULL
          ELSE ROUND((f.market_cap_value / NULLIF(me.measured_indicated_total_aueq_moz * 1000000, 0))::numeric, 2)
-    END,
+    END, -- 221,095,000 / 2.19M = 100.95
     CASE WHEN COALESCE(me.resources_total_aueq_moz, 0) = 0 THEN NULL
          ELSE ROUND((f.enterprise_value_value / NULLIF(me.resources_total_aueq_moz * 1000000, 0))::numeric, 2)
-    END,
+    END, -- 202,970,000 / 3.01M = 67.43
     CASE WHEN COALESCE(me.resources_total_aueq_moz, 0) = 0 THEN NULL
          ELSE ROUND((f.market_cap_value / NULLIF(me.resources_total_aueq_moz * 1000000, 0))::numeric, 2)
-    END,
+    END, -- 221,095,000 / 3.01M = 73.42
     CASE WHEN COALESCE(me.measured_indicated_precious_aueq_moz, 0) = 0 THEN NULL
          ELSE ROUND((f.enterprise_value_value / NULLIF(me.measured_indicated_precious_aueq_moz * 1000000, 0))::numeric, 2)
-    END,
+    END, -- Same as ev_per_mi_oz_all (gold and silver only)
     CASE WHEN COALESCE(me.measured_indicated_precious_aueq_moz, 0) = 0 THEN NULL
          ELSE ROUND((f.market_cap_value / NULLIF(me.measured_indicated_precious_aueq_moz * 1000000, 0))::numeric, 2)
-    END,
+    END, -- Same as mkt_cap_per_mi_oz_all
     CASE WHEN COALESCE(me.resources_precious_aueq_moz, 0) = 0 THEN NULL
          ELSE ROUND((f.enterprise_value_value / NULLIF(me.resources_precious_aueq_moz * 1000000, 0))::numeric, 2)
-    END,
+    END, -- Same as ev_per_resource_oz_all
     CASE WHEN COALESCE(me.resources_precious_aueq_moz, 0) = 0 THEN NULL
          ELSE ROUND((f.market_cap_value / NULLIF(me.resources_precious_aueq_moz * 1000000, 0))::numeric, 2)
-    END,
+    END, -- Same as mkt_cap_per_resource_oz_all
     CASE WHEN COALESCE(me.reserves_total_aueq_moz, 0) = 0 THEN NULL
          ELSE ROUND((f.enterprise_value_value / NULLIF(me.reserves_total_aueq_moz * 1000000, 0))::numeric, 2)
-    END,
+    END, -- NULL (no reserves)
     CASE WHEN COALESCE(me.reserves_total_aueq_moz, 0) = 0 THEN NULL
          ELSE ROUND((f.market_cap_value / NULLIF(me.reserves_total_aueq_moz * 1000000, 0))::numeric, 2)
-    END,
+    END, -- NULL (no reserves)
     CURRENT_TIMESTAMP
 FROM public.financials f
 JOIN public.mineral_estimates me ON f.company_id = me.company_id
-WHERE f.company_id = :COMPANY_ID
+WHERE f.company_id = 335
 ON CONFLICT (company_id) DO UPDATE SET
     ev_per_mi_oz_all = EXCLUDED.ev_per_mi_oz_all,
     mkt_cap_per_mi_oz_all = EXCLUDED.mkt_cap_per_mi_oz_all,
@@ -810,7 +821,7 @@ ON CONFLICT (company_id) DO UPDATE SET
 
 -- Log post-update
 INSERT INTO public.update_log (company_id, table_name, update_time, update_description)
-VALUES (:COMPANY_ID, 'valuation_metrics', CURRENT_TIMESTAMP, 'Upserted valuation metrics based on financials and mineral estimates.');
+VALUES (335, 'valuation_metrics', CURRENT_TIMESTAMP, 'Upserted valuation metrics based on updated financials and mineral estimates.');
 
 --------------------------------------------------------------------------
 -- Verify updates
@@ -834,7 +845,7 @@ LEFT JOIN public.mineral_estimates me ON c.company_id = me.company_id
 LEFT JOIN public.production p ON c.company_id = p.company_id
 LEFT JOIN public.costs co ON c.company_id = co.company_id
 LEFT JOIN public.company_urls cu ON c.company_id = cu.company_id
-WHERE c.company_id = :COMPANY_ID;
+WHERE c.company_id = 335;
 
 COMMIT;
 
