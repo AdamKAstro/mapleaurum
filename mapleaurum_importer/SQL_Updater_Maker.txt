@@ -577,6 +577,362 @@ WHERE c.company_id = 224;
 
 COMMIT;
 
+---
+
+I also think like this is a super robust way to do things :
+-- #############################################################################
+-- # Rigorous SQL Updater Template for a Single Company (Excludes stock_prices Update)
+-- # Version: 2.1
+-- #
+-- # Instructions:
+-- # 1. Replace ALL [PLACEHOLDER_VALUES] with actual data for the company.
+-- # 2. If new data for a specific field is NOT available, OMIT that line
+-- #    from the SET clause in the relevant UPDATE statement to avoid
+-- #    overwriting existing data with NULL.
+-- # 3. Ensure company_id exists in dependent tables if only performing UPDATE.
+-- #    UPSERT (INSERT ... ON CONFLICT) is used for tables where rows might be missing.
+-- # 4. Verify currency consistency for financial calculations.
+-- #############################################################################
+
+-- Provide the Company ID and Key Identifiers for this update run
+-- Example: WITH company_vars AS (SELECT 174 AS id, 'GOLD.TO' AS ticker)
+WITH company_vars AS (
+    SELECT [COMPANY_ID_NUMERIC] AS id, '[TICKER_TEXT]' AS ticker
+)
+
+BEGIN;
+
+-- Lock rows for the company across all relevant tables (excluding stock_prices for write)
+SELECT * FROM public.companies WHERE company_id = (SELECT id FROM company_vars) FOR UPDATE;
+SELECT * FROM public.financials WHERE company_id = (SELECT id FROM company_vars) FOR UPDATE;
+SELECT * FROM public.capital_structure WHERE company_id = (SELECT id FROM company_vars) FOR UPDATE;
+SELECT * FROM public.mineral_estimates WHERE company_id = (SELECT id FROM company_vars) FOR UPDATE NOWAIT;
+SELECT * FROM public.production WHERE company_id = (SELECT id FROM company_vars) FOR UPDATE NOWAIT;
+SELECT * FROM public.costs WHERE company_id = (SELECT id FROM company_vars) FOR UPDATE NOWAIT;
+SELECT * FROM public.valuation_metrics WHERE company_id = (SELECT id FROM company_vars) FOR UPDATE;
+SELECT * FROM public.company_urls WHERE company_id = (SELECT id FROM company_vars) FOR UPDATE NOWAIT;
+-- public.stock_prices table is read for MCap calculation but not locked for write here.
+
+--------------------------------------------------------------------------
+-- Update public.companies
+--------------------------------------------------------------------------
+-- Log pre-update state
+INSERT INTO public.update_log (company_id, table_name, update_time, update_description)
+SELECT
+    (SELECT id FROM company_vars),
+    'companies',
+    NOW(),
+    'Pre-update state: name=' || COALESCE(c.company_name::TEXT, 'NULL') ||
+    ', status=' || COALESCE(c.status::TEXT, 'NULL') ||
+    ', ticker=' || COALESCE(c.tsx_code::TEXT, 'NULL') ||
+    ', minerals=' || COALESCE(c.minerals_of_interest::TEXT, 'NULL') ||
+    ', desc_len=' || COALESCE(LENGTH(c.description)::TEXT, 'NULL')
+FROM public.companies c
+WHERE c.company_id = (SELECT id FROM company_vars);
+
+UPDATE public.companies
+SET
+    company_name = '[NEW_COMPANY_NAME_TEXT]',
+    tsx_code = '[NEW_TSX_CODE_TEXT]',
+    status = '[NEW_STATUS_TEXT]', -- e.g., 'developer', 'producer'
+    headquarters = '[NEW_HEADQUARTERS_TEXT]',
+    description = '[NEW_DESCRIPTION_TEXT]',
+    minerals_of_interest = '[NEW_MINERALS_TEXT]',
+    percent_gold = [NEW_PERCENT_GOLD_NUMERIC],
+    percent_silver = [NEW_PERCENT_SILVER_NUMERIC],
+    last_updated = NOW()
+WHERE company_id = (SELECT id FROM company_vars);
+
+-- Log post-update
+INSERT INTO public.update_log (company_id, table_name, update_time, update_description)
+VALUES ((SELECT id FROM company_vars), 'companies', NOW(), 'Updated company profile information.');
+
+--------------------------------------------------------------------------
+-- Update public.financials
+--------------------------------------------------------------------------
+-- Log pre-update state
+INSERT INTO public.update_log (company_id, table_name, update_time, update_description)
+SELECT
+    (SELECT id FROM company_vars),
+    'financials',
+    NOW(),
+    'Pre-update state: MCap=' || COALESCE(f.market_cap_value::TEXT, 'NULL') || ' ' || COALESCE(f.market_cap_currency,'') ||
+    ', Revenue=' || COALESCE(f.revenue_value::TEXT, 'NULL') || ' ' || COALESCE(f.revenue_currency,'') ||
+    ', Cash=' || COALESCE(f.cash_value::TEXT, 'NULL') || ' ' || COALESCE(f.cash_currency,'') ||
+    ', Debt=' || COALESCE(f.debt_value::TEXT, 'NULL') || ' ' || COALESCE(f.debt_currency,'') ||
+    ', Shares=' || COALESCE(f.shares_outstanding::TEXT, 'NULL')
+FROM public.financials f
+WHERE f.company_id = (SELECT id FROM company_vars);
+
+-- Derive Market Cap if NULL using latest stock price (read-only from stock_prices)
+WITH latest_price AS (
+    SELECT
+        sp.price_value,
+        sp.price_currency
+    FROM public.stock_prices sp
+    WHERE sp.company_id = (SELECT id FROM company_vars)
+    ORDER BY sp.price_date DESC, sp.last_updated DESC
+    LIMIT 1
+)
+UPDATE public.financials f
+SET
+    market_cap_value = COALESCE(f.market_cap_value, lp.price_value * f.shares_outstanding),
+    market_cap_currency = COALESCE(f.market_cap_currency, lp.price_currency)
+FROM latest_price lp
+WHERE f.company_id = (SELECT id FROM company_vars)
+  AND f.market_cap_value IS NULL        -- Only if MCap is NULL
+  AND f.shares_outstanding IS NOT NULL
+  AND lp.price_value IS NOT NULL;
+
+-- Log MCap derivation attempt
+INSERT INTO public.update_log (company_id, table_name, update_time, update_description)
+VALUES ((SELECT id FROM company_vars), 'financials', NOW(), 'Attempted to derive market_cap_value if NULL (Price*Shares).');
+
+-- Main Financials Update
+UPDATE public.financials
+SET
+    -- market_cap_value: Updated above if was NULL, or set directly if new MCap data available
+    -- market_cap_currency: Updated above if MCap was derived, or set directly
+    cash_value = [NEW_CASH_VALUE_NUMERIC],
+    cash_currency = '[NEW_CASH_CURRENCY_TEXT]',
+    cash_date = '[NEW_CASH_DATE_YYYY-MM-DD]',
+    debt_value = [NEW_DEBT_VALUE_NUMERIC],
+    debt_currency = '[NEW_DEBT_CURRENCY_TEXT]',
+    shares_outstanding = [NEW_SHARES_OUTSTANDING_NUMERIC],
+    enterprise_value_value = ROUND( (COALESCE(market_cap_value, 0) / COALESCE([FX_RATE_CAD_PER_USD_NUMERIC_FOR_MCAP_IF_NEEDED], 1.0)) + COALESCE([NEW_DEBT_VALUE_NUMERIC_IN_EV_CURRENCY], COALESCE(debt_value,0)) - COALESCE([NEW_CASH_VALUE_NUMERIC_IN_EV_CURRENCY], COALESCE(cash_value,0)) )::numeric, -- Ensure all in EV_CURRENCY
+    enterprise_value_currency = '[TARGET_EV_CURRENCY_TEXT]', -- e.g., 'USD'
+    revenue_value = [NEW_REVENUE_VALUE_NUMERIC],
+    revenue_currency = '[NEW_REVENUE_CURRENCY_TEXT]',
+    ebitda = [NEW_EBITDA_VALUE_NUMERIC],
+    net_income_value = [NEW_NET_INCOME_VALUE_NUMERIC],
+    net_income_currency = '[NEW_NET_INCOME_CURRENCY_TEXT]',
+    cost_of_revenue = [NEW_COST_OF_REVENUE_NUMERIC_OR_NULL],
+    gross_profit = [NEW_GROSS_PROFIT_NUMERIC_OR_NULL],
+    operating_expense = [NEW_OPERATING_EXPENSE_NUMERIC_OR_NULL],
+    operating_income = [NEW_OPERATING_INCOME_NUMERIC_OR_NULL],
+    free_cash_flow = [NEW_FCF_VALUE_NUMERIC_OR_NULL],
+    liabilities = [NEW_LIABILITIES_VALUE_NUMERIC_OR_NULL],
+    liabilities_currency = '[NEW_LIABILITIES_CURRENCY_TEXT_OR_NULL]',
+    trailing_pe = [NEW_TRAILING_PE_NUMERIC_OR_NULL],
+    forward_pe = [NEW_FORWARD_PE_NUMERIC_OR_NULL],
+    peg_ratio = [NEW_PEG_RATIO_NUMERIC_OR_NULL],
+    price_to_book = [NEW_PRICE_TO_BOOK_NUMERIC_OR_NULL],
+    price_to_sales = CASE WHEN COALESCE([NEW_REVENUE_VALUE_NUMERIC_IN_MCAP_CURRENCY_OR_CONVERTED], 0) = 0 THEN NULL ELSE ROUND((market_cap_value / [NEW_REVENUE_VALUE_NUMERIC_IN_MCAP_CURRENCY_OR_CONVERTED])::numeric, 2) END,
+    enterprise_to_revenue = CASE WHEN COALESCE([NEW_REVENUE_VALUE_NUMERIC_IN_EV_CURRENCY], 0) = 0 THEN NULL ELSE ROUND((enterprise_value_value / [NEW_REVENUE_VALUE_NUMERIC_IN_EV_CURRENCY])::numeric, 2) END,
+    enterprise_to_ebitda = CASE WHEN COALESCE([NEW_EBITDA_VALUE_NUMERIC_IN_EV_CURRENCY], 0) = 0 THEN NULL ELSE ROUND((enterprise_value_value / [NEW_EBITDA_VALUE_NUMERIC_IN_EV_CURRENCY])::numeric, 2) END,
+    investments_json = COALESCE(investments_json::jsonb, '{}'::jsonb) || jsonb_build_object(
+        'UpdateSource', '[SOURCE_OF_THIS_UPDATE_TEXT]',
+        'UpdateDetails', '[KEY_CHANGES_OR_NOTES_TEXT]',
+        'ReportDate', '[FINANCIAL_REPORT_DATE_YYYY-MM-DD]'
+    ),
+    data_source = COALESCE(data_source || '; ', '') || '[NEW_DATA_SOURCE_TEXT]',
+    last_updated = NOW()
+WHERE company_id = (SELECT id FROM company_vars);
+
+-- Log post-update
+INSERT INTO public.update_log (company_id, table_name, update_time, update_description)
+VALUES ((SELECT id FROM company_vars), 'financials', NOW(), 'Updated financial figures and ratios.');
+
+--------------------------------------------------------------------------
+-- Update public.capital_structure
+--------------------------------------------------------------------------
+-- Log pre-update state
+INSERT INTO public.update_log (company_id, table_name, update_time, update_description)
+SELECT (SELECT id FROM company_vars), 'capital_structure', NOW(), 'Pre-update state: existing_shares=' || COALESCE(cs.existing_shares::TEXT,'NULL') || ', fully_diluted_shares=' || COALESCE(cs.fully_diluted_shares::TEXT,'NULL') FROM public.capital_structure cs WHERE cs.company_id = (SELECT id FROM company_vars);
+
+UPDATE public.capital_structure
+SET
+    existing_shares = [NEW_SHARES_OUTSTANDING_NUMERIC],
+    fully_diluted_shares = [NEW_FULLY_DILUTED_SHARES_NUMERIC_OR_NULL],
+    in_the_money_options = GREATEST(0, COALESCE([NEW_FULLY_DILUTED_SHARES_NUMERIC_OR_NULL],0) - COALESCE([NEW_SHARES_OUTSTANDING_NUMERIC],0) ),
+    last_updated = NOW()
+WHERE company_id = (SELECT id FROM company_vars);
+
+-- Log post-update
+INSERT INTO public.update_log (company_id, table_name, update_time, update_description)
+VALUES ((SELECT id FROM company_vars), 'capital_structure', NOW(), 'Updated share structure information.');
+
+--------------------------------------------------------------------------
+-- UPSERT public.mineral_estimates
+--------------------------------------------------------------------------
+-- Log pre-UPSERT state
+INSERT INTO public.update_log (company_id, table_name, update_time, update_description)
+SELECT (SELECT id FROM company_vars), 'mineral_estimates', NOW(), 'Pre-UPSERT state: reserves_total=' || COALESCE(me.reserves_total_aueq_moz::TEXT,'NULL') || ', resources_total=' || COALESCE(me.resources_total_aueq_moz::TEXT,'NULL') FROM public.mineral_estimates me WHERE me.company_id = (SELECT id FROM company_vars);
+
+INSERT INTO public.mineral_estimates (
+    company_id, reserves_total_aueq_moz, measured_indicated_total_aueq_moz, resources_total_aueq_moz, potential_total_aueq_moz,
+    reserves_precious_aueq_moz, measured_indicated_precious_aueq_moz, resources_precious_aueq_moz, potential_precious_aueq_moz,
+    reserves_non_precious_aueq_moz, measured_indicated_non_precious_aueq_moz, resources_non_precious_aueq_moz, potential_non_precious_aueq_moz,
+    mineable_total_aueq_moz, last_updated
+) VALUES (
+    (SELECT id FROM company_vars),
+    [RESERVES_TOTAL_AUEQ_MOZ_NUMERIC_OR_NULL], [MI_TOTAL_AUEQ_MOZ_NUMERIC_OR_NULL], [RESOURCES_TOTAL_AUEQ_MOZ_NUMERIC_OR_NULL], [INFERRED_TOTAL_AUEQ_MOZ_NUMERIC_OR_NULL],
+    [RESERVES_PRECIOUS_AUEQ_MOZ_NUMERIC_OR_NULL], [MI_PRECIOUS_AUEQ_MOZ_NUMERIC_OR_NULL], [RESOURCES_PRECIOUS_AUEQ_MOZ_NUMERIC_OR_NULL], [INFERRED_PRECIOUS_AUEQ_MOZ_NUMERIC_OR_NULL],
+    [RESERVES_NONPRECIOUS_AUEQ_MOZ_NUMERIC_OR_NULL], [MI_NONPRECIOUS_AUEQ_MOZ_NUMERIC_OR_NULL], [RESOURCES_NONPRECIOUS_AUEQ_MOZ_NUMERIC_OR_NULL], [INFERRED_NONPRECIOUS_AUEQ_MOZ_NUMERIC_OR_NULL],
+    [MINEABLE_TOTAL_AUEQ_MOZ_NUMERIC_OR_NULL], NOW()
+)
+ON CONFLICT (company_id) DO UPDATE SET
+    reserves_total_aueq_moz = EXCLUDED.reserves_total_aueq_moz, measured_indicated_total_aueq_moz = EXCLUDED.measured_indicated_total_aueq_moz,
+    resources_total_aueq_moz = EXCLUDED.resources_total_aueq_moz, potential_total_aueq_moz = EXCLUDED.potential_total_aueq_moz,
+    reserves_precious_aueq_moz = EXCLUDED.reserves_precious_aueq_moz, measured_indicated_precious_aueq_moz = EXCLUDED.measured_indicated_precious_aueq_moz,
+    resources_precious_aueq_moz = EXCLUDED.resources_precious_aueq_moz, potential_precious_aueq_moz = EXCLUDED.potential_precious_aueq_moz,
+    reserves_non_precious_aueq_moz = EXCLUDED.reserves_non_precious_aueq_moz, measured_indicated_non_precious_aueq_moz = EXCLUDED.measured_indicated_non_precious_aueq_moz,
+    resources_non_precious_aueq_moz = EXCLUDED.resources_non_precious_aueq_moz, potential_non_precious_aueq_moz = EXCLUDED.potential_non_precious_aueq_moz,
+    mineable_total_aueq_moz = EXCLUDED.mineable_total_aueq_moz, last_updated = EXCLUDED.last_updated;
+INSERT INTO public.update_log (company_id, table_name, update_time, update_description)
+VALUES ((SELECT id FROM company_vars), 'mineral_estimates', NOW(), 'UPSERTED mineral estimates.');
+
+--------------------------------------------------------------------------
+-- UPSERT public.production
+--------------------------------------------------------------------------
+-- Log pre-UPSERT state
+INSERT INTO public.update_log (company_id, table_name, update_time, update_description)
+SELECT (SELECT id FROM company_vars), 'production', NOW(), 'Pre-UPSERT state: current_prod_total=' || COALESCE(p.current_production_total_aueq_koz::TEXT,'NULL') FROM public.production p WHERE p.company_id = (SELECT id FROM company_vars);
+
+INSERT INTO public.production (
+    company_id, current_production_total_aueq_koz, current_production_precious_aueq_koz, current_production_non_precious_aueq_koz,
+    future_production_total_aueq_koz, reserve_life_years, protected, last_updated
+) VALUES (
+    (SELECT id FROM company_vars),
+    [CURRENT_PROD_TOTAL_AUEQ_KOZ_NUMERIC_OR_0], [CURRENT_PROD_PRECIOUS_AUEQ_KOZ_NUMERIC_OR_0], [CURRENT_PROD_NONPRECIOUS_AUEQ_KOZ_NUMERIC_OR_0],
+    [FUTURE_PROD_TOTAL_AUEQ_KOZ_NUMERIC_OR_NULL],
+    CASE
+        WHEN COALESCE([CURRENT_PROD_TOTAL_AUEQ_KOZ_NUMERIC_OR_0], 0) = 0 OR COALESCE([RESERVES_TOTAL_AUEQ_MOZ_NUMERIC_OR_NULL], 0) = 0 THEN NULL
+        ELSE ROUND((([RESERVES_TOTAL_AUEQ_MOZ_NUMERIC_OR_NULL] * 1000.0) / [CURRENT_PROD_TOTAL_AUEQ_KOZ_NUMERIC_OR_0])::numeric, 1)
+    END,
+    FALSE, NOW()
+)
+ON CONFLICT (company_id) DO UPDATE SET
+    current_production_total_aueq_koz = EXCLUDED.current_production_total_aueq_koz, current_production_precious_aueq_koz = EXCLUDED.current_production_precious_aueq_koz,
+    current_production_non_precious_aueq_koz = EXCLUDED.current_production_non_precious_aueq_koz,
+    future_production_total_aueq_koz = COALESCE(public.production.future_production_total_aueq_koz, EXCLUDED.future_production_total_aueq_koz),
+    reserve_life_years = EXCLUDED.reserve_life_years, protected = EXCLUDED.protected, last_updated = EXCLUDED.last_updated;
+INSERT INTO public.update_log (company_id, table_name, update_time, update_description)
+VALUES ((SELECT id FROM company_vars), 'production', NOW(), 'UPSERTED production data.');
+
+--------------------------------------------------------------------------
+-- UPSERT public.costs
+--------------------------------------------------------------------------
+-- Log pre-UPSERT state
+INSERT INTO public.update_log (company_id, table_name, update_time, update_description)
+SELECT (SELECT id FROM company_vars), 'costs', NOW(), 'Pre-UPSERT state: aisc_last_year=' || COALESCE(c.aisc_last_year::TEXT,'NULL') || ', construction_costs=' || COALESCE(c.construction_costs::TEXT,'NULL') FROM public.costs c WHERE c.company_id = (SELECT id FROM company_vars);
+
+INSERT INTO public.costs (
+    company_id, tco_current, tco_current_currency, aisc_last_year, aisc_last_year_currency,
+    aisc_last_quarter, aisc_last_quarter_currency,
+    tco_future, tco_future_currency, aisc_future, aisc_future_currency,
+    construction_costs, construction_costs_currency, last_updated
+) VALUES (
+    (SELECT id FROM company_vars),
+    [TCO_CURRENT_USD_NUMERIC_OR_NULL], 'USD', [AISC_LAST_YEAR_USD_NUMERIC_OR_NULL], 'USD',
+    [AISC_LAST_QUARTER_USD_NUMERIC_OR_NULL], 'USD',
+    [TCO_FUTURE_USD_NUMERIC_OR_NULL], 'USD', [AISC_FUTURE_USD_NUMERIC_OR_NULL], 'USD',
+    [CONSTRUCTION_COSTS_USD_NUMERIC_OR_NULL], 'USD', NOW()
+)
+ON CONFLICT (company_id) DO UPDATE SET
+    tco_current = COALESCE(public.costs.tco_current, EXCLUDED.tco_current), tco_current_currency = COALESCE(public.costs.tco_current_currency, EXCLUDED.tco_current_currency),
+    aisc_last_year = COALESCE(public.costs.aisc_last_year, EXCLUDED.aisc_last_year), aisc_last_year_currency = COALESCE(public.costs.aisc_last_year_currency, EXCLUDED.aisc_last_year_currency),
+    aisc_last_quarter = COALESCE(public.costs.aisc_last_quarter, EXCLUDED.aisc_last_quarter), aisc_last_quarter_currency = COALESCE(public.costs.aisc_last_quarter_currency, EXCLUDED.aisc_last_quarter_currency),
+    tco_future = COALESCE(public.costs.tco_future, EXCLUDED.tco_future), tco_future_currency = COALESCE(public.costs.tco_future_currency, EXCLUDED.tco_future_currency),
+    aisc_future = COALESCE(public.costs.aisc_future, EXCLUDED.aisc_future), aisc_future_currency = COALESCE(public.costs.aisc_future_currency, EXCLUDED.aisc_future_currency),
+    construction_costs = COALESCE(public.costs.construction_costs, EXCLUDED.construction_costs), construction_costs_currency = COALESCE(public.costs.construction_costs_currency, EXCLUDED.construction_costs_currency),
+    last_updated = EXCLUDED.last_updated;
+INSERT INTO public.update_log (company_id, table_name, update_time, update_description)
+VALUES ((SELECT id FROM company_vars), 'costs', NOW(), 'UPSERTED cost data.');
+
+--------------------------------------------------------------------------
+-- UPSERT public.company_urls
+--------------------------------------------------------------------------
+INSERT INTO public.update_log (company_id, table_name, update_time, update_description)
+VALUES ((SELECT id FROM company_vars), 'company_urls', NOW(), 'Attempting to UPSERT company website URL.');
+
+INSERT INTO public.company_urls (company_id, url_type, url, last_validated)
+VALUES ((SELECT id FROM company_vars), 'company_website', '[NEW_COMPANY_WEBSITE_URL_TEXT]', NOW())
+ON CONFLICT (company_id, url_type) DO UPDATE SET
+    url = EXCLUDED.url,
+    last_validated = EXCLUDED.last_validated;
+INSERT INTO public.update_log (company_id, table_name, update_time, update_description)
+VALUES ((SELECT id FROM company_vars), 'company_urls', NOW(), 'UPSERTED company website URL.');
+
+--------------------------------------------------------------------------
+-- UPSERT public.valuation_metrics
+--------------------------------------------------------------------------
+-- Log pre-UPSERT state
+INSERT INTO public.update_log (company_id, table_name, update_time, update_description)
+SELECT (SELECT id FROM company_vars), 'valuation_metrics', NOW(), 'Pre-UPSERT state for company' FROM public.valuation_metrics vm WHERE vm.company_id = (SELECT id FROM company_vars);
+
+WITH current_data AS (
+    SELECT
+        (SELECT id FROM company_vars) AS company_id,
+        COALESCE(f.market_cap_value / NULLIF([FX_RATE_CAD_PER_USD_NUMERIC_FOR_MCAP_IF_NEEDED], 1.0), NULL) AS mcap_usd,
+        COALESCE(f.enterprise_value_value, NULL) AS ev_usd, -- Assuming EV in financials is already target currency (e.g. USD)
+        p.current_production_total_aueq_koz AS prod_koz,
+        me.reserves_total_aueq_moz AS res_moz,
+        me.measured_indicated_total_aueq_moz AS mi_moz,
+        me.resources_total_aueq_moz AS total_res_moz
+    FROM public.financials f
+    LEFT JOIN public.production p ON f.company_id = p.company_id
+    LEFT JOIN public.mineral_estimates me ON f.company_id = me.company_id
+    WHERE f.company_id = (SELECT id FROM company_vars)
+)
+INSERT INTO public.valuation_metrics (
+    company_id, ev_per_production_oz, mkt_cap_per_production_oz,
+    ev_per_reserve_oz_all, mkt_cap_per_reserve_oz_all,
+    ev_per_mi_oz_all, mkt_cap_per_mi_oz_all,
+    ev_per_resource_oz_all, mkt_cap_per_resource_oz_all,
+    last_updated
+)
+SELECT
+    company_id,
+    CASE WHEN COALESCE(prod_koz, 0) = 0 THEN NULL ELSE ROUND((ev_usd / (prod_koz * 1000.0))::numeric, 2) END,
+    CASE WHEN COALESCE(prod_koz, 0) = 0 THEN NULL ELSE ROUND((mcap_usd / (prod_koz * 1000.0))::numeric, 2) END,
+    CASE WHEN COALESCE(res_moz, 0) = 0 THEN NULL ELSE ROUND((ev_usd / (res_moz * 1000000.0))::numeric, 2) END,
+    CASE WHEN COALESCE(res_moz, 0) = 0 THEN NULL ELSE ROUND((mcap_usd / (res_moz * 1000000.0))::numeric, 2) END,
+    CASE WHEN COALESCE(mi_moz, 0) = 0 THEN NULL ELSE ROUND((ev_usd / (mi_moz * 1000000.0))::numeric, 2) END,
+    CASE WHEN COALESCE(mi_moz, 0) = 0 THEN NULL ELSE ROUND((mcap_usd / (mi_moz * 1000000.0))::numeric, 2) END,
+    CASE WHEN COALESCE(total_res_moz, 0) = 0 THEN NULL ELSE ROUND((ev_usd / (total_res_moz * 1000000.0))::numeric, 2) END,
+    CASE WHEN COALESCE(total_res_moz, 0) = 0 THEN NULL ELSE ROUND((mcap_usd / (total_res_moz * 1000000.0))::numeric, 2) END,
+    NOW()
+FROM current_data
+ON CONFLICT (company_id) DO UPDATE SET
+    ev_per_production_oz = EXCLUDED.ev_per_production_oz, mkt_cap_per_production_oz = EXCLUDED.mkt_cap_per_production_oz,
+    ev_per_reserve_oz_all = EXCLUDED.ev_per_reserve_oz_all, mkt_cap_per_reserve_oz_all = EXCLUDED.mkt_cap_per_reserve_oz_all,
+    ev_per_mi_oz_all = EXCLUDED.ev_per_mi_oz_all, mkt_cap_per_mi_oz_all = EXCLUDED.mkt_cap_per_mi_oz_all,
+    ev_per_resource_oz_all = EXCLUDED.ev_per_resource_oz_all, mkt_cap_per_resource_oz_all = EXCLUDED.mkt_cap_per_resource_oz_all,
+    last_updated = EXCLUDED.last_updated;
+
+-- Log post-update
+INSERT INTO public.update_log (company_id, table_name, update_time, update_description)
+VALUES ((SELECT id FROM company_vars), 'valuation_metrics', NOW(), 'UPSERTED and recalculated all valuation metrics.');
+
+--------------------------------------------------------------------------
+-- Final Verification Query (Example)
+--------------------------------------------------------------------------
+SELECT
+    c.company_id, c.tsx_code, c.company_name, c.status,
+    f.market_cap_value AS f_mcap, f.market_cap_currency AS f_mcap_curr,
+    f.enterprise_value_value AS f_ev, f.enterprise_value_currency AS f_ev_curr,
+    f.revenue_value AS f_rev, f.ebitda AS f_ebitda, f.net_income_value AS f_ni,
+    f.shares_outstanding AS f_shares, cs.fully_diluted_shares AS cs_fd_shares,
+    me.reserves_total_aueq_moz AS res_moz, me.measured_indicated_total_aueq_moz AS mi_moz, me.resources_total_aueq_moz AS total_res_moz,
+    p.current_production_total_aueq_koz AS prod_koz, p.reserve_life_years,
+    k.aisc_last_year, k.aisc_last_year_currency, k.aisc_future, k.aisc_future_currency, k.construction_costs,
+    (SELECT url FROM public.company_urls cu WHERE cu.company_id = c.company_id AND cu.url_type = 'company_website' LIMIT 1) AS website,
+    vm.ev_per_production_oz, vm.mkt_cap_per_reserve_oz_all
+FROM public.companies c
+LEFT JOIN public.financials f ON c.company_id = c.company_id
+LEFT JOIN public.capital_structure cs ON c.company_id = cs.company_id
+LEFT JOIN public.mineral_estimates me ON c.company_id = me.company_id
+LEFT JOIN public.production p ON c.company_id = p.company_id
+LEFT JOIN public.costs k ON c.company_id = k.company_id
+LEFT JOIN public.valuation_metrics vm ON c.company_id = vm.company_id
+WHERE c.company_id = (SELECT id FROM company_vars);
+
+COMMIT;
+----
+
+
+
 
 Data Source Handling:
 Yahoo Finance: Provides reliable market cap, share counts, financials (revenue, EBITDA, etc.), and valuation ratios. Data is in CAD for market cap/EV and USD for income statements.
