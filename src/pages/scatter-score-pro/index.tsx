@@ -1,6 +1,6 @@
 // src/pages/scatter-score-pro/index.tsx
 import React, { useState, useCallback, useMemo, useEffect, useRef } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   Chart as ChartJS,
   LinearScale,
@@ -1191,6 +1191,17 @@ export function ScatterScoreProPage() {
     };
   }, []);
 
+  // Trigger chart resize when panel state changes
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (chartRef.current) {
+        chartRef.current.resize();
+      }
+    }, 350); // Slightly longer than transition duration
+
+    return () => clearTimeout(timer);
+  }, [isConfigPanelOpen]);
+
   return (
     <PageContainer
       title="Advanced ScatterScore Analysis"
@@ -1209,7 +1220,12 @@ export function ScatterScoreProPage() {
         aria-hidden="true"
       />
 
-      <div className="flex flex-col lg:flex-row gap-4 md:gap-6 p-2 md:p-4 flex-grow overflow-hidden">
+      <motion.div 
+        initial={false}
+        animate={{ paddingLeft: isConfigPanelOpen ? '0' : '0' }}
+        transition={{ type: "spring", stiffness: 300, damping: 30 }}
+        className="flex flex-col lg:flex-row gap-4 md:gap-6 p-2 md:p-4 flex-grow overflow-hidden"
+      >
         {/* Mobile toggle button for config panel */}
         <Button 
           onClick={() => setIsConfigPanelOpen(!isConfigPanelOpen)} 
@@ -1221,230 +1237,269 @@ export function ScatterScoreProPage() {
         </Button>
 
         {/* Configuration Panel */}
-        <motion.div 
-          initial={false}
-          animate={isConfigPanelOpen ? "open" : "closed"}
-          variants={{
-            open: { opacity: 1, x: 0, display: 'flex' },
-            closed: { opacity: 0, x: "-100%", transitionEnd: { display: 'none' } }
-          }}
-          transition={{ type: "tween", duration: 0.3, ease: "easeInOut" }}
-          className={cn(
-            "flex-col space-y-4 overflow-y-auto bg-navy-800/80 border border-navy-700/70 backdrop-blur-lg rounded-xl p-3 md:p-4 flex-shrink-0 lg:w-[400px] xl:w-[450px] scrollbar-thin scrollbar-thumb-navy-600 scrollbar-track-navy-700/50",
-            "fixed inset-0 z-50 lg:relative lg:z-auto lg:inset-auto lg:h-[calc(100vh-var(--header-height,80px)-3rem)]" 
-          )}
-          style={{ '--header-height': '80px' } as React.CSSProperties}
-        >
-          {/* Panel Header */}
-          <div className="flex justify-between items-center mb-1 sticky top-0 bg-navy-800/90 backdrop-blur-sm py-2 -mx-3 md:-mx-4 px-3 md:px-4 z-10 border-b border-navy-700">
-            <h2 className="text-lg xl:text-xl font-semibold text-surface-white">Chart Configuration</h2>
-            <div className="flex items-center gap-2">
-              {/* Desktop collapse button */}
-              <Button 
-                variant="ghost" 
-                size="icon"
-                onClick={() => setIsConfigPanelOpen(false)} 
-                className="hidden lg:flex text-muted-foreground hover:text-surface-white"
-                aria-label="Collapse configuration panel"
-              >
-                <ChevronLeft size={20}/>
-              </Button>
-              {/* Mobile close button */}
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                onClick={() => setIsConfigPanelOpen(false)} 
-                className="lg:hidden text-muted-foreground hover:text-surface-white"
-              >
-                <X size={20}/>
-              </Button>
-            </div>
-          </div>
-          
-          <div className="px-1 space-y-4 pb-4">
-            {/* Template Selector */}
-            <div>
-              <TooltipProvider delayDuration={100}>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Label 
-                      htmlFor="template-selector" 
-                      className="text-xs font-semibold text-muted-foreground block mb-1 cursor-help inline-flex items-center gap-1"
-                    >
-                      Load Template
-                      <Info size={12} className="opacity-50" />
-                    </Label>
-                  </TooltipTrigger>
-                  <TooltipContent 
-                    side="bottom" 
-                    align="center" 
-                    sideOffset={5}
-                    className="text-xs max-w-[350px] p-3 z-[100] bg-navy-700/95 border border-navy-600/80"
-                  >
-                    <div className="space-y-2">
-                      {PREDEFINED_TEMPLATES.map((t, index) => (
-                        <div key={t.name} className={cn(
-                          "pb-2",
-                          index < PREDEFINED_TEMPLATES.length - 1 && "border-b border-navy-600/50"
-                        )}>
-                          <p className="font-semibold text-accent-teal mb-1">{t.name}</p>
-                          <p className="text-surface-white/80">{t.description}</p>
-                        </div>
-                      ))}
-                    </div>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-              <Select value={activeTemplateName || ""} onValueChange={handleTemplateChange}>
-                <SelectTrigger id="template-selector" className="w-full h-9 text-xs bg-navy-700 border-navy-600">
-                  <SelectValue placeholder="Select a template..." />
-                </SelectTrigger>
-                <SelectContent className="z-[60]">
-                  {PREDEFINED_TEMPLATES.map(t => (
-                    <SelectItem key={t.name} value={t.name} className="text-xs">
-                      {t.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            
-            {/* X-Axis Configuration */}
-            <AxisMetricConfigurator
-              axisTitle="X-Axis Score Metrics"
-              currentSelectedMetricsForAxis={selectedXMetrics}
-              axisType="X"
-              currentTotalWeightForAxis={xTotalWeight}
-              accessibleMetrics={accessibleMetrics}
-              handleAxisMetricChange={handleAxisMetricChange}
-            />
-            
-            {/* Y-Axis Configuration */}
-            <AxisMetricConfigurator
-              axisTitle="Y-Axis Score Metrics"
-              currentSelectedMetricsForAxis={selectedYMetrics}
-              axisType="Y"
-              currentTotalWeightForAxis={yTotalWeight}
-              accessibleMetrics={accessibleMetrics}
-              handleAxisMetricChange={handleAxisMetricChange}
-            />
-
-            {/* Z-Axis Configuration */}
-            <Card className="p-3 md:p-4 bg-navy-700/50 border-navy-600">
-              <CardHeader className="p-0 mb-2">
-                <CardTitle className="text-md font-semibold">Z-Axis (Bubble Size)</CardTitle>
-              </CardHeader>
-              <CardContent className="p-0">
-                <MetricSelector
-                  label=""
-                  selectedMetric={selectedZMetricKey || ""}
-                  onMetricChange={(value) => {
-                    setSelectedZMetricKey(value || null);
-                    setActiveTemplateName(null);
-                  }}
-                  currentTier={currentUserTier}
-                  availableMetrics={accessibleMetrics}
-                  filterForNumericOnly={true}
-                  placeholder="Select Z-Axis Metric..."
-                />
-                {selectedZMetricKey && (
-                  <ScaleToggle 
-                    scale={zScale} 
-                    onChange={(newScale) => {
-                      setZScale(newScale);
-                      setActiveTemplateName(null);
-                    }} 
-                    label="Bubble Scale" 
-                  />
+        <AnimatePresence initial={false}>
+          {isConfigPanelOpen && (
+            <motion.div 
+              key="config-panel"
+              initial={{ width: 0, opacity: 0 }}
+              animate={{ 
+                width: "auto",
+                opacity: 1,
+                transition: {
+                  width: { type: "spring", stiffness: 300, damping: 30 },
+                  opacity: { duration: 0.2, delay: 0.1 }
+                }
+              }}
+              exit={{ 
+                width: 0,
+                opacity: 0,
+                transition: {
+                  width: { type: "spring", stiffness: 300, damping: 30 },
+                  opacity: { duration: 0.1 }
+                }
+              }}
+              className={cn(
+                "flex-shrink-0 overflow-hidden",
+                "lg:block fixed inset-0 z-50 lg:relative lg:z-auto lg:inset-auto"
+              )}
+            >
+              <motion.div
+                initial={false}
+                animate={{ x: 0 }}
+                className={cn(
+                  "h-full flex flex-col space-y-4 overflow-y-auto bg-navy-800/80 border border-navy-700/70 backdrop-blur-lg rounded-xl p-3 md:p-4",
+                  "lg:w-[400px] xl:w-[450px] lg:h-[calc(100vh-var(--header-height,80px)-3rem)]",
+                  "scrollbar-thin scrollbar-thumb-navy-600 scrollbar-track-navy-700/50"
                 )}
-              </CardContent>
-            </Card>
-
-            {/* Scoring Settings */}
-            <Card className="p-3 md:p-4 bg-navy-700/50 border-navy-600">
-              <CardHeader className="p-0 mb-2">
-                <CardTitle className="text-md font-semibold">Scoring Settings</CardTitle>
-              </CardHeader>
-              <CardContent className="p-0">
-                <div className="space-y-3">
-                  <div>
-                    <Label htmlFor="norm-mode" className="text-xs font-medium text-muted-foreground">
-                      Normalization Mode
-                    </Label>
-                    <Select 
-                      value={normalizationMode} 
-                      onValueChange={(val) => {
-                        setNormalizationMode(val as NormalizationMode);
-                        setActiveTemplateName(null);
-                      }}
+                style={{ '--header-height': '80px' } as React.CSSProperties}
+              >
+                {/* Panel Header */}
+                <div className="flex justify-between items-center mb-1 sticky top-0 bg-navy-800/90 backdrop-blur-sm py-2 -mx-3 md:-mx-4 px-3 md:px-4 z-10 border-b border-navy-700">
+                  <h2 className="text-lg xl:text-xl font-semibold text-surface-white">Chart Configuration</h2>
+                  <div className="flex items-center gap-2">
+                    {/* Desktop collapse button */}
+                    <Button 
+                      variant="ghost" 
+                      size="icon"
+                      onClick={() => setIsConfigPanelOpen(false)} 
+                      className="hidden lg:flex text-muted-foreground hover:text-surface-white"
+                      aria-label="Collapse configuration panel"
                     >
-                      <SelectTrigger id="norm-mode" className="h-9 text-xs bg-navy-700 border-navy-600 mt-1">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent className="z-[60]">
-                        <SelectItem value="dataset_min_max" className="text-xs">Dataset Min-Max (0-1)</SelectItem>
-                        <SelectItem value="global_min_max" className="text-xs">Global Min-Max (0-1)</SelectItem>
-                        <SelectItem value="dataset_rank_percentile" className="text-xs">Dataset Rank/Percentile (0-1)</SelectItem>
-                        <SelectItem value="dataset_z_score" className="text-xs">Dataset Z-Score (approx 0-1)</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div>
-                    <Label htmlFor="impute-mode" className="text-xs font-medium text-muted-foreground">
-                      Imputation (Missing Values)
-                    </Label>
-                    <Select 
-                      value={imputationMode} 
-                      onValueChange={(val) => {
-                        setImputationMode(val as ImputationMode);
-                        setActiveTemplateName(null);
-                      }}
+                      <ChevronLeft size={20}/>
+                    </Button>
+                    {/* Mobile close button */}
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      onClick={() => setIsConfigPanelOpen(false)} 
+                      className="lg:hidden text-muted-foreground hover:text-surface-white"
                     >
-                      <SelectTrigger id="impute-mode" className="h-9 text-xs bg-navy-700 border-navy-600 mt-1">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent className="z-[60]">
-                        <SelectItem value="zero_worst" className="text-xs">Zero / Worst Case</SelectItem>
-                        <SelectItem value="dataset_mean" className="text-xs">Dataset Mean</SelectItem>
-                        <SelectItem value="dataset_median" className="text-xs">Dataset Median</SelectItem>
-                      </SelectContent>
-                    </Select>
+                      <X size={20}/>
+                    </Button>
                   </div>
                 </div>
-              </CardContent>
-            </Card>
+                
+                <div className="px-1 space-y-4 pb-4">
+                  {/* Template Selector */}
+                  <div>
+                    <TooltipProvider delayDuration={100}>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Label 
+                            htmlFor="template-selector" 
+                            className="text-xs font-semibold text-muted-foreground block mb-1 cursor-help inline-flex items-center gap-1"
+                          >
+                            Load Template
+                            <Info size={12} className="opacity-50" />
+                          </Label>
+                        </TooltipTrigger>
+                        <TooltipContent 
+                          side="bottom" 
+                          align="center" 
+                          sideOffset={5}
+                          className="text-xs max-w-[350px] p-3 z-[100] bg-navy-700/95 border border-navy-600/80"
+                        >
+                          <div className="space-y-2">
+                            {PREDEFINED_TEMPLATES.map((t, index) => (
+                              <div key={t.name} className={cn(
+                                "pb-2",
+                                index < PREDEFINED_TEMPLATES.length - 1 && "border-b border-navy-600/50"
+                              )}>
+                                <p className="font-semibold text-accent-teal mb-1">{t.name}</p>
+                                <p className="text-surface-white/80">{t.description}</p>
+                              </div>
+                            ))}
+                          </div>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                    <Select value={activeTemplateName || ""} onValueChange={handleTemplateChange}>
+                      <SelectTrigger id="template-selector" className="w-full h-9 text-xs bg-navy-700 border-navy-600">
+                        <SelectValue placeholder="Select a template..." />
+                      </SelectTrigger>
+                      <SelectContent className="z-[60]">
+                        {PREDEFINED_TEMPLATES.map(t => (
+                          <SelectItem key={t.name} value={t.name} className="text-xs">
+                            {t.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  {/* X-Axis Configuration */}
+                  <AxisMetricConfigurator
+                    axisTitle="X-Axis Score Metrics"
+                    currentSelectedMetricsForAxis={selectedXMetrics}
+                    axisType="X"
+                    currentTotalWeightForAxis={xTotalWeight}
+                    accessibleMetrics={accessibleMetrics}
+                    handleAxisMetricChange={handleAxisMetricChange}
+                  />
+                  
+                  {/* Y-Axis Configuration */}
+                  <AxisMetricConfigurator
+                    axisTitle="Y-Axis Score Metrics"
+                    currentSelectedMetricsForAxis={selectedYMetrics}
+                    axisType="Y"
+                    currentTotalWeightForAxis={yTotalWeight}
+                    accessibleMetrics={accessibleMetrics}
+                    handleAxisMetricChange={handleAxisMetricChange}
+                  />
 
-            {/* Apply Button */}
-            <Button 
-              onClick={handleApplyConfigurationAndCalculateScores} 
-              className="w-full mt-3 bg-accent-teal hover:bg-accent-teal/90 text-sm font-semibold py-2.5"
-              disabled={isCalculatingScores || (selectedXMetrics.length === 0 && selectedYMetrics.length === 0)}
-            >
-              {isCalculatingScores ? (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              ) : (
-                <RefreshCw size={16} className="mr-2"/>
-              )}
-              Apply & Plot Scores
-            </Button>
-          </div>
-        </motion.div>
+                  {/* Z-Axis Configuration */}
+                  <Card className="p-3 md:p-4 bg-navy-700/50 border-navy-600">
+                    <CardHeader className="p-0 mb-2">
+                      <CardTitle className="text-md font-semibold">Z-Axis (Bubble Size)</CardTitle>
+                    </CardHeader>
+                    <CardContent className="p-0">
+                      <MetricSelector
+                        label=""
+                        selectedMetric={selectedZMetricKey || ""}
+                        onMetricChange={(value) => {
+                          setSelectedZMetricKey(value || null);
+                          setActiveTemplateName(null);
+                        }}
+                        currentTier={currentUserTier}
+                        availableMetrics={accessibleMetrics}
+                        filterForNumericOnly={true}
+                        placeholder="Select Z-Axis Metric..."
+                      />
+                      {selectedZMetricKey && (
+                        <ScaleToggle 
+                          scale={zScale} 
+                          onChange={(newScale) => {
+                            setZScale(newScale);
+                            setActiveTemplateName(null);
+                          }} 
+                          label="Bubble Scale" 
+                        />
+                      )}
+                    </CardContent>
+                  </Card>
+
+                  {/* Scoring Settings */}
+                  <Card className="p-3 md:p-4 bg-navy-700/50 border-navy-600">
+                    <CardHeader className="p-0 mb-2">
+                      <CardTitle className="text-md font-semibold">Scoring Settings</CardTitle>
+                    </CardHeader>
+                    <CardContent className="p-0">
+                      <div className="space-y-3">
+                        <div>
+                          <Label htmlFor="norm-mode" className="text-xs font-medium text-muted-foreground">
+                            Normalization Mode
+                          </Label>
+                          <Select 
+                            value={normalizationMode} 
+                            onValueChange={(val) => {
+                              setNormalizationMode(val as NormalizationMode);
+                              setActiveTemplateName(null);
+                            }}
+                          >
+                            <SelectTrigger id="norm-mode" className="h-9 text-xs bg-navy-700 border-navy-600 mt-1">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent className="z-[60]">
+                              <SelectItem value="dataset_min_max" className="text-xs">Dataset Min-Max (0-1)</SelectItem>
+                              <SelectItem value="global_min_max" className="text-xs">Global Min-Max (0-1)</SelectItem>
+                              <SelectItem value="dataset_rank_percentile" className="text-xs">Dataset Rank/Percentile (0-1)</SelectItem>
+                              <SelectItem value="dataset_z_score" className="text-xs">Dataset Z-Score (approx 0-1)</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div>
+                          <Label htmlFor="impute-mode" className="text-xs font-medium text-muted-foreground">
+                            Imputation (Missing Values)
+                          </Label>
+                          <Select 
+                            value={imputationMode} 
+                            onValueChange={(val) => {
+                              setImputationMode(val as ImputationMode);
+                              setActiveTemplateName(null);
+                            }}
+                          >
+                            <SelectTrigger id="impute-mode" className="h-9 text-xs bg-navy-700 border-navy-600 mt-1">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent className="z-[60]">
+                              <SelectItem value="zero_worst" className="text-xs">Zero / Worst Case</SelectItem>
+                              <SelectItem value="dataset_mean" className="text-xs">Dataset Mean</SelectItem>
+                              <SelectItem value="dataset_median" className="text-xs">Dataset Median</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  {/* Apply Button */}
+                  <Button 
+                    onClick={handleApplyConfigurationAndCalculateScores} 
+                    className="w-full mt-3 bg-accent-teal hover:bg-accent-teal/90 text-sm font-semibold py-2.5"
+                    disabled={isCalculatingScores || (selectedXMetrics.length === 0 && selectedYMetrics.length === 0)}
+                  >
+                    {isCalculatingScores ? (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    ) : (
+                      <RefreshCw size={16} className="mr-2"/>
+                    )}
+                    Apply & Plot Scores
+                  </Button>
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Desktop expand button when collapsed */}
-        {!isConfigPanelOpen && (
-          <Button
-            onClick={() => setIsConfigPanelOpen(true)}
-            variant="outline"
-            size="icon"
-            className="hidden lg:flex fixed left-3 bottom-3 z-100 bg-accent-teal/90 border-teal-600 hover:bg-accent-teal shadow-md rounded-lg w-12 h-12"
-            aria-label="Open configuration panel"
-          >
-            <Settings size={20} />
-          </Button>
-        )}
+        <AnimatePresence>
+          {!isConfigPanelOpen && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.8 }}
+              transition={{ duration: 0.2 }}
+              className="hidden lg:block"
+            >
+              <Button
+                onClick={() => setIsConfigPanelOpen(true)}
+                variant="outline"
+                size="icon"
+                className="fixed left-3 bottom-3 z-[100] bg-accent-teal/90 border-teal-600 hover:bg-accent-teal shadow-md rounded-lg w-12 h-12"
+                aria-label="Open configuration panel"
+              >
+                <Settings size={20} />
+              </Button>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Chart Container */}
-        <div className="flex-grow relative bg-navy-800/70 backdrop-blur-sm rounded-lg p-4 shadow-lg border border-navy-700/50 flex flex-col min-h-[400px] lg:min-h-0">
+        <motion.div 
+          layout
+          transition={{ type: "spring", stiffness: 300, damping: 30 }}
+          className="flex-grow relative bg-navy-800/70 backdrop-blur-sm rounded-lg p-4 shadow-lg border border-navy-700/50 flex flex-col min-h-[400px] lg:min-h-0"
+        >
           {(plotData.length > 0 || isCalculatingScores) && !axisScoreError && (
             <div className="absolute top-3 right-3 flex items-center gap-1.5 z-10">
               <Button 
@@ -1530,8 +1585,8 @@ export function ScatterScoreProPage() {
               </div>
             )}
           </div>
-        </div>
-      </div>
+        </motion.div>
+      </motion.div>
     </PageContainer>
   );
 }
