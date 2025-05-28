@@ -14,7 +14,7 @@ export function Hero({ className }: HeroProps) {
   // Ensure these images are in your /public folder and paths are correct
   const scatterImageUrl = "/ScatterJPG.jpg";
   const compImageUrl = "/CompJPG.jpg";
-  const backgroundImageUrl = "/Background2.jpg"; // Path for the main background
+  const backgroundImageUrl = "/GeminiMAB1.jpg"; // Path for the main background
 
   const placeholderErrorUrl = (width: number, height: number, text: string) => `https://placehold.co/${width}x${height}/1E293B/94A3B8?text=${encodeURIComponent(text)}`;
 
@@ -42,7 +42,7 @@ export function Hero({ className }: HeroProps) {
         <nav className="flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2">
             <img
-              src="/new-logo.png"
+              src="/GeminiMALBig3.jpg"
               alt="Maple Aurum Logo"
               className="h-10 w-10 rounded-xl object-cover"
             />

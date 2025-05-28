@@ -1,0 +1,227 @@
+Step 1: Schema Confirmation
+Based on the provided schema, the relevant tables and their columns are:
+financials:
+company_id (bigint)
+
+financial_id (bigint, auto-incremented)
+
+market_cap_value (double precision)
+
+market_cap_currency (text)
+
+enterprise_value_value (double precision)
+
+enterprise_value_currency (text)
+
+revenue_value (double precision)
+
+ebitda (double precision)
+
+net_income_value (double precision)
+
+cash_value (double precision)
+
+cash_currency (text)
+
+cash_date (timestamp with time zone)
+
+debt_value (double precision)
+
+debt_currency (text)
+
+liabilities (double precision)
+
+liabilities_currency (text)
+
+net_financial_assets (double precision)
+
+net_financial_assets_currency (text)
+
+other_financial_assets (double precision)
+
+other_financial_assets_currency (text)
+
+gross_profit (double precision)
+
+operating_income (double precision)
+
+operating_expense (double precision)
+
+cost_of_revenue (double precision)
+
+price_to_sales (double precision)
+
+price_to_book (double precision)
+
+trailing_pe (double precision)
+
+forward_pe (double precision)
+
+peg_ratio (double precision)
+
+enterprise_to_revenue (double precision)
+
+enterprise_to_ebitda (double precision)
+
+free_cash_flow (double precision)
+
+shares_outstanding (double precision)
+
+data_source (text)
+
+hedgebook (text)
+
+investments_json (text)
+
+last_updated (timestamp with time zone)
+
+Note: No total_assets, but liabilities is present (unlike previous assumption).
+
+production:
+company_id (bigint)
+
+production_id (bigint, auto-incremented)
+
+current_production_total_aueq_koz (double precision)
+
+current_production_precious_aueq_koz (double precision)
+
+current_production_non_precious_aueq_koz (double precision)
+
+future_production_total_aueq_koz (double precision)
+
+reserve_life_years (double precision)
+
+protected (boolean)
+
+last_updated (timestamp with time zone)
+
+mineral_estimates:
+company_id (bigint)
+
+estimate_id (bigint, auto-incremented)
+
+reserves_total_aueq_moz (double precision)
+
+reserves_precious_aueq_moz (double precision)
+
+reserves_non_precious_aueq_moz (double precision)
+
+resources_total_aueq_moz (double precision)
+
+resources_precious_aueq_moz (double precision)
+
+resources_non_precious_aueq_moz (double precision)
+
+measured_indicated_total_aueq_moz (double precision)
+
+measured_indicated_precious_aueq_moz (double precision)
+
+measured_indicated_non_precious_aueq_moz (double precision)
+
+mineable_total_aueq_moz (double precision)
+
+mineable_precious_aueq_moz (double precision)
+
+mineable_non_precious_aueq_moz (double precision)
+
+potential_total_aueq_moz (double precision)
+
+potential_precious_aueq_moz (double precision)
+
+potential_non_precious_aueq_moz (double precision)
+
+last_updated (timestamp with time zone)
+
+valuation_metrics:
+company_id (bigint)
+
+valuation_id (bigint, auto-incremented)
+
+ev_per_production_oz (double precision)
+
+mkt_cap_per_production_oz (double precision)
+
+ev_per_reserve_oz_all (double precision)
+
+ev_per_resource_oz_all (double precision)
+
+ev_per_mi_oz_all (double precision)
+
+mkt_cap_per_mi_oz_all (double precision)
+
+ev_per_mineable_oz_all (double precision)
+
+mkt_cap_per_mineable_oz_all (double precision)
+
+ev_per_resource_oz_precious (double precision)
+
+ev_per_reserve_oz_precious (double precision)
+
+mkt_cap_per_reserve_oz_all (double precision)
+
+mkt_cap_per_resource_oz_all (double precision)
+
+mkt_cap_per_resource_oz_precious (double precision)
+
+ev_per_mi_oz_precious (double precision)
+
+mkt_cap_per_mi_oz_precious (double precision)
+
+ev_per_mineable_oz_precious (double precision)
+
+mkt_cap_per_mineable_oz_precious (double precision)
+
+last_updated (timestamp with time zone)
+
+companies:
+company_id (bigint)
+
+tsx_code (text)
+
+company_name (text)
+
+status (USER-DEFINED)
+
+description (text)
+
+headquarters (text)
+
+minerals_of_interest (text)
+
+name_alt (text)
+
+percent_gold (double precision)
+
+percent_silver (double precision)
+
+last_updated (timestamp with time zone)
+
+stock_prices:
+company_id (bigint)
+
+price_id (bigint, auto-incremented)
+
+price_value (double precision)
+
+price_currency (text)
+
+price_date (date)
+
+change_1yr_percent (double precision)
+
+data_source (text)
+
+last_updated (timestamp with time zone)
+
+update_log:
+log_id (integer, auto-incremented)
+
+company_id (integer)
+
+table_name (text)
+
+update_time (timestamp with time zone)
+
+update_description (text)
+

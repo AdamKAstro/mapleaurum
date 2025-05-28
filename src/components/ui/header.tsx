@@ -77,7 +77,7 @@ export function Header() {
         {/* Logo Section */}
         <div className="flex">
           <Link className="flex items-center gap-2" to="/">
-            <img src="/new-logo.png" alt="Maple Aurum Logo" className="h-8 w-8 object-contain" />
+            <img src="/GeminiMALBig3.jpg" alt="Maple Aurum Logo" className="h-8 w-8 object-contain" />
             <span className="font-bold text-xl text-surface-white hidden sm:inline-block">MapleAurum</span>
           </Link>
         </div>
