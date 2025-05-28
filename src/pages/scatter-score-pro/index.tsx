@@ -27,7 +27,7 @@ import { Input } from '../../components/ui/input';
 import { Label } from '../../components/ui/label';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../../components/ui/tooltip';
 import { LoadingIndicator } from '../../components/ui/loading-indicator';
-import { Info, Lock, ArrowUp, ArrowDown, Settings, RefreshCw, ListPlus, X, ZoomIn, ZoomOut, RotateCcw, Loader2, ChevronLeft } from 'lucide-react';
+import { Info, Lock, ArrowUp, ArrowDown, Settings, RefreshCw, ListPlus, X, ZoomIn, ZoomOut, RotateCcw, Loader2, ChevronLeft, Plus, Minus } from 'lucide-react';
 import { MetricSelector } from '../../components/metric-selector';
 import {
   metrics as allMetrics,
@@ -286,7 +286,7 @@ const ScaleToggle: React.FC<{
   onChange: (newScale: 'linear' | 'log') => void;
   label: string;
 }> = ({ scale, onChange, label }) => (
-  <div className="flex items-center gap-2 text-xs mt-1">
+  <div className="flex items-center gap-2 text-xs">
     <span className="text-surface-white/70">{label}:</span>
     <div className="flex bg-navy-400/20 rounded-lg overflow-hidden p-0.5 gap-0.5">
       <button
@@ -438,61 +438,62 @@ const normalizeWeights = (
   }));
 };
 
-const AvailableMetricsSelector: React.FC<{
-  axisLabel: 'X' | 'Y';
-  onMetricSelect: (metricKey: string) => void;
-  currentSelectedKeys: string[];
-  accessibleMetrics: MetricConfig[];
-}> = ({ axisLabel, onMetricSelect, currentSelectedKeys, accessibleMetrics }) => (
-  <div className="my-3">
-    <Label className="text-xs font-medium text-muted-foreground">Add Metric to {axisLabel}-Axis</Label>
-    <Select 
-      onValueChange={(value) => { 
-        if (value && value !== "__placeholder__") {
-          onMetricSelect(value);
-        }
-      }}
-      value=""
-    >
-      <SelectTrigger className="text-xs h-9 bg-navy-600/50 border-navy-500 mt-1">
-        <SelectValue placeholder={`Select metric to add...`} />
-      </SelectTrigger>
-      <SelectContent className="max-h-72 z-[60]">
-        <SelectItem value="__placeholder__" disabled className="text-xs hidden">
-          Select metric...
-        </SelectItem>
-        {Object.entries(metricCategories)
-          .sort(([, labelA], [, labelB]) => labelA.localeCompare(labelB))
-          .map(([catKey, catLabel]) => {
-            const metricsInCat = accessibleMetrics.filter(
-              m => m.category === catKey && !currentSelectedKeys.includes(m.key)
-            );
-            if (metricsInCat.length === 0) return null;
-            return (
-              <SelectGroup key={catKey}>
-                <SelectLabel className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">
-                  {catLabel}
-                </SelectLabel>
-                {metricsInCat.map(m => (
-                  <SelectItem key={m.key} value={m.key} className="text-xs pl-4">
-                    {m.label}
-                  </SelectItem>
-                ))}
-              </SelectGroup>
-            );
-          })}
-        {accessibleMetrics.filter(m => !currentSelectedKeys.includes(m.key)).length === 0 && (
-          <div className="p-2 text-xs text-muted-foreground text-center">
-            All accessible metrics added.
-          </div>
-        )}
-      </SelectContent>
-    </Select>
+const MetricListItem: React.FC<{
+  metric: AxisMetricConfig;
+  axisType: 'X' | 'Y';
+  onWeightChange: (value: number) => void;
+  onToggleHLB: (value: boolean) => void;
+  onRemove: () => void;
+}> = ({ metric, axisType, onWeightChange, onToggleHLB, onRemove }) => (
+  <div className="flex items-center gap-2 p-2 bg-navy-700/30 rounded-md border border-navy-600/50 hover:border-navy-500/70 transition-colors">
+    <div className="flex-1 min-w-0">
+      <p className="text-xs font-medium text-surface-white truncate" title={metric.metricLabel}>
+        {metric.metricLabel}
+      </p>
+    </div>
+    <div className="flex items-center gap-2 flex-shrink-0">
+      <Input 
+        type="number" 
+        value={metric.weight}
+        onChange={(e) => {
+          const value = parseInt(e.target.value, 10);
+          if (!isNaN(value)) onWeightChange(value);
+        }}
+        className="h-7 text-xs w-14 bg-navy-800/50 border-navy-600 text-center"
+        min={0} 
+        max={100} 
+        step={1} 
+      />
+      <span className="text-xs text-muted-foreground">%</span>
+      <Checkbox 
+        checked={metric.userHigherIsBetter}
+        onCheckedChange={(checked) => onToggleHLB(!!checked)}
+        className="border-gray-600 data-[state=checked]:bg-accent-teal data-[state=checked]:border-accent-teal h-3.5 w-3.5" 
+      />
+      <TooltipProvider delayDuration={100}>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <span className="text-xs text-muted-foreground cursor-help">HLB</span>
+          </TooltipTrigger>
+          <TooltipContent side="left" className="text-xs max-w-[200px] p-2 z-[70]">
+            <p>Higher is Better. Default: {metric.originalHigherIsBetter ? 'Yes' : 'No'}</p>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+      <Button 
+        variant="ghost" 
+        size="icon" 
+        className="h-6 w-6 p-0 text-red-400 hover:text-red-300 hover:bg-red-500/10" 
+        onClick={onRemove}
+      >
+        <X size={14} />
+      </Button>
+    </div>
   </div>
 );
 
 const AxisMetricConfigurator: React.FC<{
-  axisTitle: 'X-Axis Score Metrics' | 'Y-Axis Score Metrics';
+  axisTitle: string;
   currentSelectedMetricsForAxis: AxisMetricConfig[];
   axisType: 'X' | 'Y';
   currentTotalWeightForAxis: number;
@@ -510,115 +511,105 @@ const AxisMetricConfigurator: React.FC<{
   currentTotalWeightForAxis,
   accessibleMetrics,
   handleAxisMetricChange
-}) => (
-  <Card className="p-3 md:p-4 bg-navy-700/50 border-navy-600">
-    <CardHeader className="p-0 mb-2">
-      <CardTitle className="text-md font-semibold">{axisTitle}</CardTitle>
-    </CardHeader>
-    <CardContent className="p-0">
-      <AvailableMetricsSelector
-        axisLabel={axisType}
-        onMetricSelect={(metricKey) => handleAxisMetricChange(axisType, metricKey, 'add')}
-        currentSelectedKeys={currentSelectedMetricsForAxis.map(m => m.key)}
-        accessibleMetrics={accessibleMetrics}
-      />
-      <div className="space-y-2 max-h-48 overflow-y-auto pr-1 mt-2 scrollbar-thin scrollbar-thumb-navy-500 scrollbar-track-navy-700/30">
-        {currentSelectedMetricsForAxis.length === 0 && (
-          <p className="text-xs text-muted-foreground italic py-2 text-center">
-            No metrics selected for this axis.
-          </p>
-        )}
-        {currentSelectedMetricsForAxis.map((sm) => (
-          <div key={sm.key} className="p-2.5 border rounded-md bg-navy-600/40 border-navy-500/70 space-y-1.5">
-            <div className="flex justify-between items-center">
-              <Label 
-                htmlFor={`weight-${axisType}-${sm.key}`} 
-                className="text-xs font-medium text-surface-white truncate flex-grow mr-2" 
-                title={sm.metricLabel}
-              >
-                {sm.metricLabel}
-              </Label>
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                className="p-0 h-5 w-5 text-red-500 hover:text-red-400 hover:bg-transparent flex-shrink-0" 
-                onClick={() => handleAxisMetricChange(axisType, sm.key, 'remove')}
-              >
-                <X size={14} />
-              </Button>
-            </div>
-            <div className="flex items-center justify-between gap-2">
-              <div className="flex items-center gap-1">
-                <Label htmlFor={`weight-${axisType}-${sm.key}`} className="text-xs text-muted-foreground">
-                  Wt:
-                </Label>
-                <Input 
-                  id={`weight-${axisType}-${sm.key}`} 
-                  type="number" 
-                  value={sm.weight}
-                  onChange={(e) => {
-                    const value = parseInt(e.target.value, 10);
-                    if (!isNaN(value)) {
-                      handleAxisMetricChange(axisType, sm.key, 'updateWeight', value);
-                    }
-                  }}
-                  className="h-7 text-xs w-16 bg-navy-800 border-navy-500 px-1.5"
-                  min={0} 
-                  max={100} 
-                  step={1} 
-                />
-                <span className="text-xs text-muted-foreground">%</span>
+}) => {
+  const [isExpanded, setIsExpanded] = useState(true);
+
+  return (
+    <div className="bg-navy-700/30 rounded-lg border border-navy-600/50">
+      <button
+        onClick={() => setIsExpanded(!isExpanded)}
+        className="w-full flex items-center justify-between p-3 hover:bg-navy-700/20 transition-colors rounded-t-lg"
+      >
+        <h3 className="text-sm font-semibold">{axisTitle}</h3>
+        <div className="flex items-center gap-2">
+          <span className={cn(
+            "text-xs font-medium px-2 py-0.5 rounded",
+            currentTotalWeightForAxis !== 100 && currentSelectedMetricsForAxis.length > 0 
+              ? "bg-red-500/20 text-red-400" 
+              : currentTotalWeightForAxis === 100 
+              ? "bg-green-500/20 text-green-400" 
+              : "bg-navy-600/50 text-muted-foreground"
+          )}>
+            {Math.round(currentTotalWeightForAxis)}%
+          </span>
+          <ChevronLeft className={cn(
+            "h-4 w-4 transition-transform text-muted-foreground",
+            isExpanded ? "-rotate-90" : ""
+          )} />
+        </div>
+      </button>
+      
+      {isExpanded && (
+        <div className="p-3 pt-0 space-y-3">
+          <Select 
+            onValueChange={(value) => { 
+              if (value && value !== "__placeholder__") {
+                handleAxisMetricChange(axisType, value, 'add');
+              }
+            }}
+            value=""
+          >
+            <SelectTrigger className="text-xs h-8 bg-navy-700/50 border-navy-600">
+              <div className="flex items-center gap-2">
+                <Plus size={14} />
+                <SelectValue placeholder="Add metric..." />
               </div>
-              <Label 
-                htmlFor={`hlb-${axisType}-${sm.key}`} 
-                className="flex items-center text-xs gap-1.5 cursor-pointer text-surface-white/80"
-              >
-                <Checkbox 
-                  id={`hlb-${axisType}-${sm.key}`} 
-                  checked={sm.userHigherIsBetter}
-                  onCheckedChange={(checked) => handleAxisMetricChange(
-                    axisType, 
-                    sm.key, 
-                    'toggleHLB', 
-                    !!checked
-                  )}
-                  className="border-gray-500 data-[state=checked]:bg-accent-teal data-[state=checked]:border-accent-teal-darker h-3.5 w-3.5" 
+            </SelectTrigger>
+            <SelectContent className="max-h-72 z-[60]">
+              <SelectItem value="__placeholder__" disabled className="text-xs hidden">
+                Select metric...
+              </SelectItem>
+              {Object.entries(metricCategories)
+                .sort(([, labelA], [, labelB]) => labelA.localeCompare(labelB))
+                .map(([catKey, catLabel]) => {
+                  const metricsInCat = accessibleMetrics.filter(
+                    m => m.category === catKey && !currentSelectedMetricsForAxis.find(sm => sm.key === m.key)
+                  );
+                  if (metricsInCat.length === 0) return null;
+                  return (
+                    <SelectGroup key={catKey}>
+                      <SelectLabel className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">
+                        {catLabel}
+                      </SelectLabel>
+                      {metricsInCat.map(m => (
+                        <SelectItem key={m.key} value={m.key} className="text-xs pl-4">
+                          {m.label}
+                        </SelectItem>
+                      ))}
+                    </SelectGroup>
+                  );
+                })}
+              {accessibleMetrics.filter(m => !currentSelectedMetricsForAxis.find(sm => sm.key === m.key)).length === 0 && (
+                <div className="p-2 text-xs text-muted-foreground text-center">
+                  All accessible metrics added.
+                </div>
+              )}
+            </SelectContent>
+          </Select>
+          
+          <div className="space-y-2 max-h-64 overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-navy-600 scrollbar-track-transparent">
+            {currentSelectedMetricsForAxis.length === 0 ? (
+              <p className="text-xs text-muted-foreground text-center py-4">
+                No metrics selected for this axis.
+              </p>
+            ) : (
+              currentSelectedMetricsForAxis.map((sm) => (
+                <MetricListItem
+                  key={sm.key}
+                  metric={sm}
+                  axisType={axisType}
+                  onWeightChange={(value) => handleAxisMetricChange(axisType, sm.key, 'updateWeight', value)}
+                  onToggleHLB={(value) => handleAxisMetricChange(axisType, sm.key, 'toggleHLB', value)}
+                  onRemove={() => handleAxisMetricChange(axisType, sm.key, 'remove')}
                 />
-                HLB
-                <TooltipProvider delayDuration={100}>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <button type="button" className="cursor-help">
-                        <Info size={12} className="text-muted-foreground hover:text-accent-teal"/>
-                      </button>
-                    </TooltipTrigger>
-                    <TooltipContent side="left" className="text-xs max-w-[200px] p-2 z-[70]">
-                      <p>
-                        Check if a HIGHER value of this metric is better for this axis score. 
-                        Default: {sm.originalHigherIsBetter ? 'Higher is better' : 'Lower is better'}.
-                      </p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              </Label>
-            </div>
+              ))
+            )}
           </div>
-        ))}
-      </div>
-      <div className={cn(
-        "text-xs mt-2 font-medium",
-        currentTotalWeightForAxis !== 100 && currentSelectedMetricsForAxis.length > 0 
-          ? "text-destructive" 
-          : currentTotalWeightForAxis === 100 
-          ? "text-green-400" 
-          : "text-muted-foreground"
-      )}>
-        Total {axisType}-Axis Weight: {Math.round(currentTotalWeightForAxis)}% 
-        {currentSelectedMetricsForAxis.length > 0 && Math.round(currentTotalWeightForAxis) !== 100 && " (Must sum to 100%)"}
-      </div>
-    </CardContent>
-  </Card>
-);
+        </div>
+      )}
+    </div>
+  );
+};
 
 export function ScatterScoreProPage() {
   const { 
@@ -1024,7 +1015,7 @@ export function ScatterScoreProPage() {
         anchor: 'center' as const,
         align: 'center' as const,
         offset: 0,
-        clamp: true
+        clip: true // This ensures labels are clipped to the chart area
       }
     }));
   }, [plotData, isCalculatingScores, selectedZMetricKey, zMetricConfig, zScale]);
@@ -1168,6 +1159,14 @@ export function ScatterScoreProPage() {
       datalabels: {
         display: false
       }
+    },
+    layout: {
+      padding: {
+        top: 20,
+        right: 20,
+        bottom: 20,
+        left: 20
+      }
     }
   }), [selectedXMetrics, selectedYMetrics, zMetricConfig, selectedDisplayCurrency, currentTemplateConfig]);
 
@@ -1267,74 +1266,59 @@ export function ScatterScoreProPage() {
                 initial={false}
                 animate={{ x: 0 }}
                 className={cn(
-                  "h-full flex flex-col space-y-4 overflow-y-auto bg-navy-800/80 border border-navy-700/70 backdrop-blur-lg rounded-xl p-3 md:p-4",
-                  "lg:w-[400px] xl:w-[450px] lg:h-[calc(100vh-var(--header-height,80px)-3rem)]",
+                  "h-full flex flex-col space-y-4 overflow-y-auto bg-navy-800/80 backdrop-blur-sm rounded-xl p-3 md:p-4",
+                  "lg:w-[380px] xl:w-[420px] lg:h-[calc(100vh-var(--header-height,80px)-3rem)]",
                   "scrollbar-thin scrollbar-thumb-navy-600 scrollbar-track-navy-700/50"
                 )}
                 style={{ '--header-height': '80px' } as React.CSSProperties}
               >
                 {/* Panel Header */}
-                <div className="flex justify-between items-center mb-1 sticky top-0 bg-navy-800/90 backdrop-blur-sm py-2 -mx-3 md:-mx-4 px-3 md:px-4 z-10 border-b border-navy-700">
-                  <h2 className="text-lg xl:text-xl font-semibold text-surface-white">Chart Configuration</h2>
-                  <div className="flex items-center gap-2">
-                    {/* Desktop collapse button */}
-                    <Button 
-                      variant="ghost" 
-                      size="icon"
-                      onClick={() => setIsConfigPanelOpen(false)} 
-                      className="hidden lg:flex text-muted-foreground hover:text-surface-white"
-                      aria-label="Collapse configuration panel"
-                    >
-                      <ChevronLeft size={20}/>
-                    </Button>
-                    {/* Mobile close button */}
-                    <Button 
-                      variant="ghost" 
-                      size="icon" 
-                      onClick={() => setIsConfigPanelOpen(false)} 
-                      className="lg:hidden text-muted-foreground hover:text-surface-white"
-                    >
-                      <X size={20}/>
-                    </Button>
-                  </div>
+                <div className="flex justify-between items-center sticky top-0 bg-navy-800/90 backdrop-blur-sm py-2 -mx-3 md:-mx-4 px-3 md:px-4 z-10 border-b border-navy-700">
+                  <h2 className="text-lg font-semibold text-surface-white">Configuration</h2>
+                  <Button 
+                    variant="ghost" 
+                    size="icon"
+                    onClick={() => setIsConfigPanelOpen(false)} 
+                    className="text-muted-foreground hover:text-surface-white h-8 w-8"
+                  >
+                    <X size={18}/>
+                  </Button>
                 </div>
                 
-                <div className="px-1 space-y-4 pb-4">
+                <div className="space-y-4">
                   {/* Template Selector */}
-                  <div>
-                    <TooltipProvider delayDuration={100}>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Label 
-                            htmlFor="template-selector" 
-                            className="text-xs font-semibold text-muted-foreground block mb-1 cursor-help inline-flex items-center gap-1"
+                  <div className="bg-navy-700/30 rounded-lg p-3 border border-navy-600/50">
+                    <div className="flex items-center justify-between mb-2">
+                      <Label className="text-xs font-semibold text-surface-white">Template</Label>
+                      <TooltipProvider delayDuration={100}>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <button className="text-muted-foreground hover:text-accent-teal">
+                              <Info size={14} />
+                            </button>
+                          </TooltipTrigger>
+                          <TooltipContent 
+                            side="left" 
+                            align="end"
+                            className="text-xs max-w-[300px] p-3 z-[100] bg-navy-700/95 border border-navy-600/80"
                           >
-                            Load Template
-                            <Info size={12} className="opacity-50" />
-                          </Label>
-                        </TooltipTrigger>
-                        <TooltipContent 
-                          side="bottom" 
-                          align="center" 
-                          sideOffset={5}
-                          className="text-xs max-w-[350px] p-3 z-[100] bg-navy-700/95 border border-navy-600/80"
-                        >
-                          <div className="space-y-2">
-                            {PREDEFINED_TEMPLATES.map((t, index) => (
-                              <div key={t.name} className={cn(
-                                "pb-2",
-                                index < PREDEFINED_TEMPLATES.length - 1 && "border-b border-navy-600/50"
-                              )}>
-                                <p className="font-semibold text-accent-teal mb-1">{t.name}</p>
-                                <p className="text-surface-white/80">{t.description}</p>
-                              </div>
-                            ))}
-                          </div>
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
+                            <div className="space-y-2">
+                              {PREDEFINED_TEMPLATES.map((t, index) => (
+                                <div key={t.name} className={cn(
+                                  "pb-2",
+                                  index < PREDEFINED_TEMPLATES.length - 1 && "border-b border-navy-600/50"
+                                )}>
+                                  <p className="font-semibold text-accent-teal mb-0.5">{t.name}</p>
+                                  <p className="text-surface-white/80 text-[11px]">{t.description}</p>
+                                </div>
+                              ))}
+                            </div>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    </div>
                     <Select value={activeTemplateName || ""} onValueChange={handleTemplateChange}>
-                      <SelectTrigger id="template-selector" className="w-full h-9 text-xs bg-navy-700 border-navy-600">
+                      <SelectTrigger className="w-full h-8 text-xs bg-navy-700/50 border-navy-600">
                         <SelectValue placeholder="Select a template..." />
                       </SelectTrigger>
                       <SelectContent className="z-[60]">
@@ -1347,9 +1331,9 @@ export function ScatterScoreProPage() {
                     </Select>
                   </div>
                   
-                  {/* X-Axis Configuration */}
+                  {/* Axis Configurations */}
                   <AxisMetricConfigurator
-                    axisTitle="X-Axis Score Metrics"
+                    axisTitle="X-Axis Metrics"
                     currentSelectedMetricsForAxis={selectedXMetrics}
                     axisType="X"
                     currentTotalWeightForAxis={xTotalWeight}
@@ -1357,9 +1341,8 @@ export function ScatterScoreProPage() {
                     handleAxisMetricChange={handleAxisMetricChange}
                   />
                   
-                  {/* Y-Axis Configuration */}
                   <AxisMetricConfigurator
-                    axisTitle="Y-Axis Score Metrics"
+                    axisTitle="Y-Axis Metrics"
                     currentSelectedMetricsForAxis={selectedYMetrics}
                     axisType="Y"
                     currentTotalWeightForAxis={yTotalWeight}
@@ -1368,102 +1351,100 @@ export function ScatterScoreProPage() {
                   />
 
                   {/* Z-Axis Configuration */}
-                  <Card className="p-3 md:p-4 bg-navy-700/50 border-navy-600">
-                    <CardHeader className="p-0 mb-2">
-                      <CardTitle className="text-md font-semibold">Z-Axis (Bubble Size)</CardTitle>
-                    </CardHeader>
-                    <CardContent className="p-0">
-                      <MetricSelector
-                        label=""
-                        selectedMetric={selectedZMetricKey || ""}
-                        onMetricChange={(value) => {
-                          setSelectedZMetricKey(value || null);
+                  <div className="bg-navy-700/30 rounded-lg p-3 border border-navy-600/50 space-y-2">
+                    <h3 className="text-sm font-semibold">Bubble Size (Z-Axis)</h3>
+                    <MetricSelector
+                      label=""
+                      selectedMetric={selectedZMetricKey || ""}
+                      onMetricChange={(value) => {
+                        setSelectedZMetricKey(value || null);
+                        setActiveTemplateName(null);
+                      }}
+                      currentTier={currentUserTier}
+                      availableMetrics={accessibleMetrics}
+                      filterForNumericOnly={true}
+                      placeholder="Select metric..."
+                      className="text-xs h-8"
+                    />
+                    {selectedZMetricKey && (
+                      <ScaleToggle 
+                        scale={zScale} 
+                        onChange={(newScale) => {
+                          setZScale(newScale);
+                          setActiveTemplateName(null);
+                        }} 
+                        label="Scale" 
+                      />
+                    )}
+                  </div>
+
+                  {/* Advanced Settings */}
+                  <div className="bg-navy-700/30 rounded-lg p-3 border border-navy-600/50 space-y-3">
+                    <h3 className="text-sm font-semibold">Advanced Settings</h3>
+                    
+                    <div>
+                      <Label htmlFor="norm-mode" className="text-xs text-muted-foreground">
+                        Normalization
+                      </Label>
+                      <Select 
+                        value={normalizationMode} 
+                        onValueChange={(val) => {
+                          setNormalizationMode(val as NormalizationMode);
                           setActiveTemplateName(null);
                         }}
-                        currentTier={currentUserTier}
-                        availableMetrics={accessibleMetrics}
-                        filterForNumericOnly={true}
-                        placeholder="Select Z-Axis Metric..."
-                      />
-                      {selectedZMetricKey && (
-                        <ScaleToggle 
-                          scale={zScale} 
-                          onChange={(newScale) => {
-                            setZScale(newScale);
-                            setActiveTemplateName(null);
-                          }} 
-                          label="Bubble Scale" 
-                        />
-                      )}
-                    </CardContent>
-                  </Card>
-
-                  {/* Scoring Settings */}
-                  <Card className="p-3 md:p-4 bg-navy-700/50 border-navy-600">
-                    <CardHeader className="p-0 mb-2">
-                      <CardTitle className="text-md font-semibold">Scoring Settings</CardTitle>
-                    </CardHeader>
-                    <CardContent className="p-0">
-                      <div className="space-y-3">
-                        <div>
-                          <Label htmlFor="norm-mode" className="text-xs font-medium text-muted-foreground">
-                            Normalization Mode
-                          </Label>
-                          <Select 
-                            value={normalizationMode} 
-                            onValueChange={(val) => {
-                              setNormalizationMode(val as NormalizationMode);
-                              setActiveTemplateName(null);
-                            }}
-                          >
-                            <SelectTrigger id="norm-mode" className="h-9 text-xs bg-navy-700 border-navy-600 mt-1">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent className="z-[60]">
-                              <SelectItem value="dataset_min_max" className="text-xs">Dataset Min-Max (0-1)</SelectItem>
-                              <SelectItem value="global_min_max" className="text-xs">Global Min-Max (0-1)</SelectItem>
-                              <SelectItem value="dataset_rank_percentile" className="text-xs">Dataset Rank/Percentile (0-1)</SelectItem>
-                              <SelectItem value="dataset_z_score" className="text-xs">Dataset Z-Score (approx 0-1)</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        <div>
-                          <Label htmlFor="impute-mode" className="text-xs font-medium text-muted-foreground">
-                            Imputation (Missing Values)
-                          </Label>
-                          <Select 
-                            value={imputationMode} 
-                            onValueChange={(val) => {
-                              setImputationMode(val as ImputationMode);
-                              setActiveTemplateName(null);
-                            }}
-                          >
-                            <SelectTrigger id="impute-mode" className="h-9 text-xs bg-navy-700 border-navy-600 mt-1">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent className="z-[60]">
-                              <SelectItem value="zero_worst" className="text-xs">Zero / Worst Case</SelectItem>
-                              <SelectItem value="dataset_mean" className="text-xs">Dataset Mean</SelectItem>
-                              <SelectItem value="dataset_median" className="text-xs">Dataset Median</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
+                      >
+                        <SelectTrigger id="norm-mode" className="h-8 text-xs bg-navy-700/50 border-navy-600 mt-1">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent className="z-[60]">
+                          <SelectItem value="dataset_min_max" className="text-xs">Dataset Min-Max</SelectItem>
+                          <SelectItem value="global_min_max" className="text-xs">Global Min-Max</SelectItem>
+                          <SelectItem value="dataset_rank_percentile" className="text-xs">Dataset Rank</SelectItem>
+                          <SelectItem value="dataset_z_score" className="text-xs">Dataset Z-Score</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    
+                    <div>
+                      <Label htmlFor="impute-mode" className="text-xs text-muted-foreground">
+                        Missing Values
+                      </Label>
+                      <Select 
+                        value={imputationMode} 
+                        onValueChange={(val) => {
+                          setImputationMode(val as ImputationMode);
+                          setActiveTemplateName(null);
+                        }}
+                      >
+                        <SelectTrigger id="impute-mode" className="h-8 text-xs bg-navy-700/50 border-navy-600 mt-1">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent className="z-[60]">
+                          <SelectItem value="zero_worst" className="text-xs">Zero / Worst</SelectItem>
+                          <SelectItem value="dataset_mean" className="text-xs">Dataset Mean</SelectItem>
+                          <SelectItem value="dataset_median" className="text-xs">Dataset Median</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
 
                   {/* Apply Button */}
                   <Button 
                     onClick={handleApplyConfigurationAndCalculateScores} 
-                    className="w-full mt-3 bg-accent-teal hover:bg-accent-teal/90 text-sm font-semibold py-2.5"
+                    className="w-full bg-accent-teal hover:bg-accent-teal/90 text-sm font-semibold h-10"
                     disabled={isCalculatingScores || (selectedXMetrics.length === 0 && selectedYMetrics.length === 0)}
                   >
                     {isCalculatingScores ? (
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Calculating...
+                      </>
                     ) : (
-                      <RefreshCw size={16} className="mr-2"/>
+                      <>
+                        <RefreshCw size={16} className="mr-2"/>
+                        Apply & Plot
+                      </>
                     )}
-                    Apply & Plot Scores
                   </Button>
                 </div>
               </motion.div>
@@ -1551,7 +1532,7 @@ export function ScatterScoreProPage() {
                 <p className="text-center text-gray-400 p-4">
                   No data to plot. <br/>
                   This can happen if no companies match global filters, or if selected metrics resulted in no valid scores for any company. <br/>
-                  Try adjusting global filters or click "Apply & Plot Scores" again.
+                  Try adjusting global filters or click "Apply & Plot" again.
                 </p>
               </div>
             )}
@@ -1560,7 +1541,7 @@ export function ScatterScoreProPage() {
              selectedXMetrics.length === 0 && selectedYMetrics.length === 0 && (
               <div className="h-full flex items-center justify-center">
                 <p className="text-center text-gray-400">
-                  Please select metrics for at least one axis and click "Apply & Plot Scores".
+                  Please select metrics for at least one axis and click "Apply & Plot".
                 </p>
               </div>
             )}
