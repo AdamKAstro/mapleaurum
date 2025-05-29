@@ -4,10 +4,10 @@ import { supabase } from '../lib/supabaseClient';
 import type { SubscriptionTier } from '../lib/types';
 import { useAuth } from './auth-context';
 
-const PRO_MONTHLY_PRICE_ID = import.meta.env.VITE_STRIPE_PRO_MONTHLY_PRICE_ID || 'price_1RMJ31Ast4LlpL7pauoVPwpm';
-const PRO_YEARLY_PRICE_ID = import.meta.env.VITE_STRIPE_PRO_YEARLY_PRICE_ID || 'price_1RMIBuAst4LlpL7pf1EFTmlk';
-const PREMIUM_MONTHLY_PRICE_ID = import.meta.env.VITE_STRIPE_PREMIUM_MONTHLY_PRICE_ID || 'price_1RMJ3pAst4LlpL7pXTO1bVli';
-const PREMIUM_YEARLY_PRICE_ID = import.meta.env.VITE_STRIPE_PREMIUM_YEARLY_PRICE_ID || 'price_1RMIDFAst4LlpL7p8UInqh9P';
+const PRO_MONTHLY_PRICE_ID = import.meta.env.VITE_STRIPE_PRO_MONTHLY_PRICE_ID || 'price_1RTylqAst4LlpL7pTIvN18rF';
+const PRO_YEARLY_PRICE_ID = import.meta.env.VITE_STRIPE_PRO_YEARLY_PRICE_ID || 'price_1RTysEAst4LlpL7pM2Kvc3dw';
+const PREMIUM_MONTHLY_PRICE_ID = import.meta.env.VITE_STRIPE_PREMIUM_MONTHLY_PRICE_ID || 'price_1RTyi3Ast4LlpL7pv6DnpcKS';
+const PREMIUM_YEARLY_PRICE_ID = import.meta.env.VITE_STRIPE_PREMIUM_YEARLY_PRICE_ID || 'price_1RTyppAst4LlpL7pC47N3jPT';
 
 interface SubscriptionContextType {
   currentUserSubscriptionTier: SubscriptionTier;
