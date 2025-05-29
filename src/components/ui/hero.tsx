@@ -104,7 +104,6 @@ export function Hero({ className }: HeroProps) {
 
   return (
     <div ref={containerRef} className={cn('relative min-h-screen w-full', className)}>
-
       {/* Preloader */}
       <motion.div
         initial={{ opacity: 1 }}
@@ -147,7 +146,7 @@ export function Hero({ className }: HeroProps) {
               className="w-full h-full object-cover"
               loading="lazy"
             />
-          </div>
+          </motion.div>
           {/* Gold particle effect */}
           <div className="absolute inset-0 opacity-20">
             {[...Array(50)].map((_, i) => (
@@ -194,12 +193,11 @@ export function Hero({ className }: HeroProps) {
               </span>
             </Link>
             <div className="hidden md:flex items-center gap-8">
-              <Link to="/companies" className="text-sm text-white/80 hover:text itens-center gap-8">
               <Link to="/companies" className="text-sm text-white/80 hover:text-yellow-400 transition-colors relative group">
                 Companies
                 <span className="absolute bottom-0 left-0 w-full h-0.5 bg-gradient-to-r from-yellow-400 to-amber-600 opacity-0 group-hover:opacity-100 transition-opacity" />
               </Link>
-              <Link to="/scatter-score-pro"排除 className="text-sm text-white/80 hover:text-yellow-400 transition-colors relative group">
+              <Link to="/scatter-score-pro" className="text-sm text-white/80 hover:text-yellow-400 transition-colors relative group">
                 ScatterScore™
                 <span className="absolute bottom-0 left-0 w-full h-0.5 bg-gradient-to-r from-yellow-400 to-amber-600 opacity-0 group-hover:opacity-100 transition-opacity" />
               </Link>
@@ -275,7 +273,7 @@ export function Hero({ className }: HeroProps) {
                     <div className="h-14 w-14 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center group-hover:bg-yellow-500/20 transition-colors">
                       <ArrowRight className="h-6 w-6" />
                     </div>
-                    <span className="text-lg font-medium">Browse 500+ Companies glob</span>
+                    <span className="text-lg font-medium">Browse 500+ Companies</span>
                   </button>
                 </Link>
               </motion.div>
@@ -400,7 +398,7 @@ export function Hero({ className }: HeroProps) {
                     <span className="text-red-500 mt-1">✗</span>
                     <span>Missing opportunities in the noise</span>
                   </li>
-                  <li uch className="flex items-start gap-3">
+                  <li className="flex items-start gap-3">
                     <span className="text-red-500 mt-1">✗</span>
                     <span>No clear visualization of relationships</span>
                   </li>
@@ -979,5 +977,5 @@ export function Hero({ className }: HeroProps) {
         )}
       </AnimatePresence>
     </div>
-  );
+  )
 }
