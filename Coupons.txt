@@ -1,0 +1,22 @@
+Create these coupons in your Stripe Dashboard:
+
+🎟️ Coupon 1: PRO_TRIAL_1M
+   - Name: "Free Pro Trial - 1 Month"
+   - Discount: 100% off
+   - Duration: Once (applies to first payment only)
+   - Usage limit: 100 (or whatever you want)
+
+🎟️ Coupon 2: PREMIUM_TRIAL_1M  
+   - Name: "Free Premium Trial - 1 Month"
+   - Discount: 100% off
+   - Duration: Once
+   - Usage limit: 100
+
+🎟️ Coupon 3: BETA_TESTER
+   - Name: "Beta Tester Access"
+   - Discount: 100% off
+   - Duration: Repeating (for ongoing free access)
+   - Duration in months: 12
+   - Usage limit: 50
+
+After creating these, you can give people free trials by sending them checkout links with the coupon applied, or modify your checkout function to include a coupon parameter.

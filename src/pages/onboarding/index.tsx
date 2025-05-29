@@ -1,24 +1,24 @@
-// src/pages/onboarding/index.tsx
+// src/pages/onboarding/index.tsx - SECURITY FIX
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { PageContainer } from '../../components/ui/page-container';
-import { Typography } from '../../components/ui/typography'; // Verify this import path and that Typography is correctly exported
+import { Typography } from '../../components/ui/typography';
 import { Button } from '../../components/ui/button';
 import { useAuth } from '../../contexts/auth-context';
 import { useSubscription } from '../../contexts/subscription-context';
-// import { supabase } from '../../lib/supabaseClient'; // Not strictly needed if AuthContext handles user checks
-import { Loader2, CheckCircle, AlertCircle, Table2, LogIn as LogInIcon, UserPlus } from 'lucide-react'; // Ensured correct icons
+import { supabase } from '../../lib/supabaseClient';
+import { Loader2, CheckCircle, AlertCircle, Table2, LogIn as LogInIcon, UserPlus } from 'lucide-react';
 
 export function OnboardingPage() {
     const { session, user, isLoading: isAuthLoading } = useAuth();
     const { refreshSubscriptionStatus } = useSubscription();
     const navigate = useNavigate();
     const location = useLocation();
-    const backgroundImageUrl = '/og-image.jpg'; // Make sure this image is in your public folder
+    const backgroundImageUrl = '/og-image.jpg';
 
     const [statusMessage, setStatusMessage] = useState<string>('Verifying your subscription...');
     const [errorOccurred, setErrorOccurred] = useState<boolean>(false);
-    const [isLoadingPage, setIsLoadingPage] = useState<boolean>(true); // True by default
+    const [isLoadingPage, setIsLoadingPage] = useState<boolean>(true);
     const [planName, setPlanName] = useState<string | null>(null);
     const [stripeCheckoutEmail, setStripeCheckoutEmail] = useState<string | null>(null);
     const [requiresAuthAction, setRequiresAuthAction] = useState<boolean>(false);
@@ -26,7 +26,7 @@ export function OnboardingPage() {
     useEffect(() => {
         const searchParams = new URLSearchParams(location.search);
         const stripeSessionId = searchParams.get('session_id');
-        const queryPlanName = searchParams.get('plan_name'); // From Stripe success_url metadata
+        const queryPlanName = searchParams.get('plan_name');
         
         console.log(`[OnboardingPage] Mount/Update. Auth Loading: ${isAuthLoading}, User: ${user ? user.id : 'null'}, Stripe SessionId: ${stripeSessionId}, QueryPlanName: ${queryPlanName}`);
 
@@ -35,11 +35,10 @@ export function OnboardingPage() {
         if (isAuthLoading) {
             console.log("[OnboardingPage] Auth context is loading. Waiting...");
             setStatusMessage('Initializing your session...');
-            // setIsLoadingPage(true) is default, so no change needed here
             return; 
         }
 
-        // Scenario 1: User is already logged in (e.g., they upgraded an existing subscription)
+        // Scenario 1: User is already logged in
         if (user && session) {
             console.log(`[OnboardingPage] User ${user.id} is logged in. Refreshing subscription status.`);
             setIsLoadingPage(true); 
@@ -49,71 +48,62 @@ export function OnboardingPage() {
             }).catch(err => {
                 console.error("[OnboardingPage] Error refreshing subscription for logged-in user:", err);
                 setStatusMessage("We couldn't confirm your subscription update immediately. Please check your account or contact support.");
-                setErrorOccurred(true); // Potentially show an error if refresh fails critically
+                setErrorOccurred(true);
             }).finally(() => {
                 setIsLoadingPage(false);
             });
             return; 
         }
         
-        // Scenario 2: New customer from Stripe checkout, not yet logged into Supabase
+        // Scenario 2: New customer from Stripe checkout - USE SECURE EDGE FUNCTION
         if (stripeSessionId && !user) {
-            console.log(`[OnboardingPage] No Supabase session. Fetching Stripe session '${stripeSessionId}' for new customer flow.`);
+            console.log(`[OnboardingPage] No Supabase session. Fetching Stripe session '${stripeSessionId}' via secure Edge Function.`);
             setIsLoadingPage(true);
             setStatusMessage('Finalizing your new subscription...');
             
-            const fetchStripeSession = async () => {
+            const fetchStripeSessionSecurely = async () => {
                 try {
-                    // !!! CRITICAL SECURITY WARNING !!!
-                    // Exposing VITE_STRIPE_SECRET_KEY to the client-side is a major security risk.
-                    // This fetch should be done via a secure Supabase Edge Function.
-                    // For now, proceeding with the user's existing code structure but with a strong warning.
-                    const stripeSecret = import.meta.env.VITE_STRIPE_SECRET_KEY;
-                    if (!stripeSecret) {
-                        console.error("[OnboardingPage] FATAL: VITE_STRIPE_SECRET_KEY is not configured client-side. This is a security risk and will fail if not set.");
-                        throw new Error("Client-side Stripe secret key is not configured.");
-                    }
-                    console.warn("[OnboardingPage] SECURITY RISK: Fetching Stripe session details client-side using a secret key. This should be moved to a backend function.");
-
-                    const response = await fetch(`https://api.stripe.com/v1/checkout/sessions/${stripeSessionId}`, {
-                        headers: { Authorization: `Bearer ${stripeSecret}` },
+                    // ✅ SECURE: Use Edge Function instead of client-side Stripe API call
+                    const { data, error } = await supabase.functions.invoke('get-stripe-session-details', {
+                        body: { checkoutSessionId: stripeSessionId }
                     });
-                    const sessionData = await response.json();
 
-                    if (response.ok && sessionData.customer_details?.email) {
-                        const emailFromStripe = sessionData.customer_details.email;
+                    if (error) {
+                        console.error('[OnboardingPage] Edge function error:', error);
+                        throw new Error(error.message || 'Failed to retrieve session details');
+                    }
+
+                    if (data && data.customerEmail) {
+                        const emailFromStripe = data.customerEmail;
                         setStripeCheckoutEmail(emailFromStripe);
-                        const effectivePlanName = sessionData.metadata?.plan_name || queryPlanName || 'your new';
+                        const effectivePlanName = data.planName || queryPlanName || 'your new';
                         setPlanName(effectivePlanName);
                         
                         setStatusMessage(`Payment for your ${effectivePlanName} plan was successful! Please create an account or log in with ${emailFromStripe} to access it.`);
                         setRequiresAuthAction(true); 
-                        console.log(`[OnboardingPage] Stripe session success for new customer. Email: ${emailFromStripe}. Needs Supabase account action.`);
+                        console.log(`[OnboardingPage] Stripe session success for new customer. Email: ${emailFromStripe}`);
                     } else {
-                        throw new Error(sessionData.error?.message || 'Could not retrieve customer details from Stripe session.');
+                        throw new Error('Could not retrieve customer details from session.');
                     }
                 } catch (err: any) {
-                    console.error('[OnboardingPage] Error fetching/processing Stripe session:', err);
-                    setStatusMessage('There was an issue confirming your payment with Stripe. Please contact support if your payment was processed but access is not granted.');
+                    console.error('[OnboardingPage] Error fetching Stripe session via Edge Function:', err);
+                    setStatusMessage('There was an issue confirming your payment. Please contact support if your payment was processed but access is not granted.');
                     setErrorOccurred(true);
                 } finally {
                     setIsLoadingPage(false);
                 }
             };
-            fetchStripeSession();
+            fetchStripeSessionSecurely();
         } else if (!stripeSessionId && !user && !isAuthLoading) {
-            // No Stripe session ID, no user, and auth has loaded - unusual state.
             console.warn('[OnboardingPage] No Stripe session ID and no user. Redirecting to subscription page.');
             navigate('/subscribe', { replace: true });
         } else if (user && session && !stripeSessionId && !isAuthLoading){
-            // Logged in, but no stripe session - perhaps navigated here directly.
             console.log('[OnboardingPage] User logged in but no Stripe session ID in URL. Showing generic welcome.');
             setStatusMessage(planName ? `Welcome to your ${planName} plan!` : 'Welcome! Your account is ready.');
             setIsLoadingPage(false);
         }
 
-    }, [isAuthLoading, user, session, location.search, navigate, refreshSubscriptionStatus]); // Removed queryPlanName
-
+    }, [isAuthLoading, user, session, location.search, navigate, refreshSubscriptionStatus]);
 
     const titleToDisplay = errorOccurred ? "Onboarding Problem" : (planName ? `${planName} Plan Activated!` : "Welcome to MapleAurum!");
     const descriptionToDisplay = errorOccurred 
@@ -124,7 +114,6 @@ export function OnboardingPage() {
         return (
             <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-b from-navy-900 via-navy-800 to-navy-900 p-4 text-white">
                 <Loader2 className="h-12 w-12 animate-spin text-cyan-300 mb-4" />
-                {/* Ensure Typography component is correctly imported and works */}
                 <Typography variant="h3" className="text-white">{statusMessage || "Loading..."}</Typography>
             </div>
         );
@@ -135,7 +124,7 @@ export function OnboardingPage() {
             <div className="absolute inset-0 bg-cover bg-center opacity-30 -z-10" style={{ backgroundImage: `url('${backgroundImageUrl}')` }} aria-hidden="true" />
             <div className="absolute inset-0 bg-noise opacity-20 -z-10" aria-hidden="true" />
             
-            <div className="relative z-0 flex items-center justify-center min-h-[calc(100vh-150px)] px-4"> {/* Ensure some padding on small screens */}
+            <div className="relative z-0 flex items-center justify-center min-h-[calc(100vh-150px)] px-4">
                 <div className="max-w-lg w-full bg-navy-800/80 backdrop-blur-md shadow-xl rounded-lg p-6 sm:p-8 text-center">
                     {errorOccurred ? (
                         <AlertCircle className="h-16 w-16 text-red-400 mx-auto mb-4 sm:mb-6" />
@@ -172,7 +161,7 @@ export function OnboardingPage() {
                         </div>
                     )}
 
-                    {user && !errorOccurred && ( // User is logged in and no error
+                    {user && !errorOccurred && (
                         <Button
                             onClick={() => navigate('/companies')}
                             className="w-full bg-gradient-to-r from-emerald-600 to-cyan-600 hover:from-emerald-700 hover:to-cyan-700 text-white py-2.5 sm:py-3 text-base"

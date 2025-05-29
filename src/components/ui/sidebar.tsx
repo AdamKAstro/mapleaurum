@@ -27,10 +27,10 @@ export function Sidebar() {
   const mainNavItems = [
     { path: '/', label: 'Home', icon: Home },
     { path: '/companies', label: 'Companies', icon: Table2 },
-    { path: '/scatter-chart', label: 'Scatter Chart', icon: Scatter },
-    { path: '/scatter-score-pro', label: 'ScatterScore', icon: TrendingUp },
     { path: '/filter', label: 'Filters', icon: Filter },
-    { path: '/scoring', label: 'Scoring', icon: Calculator },
+    { path: '/scatter-chart', label: 'Scatter Chart', icon: Scatter },	
+    { path: '/scoring', label: 'Scoring', icon: Calculator },	
+    { path: '/scatter-score-pro', label: 'ScatterScore', icon: TrendingUp },
     { path: '/subscribe', label: 'Subscribe', icon: Crown },
   ];
 
@@ -40,7 +40,7 @@ export function Sidebar() {
     { path: '/help/filters', label: 'Filters Guide', icon: Filter },
     { path: '/help/scoring', label: 'Scoring Guide', icon: Target },
     { path: '/help/scatter-chart', label: 'Scatter Guide', icon: Scatter },
-    { path: '/help/scatter-score-pro', label: 'ScatterScore Guide', icon: Scatter }, // New Item
+    { path: '/help/scatter-score-pro', label: 'ScatterScore Guide', icon: Scatter },
     { path: '/help/tiers', label: 'Subscription Tiers', icon: Award },
     { path: '/help/general', label: 'General & FAQ', icon: BookOpen },
   ];

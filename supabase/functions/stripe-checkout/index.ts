@@ -153,7 +153,7 @@ Deno.serve(async (req: Request) => {
         return createJsonResponse(req, { error: `Invalid input: ${optionalValidationError}` }, 400);
     }
 
-    const { price_id, success_url, cancel_url, mode, plan_name: clientPlanName, interval: clientInterval } = requestBody;
+    const { price_id, success_url, cancel_url, mode, plan_name: clientPlanName, interval: clientInterval, coupon_id  } = requestBody;
 
     try {
         const authHeader = req.headers.get('Authorization');
@@ -219,10 +219,20 @@ Deno.serve(async (req: Request) => {
         console.info(`${logPrefix} Using Stripe Customer ID: ${stripeCustomerId} for user ${user.id}.`);
         
         const metadataForStripe = { supabaseUserId: user.id, priceId: price_id, planName: derivedPlanName, interval: derivedInterval || '' };
-        const checkoutSessionParams: Stripe.Checkout.SessionCreateParams = {
-            customer: stripeCustomerId, payment_method_types: ['card'], line_items: [{ price: price_id, quantity: 1 }],
-            mode: mode, success_url: success_url, cancel_url: cancel_url, metadata: metadataForStripe,
-        };
+		const checkoutSessionParams = {
+			customer: stripeCustomerId,
+			payment_method_types: ['card'],
+			line_items: [{ price: price_id, quantity: 1 }],
+			mode: mode,
+			success_url: success_url,
+			cancel_url: cancel_url,
+			metadata: metadataForStripe
+		};
+
+		// ✅ ADD coupon support
+		if (coupon_id) {
+			checkoutSessionParams.discounts = [{ coupon: coupon_id }];
+		}
         if (mode === 'subscription') checkoutSessionParams.subscription_data = { metadata: metadataForStripe };
 
         const stripeCheckoutSession = await stripe.checkout.sessions.create(checkoutSessionParams);
