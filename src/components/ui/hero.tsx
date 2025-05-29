@@ -19,6 +19,7 @@ const Button = ({ children, className, size = "default", variant = "default", ..
   return (
     <button
       className={`inline-flex items-center justify-center rounded-lg font-medium transition-all ${sizes[size]} ${variants[variant]} ${className}`}
+      style={{ fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}
       {...props}
     >
       {children}
@@ -112,16 +113,16 @@ export function Hero({ className }: HeroProps) {
   const heroY = useTransform(scrollYProgress, [0, 1], [0, -200]);
   const fadeOut = useTransform(scrollYProgress, [0, 0.3], [1, 0]);
 
-  // Auto-rotate through process steps
+  // Auto-rotate through process steps (slower pace)
   useEffect(() => {
     const interval = setInterval(() => {
       setActiveStep((prev) => (prev + 1) % processSteps.length);
-    }, 5000);
+    }, 8000); // Slower rotation - 8 seconds
     return () => clearInterval(interval);
   }, []);
 
   return (
-    <div ref={containerRef} className={cn('relative w-full', className)}>
+    <div ref={containerRef} className={cn('relative w-full', className)} style={{ fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
       
       {/* Section 1: Hero Banner with Technical Focus */}
       <section className="relative min-h-screen flex flex-col overflow-hidden bg-gradient-to-b from-navy-900 via-navy-800 to-navy-900">
@@ -150,6 +151,47 @@ export function Hero({ className }: HeroProps) {
             />
           </div>
         </div>
+
+        {/* Floating Bubble Effect */}
+        <div className="absolute inset-0 overflow-hidden">
+          {[...Array(20)].map((_, i) => (
+            <motion.div
+              key={i}
+              className="absolute rounded-full"
+              style={{
+                width: `${20 + Math.random() * 40}px`,
+                height: `${20 + Math.random() * 40}px`,
+                left: `${Math.random() * 100}%`,
+                top: `${100 + Math.random() * 100}%`,
+                background: i % 3 === 0 
+                  ? 'radial-gradient(circle, rgba(251, 191, 36, 0.1) 0%, transparent 70%)'
+                  : i % 3 === 1
+                  ? 'radial-gradient(circle, rgba(34, 197, 94, 0.1) 0%, transparent 70%)'
+                  : 'radial-gradient(circle, rgba(59, 130, 246, 0.1) 0%, transparent 70%)'
+              }}
+              animate={{
+                y: [-window.innerHeight - 100, -200],
+                x: [0, (Math.random() - 0.5) * 100],
+                scale: [1, 1.1, 1],
+              }}
+              transition={{
+                duration: 15 + Math.random() * 10,
+                repeat: Infinity,
+                ease: 'linear',
+                delay: Math.random() * 10,
+              }}
+            />
+          ))}
+        </div>
+
+        {/* Subtle Background Image */}
+        <div 
+          className="absolute inset-0 bg-cover bg-center opacity-[0.02]"
+          style={{ backgroundImage: "url('/GeminiMAB1.jpg')" }}
+        />
+        
+        {/* Noise texture overlay */}
+        <div className="absolute inset-0 bg-noise opacity-30" aria-hidden="true" />
 
         {/* Navigation Header */}
         <header className="relative z-40 mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
@@ -278,12 +320,14 @@ export function Hero({ className }: HeroProps) {
                 transition={{ duration: 1, delay: 0.4 }}
                 className="relative"
               >
-                <div className="relative rounded-2xl overflow-hidden shadow-2xl shadow-black/50 border border-navy-700">
+                <div className="relative rounded-2xl overflow-hidden shadow-2xl shadow-black/50 border border-navy-700 group">
                   <img 
                     src="/ScatterScore1b.jpg"
                     alt="ScatterScore Platform"
-                    className="w-full h-auto"
+                    className="w-full h-auto transition-transform duration-700 group-hover:scale-105"
                   />
+                  {/* Subtle glow overlay */}
+                  <div className="absolute inset-0 bg-gradient-to-br from-yellow-400/5 via-transparent to-blue-400/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
                   {/* Animated overlay points */}
                   <div className="absolute inset-0">
                     {[
@@ -411,19 +455,23 @@ export function Hero({ className }: HeroProps) {
               className="relative"
             >
               <div className="relative rounded-2xl overflow-hidden shadow-2xl shadow-black/50 border-2 border-yellow-500/30">
-                <img 
-                  src={processSteps[activeStep].image}
-                  alt={processSteps[activeStep].title}
-                  className="w-full h-auto"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
-                <div className="absolute bottom-0 left-0 right-0 p-6">
-                  <h3 className="text-2xl font-bold text-white mb-2">
-                    {processSteps[activeStep].title}
-                  </h3>
-                  <p className="text-gray-200">
-                    {processSteps[activeStep].description}
-                  </p>
+                <div className="relative group">
+                  <img 
+                    src={processSteps[activeStep].image}
+                    alt={processSteps[activeStep].title}
+                    className="w-full h-auto transition-transform duration-500 group-hover:scale-105"
+                  />
+                  {/* Subtle glow effect on hover */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+                  <div className="absolute bottom-0 left-0 right-0 p-6">
+                    <h3 className="text-2xl font-bold text-white mb-2">
+                      {processSteps[activeStep].title}
+                    </h3>
+                    <p className="text-gray-200">
+                      {processSteps[activeStep].description}
+                    </p>
+                  </div>
                 </div>
               </div>
 
@@ -618,7 +666,7 @@ export function Hero({ className }: HeroProps) {
             </p>
 
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-8">
-              <a href="/scatter-score-pro">
+              <a href="/subscribe">
                 <Button 
                   size="lg" 
                   className="bg-gradient-to-r from-yellow-500 to-amber-600 hover:from-yellow-400 hover:to-amber-500 text-white px-10 py-6 text-lg shadow-2xl shadow-yellow-500/25 transform hover:scale-105 transition-all"
