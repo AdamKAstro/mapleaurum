@@ -114,10 +114,10 @@ function App() {
                             <Route path="/subscribe" element={<SubscribePage />} />
                             <Route path="/onboarding" element={<OnboardingPage />} />
                             <Route path="/companies" element={<CompaniesPage />} />
+                            <Route path="/filter" element={<FilterPage />} />							
+                            <Route path="/scoring" element={<ScoringPage />} />																					
                             <Route path="/scatter-chart" element={<ScatterChartPage />} />
                             <Route path="/scatter-score-pro" element={<ScatterScoreProPage />} />
-                            <Route path="/filter" element={<FilterPage />} />
-                            <Route path="/scoring" element={<ScoringPage />} />
                             <Route path="/help" element={<HelpLandingPage />} />
                             <Route path="/help/metrics" element={<HelpMetricsPage />} />
                             <Route path="/help/filters" element={<HelpFiltersPage />} />

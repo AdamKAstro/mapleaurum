@@ -1,18 +1,113 @@
+// src/stripe-config.ts - FIXED with your real coupon IDs
+const FRONTEND_URL = import.meta.env.VITE_FRONTEND_URL || window.location.origin;
+
 export const products = {
   pro: {
-    priceId: 'price_1RJVcCPMCIlIT9KEUaR6HP2J',
     name: 'Maple Aurum Pro',
-    description: 'Maple Aurum Pro. Advanced analytics and insights',
+    description: 'Advanced analytics and insights for Canadian precious metals companies',
     mode: 'subscription' as const,
-    successUrl: 'https://mapleaurum.com/subscribe/success',
-    cancelUrl: 'https://mapleaurum.com/subscribe'
+    successUrl: `${FRONTEND_URL}/onboarding?session_id={CHECKOUT_SESSION_ID}&plan_name=Pro`,
+    cancelUrl: `${FRONTEND_URL}/subscribe`,
+    prices: {
+      monthly: {
+        priceId: 'price_1RTylqAst4LlpL7pTIvN18rF', // ✅ NEW Pro Monthly $15 CAD
+        amount: 15,
+        currency: 'CAD',
+        interval: 'month'
+      },
+      yearly: {
+        priceId: 'price_1RTysEAst4LlpL7pM2Kvc3dw', // ✅ NEW Pro Yearly $110 CAD  
+        amount: 110,
+        currency: 'CAD',
+        interval: 'year'
+      }
+    },
+    features: [
+      'Advanced financial metrics',
+      'Resource estimates and production data', 
+      'Market analysis tools',
+      'Custom watchlists (coming soon)',
+      'Email support'
+    ],
+    popular: true
   },
   premium: {
-    priceId: 'price_1RJVdHPMCIlIT9KE489wZrgI',
     name: 'Maple Aurum Premium',
-    description: 'Maple Aurum Premium. Complete access and premium features',
+    description: 'Complete access with premium features and priority support',
     mode: 'subscription' as const,
-    successUrl: 'https://mapleaurum.com/subscribe/success',
-    cancelUrl: 'https://mapleaurum.com/subscribe'
-  },
+    successUrl: `${FRONTEND_URL}/onboarding?session_id={CHECKOUT_SESSION_ID}&plan_name=Premium`,
+    cancelUrl: `${FRONTEND_URL}/subscribe`,
+    prices: {
+      monthly: {
+        priceId: 'price_1RTyi3Ast4LlpL7pv6DnpcKS', // ✅ NEW Premium Monthly $30 CAD
+        amount: 30,
+        currency: 'CAD', 
+        interval: 'month'
+      },
+      yearly: {
+        priceId: 'price_1RTyppAst4LlpL7pC47N3jPT', // ✅ NEW Premium Yearly $260 CAD
+        amount: 260,
+        currency: 'CAD',
+        interval: 'year'
+      }
+    },
+    features: [
+      'All Pro features included',
+      'Advanced valuation models',
+      'Priority customer support',
+      'Exclusive market insights',
+      'API access (coming soon)',
+      'Custom reporting tools'
+    ],
+    popular: false
+  }
 } as const;
+
+// ✅ REAL COUPON IDs from your Stripe Dashboard
+export const FREE_TRIAL_COUPONS = {
+  'ldoCcm3N': 'Free Pro Trial - 1 Month',      // ✅ Your real Pro trial coupon
+  'SKtE1p9l': 'Free Premium Trial - 1 Month',  // ✅ Your real Premium trial coupon  
+  'jyL3Vqu8': 'Beta Tester Access'              // ✅ Your real Beta tester coupon
+};
+
+// Helper functions
+export const getPriceId = (plan: 'pro' | 'premium', interval: 'monthly' | 'yearly') => {
+  return products[plan].prices[interval].priceId;
+};
+
+export const getProduct = (plan: 'pro' | 'premium') => {
+  return products[plan];
+};
+
+export const getPrice = (plan: 'pro' | 'premium', interval: 'monthly' | 'yearly') => {
+  return products[plan].prices[interval];
+};
+
+// Calculate yearly savings
+export const getYearlySavings = (plan: 'pro' | 'premium') => {
+  const product = products[plan];
+  const monthlyTotal = product.prices.monthly.amount * 12;
+  const yearlyPrice = product.prices.yearly.amount;
+  const savings = monthlyTotal - yearlyPrice;
+  const savingsPercent = Math.round((savings / monthlyTotal) * 100);
+  
+  return {
+    amount: savings,
+    percentage: savingsPercent,
+    monthlyEquivalent: Math.round((yearlyPrice / 12) * 100) / 100
+  };
+};
+
+// ✅ Generate special admin links with coupons
+export const generateCouponLink = (plan: 'pro' | 'premium', couponType: 'trial' | 'beta' = 'trial') => {
+  const couponId = couponType === 'trial' 
+    ? (plan === 'pro' ? 'ldoCcm3N' : 'SKtE1p9l')  // Use real IDs
+    : 'jyL3Vqu8';  // Beta tester
+    
+  return `${FRONTEND_URL}/subscribe?coupon=${couponId}&plan=${plan}&admin=true`;
+};
+
+// Types
+export type ProductKey = 'pro' | 'premium';
+export type PriceInterval = 'monthly' | 'yearly';
+export type SubscriptionTier = 'free' | 'pro' | 'premium';
