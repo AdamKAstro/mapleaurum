@@ -1,14 +1,15 @@
-/* src/index.css */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
   body {
-    @apply text-surface-white antialiased; /* Removed bg-navy */
+    @apply text-surface-white antialiased font-sans; /* Added font-sans for Inter */
+    font-family: 'Inter', sans-serif;
   }
   h1, h2, h3, h4, h5, h6 {
     @apply font-bold tracking-tight;
+    font-family: 'Playfair Display', serif;
   }
 }
 
@@ -25,6 +26,7 @@
 
   .table-header th {
     @apply bg-navy-500;
+    font-family: 'Playfair Display', serif; /* Ensure table headers use Playfair */
   }
 
   .table-cell {
@@ -33,6 +35,7 @@
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+    font-family: 'Inter', sans-serif; /* Ensure table cells use Inter */
   }
 
   /* Column widths */
@@ -168,6 +171,7 @@
   /* Group header styles */
   .group-header {
     @apply bg-navy-500 font-semibold text-surface-white/90;
+    font-family: 'Playfair Display', serif; /* Ensure group headers use Playfair */
   }
 
   /* Locked column overlay */
@@ -217,6 +221,7 @@
 
   .status-checkbox label {
     @apply text-sm font-medium text-surface-white cursor-pointer;
+    font-family: 'Inter', sans-serif; /* Ensure labels use Inter */
   }
 
   /* Pagination styles */
@@ -227,6 +232,7 @@
 
   .pagination-info {
     @apply text-sm text-surface-white/70;
+    font-family: 'Inter', sans-serif; /* Ensure pagination info uses Inter */
   }
 
   .pagination-controls {
@@ -241,5 +247,6 @@
   .page-size-select {
     @apply text-sm bg-navy-400/20 border-navy-300/20 rounded-md text-surface-white
            px-2 py-1 focus:outline-none focus:ring-2 focus:ring-accent-teal;
+    font-family: 'Inter', sans-serif; /* Ensure select uses Inter */
   }
 }
