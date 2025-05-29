@@ -216,10 +216,10 @@ export function Hero({ className }: HeroProps) {
                 transition={{ duration: 0.8, delay: 0.4 }}
                 className="text-xl md:text-2xl text-gray-300 max-w-3xl mx-auto mb-10"
               >
-                Analyze Canadian precious metals companies like a pro—find value, growth, and stability effortlessly.
+                Analyze CANADIAN precious metals companies like a pro—find value, growth, and stability effortlessly.
               </motion.p>
 
-              {/* CTA Buttons */}
+			  {/* CTA Buttons */}
               <motion.div
                 initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -232,17 +232,15 @@ export function Hero({ className }: HeroProps) {
                     Try ScatterScore™ Free
                   </Button>
                 </Link>
-                <button
-                  onClick={() => setIsVideoPlaying(true)}
-                  className="group flex items-center gap-3 text-white hover:text-yellow-400 transition-colors"
-                >
-                  <div className="h-14 w-14 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center group-hover:bg-yellow-500/20 transition-colors">
-                    <Play className="h-6 w-6 ml-1" />
-                  </div>
-                  <span className="text-lg font-medium">See How It Works</span>
-                </button>
+                <Link to="/companies">
+                  <button className="group flex items-center gap-3 text-white hover:text-yellow-400 transition-colors">
+                    <div className="h-14 w-14 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center group-hover:bg-yellow-500/20 transition-colors">
+                      <ArrowRight className="h-6 w-6" />
+                    </div>
+                    <span className="text-lg font-medium">Browse 500+ Companies</span>
+                  </button>
+                </Link>
               </motion.div>
-
               {/* Trust indicators */}
               <motion.div
                 initial={{ opacity: 0 }}
@@ -266,6 +264,7 @@ export function Hero({ className }: HeroProps) {
             </div>
           </div>
         </motion.div>
+			
 
         {/* Animated 3D Scatter Plot Visualization */}
         <motion.div
