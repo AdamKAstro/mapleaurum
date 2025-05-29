@@ -1,4 +1,4 @@
-// src/stripe-config.ts - COMPLETE VERSION
+// src/stripe-config.ts - FIXED with your real coupon IDs
 const FRONTEND_URL = import.meta.env.VITE_FRONTEND_URL || window.location.origin;
 
 export const products = {
@@ -63,11 +63,11 @@ export const products = {
   }
 } as const;
 
-// Free trial coupons - create these in your Stripe Dashboard
+// ✅ REAL COUPON IDs from your Stripe Dashboard
 export const FREE_TRIAL_COUPONS = {
-  'PRO_TRIAL_1M': 'Free Pro Trial - 1 Month',
-  'PREMIUM_TRIAL_1M': 'Free Premium Trial - 1 Month',
-  'BETA_TESTER': 'Beta Tester Access'
+  'ldoCcm3N': 'Free Pro Trial - 1 Month',      // ✅ Your real Pro trial coupon
+  'SKtE1p9l': 'Free Premium Trial - 1 Month',  // ✅ Your real Premium trial coupon  
+  'jyL3Vqu8': 'Beta Tester Access'              // ✅ Your real Beta tester coupon
 };
 
 // Helper functions
@@ -96,6 +96,15 @@ export const getYearlySavings = (plan: 'pro' | 'premium') => {
     percentage: savingsPercent,
     monthlyEquivalent: Math.round((yearlyPrice / 12) * 100) / 100
   };
+};
+
+// ✅ Generate special admin links with coupons
+export const generateCouponLink = (plan: 'pro' | 'premium', couponType: 'trial' | 'beta' = 'trial') => {
+  const couponId = couponType === 'trial' 
+    ? (plan === 'pro' ? 'ldoCcm3N' : 'SKtE1p9l')  // Use real IDs
+    : 'jyL3Vqu8';  // Beta tester
+    
+  return `${FRONTEND_URL}/subscribe?coupon=${couponId}&plan=${plan}&admin=true`;
 };
 
 // Types

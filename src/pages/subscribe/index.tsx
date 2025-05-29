@@ -1,7 +1,7 @@
-// src/pages/subscribe/index.tsx - COMPLETE WORKING VERSION
+// src/pages/subscribe/index.tsx - FIXED VERSION (No public trial buttons)
 import React, { useState, useEffect } from 'react';
-import { Star, Crown, Check, Loader2, Gift } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { Star, Crown, Check, Loader2, Gift, Link as LinkIcon, Copy } from 'lucide-react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '../../components/ui/button';
 import { Typography } from '../../components/ui/typography';
 import { PageContainer } from '../../components/ui/page-container';
@@ -17,6 +17,7 @@ import {
   getProduct, 
   getPrice,
   getYearlySavings,
+  generateCouponLink,
   FREE_TRIAL_COUPONS,
   type ProductKey,
   type SubscriptionTier 
@@ -41,10 +42,11 @@ interface PlanCardProps {
   isFree?: boolean;
   isYearly: boolean;
   currentTier: SubscriptionTier;
-  onSubscribe: (productKey: ProductKey, isYearly: boolean) => void;
-  onFreeTrialSubscribe?: (productKey: ProductKey, isYearly: boolean, couponId: string) => void;
+  onSubscribe: (productKey: ProductKey, isYearly: boolean, couponId?: string) => void;
   isProcessing: boolean;
   isLoggedIn: boolean;
+  hasCoupon?: boolean;
+  couponMessage?: string;
 }
 
 function PlanCard({ 
@@ -53,9 +55,10 @@ function PlanCard({
   isYearly, 
   currentTier, 
   onSubscribe, 
-  onFreeTrialSubscribe,
   isProcessing, 
-  isLoggedIn 
+  isLoggedIn,
+  hasCoupon = false,
+  couponMessage
 }: PlanCardProps) {
   const navigate = useNavigate();
   
@@ -125,42 +128,78 @@ function PlanCard({
     buttonAction = () => navigate(`/login?action=signup&plan=${productKey}&yearly=${isYearly}`);
   }
 
+  // ✅ Special coupon handling
+  if (hasCoupon && canUpgrade) {
+    buttonText = `Get ${product.name} - FREE TRIAL!`;
+    if (!isLoggedIn) {
+      buttonText = `Sign Up for FREE ${product.name}!`;
+    }
+  }
+
   const Icon = productKey === 'pro' ? Star : Crown;
   const isPopular = product.popular;
 
   return (
-    <div className={cn('relative transform transition-all duration-300 hover:scale-[1.015] flex', isPopular && 'shadow-cyan-900/20 shadow-lg')}>
-      {isPopular && (
+    <div className={cn(
+      'relative transform transition-all duration-300 hover:scale-[1.015] flex',
+      isPopular && 'shadow-cyan-900/20 shadow-lg',
+      hasCoupon && 'ring-2 ring-emerald-500 shadow-emerald-500/20'
+    )}>
+      {isPopular && !hasCoupon && (
         <div className="absolute -top-3 left-1/2 -translate-x-1/2 transform z-10">
           <span className="inline-flex items-center rounded-full bg-gradient-to-r from-teal-500 to-cyan-600 px-3 py-0.5 text-xs font-semibold text-white shadow-sm">
             Most Popular
           </span>
         </div>
       )}
+
+      {hasCoupon && (
+        <div className="absolute -top-3 left-1/2 -translate-x-1/2 transform z-10">
+          <span className="inline-flex items-center rounded-full bg-gradient-to-r from-emerald-500 to-green-600 px-3 py-0.5 text-xs font-semibold text-white shadow-sm">
+            🎁 FREE TRIAL
+          </span>
+        </div>
+      )}
       
       <div className={cn(
         'relative flex flex-col h-full rounded-xl border p-6 w-full backdrop-blur-sm',
-        isPopular ? 'bg-navy-700/50 border-cyan-700/50' : 'bg-navy-800/60 border-navy-700/50'
+        isPopular && !hasCoupon ? 'bg-navy-700/50 border-cyan-700/50' : 'bg-navy-800/60 border-navy-700/50',
+        hasCoupon && 'bg-emerald-900/20 border-emerald-600/50'
       )}>
         <div className="flex items-center gap-3 mb-4">
           <Icon className={cn('h-7 w-7', productKey === 'premium' ? 'text-accent-yellow' : 'text-accent-teal')} />
-          <h3 className={cn('text-lg font-semibold', isPopular ? 'text-cyan-300' : 'text-white')}>
+          <h3 className={cn('text-lg font-semibold', isPopular || hasCoupon ? 'text-cyan-300' : 'text-white')}>
             {product.name}
           </h3>
         </div>
         
         <div className="mt-2 flex items-baseline gap-x-1">
-          <span className="text-3xl font-bold tracking-tight text-white">
+          <span className={cn(
+            'text-3xl font-bold tracking-tight',
+            hasCoupon ? 'line-through text-gray-400' : 'text-white'
+          )}>
             ${price.amount}
           </span>
           <span className="text-sm font-semibold leading-6 text-gray-400">
             /{price.interval}
           </span>
+          {hasCoupon && (
+            <div className="ml-2">
+              <span className="text-3xl font-bold tracking-tight text-emerald-400">FREE</span>
+              <div className="text-xs text-emerald-300">for 1 month</div>
+            </div>
+          )}
         </div>
         
-        {savings && (
+        {savings && !hasCoupon && (
           <div className="mt-2 text-sm text-emerald-400 font-medium">
             Save ${savings.amount} ({savings.percentage}%) yearly
+          </div>
+        )}
+        
+        {couponMessage && (
+          <div className="mt-2 text-sm text-emerald-300 font-medium bg-emerald-900/30 p-2 rounded">
+            🎁 {couponMessage}
           </div>
         )}
         
@@ -177,104 +216,119 @@ function PlanCard({
           ))}
         </ul>
         
-        <div className="mt-8 space-y-2">
+        <div className="mt-8">
           <Button
             onClick={buttonAction}
             disabled={buttonDisabled}
             size="lg"
-            variant={isCurrentPlan || buttonDisabled ? 'secondary' : (isPopular ? 'primary' : 'outline')}
+            variant={isCurrentPlan || buttonDisabled ? 'secondary' : (hasCoupon ? 'default' : (isPopular ? 'primary' : 'outline'))}
             className={cn(
               'w-full font-semibold',
               buttonDisabled && 'opacity-60 cursor-not-allowed',
-              isPopular && !isCurrentPlan && !buttonDisabled && 'bg-gradient-to-r from-teal-500 to-cyan-600 hover:from-teal-600 hover:to-cyan-700 text-white'
+              hasCoupon && !isCurrentPlan && !buttonDisabled && 'bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 text-white',
+              isPopular && !hasCoupon && !isCurrentPlan && !buttonDisabled && 'bg-gradient-to-r from-teal-500 to-cyan-600 hover:from-teal-600 hover:to-cyan-700 text-white'
             )}
           >
             {isProcessing && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             {buttonText}
           </Button>
-
-          {/* Free trial button for testing */}
-          {canUpgrade && isLoggedIn && onFreeTrialSubscribe && (
-            <Button
-              onClick={() => {
-                const couponId = productKey === 'pro' ? 'PRO_TRIAL_1M' : 'PREMIUM_TRIAL_1M';
-                onFreeTrialSubscribe(productKey, isYearly, couponId);
-              }}
-              disabled={buttonDisabled}
-              size="sm"
-              variant="outline"
-              className="w-full text-xs border-emerald-500 text-emerald-400 hover:bg-emerald-900/20"
-            >
-              Try Free for 1 Month
-            </Button>
-          )}
         </div>
       </div>
     </div>
   );
 }
 
-// Admin free trial section
-function FreeTrialSection() {
+// ✅ Admin panel for generating coupon links
+function AdminCouponPanel() {
   const { user } = useAuth();
-  const [email, setEmail] = useState('');
-  const [isGranting, setIsGranting] = useState(false);
-  const [message, setMessage] = useState('');
+  const [generatedLinks, setGeneratedLinks] = useState<{pro: string, premium: string}>({pro: '', premium: ''});
+  const [copyStatus, setCopyStatus] = useState<string>('');
   
-  const grantFreeTrial = async () => {
-    if (!email) return;
-    
-    setIsGranting(true);
-    try {
-      // This would call your admin function - for now just show message
-      setMessage(`✅ Would grant free Premium trial to ${email} (admin function not implemented yet)`);
-      setEmail('');
-    } catch (err: any) {
-      setMessage(`❌ Error: ${err.message}`);
-    } finally {
-      setIsGranting(false);
-    }
+  // ✅ FIXED: Check admin emails properly
+  const adminEmails = ['adamkiil@outlook.com', 'adamkiil79@gmail.com', 'adamkiil@yahoo.co.uk'];
+  const isAdmin = user?.email && adminEmails.includes(user.email);
+  
+  if (!isAdmin) return null;
+
+  const generateLinks = () => {
+    const proLink = generateCouponLink('pro', 'trial');
+    const premiumLink = generateCouponLink('premium', 'trial');
+    setGeneratedLinks({ pro: proLink, premium: premiumLink });
   };
 
-  // Only show to admin users
-  if (user?.email !== 'adamkiil@outlook.com' && user?.email !== 'adamkiil79@gmail.com') {
-    return null;
-  }
+  const copyToClipboard = (text: string, type: string) => {
+    navigator.clipboard.writeText(text);
+    setCopyStatus(`${type} link copied!`);
+    setTimeout(() => setCopyStatus(''), 2000);
+  };
 
   return (
-    <div className="max-w-md mx-auto mb-8 p-6 bg-emerald-700/20 border border-emerald-600/50 rounded-lg backdrop-blur-sm">
+    <div className="max-w-2xl mx-auto mb-8 p-6 bg-purple-900/20 border border-purple-600/50 rounded-lg backdrop-blur-sm">
       <div className="flex items-center gap-2 mb-4">
-        <Gift className="h-5 w-5 text-emerald-400" />
-        <Typography variant="h3" className="text-lg font-bold text-emerald-300">
-          Admin: Grant Free Trial
+        <Gift className="h-5 w-5 text-purple-400" />
+        <Typography variant="h3" className="text-lg font-bold text-purple-300">
+          Admin: Generate Free Trial Links
         </Typography>
       </div>
       
-      {message && (
-        <div className={cn(
-          'mb-4 p-2 rounded text-sm',
-          message.startsWith('✅') ? 'bg-emerald-900/30 text-emerald-300' : 'bg-red-900/30 text-red-300'
-        )}>
-          {message}
-        </div>
-      )}
-      
-      <div className="flex gap-2">
-        <input
-          type="email"
-          placeholder="User email for free trial"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          className="flex-1 px-3 py-2 bg-navy-600/80 border border-navy-500 rounded text-white placeholder-gray-400 text-sm"
-        />
+      <div className="space-y-4">
         <Button
-          onClick={grantFreeTrial}
-          disabled={isGranting || !email}
-          size="sm"
-          className="bg-emerald-600 hover:bg-emerald-700"
+          onClick={generateLinks}
+          className="bg-purple-600 hover:bg-purple-700 text-white"
         >
-          {isGranting ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Grant'}
+          <LinkIcon className="mr-2 h-4 w-4" />
+          Generate Trial Links
         </Button>
+
+        {generatedLinks.pro && (
+          <div className="space-y-3">
+            <div className="p-3 bg-navy-800/60 rounded border border-purple-500/30">
+              <div className="flex items-center justify-between mb-2">
+                <span className="font-medium text-purple-300">Pro Trial Link:</span>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => copyToClipboard(generatedLinks.pro, 'Pro')}
+                  className="border-purple-500 text-purple-300 hover:bg-purple-900/20"
+                >
+                  <Copy className="h-3 w-3 mr-1" />
+                  Copy
+                </Button>
+              </div>
+              <code className="text-xs text-gray-300 break-all block bg-navy-900/50 p-2 rounded">
+                {generatedLinks.pro}
+              </code>
+            </div>
+
+            <div className="p-3 bg-navy-800/60 rounded border border-purple-500/30">
+              <div className="flex items-center justify-between mb-2">
+                <span className="font-medium text-purple-300">Premium Trial Link:</span>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => copyToClipboard(generatedLinks.premium, 'Premium')}
+                  className="border-purple-500 text-purple-300 hover:bg-purple-900/20"
+                >
+                  <Copy className="h-3 w-3 mr-1" />
+                  Copy
+                </Button>
+              </div>
+              <code className="text-xs text-gray-300 break-all block bg-navy-900/50 p-2 rounded">
+                {generatedLinks.premium}
+              </code>
+            </div>
+          </div>
+        )}
+
+        {copyStatus && (
+          <div className="text-sm text-emerald-400 bg-emerald-900/30 p-2 rounded">
+            ✅ {copyStatus}
+          </div>
+        )}
+
+        <div className="text-xs text-gray-400">
+          💡 Share these links with testers to give them free 1-month trials. The coupon will be applied automatically.
+        </div>
       </div>
     </div>
   );
@@ -286,6 +340,13 @@ export function SubscribePage() {
   const [isYearly, setIsYearly] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
+
+  // ✅ Check for coupon in URL parameters
+  const urlParams = new URLSearchParams(location.search);
+  const couponId = urlParams.get('coupon');
+  const planFromUrl = urlParams.get('plan') as ProductKey | null;
+  const isAdminAccess = urlParams.get('admin') === 'true';
 
   useEffect(() => {
     if (!isAuthLoading && session) {
@@ -294,9 +355,13 @@ export function SubscribePage() {
   }, [session, isAuthLoading, refreshSubscriptionStatus]);
 
   // Regular subscription checkout
-  const handleSubscribe = async (productKey: ProductKey, yearly: boolean) => {
+  const handleSubscribe = async (productKey: ProductKey, yearly: boolean, applyCouponId?: string) => {
     if (!user || !session?.access_token) {
-      navigate(`/login?action=login&plan=${productKey}&yearly=${yearly}`);
+      // Preserve coupon in login redirect
+      const loginUrl = couponId 
+        ? `/login?action=login&plan=${productKey}&yearly=${yearly}&coupon=${couponId}`
+        : `/login?action=login&plan=${productKey}&yearly=${yearly}`;
+      navigate(loginUrl);
       return;
     }
 
@@ -306,15 +371,24 @@ export function SubscribePage() {
     const product = getProduct(productKey);
     
     try {
+      const checkoutBody: any = {
+        price_id: priceId,
+        success_url: `${product.successUrl}&tier=${productKey}`,
+        cancel_url: product.cancelUrl,
+        mode: 'subscription',
+        plan_name: product.name,
+        interval: yearly ? 'year' : 'month'
+      };
+
+      // ✅ Apply coupon if provided
+      if (applyCouponId || couponId) {
+        checkoutBody.coupon_id = applyCouponId || couponId;
+        checkoutBody.plan_name = `${product.name} (Free Trial)`;
+        checkoutBody.success_url = `${product.successUrl}&tier=${productKey}&trial=true`;
+      }
+
       const { data, error } = await supabase.functions.invoke('stripe-checkout', {
-        body: {
-          price_id: priceId,
-          success_url: `${product.successUrl}&tier=${productKey}`,
-          cancel_url: product.cancelUrl,
-          mode: 'subscription',
-          plan_name: product.name,
-          interval: yearly ? 'year' : 'month'
-        }
+        body: checkoutBody
       });
 
       if (error) {
@@ -336,53 +410,19 @@ export function SubscribePage() {
     }
   };
 
-  // ✅ FREE TRIAL CHECKOUT - This is where you use coupons!
-  const handleFreeTrialSubscribe = async (productKey: ProductKey, yearly: boolean, couponId: string) => {
-    if (!user || !session?.access_token) {
-      navigate(`/login?action=login&plan=${productKey}&yearly=${yearly}`);
-      return;
-    }
-
-    setIsProcessing(true);
-    
-    const priceId = getPriceId(productKey, yearly ? 'yearly' : 'monthly');
-    const product = getProduct(productKey);
-    
-    try {
-      const { data, error } = await supabase.functions.invoke('stripe-checkout', {
-        body: {
-          price_id: priceId,
-          success_url: `${product.successUrl}&tier=${productKey}&trial=true`,
-          cancel_url: product.cancelUrl,
-          mode: 'subscription',
-          plan_name: `${product.name} (Free Trial)`,
-          interval: yearly ? 'year' : 'month',
-          coupon_id: couponId  // ✅ This applies the 100% off coupon
-        }
-      });
-
-      if (error) {
-        console.error('Free trial checkout error:', error);
-        alert(`Free trial setup failed: ${error.message || 'Please try again'}`);
-        return;
-      }
-
-      if (data?.url) {
-        window.location.href = data.url;
-      } else {
-        alert('Could not create free trial session. Please try again.');
-      }
-    } catch (error: any) {
-      console.error('Free trial error:', error);
-      alert(`Error: ${error.message}`);
-    } finally {
-      setIsProcessing(false);
-    }
-  };
-
   const isLoading = isAuthLoading || isSubscriptionLoading;
   const currentTier = currentUserSubscriptionTier || 'free';
   const isLoggedIn = !!(session && user);
+
+  // ✅ Determine which plan has the coupon applied
+  const getCouponMessage = (productKey: ProductKey) => {
+    if (!couponId) return '';
+    
+    const couponName = FREE_TRIAL_COUPONS[couponId as keyof typeof FREE_TRIAL_COUPONS];
+    if (!couponName) return '';
+    
+    return `Special offer: ${couponName}`;
+  };
 
   return (
     <PageContainer
@@ -418,8 +458,17 @@ export function SubscribePage() {
           </div>
         </div>
 
-        {/* Admin Free Trial Section */}
-        <FreeTrialSection />
+        {/* ✅ Admin Panel - Only for admins */}
+        <AdminCouponPanel />
+
+        {/* Coupon notification */}
+        {couponId && (
+          <div className="max-w-md mx-auto mb-8 p-4 bg-emerald-900/30 border border-emerald-600/50 rounded-lg backdrop-blur-sm text-center">
+            <div className="text-emerald-300 font-medium">
+              🎁 You have a special offer! Select your plan below to activate your free trial.
+            </div>
+          </div>
+        )}
 
         {/* Plans Grid */}
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-3 max-w-5xl mx-auto px-4">
@@ -428,7 +477,6 @@ export function SubscribePage() {
             isYearly={isYearly}
             currentTier={currentTier}
             onSubscribe={handleSubscribe}
-            onFreeTrialSubscribe={handleFreeTrialSubscribe}
             isProcessing={isProcessing}
             isLoggedIn={isLoggedIn}
           />
@@ -438,9 +486,10 @@ export function SubscribePage() {
             isYearly={isYearly}
             currentTier={currentTier}
             onSubscribe={handleSubscribe}
-            onFreeTrialSubscribe={handleFreeTrialSubscribe}
             isProcessing={isProcessing}
             isLoggedIn={isLoggedIn}
+            hasCoupon={!!(couponId && (planFromUrl === 'pro' || !planFromUrl))}
+            couponMessage={getCouponMessage('pro')}
           />
           
           <PlanCard
@@ -448,9 +497,10 @@ export function SubscribePage() {
             isYearly={isYearly}
             currentTier={currentTier}
             onSubscribe={handleSubscribe}
-            onFreeTrialSubscribe={handleFreeTrialSubscribe}
             isProcessing={isProcessing}
             isLoggedIn={isLoggedIn}
+            hasCoupon={!!(couponId && (planFromUrl === 'premium' || !planFromUrl))}
+            couponMessage={getCouponMessage('premium')}
           />
         </div>
 
