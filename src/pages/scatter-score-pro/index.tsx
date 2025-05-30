@@ -286,7 +286,7 @@ const ScaleToggle: React.FC<{
   onChange: (newScale: 'linear' | 'log') => void;
   label: string;
 }> = ({ scale, onChange, label }) => (
-  <div className="flex items-center gap-2 text-xs">
+  <div className="flex items-center gap-2 text-xs font-medium">
     <span className="text-surface-white/70">{label}:</span>
     <div className="flex bg-navy-400/20 rounded-lg overflow-hidden p-0.5 gap-0.5">
       <button
@@ -459,12 +459,12 @@ const MetricListItem: React.FC<{
           const value = parseInt(e.target.value, 10);
           if (!isNaN(value)) onWeightChange(value);
         }}
-        className="h-7 text-xs w-14 bg-navy-800/50 border-navy-600 text-center"
+        className="h-7 text-xs w-14 bg-navy-800/50 border-navy-600 text-center font-medium"
         min={0} 
         max={100} 
         step={1} 
       />
-      <span className="text-xs text-muted-foreground">%</span>
+      <span className="text-xs text-muted-foreground font-medium">%</span>
       <Checkbox 
         checked={metric.userHigherIsBetter}
         onCheckedChange={(checked) => onToggleHLB(!!checked)}
@@ -473,9 +473,9 @@ const MetricListItem: React.FC<{
       <TooltipProvider delayDuration={100}>
         <Tooltip>
           <TooltipTrigger asChild>
-            <span className="text-xs text-muted-foreground cursor-help">HLB</span>
+            <span className="text-xs text-muted-foreground cursor-help font-medium">HLB</span>
           </TooltipTrigger>
-          <TooltipContent side="left" className="text-xs max-w-[200px] p-2 z-[70]">
+          <TooltipContent side="left" className="text-xs max-w-[200px] p-2 z-[70] font-sans">
             <p>Higher is Better. Default: {metric.originalHigherIsBetter ? 'Yes' : 'No'}</p>
           </TooltipContent>
         </Tooltip>
@@ -520,7 +520,7 @@ const AxisMetricConfigurator: React.FC<{
         onClick={() => setIsExpanded(!isExpanded)}
         className="w-full flex items-center justify-between p-3 hover:bg-navy-700/20 transition-colors rounded-t-lg"
       >
-        <h3 className="text-sm font-semibold">{axisTitle}</h3>
+        <h3 className="text-base font-semibold">{axisTitle}</h3>
         <div className="flex items-center gap-2">
           <span className={cn(
             "text-xs font-medium px-2 py-0.5 rounded",
@@ -549,7 +549,7 @@ const AxisMetricConfigurator: React.FC<{
             }}
             value=""
           >
-            <SelectTrigger className="text-xs h-8 bg-navy-700/50 border-navy-600">
+            <SelectTrigger className="text-xs h-8 bg-navy-700/50 border-navy-600 font-medium">
               <div className="flex items-center gap-2">
                 <Plus size={14} />
                 <SelectValue placeholder="Add metric..." />
@@ -572,7 +572,7 @@ const AxisMetricConfigurator: React.FC<{
                         {catLabel}
                       </SelectLabel>
                       {metricsInCat.map(m => (
-                        <SelectItem key={m.key} value={m.key} className="text-xs pl-4">
+                        <SelectItem key={m.key} value={m.key} className="text-xs pl-4 font-medium">
                           {m.label}
                         </SelectItem>
                       ))}
@@ -580,7 +580,7 @@ const AxisMetricConfigurator: React.FC<{
                   );
                 })}
               {accessibleMetrics.filter(m => !currentSelectedMetricsForAxis.find(sm => sm.key === m.key)).length === 0 && (
-                <div className="p-2 text-xs text-muted-foreground text-center">
+                <div className="p-2 text-xs text-muted-foreground text-center font-medium">
                   All accessible metrics added.
                 </div>
               )}
@@ -589,7 +589,7 @@ const AxisMetricConfigurator: React.FC<{
           
           <div className="space-y-2 max-h-64 overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-navy-600 scrollbar-track-transparent">
             {currentSelectedMetricsForAxis.length === 0 ? (
-              <p className="text-xs text-muted-foreground text-center py-4">
+              <p className="text-xs text-muted-foreground text-center py-4 font-medium">
                 No metrics selected for this axis.
               </p>
             ) : (
@@ -650,6 +650,7 @@ export function ScatterScoreProPage() {
   const [axisScoreError, setAxisScoreError] = useState<string | null>(null);
   const [isTemplateLoading, setIsTemplateLoading] = useState(false);
   const [hasInitialLoad, setHasInitialLoad] = useState(false);
+  const [isTemplateReady, setIsTemplateReady] = useState(false);
 
   const chartRef = useRef<ChartJS<'scatter', (ScatterDataPoint | null)[], unknown> | null>(null);
 
@@ -668,10 +669,11 @@ export function ScatterScoreProPage() {
     [selectedZMetricKey, getMetricConfigDetails]
   );
 
-  const loadTemplate = useCallback((templateName: string | null) => {
+  const loadTemplate = useCallback((templateName: string | null, autoApply: boolean = false) => {
     if (DEBUG_SCATTER_SCORE) console.log(`[ScatterScoreProPage] loadTemplate attempting for: '${templateName}'`);
     
     setIsTemplateLoading(true);
+    setIsTemplateReady(false);
     
     const template = PREDEFINED_TEMPLATES.find(t => t.name === templateName) || PREDEFINED_TEMPLATES[0];
     
@@ -683,6 +685,7 @@ export function ScatterScoreProPage() {
       setActiveTemplateName(null);
       setCurrentTemplateConfig({});
       setIsTemplateLoading(false);
+      setIsTemplateReady(false);
       return;
     }
     
@@ -705,8 +708,11 @@ export function ScatterScoreProPage() {
         };
       }).filter(Boolean) as AxisMetricConfig[];
     
-    setSelectedXMetrics(normalizeWeights(mapAndFilter(template.xMetricsConfig)));
-    setSelectedYMetrics(normalizeWeights(mapAndFilter(template.yMetricsConfig)));
+    const xMetrics = normalizeWeights(mapAndFilter(template.xMetricsConfig));
+    const yMetrics = normalizeWeights(mapAndFilter(template.yMetricsConfig));
+    
+    setSelectedXMetrics(xMetrics);
+    setSelectedYMetrics(yMetrics);
     
     const zAccessible = template.zMetricKey ? accessibleMetrics.some(am => am.key === template.zMetricKey) : false;
     setSelectedZMetricKey(zAccessible && template.zMetricKey ? template.zMetricKey : null);
@@ -715,11 +721,19 @@ export function ScatterScoreProPage() {
     setImputationMode(template.defaultImputationMode || 'dataset_median');
     
     setIsTemplateLoading(false);
+    setIsTemplateReady(true);
     
     if (DEBUG_SCATTER_SCORE) console.log(`[ScatterScoreProPage] Template '${template.name}' loaded.`);
+    
+    // Return a promise that resolves when template is ready
+    return new Promise<void>((resolve) => {
+      setTimeout(() => {
+        resolve();
+      }, 50);
+    });
   }, [accessibleMetrics, getMetricConfigDetails]);
 
-  const handleApplyConfigurationAndCalculateScores = useCallback(async () => {
+  const handleApplyConfigurationAndCalculateScores = useCallback(async (skipValidation: boolean = false) => {
     if (DEBUG_SCATTER_SCORE) console.log("[ScatterScoreProPage] 'Apply & Plot Scores' clicked.");
     
     const finalXMetrics = normalizeWeights(selectedXMetrics);
@@ -730,18 +744,20 @@ export function ScatterScoreProPage() {
     const currentXTotalOnApply = finalXMetrics.reduce((sum, m) => sum + m.weight, 0);
     const currentYTotalOnApply = finalYMetrics.reduce((sum, m) => sum + m.weight, 0);
 
-    if (finalXMetrics.length > 0 && Math.round(currentXTotalOnApply) !== 100) {
-      alert(`X-Axis weights sum to ${currentXTotalOnApply}%, but must sum to 100%. Please adjust.`);
-      return;
-    }
-    if (finalYMetrics.length > 0 && Math.round(currentYTotalOnApply) !== 100) {
-      alert(`Y-Axis weights sum to ${currentYTotalOnApply}%, but must sum to 100%. Please adjust.`);
-      return;
-    }
-    if (finalXMetrics.length === 0 && finalYMetrics.length === 0) {
-      alert("Please select at least one metric for either X or Y axis.");
-      setPlotData([]);
-      return;
+    if (!skipValidation) {
+      if (finalXMetrics.length > 0 && Math.round(currentXTotalOnApply) !== 100) {
+        alert(`X-Axis weights sum to ${currentXTotalOnApply}%, but must sum to 100%. Please adjust.`);
+        return;
+      }
+      if (finalYMetrics.length > 0 && Math.round(currentYTotalOnApply) !== 100) {
+        alert(`Y-Axis weights sum to ${currentYTotalOnApply}%, but must sum to 100%. Please adjust.`);
+        return;
+      }
+      if (finalXMetrics.length === 0 && finalYMetrics.length === 0) {
+        alert("Please select at least one metric for either X or Y axis.");
+        setPlotData([]);
+        return;
+      }
     }
     
     setIsCalculatingScores(true);
@@ -868,15 +884,20 @@ export function ScatterScoreProPage() {
 
   // Load template and auto-apply on first mount
   useEffect(() => {
-    if (accessibleMetrics.length > 0 && activeTemplateName && !isTemplateLoading && !hasInitialLoad) {
-      loadTemplate(activeTemplateName);
-      // Add a small delay to ensure state is updated before calculating
-      setTimeout(() => {
-        handleApplyConfigurationAndCalculateScores();
-        setHasInitialLoad(true);
-      }, 100);
+    if (accessibleMetrics.length > 0 && !hasInitialLoad) {
+      const performInitialLoad = async () => {
+        if (activeTemplateName) {
+          await loadTemplate(activeTemplateName, true);
+          // Wait a bit more to ensure state is fully updated
+          await new Promise(resolve => setTimeout(resolve, 200));
+          await handleApplyConfigurationAndCalculateScores(true);
+          setHasInitialLoad(true);
+        }
+      };
+      
+      performInitialLoad();
     }
-  }, [accessibleMetrics, activeTemplateName, isTemplateLoading, hasInitialLoad, loadTemplate, handleApplyConfigurationAndCalculateScores]);
+  }, [accessibleMetrics, hasInitialLoad]);
 
   const handleTemplateChange = (newTemplateName: string) => {
     loadTemplate(newTemplateName);
@@ -1016,7 +1037,7 @@ export function ScatterScoreProPage() {
         font: { 
           size: 9, 
           weight: '500' as const, 
-          family: "'Inter', sans-serif" 
+          family: 'font-sans' 
         },
         textAlign: 'center' as const,
         anchor: 'center' as const,
@@ -1054,11 +1075,18 @@ export function ScatterScoreProPage() {
                 (selectedXMetrics.length > 1 ? ' & others' : '') 
               : 'Not Set'})`,
           color: '#94A3B8',
-          font: { size: 12 }
+          font: { 
+            size: 13,
+            family: 'font-sans',
+            weight: '500' as const
+          }
         },
         ticks: {
           color: '#64748B',
-          font: { size: 9 },
+          font: { 
+            size: 10,
+            family: 'font-sans'
+          },
           maxTicksLimit: 8,
           precision: 0,
           autoSkipPadding: 15,
@@ -1083,11 +1111,18 @@ export function ScatterScoreProPage() {
                 (selectedYMetrics.length > 1 ? ' & others' : '') 
               : 'Not Set'})`,
           color: '#94A3B8',
-          font: { size: 12 }
+          font: { 
+            size: 13,
+            family: 'font-sans',
+            weight: '500' as const
+          }
         },
         ticks: {
           color: '#64748B',
-          font: { size: 9 },
+          font: { 
+            size: 10,
+            family: 'font-sans'
+          },
           maxTicksLimit: 8,
           precision: 0,
           autoSkipPadding: 15,
@@ -1109,7 +1144,10 @@ export function ScatterScoreProPage() {
           usePointStyle: true,
           pointStyle: 'circle',
           padding: 20,
-          font: { size: 11 }
+          font: { 
+            size: 12,
+            family: 'font-sans'
+          }
         }
       },
       tooltip: {
@@ -1123,6 +1161,15 @@ export function ScatterScoreProPage() {
         cornerRadius: 4,
         boxPadding: 4,
         usePointStyle: true,
+        titleFont: {
+          size: 13,
+          family: 'font-sans',
+          weight: 'bold' as const
+        },
+        bodyFont: {
+          size: 12,
+          family: 'font-sans'
+        },
         callbacks: {
           title: (tooltipItems: any[]) => {
             const dp = tooltipItems[0]?.raw as ScatterScorePlotPointData;
@@ -1217,7 +1264,7 @@ export function ScatterScoreProPage() {
         ? `Displaying ${plotData.length} companies.` 
         : "Configure axes and apply to plot scores."
       }
-      className="relative isolate flex flex-col flex-grow"
+      className="relative isolate flex flex-col flex-grow font-sans"
       contentClassName="flex flex-col flex-grow min-h-0"
     >
       <div 
@@ -1281,7 +1328,7 @@ export function ScatterScoreProPage() {
               >
                 {/* Panel Header */}
                 <div className="flex justify-between items-center sticky top-0 bg-navy-800/90 backdrop-blur-sm py-2 -mx-3 md:-mx-4 px-3 md:px-4 z-10 border-b border-navy-700">
-                  <h2 className="text-lg font-semibold text-surface-white">Configuration</h2>
+                  <h2 className="text-xl font-bold text-surface-white">Configuration</h2>
                   <Button 
                     variant="ghost" 
                     size="icon"
@@ -1296,7 +1343,7 @@ export function ScatterScoreProPage() {
                   {/* Template Selector */}
                   <div className="bg-navy-700/30 rounded-lg p-3 border border-navy-600/50">
                     <div className="flex items-center justify-between mb-2">
-                      <Label className="text-xs font-semibold text-surface-white">Template</Label>
+                      <Label className="text-sm font-semibold text-surface-white">Template</Label>
                       <TooltipProvider delayDuration={100}>
                         <Tooltip>
                           <TooltipTrigger asChild>
@@ -1307,7 +1354,7 @@ export function ScatterScoreProPage() {
                           <TooltipContent 
                             side="left" 
                             align="end"
-                            className="text-xs max-w-[300px] p-3 z-[100] bg-navy-700/95 border border-navy-600/80"
+                            className="text-xs max-w-[300px] p-3 z-[100] bg-navy-700/95 border border-navy-600/80 font-sans"
                           >
                             <div className="space-y-2">
                               {PREDEFINED_TEMPLATES.map((t, index) => (
@@ -1316,7 +1363,7 @@ export function ScatterScoreProPage() {
                                   index < PREDEFINED_TEMPLATES.length - 1 && "border-b border-navy-600/50"
                                 )}>
                                   <p className="font-semibold text-accent-teal mb-0.5">{t.name}</p>
-                                  <p className="text-surface-white/80 text-[11px]">{t.description}</p>
+                                  <p className="text-surface-white/80 text-[11px] font-light">{t.description}</p>
                                 </div>
                               ))}
                             </div>
@@ -1325,12 +1372,12 @@ export function ScatterScoreProPage() {
                       </TooltipProvider>
                     </div>
                     <Select value={activeTemplateName || ""} onValueChange={handleTemplateChange}>
-                      <SelectTrigger className="w-full h-8 text-xs bg-navy-700/50 border-navy-600">
+                      <SelectTrigger className="w-full h-8 text-xs bg-navy-700/50 border-navy-600 font-medium">
                         <SelectValue placeholder="Select a template..." />
                       </SelectTrigger>
                       <SelectContent className="z-[60]">
                         {PREDEFINED_TEMPLATES.map(t => (
-                          <SelectItem key={t.name} value={t.name} className="text-xs">
+                          <SelectItem key={t.name} value={t.name} className="text-xs font-medium">
                             {t.name}
                           </SelectItem>
                         ))}
@@ -1359,7 +1406,7 @@ export function ScatterScoreProPage() {
 
                   {/* Z-Axis Configuration */}
                   <div className="bg-navy-700/30 rounded-lg p-3 border border-navy-600/50 space-y-2">
-                    <h3 className="text-sm font-semibold">Bubble Size (Z-Axis)</h3>
+                    <h3 className="text-base font-semibold">Bubble Size (Z-Axis)</h3>
                     <MetricSelector
                       label=""
                       selectedMetric={selectedZMetricKey || ""}
@@ -1371,7 +1418,7 @@ export function ScatterScoreProPage() {
                       availableMetrics={accessibleMetrics}
                       filterForNumericOnly={true}
                       placeholder="Select metric..."
-                      className="text-xs h-8"
+                      className="text-xs h-8 font-medium"
                     />
                     {selectedZMetricKey && (
                       <ScaleToggle 
@@ -1387,10 +1434,10 @@ export function ScatterScoreProPage() {
 
                   {/* Advanced Settings */}
                   <div className="bg-navy-700/30 rounded-lg p-3 border border-navy-600/50 space-y-3">
-                    <h3 className="text-sm font-semibold">Advanced Settings</h3>
+                    <h3 className="text-base font-semibold">Advanced Settings</h3>
                     
                     <div>
-                      <Label htmlFor="norm-mode" className="text-xs text-muted-foreground">
+                      <Label htmlFor="norm-mode" className="text-xs text-muted-foreground font-medium">
                         Normalization
                       </Label>
                       <Select 
@@ -1400,20 +1447,20 @@ export function ScatterScoreProPage() {
                           setActiveTemplateName(null);
                         }}
                       >
-                        <SelectTrigger id="norm-mode" className="h-8 text-xs bg-navy-700/50 border-navy-600 mt-1">
+                        <SelectTrigger id="norm-mode" className="h-8 text-xs bg-navy-700/50 border-navy-600 mt-1 font-medium">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent className="z-[60]">
-                          <SelectItem value="dataset_min_max" className="text-xs">Dataset Min-Max</SelectItem>
-                          <SelectItem value="global_min_max" className="text-xs">Global Min-Max</SelectItem>
-                          <SelectItem value="dataset_rank_percentile" className="text-xs">Dataset Rank</SelectItem>
-                          <SelectItem value="dataset_z_score" className="text-xs">Dataset Z-Score</SelectItem>
+                          <SelectItem value="dataset_min_max" className="text-xs font-medium">Dataset Min-Max</SelectItem>
+                          <SelectItem value="global_min_max" className="text-xs font-medium">Global Min-Max</SelectItem>
+                          <SelectItem value="dataset_rank_percentile" className="text-xs font-medium">Dataset Rank</SelectItem>
+                          <SelectItem value="dataset_z_score" className="text-xs font-medium">Dataset Z-Score</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
                     
                     <div>
-                      <Label htmlFor="impute-mode" className="text-xs text-muted-foreground">
+                      <Label htmlFor="impute-mode" className="text-xs text-muted-foreground font-medium">
                         Missing Values
                       </Label>
                       <Select 
@@ -1423,13 +1470,13 @@ export function ScatterScoreProPage() {
                           setActiveTemplateName(null);
                         }}
                       >
-                        <SelectTrigger id="impute-mode" className="h-8 text-xs bg-navy-700/50 border-navy-600 mt-1">
+                        <SelectTrigger id="impute-mode" className="h-8 text-xs bg-navy-700/50 border-navy-600 mt-1 font-medium">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent className="z-[60]">
-                          <SelectItem value="zero_worst" className="text-xs">Zero / Worst</SelectItem>
-                          <SelectItem value="dataset_mean" className="text-xs">Dataset Mean</SelectItem>
-                          <SelectItem value="dataset_median" className="text-xs">Dataset Median</SelectItem>
+                          <SelectItem value="zero_worst" className="text-xs font-medium">Zero / Worst</SelectItem>
+                          <SelectItem value="dataset_mean" className="text-xs font-medium">Dataset Mean</SelectItem>
+                          <SelectItem value="dataset_median" className="text-xs font-medium">Dataset Median</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -1437,9 +1484,9 @@ export function ScatterScoreProPage() {
 
                   {/* Apply Button */}
                   <Button 
-                    onClick={handleApplyConfigurationAndCalculateScores} 
+                    onClick={() => handleApplyConfigurationAndCalculateScores(false)} 
                     className={cn(
-                      "w-full text-sm font-semibold h-11 relative overflow-hidden group transition-all duration-300",
+                      "w-full text-base font-bold h-12 relative overflow-hidden group transition-all duration-300",
                       "bg-gradient-to-r from-accent-teal to-teal-500 hover:from-teal-500 hover:to-accent-teal",
                       "shadow-lg hover:shadow-xl shadow-teal-900/20 hover:shadow-teal-900/30",
                       "before:absolute before:inset-0 before:bg-gradient-to-r before:from-transparent before:via-white/20 before:to-transparent",
@@ -1450,14 +1497,14 @@ export function ScatterScoreProPage() {
                     <span className="relative flex items-center justify-center gap-2">
                       {isCalculatingScores ? (
                         <>
-                          <Loader2 className="h-4 w-4 animate-spin" />
+                          <Loader2 className="h-5 w-5 animate-spin" />
                           <span>Calculating...</span>
                         </>
                       ) : (
                         <>
-                          <Sparkles className="h-4 w-4" />
+                          <Sparkles className="h-5 w-5" />
                           <span>Apply Configuration & Plot</span>
-                          <PlayCircle className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+                          <PlayCircle className="h-5 w-5 transition-transform group-hover:translate-x-1" />
                         </>
                       )}
                     </span>
@@ -1538,14 +1585,14 @@ export function ScatterScoreProPage() {
             
             {!isCalculatingScores && axisScoreError && (
               <div className="h-full flex items-center justify-center">
-                <p className="text-destructive text-center p-4">{axisScoreError}</p>
+                <p className="text-destructive text-center p-4 font-medium">{axisScoreError}</p>
               </div>
             )}
             
             {!isCalculatingScores && !axisScoreError && plotData.length === 0 && 
              (selectedXMetrics.length > 0 || selectedYMetrics.length > 0) && !hasInitialLoad && (
               <div className="h-full flex items-center justify-center">
-                <p className="text-center text-gray-400 p-4">
+                <p className="text-center text-gray-400 p-4 font-light">
                   No data to plot. <br/>
                   This can happen if no companies match global filters, or if selected metrics resulted in no valid scores for any company. <br/>
                   Try adjusting global filters or click "Apply Configuration & Plot" again.
@@ -1556,7 +1603,7 @@ export function ScatterScoreProPage() {
             {!isCalculatingScores && !axisScoreError && plotData.length === 0 && 
              selectedXMetrics.length === 0 && selectedYMetrics.length === 0 && !hasInitialLoad && (
               <div className="h-full flex items-center justify-center">
-                <p className="text-center text-gray-400">
+                <p className="text-center text-gray-400 font-light">
                   Please select metrics for at least one axis and click "Apply Configuration & Plot".
                 </p>
               </div>
@@ -1574,7 +1621,7 @@ export function ScatterScoreProPage() {
             {!isCalculatingScores && !axisScoreError && plotData.length > 0 && 
              chartDatasets.length === 0 && (
               <div className="h-full flex items-center justify-center">
-                <p className="text-center text-gray-400 p-4">
+                <p className="text-center text-gray-400 p-4 font-light">
                   Scores were calculated for {plotData.length} companies, but no valid data points could be generated for the chart 
                   (e.g., all X or Y scores were null, or Z-axis data was problematic). 
                   Please check your metric selections and try again.
