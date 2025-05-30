@@ -2,23 +2,29 @@
 import 'jsr:@supabase/functions-js/edge-runtime.d.ts';
 import { createClient } from 'npm:@supabase/supabase-js@2.49.1'; // Ensure this is your Supabase client version
 
-// Corrected import from the new backend-specific shared file
-import { APP_TRIAL_PROMO_CODES, isValidAppTrialPromoCode, ProductKey } from '../_shared/app-config.ts';
+// MODIFIED IMPORT using the import_map.json alias "shared/"
+import { APP_TRIAL_PROMO_CODES, isValidAppTrialPromoCode, ProductKey } from 'shared/app-config.ts';
 
 const logPrefix = '[activate-app-trial]';
 
 // Standardized JSON Response
 function createJsonResponse(body: unknown, status = 200, extraHeaders: Record<string, string> = {}) {
-  // Ensure your actual frontend URL is used for CORS in production
-  const frontendUrl = Deno.env.get('FRONTEND_URL') || '*'; // Get from env or allow all for dev
+  const frontendUrl = Deno.env.get('FRONTEND_URL') || '*'; // Get from env for CORS
 
-  const commonHeaders = {
-    'Access-Control-Allow-Origin': frontendUrl,
+  const commonHeaders: Record<string, string> = {
     'Access-Control-Allow-Methods': 'POST, OPTIONS',
-    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, accept', // Added accept
     'Content-Type': 'application/json',
-    'Vary': 'Origin', // Important for CORS with varying origins
   };
+  
+  // Dynamically set Access-Control-Allow-Origin
+  // For local development, you might use '*' or a specific localhost port.
+  // For production, set FRONTEND_URL in your Supabase project's environment variables.
+  commonHeaders['Access-Control-Allow-Origin'] = frontendUrl;
+  if (frontendUrl !== '*') {
+    commonHeaders['Vary'] = 'Origin'; // Important for CORS when not using '*'
+  }
+
   return new Response(status === 204 ? null : JSON.stringify(body), {
     status,
     headers: { ...commonHeaders, ...extraHeaders },
@@ -27,34 +33,45 @@ function createJsonResponse(body: unknown, status = 200, extraHeaders: Record<st
 
 Deno.serve(async (req) => {
   console.log(`${logPrefix} INFO: Method: ${req.method}, URL: ${req.url}`);
-
+  
+  const responseHeaders: Record<string, string> = {};
+  const frontendUrlEnv = Deno.env.get('FRONTEND_URL');
   const requestOrigin = req.headers.get('Origin');
-  const allowedOrigins = [Deno.env.get('FRONTEND_URL')]; // Add other allowed origins if needed
-  // In development, you might allow 'http://localhost:xxxx' or '*' broadly
-  // For production, be specific.
 
-  let corsHeaders: Record<string, string> = {
-    'Access-Control-Allow-Methods': 'POST, OPTIONS',
-    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-  };
-
-  if (requestOrigin && allowedOrigins.includes(requestOrigin)) {
-    corsHeaders['Access-Control-Allow-Origin'] = requestOrigin;
-  } else if (!allowedOrigins.some(o => o) && Deno.env.get("NETLIFY_DEV") === "true") { // Example for local Netlify dev
-    corsHeaders['Access-Control-Allow-Origin'] = requestOrigin || '*'; // More permissive for local dev
-  } else if (allowedOrigins.some(o => o)) {
-    corsHeaders['Access-Control-Allow-Origin'] = allowedOrigins[0]!; // Default to first allowed
+  if (frontendUrlEnv) {
+    // If FRONTEND_URL is set, only allow requests from that origin.
+    // This is important for production.
+    if (requestOrigin === frontendUrlEnv) {
+      responseHeaders['Access-Control-Allow-Origin'] = frontendUrlEnv;
+    } else {
+      // Origin not allowed - let createJsonResponse handle the default or '*' if frontendUrlEnv wasn't specific
+      // Or, you could return an error here if the origin is mandatory and not matching
+      console.warn(`${logPrefix} CORS WARN: Request from origin '${requestOrigin}' does not match FRONTEND_URL '${frontendUrlEnv}'.`);
+      // For now, createJsonResponse will use Deno.env.get('FRONTEND_URL') or '*'
+    }
   } else {
-     corsHeaders['Access-Control-Allow-Origin'] = '*'; // Fallback, be careful in production
+    // Fallback for local development if FRONTEND_URL is not set in env.
+    // Be cautious with '*' in production.
+    responseHeaders['Access-Control-Allow-Origin'] = requestOrigin || '*';
+  }
+  if (responseHeaders['Access-Control-Allow-Origin'] !== '*') {
+      responseHeaders['Vary'] = 'Origin';
   }
 
 
   if (req.method === 'OPTIONS') {
-    return new Response(null, { status: 204, headers: corsHeaders });
+    return new Response(null, { 
+        status: 204, 
+        headers: {
+            ...responseHeaders, // Use dynamically determined Allow-Origin
+            'Access-Control-Allow-Methods': 'POST, OPTIONS',
+            'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, accept',
+        }
+    });
   }
-
+  // Use createJsonResponse which now incorporates dynamic CORS headers based on FRONTEND_URL
   if (req.method !== 'POST') {
-    return createJsonResponse({ error: 'Method Not Allowed.' }, 405, corsHeaders);
+    return createJsonResponse({ error: 'Method Not Allowed.' }, 405);
   }
 
   let requestBody;
@@ -64,18 +81,18 @@ Deno.serve(async (req) => {
     requestBody = JSON.parse(rawBody);
   } catch (parseError) {
     console.error(`${logPrefix} ERROR: Failed to parse JSON request body.`, parseError.message);
-    return createJsonResponse({ error: 'Invalid request: Could not parse JSON body.' }, 400, corsHeaders);
+    return createJsonResponse({ error: 'Invalid request: Could not parse JSON body.' }, 400);
   }
 
   const { promo_code } = requestBody;
 
   if (!promo_code || typeof promo_code !== 'string') {
-    return createJsonResponse({ error: 'Missing or invalid required parameter: promo_code (string)' }, 400, corsHeaders);
+    return createJsonResponse({ error: 'Missing or invalid required parameter: promo_code (string)' }, 400);
   }
 
   if (!isValidAppTrialPromoCode(promo_code)) {
     console.warn(`${logPrefix} WARN: Invalid promo_code received: ${promo_code}`);
-    return createJsonResponse({ error: 'Invalid or expired promo code.' }, 400, corsHeaders);
+    return createJsonResponse({ error: 'Invalid or expired promo code.' }, 400);
   }
 
   try {
@@ -87,19 +104,18 @@ Deno.serve(async (req) => {
     const authHeader = req.headers.get('Authorization');
     if (!authHeader?.startsWith('Bearer ')) {
       console.warn(`${logPrefix} WARN: Auth header missing or invalid.`);
-      return createJsonResponse({ error: 'Auth header missing or invalid.' }, 401, corsHeaders);
+      return createJsonResponse({ error: 'Auth header missing or invalid.' }, 401);
     }
     const token = authHeader.replace('Bearer ', '');
     const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token);
 
     if (authError || !user) {
       console.error(`${logPrefix} ERROR: Supabase auth failed:`, authError?.message || 'User not found');
-      const status = authError?.status || (user ? 401 : 404); // Be more specific if user object is null due to no user vs auth error
-      return createJsonResponse({ error: `Auth failed: ${authError?.message || 'User not found.'}` }, status, corsHeaders);
+      const status = authError?.status || 401;
+      return createJsonResponse({ error: `Auth failed: ${authError?.message || 'User not found.'}` }, status);
     }
     console.info(`${logPrefix} User ${user.id} (${user.email}) authenticated.`);
 
-    // Check if user already has an active Stripe subscription
     const { data: existingStripeSub, error: stripeSubError } = await supabaseAdmin
       .from('stripe_subscriptions')
       .select('status, price_id')
@@ -113,10 +129,9 @@ Deno.serve(async (req) => {
     }
     if (existingStripeSub) {
       console.warn(`${logPrefix} WARN: User ${user.id} already has an active/trialing Stripe subscription. Cannot apply app trial.`);
-      return createJsonResponse({ error: 'You already have an active subscription.' }, 400, corsHeaders);
+      return createJsonResponse({ error: 'You already have an active subscription.' }, 400);
     }
     
-    // Check for existing active app trials
     const { data: existingAppTrial, error: appTrialCheckError } = await supabaseAdmin
       .from('user_app_trials')
       .select('id, expires_at')
@@ -131,12 +146,12 @@ Deno.serve(async (req) => {
     }
     if (existingAppTrial) {
       console.warn(`${logPrefix} WARN: User ${user.id} already has an active app trial. Cannot apply another.`);
-      return createJsonResponse({ error: 'You already have an active trial.' }, 400, corsHeaders);
+      return createJsonResponse({ error: 'You already have an active trial.' }, 400);
     }
 
-    const trialDetails = APP_TRIAL_PROMO_CODES[promo_code]; // promo_code is already validated by isValidAppTrialPromoCode
+    const trialDetails = APP_TRIAL_PROMO_CODES[promo_code];
     const now = new Date();
-    const expiresAt = new Date(new Date().setDate(now.getDate() + trialDetails.durationDays)); // Correct way to add days
+    const expiresAt = new Date(new Date().setDate(now.getDate() + trialDetails.durationDays));
 
     const { data: newTrial, error: insertError } = await supabaseAdmin
       .from('user_app_trials')
@@ -147,7 +162,7 @@ Deno.serve(async (req) => {
         promo_code_used: promo_code,
         is_active: true,
       })
-      .select('tier, expires_at') // Select only what you need to return
+      .select('tier, expires_at')
       .single();
 
     if (insertError) {
@@ -160,10 +175,10 @@ Deno.serve(async (req) => {
       message: `Trial for ${trialDetails.description} activated!`,
       tier: newTrial.tier,
       expires_at: newTrial.expires_at,
-    }, 200, corsHeaders);
+    }, 200);
 
   } catch (error) {
     console.error(`${logPrefix} ERROR: Unhandled exception:`, error.message, error.stack);
-    return createJsonResponse({ error: 'Internal Server Error.', details: error.message }, 500, corsHeaders);
+    return createJsonResponse({ error: 'Internal Server Error.', details: error.message }, 500);
   }
 });
