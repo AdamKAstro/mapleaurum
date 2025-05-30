@@ -13,7 +13,7 @@ import { cn } from '../../lib/utils';
 import type { Company, SortState, CompanyStatus } from '../../lib/types';
 import debounce from 'lodash/debounce';
 
-const FILTERABLE_STATUSES: CompanyStatus[] = ['Producer', 'Developer', 'Explorer', 'Royalty'];
+const FILTERABLE_STATUSES: CompanyStatus[] = ['producer', 'developer', 'explorer', 'royalty'];
 const SEARCH_DEBOUNCE_MS = 350;
 
 export function CompaniesPage() {
