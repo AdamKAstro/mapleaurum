@@ -519,7 +519,14 @@ export function SubscribePage() {
     >
       <div className="absolute inset-0 bg-cover bg-center opacity-20 -z-10" style={{ backgroundImage: "url('/Background2.jpg')" }} />
       
-      {isLoading && ( /* ... Loading overlay ... */ )}
+      {isLoading && (
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 backdrop-blur-sm">
+          <div className="text-center p-6 bg-navy-800 rounded-lg shadow-xl">
+            <Loader2 className="h-12 w-12 text-teal-400 animate-spin mx-auto" />
+            <p className="mt-4 text-white font-semibold">Loading plans & subscription...</p>
+          </div>
+        </div>
+      )}
 
       <div className="relative z-0 pt-8 pb-12">
         <div className="flex justify-center mb-8"> {/* Billing Toggle */}
