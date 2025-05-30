@@ -3,15 +3,15 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Star, Crown, Check, Loader2, Gift, Link as LinkIcon, Copy, Zap } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Button } from '../../components/ui/button'; // Assuming path
-import { Typography } from '../../components/ui/typography'; // Assuming path
-import { PageContainer } from '../../components/ui/page-container'; // Assuming path
-import { Label } from '../../components/ui/label'; // Assuming path
-import { Switch } from '../../components/ui/switch'; // Assuming path
-import { useAuth } from '../../contexts/auth-context'; // Assuming path
-import { useSubscription } from '../../contexts/subscription-context'; // Assuming path
-import { cn } from '../../lib/utils'; // Assuming path
-import { supabase } from '../../lib/supabaseClient'; // Assuming path
+import { Button } from '../../components/ui/button';
+import { Typography } from '../../components/ui/typography';
+import { PageContainer } from '../../components/ui/page-container';
+import { Label } from '../../components/ui/label';
+import { Switch } from '../../components/ui/switch';
+import { useAuth } from '../../contexts/auth-context';
+import { useSubscription } from '../../contexts/subscription-context';
+import { cn } from '../../lib/utils';
+import { supabase } from '../../lib/supabaseClient';
 import { 
   products, 
   getPriceId, 
@@ -20,10 +20,10 @@ import {
   getYearlySavings,
   generateStripeCouponLink,
   FREE_TRIAL_COUPONS,
-  APP_TRIAL_PROMO_CODES,      // New
-  isValidAppTrialPromoCode, // New
-  generateAppTrialLink,       // New
-  type AppTrialPromoCodeKey,  // New
+  APP_TRIAL_PROMO_CODES,
+  isValidAppTrialPromoCode,
+  generateAppTrialLink,
+  type AppTrialPromoCodeKey,
   type ProductKey,
   type SubscriptionTier 
 } from '../../stripe-config'; // Ensure path is correct
@@ -38,23 +38,23 @@ const FREE_PLAN = {
     'Public company profiles',
     'Daily market updates'
   ],
-  tier: 'free' as const, // Explicitly type as 'free'
+  tier: 'free' as const,
   price: { amount: 0, currency: 'CAD' }
 };
 
 interface PlanCardProps {
-  productKey?: Exclude<ProductKey, 'free'>;
-  isFree?: boolean;
+  productKey?: Exclude<ProductKey, 'free'>; // Product key for Pro or Premium
+  isFree?: boolean; // True if this is the Free plan card
   isYearly: boolean;
   currentTier: SubscriptionTier;
   onSubscribeStripe: (productKey: Exclude<ProductKey, 'free'>, isYearly: boolean, stripeCouponId?: string) => void;
   onActivateAppTrial: (promoCode: AppTrialPromoCodeKey) => Promise<void>;
-  isProcessing: boolean;
+  isProcessing: boolean; // Global processing state
   isLoggedIn: boolean;
   
-  activeStripeCouponId?: string | null; // The Stripe coupon ID from URL if applicable to this card
-  activeAppPromoCode?: AppTrialPromoCodeKey | null; // The App promo code from URL if applicable
-  planFromUrl?: Exclude<ProductKey, 'free'> | null; // Plan targeted by URL param
+  // Props passed down from SubscribePage based on URL params
+  activeStripeCouponIdForThisPlan?: string | null; // Stripe coupon ID if URL targets this plan
+  activeAppPromoCodeForThisPlan?: AppTrialPromoCodeKey | null; // App promo code if URL targets this plan
 }
 
 function PlanCard({ 
@@ -66,9 +66,8 @@ function PlanCard({
   onActivateAppTrial,
   isProcessing, 
   isLoggedIn,
-  activeStripeCouponId,
-  activeAppPromoCode,
-  planFromUrl,
+  activeStripeCouponIdForThisPlan,
+  activeAppPromoCodeForThisPlan,
 }: PlanCardProps) {
   const navigate = useNavigate();
   
@@ -107,7 +106,7 @@ function PlanCard({
     );
   }
 
-  if (!productKey) return null;
+  if (!productKey) return null; // Should only be called for Pro or Premium
   
   const product = getProduct(productKey);
   const price = getPrice(productKey, isYearly ? 'yearly' : 'monthly');
@@ -116,13 +115,8 @@ function PlanCard({
   const isCurrentActivePlan = currentTier === productKey;
   const canUpgradeGenerally = !isCurrentActivePlan && (currentTier === 'free' || (currentTier === 'pro' && productKey === 'premium'));
 
-  // Determine if this specific card is targeted by an app trial promo code from the URL
-  const isAppTrialOfferForThisCard = !!(activeAppPromoCode && isValidAppTrialPromoCode(activeAppPromoCode) && APP_TRIAL_PROMO_CODES[activeAppPromoCode].tier === productKey);
-  const appTrialDetails = isAppTrialOfferForThisCard ? APP_TRIAL_PROMO_CODES[activeAppPromoCode!] : null;
-
-  // Determine if this specific card is targeted by a Stripe coupon from the URL (and not overridden by an app trial for this card)
-  const hasStripeCouponForThisCard = !!(activeStripeCouponId && !isAppTrialOfferForThisCard && (planFromUrl === productKey || !planFromUrl) );
-  const stripeCouponInfo = hasStripeCouponForThisCard ? FREE_TRIAL_COUPONS[activeStripeCouponId!] : null;
+  const appTrialDetails = activeAppPromoCodeForThisPlan ? APP_TRIAL_PROMO_CODES[activeAppPromoCodeForThisPlan] : null;
+  const stripeCouponDetailsText = activeStripeCouponIdForThisPlan ? FREE_TRIAL_COUPONS[activeStripeCouponIdForThisPlan] : null;
 
   let buttonText = `Get ${product.name}`;
   let buttonAction: () => void = () => onSubscribeStripe(productKey, isYearly);
@@ -130,25 +124,27 @@ function PlanCard({
   let buttonVariant: any = product.popular ? 'primary' : 'outline';
   let showPrice = true;
   let cardHighlightType: 'none' | 'popular' | 'stripe_trial' | 'app_trial' = product.popular ? 'popular' : 'none';
+  let displayMessage: string | null = null;
 
-  if (isAppTrialOfferForThisCard && canUpgradeGenerally) {
-    buttonText = `Activate ${appTrialDetails!.description}`;
-    buttonAction = () => onActivateAppTrial(activeAppPromoCode!);
-    buttonVariant = 'default'; // Special variant for app trials
+  if (appTrialDetails && canUpgradeGenerally) {
+    buttonText = `Activate ${appTrialDetails.description}`;
+    buttonAction = () => onActivateAppTrial(activeAppPromoCodeForThisPlan!);
+    buttonVariant = 'default'; 
     showPrice = false;
     cardHighlightType = 'app_trial';
     if (!isLoggedIn) {
-        buttonText = `Sign Up for ${appTrialDetails!.description}`;
-        buttonAction = () => navigate(`/login?action=signup&plan=${productKey}&yearly=${isYearly}&promo_code=${activeAppPromoCode}`);
+        buttonText = `Sign Up for ${appTrialDetails.description}`;
+        buttonAction = () => navigate(`/login?action=signup&plan=${productKey}&yearly=${isYearly}&promo_code=${activeAppPromoCodeForThisPlan}`);
     }
-  } else if (hasStripeCouponForThisCard && canUpgradeGenerally) {
-    buttonText = `Get ${product.name} with ${stripeCouponInfo || 'Stripe Trial'}`;
-    buttonAction = () => onSubscribeStripe(productKey, isYearly, activeStripeCouponId!);
-    buttonVariant = 'default'; // Special variant for Stripe trials
+  } else if (stripeCouponDetailsText && canUpgradeGenerally) {
+    buttonText = `Get ${product.name} with ${stripeCouponDetailsText}`;
+    buttonAction = () => onSubscribeStripe(productKey, isYearly, activeStripeCouponIdForThisPlan!);
+    buttonVariant = 'default'; 
     cardHighlightType = 'stripe_trial';
+    displayMessage = `🎁 Stripe Offer: ${stripeCouponDetailsText}`;
     if (!isLoggedIn) {
-        buttonText = `Sign Up for FREE ${product.name}! (${stripeCouponInfo || 'Stripe Trial'})`;
-        buttonAction = () => navigate(`/login?action=signup&plan=${productKey}&yearly=${isYearly}&coupon=${activeStripeCouponId}`);
+        buttonText = `Sign Up for FREE ${product.name}! (${stripeCouponDetailsText})`;
+        buttonAction = () => navigate(`/login?action=signup&plan=${productKey}&yearly=${isYearly}&coupon=${activeStripeCouponIdForThisPlan}`);
     }
   } else if (isCurrentActivePlan) {
     buttonText = 'Current Plan';
@@ -158,14 +154,15 @@ function PlanCard({
   } else if (!canUpgradeGenerally) {
     buttonText = 'Manage Subscription';
     buttonDisabled = true; 
-    buttonAction = () => navigate('/account'); // Assuming you have an account page
+    buttonAction = () => navigate('/account');
     buttonVariant = 'secondary';
     cardHighlightType = 'none';
   } else if (!isLoggedIn) {
     buttonText = `Sign Up for ${product.name}`;
     buttonAction = () => navigate(`/login?action=signup&plan=${productKey}&yearly=${isYearly}`);
   }
-  // If logged in and can upgrade without any coupon/promo, default buttonAction and text are already set
+  // Default for logged-in user, no special offers, upgradable:
+  // buttonText, buttonAction, buttonVariant already set.
 
   const Icon = productKey === 'pro' ? Star : Crown;
 
@@ -206,7 +203,7 @@ function PlanCard({
         <div className="flex items-center gap-3 mb-4">
           <Icon className={cn('h-7 w-7', productKey === 'premium' ? 'text-accent-yellow' : 'text-accent-teal')} />
           <h3 className={cn('text-lg font-semibold', 
-            cardHighlightType === 'popular' || cardHighlightType === 'app_trial' || cardHighlightType === 'stripe_trial' ? 'text-cyan-300' : 'text-white'
+            (cardHighlightType !== 'none') ? 'text-cyan-300' : 'text-white' // Simplified highlighting
           )}>
             {product.name}
           </h3>
@@ -238,15 +235,16 @@ function PlanCard({
             </div>
         )}
         
-        {savings && !isAppTrialOfferForThisCard && !hasStripeCouponForThisCard && (
+        {savings && cardHighlightType !== 'app_trial' && cardHighlightType !== 'stripe_trial' && (
           <div className="mt-2 text-sm text-emerald-400 font-medium">
             Save ${savings.amount} ({savings.percentage}%) yearly
           </div>
         )}
         
-        {stripeCouponMessage && !isAppTrialOfferForThisCard && (
+        {/* Display message for Stripe coupon if applicable */}
+        {displayMessage && cardHighlightType === 'stripe_trial' && (
           <div className="mt-2 text-sm text-emerald-300 font-medium bg-emerald-900/30 p-2 rounded">
-            🎁 {stripeCouponMessage}
+            {displayMessage}
           </div>
         )}
         
@@ -286,14 +284,13 @@ function PlanCard({
   );
 }
 
-// --- MODIFIED AdminCouponPanel ---
 function AdminCouponPanel() {
   const { user } = useAuth();
   const [generatedStripeLinks, setGeneratedStripeLinks] = useState<{pro: string, premium: string}>({pro: '', premium: ''});
-  const [generatedAppTrialLinks, setGeneratedAppTrialLinks] = useState<Record<AppTrialPromoCodeKey, string>>({} as Record<AppTrialPromoCodeKey, string>);
+  const [generatedAppTrialLinks, setGeneratedAppTrialLinks] = useState<Record<AppTrialPromoCodeKey, string>>({} as Record<AppTrialPromoCodeKey, string>); // Corrected type
   const [copyStatus, setCopyStatus] = useState<string>('');
   
-  const adminEmails = ['adamkiil@outlook.com', 'adamkiil79@gmail.com', 'adamkiil@yahoo.co.uk']; // Make sure these are correct
+  const adminEmails = ['adamkiil@outlook.com', 'adamkiil79@gmail.com', 'adamkiil@yahoo.co.uk'];
   const isAdmin = user?.email && adminEmails.includes(user.email);
   
   if (!isAdmin) return null;
@@ -305,9 +302,9 @@ function AdminCouponPanel() {
   };
 
   const generateAppLinks = () => {
-    const links = {} as Record<AppTrialPromoCodeKey, string>;
+    const links = {} as Record<AppTrialPromoCodeKey, string>; // Corrected type
     (Object.keys(APP_TRIAL_PROMO_CODES) as AppTrialPromoCodeKey[]).forEach(codeKey => {
-      if (isValidAppTrialPromoCode(codeKey)) { // Type guard
+      if (isValidAppTrialPromoCode(codeKey)) { 
           links[codeKey] = generateAppTrialLink(codeKey);
       }
     });
@@ -330,7 +327,6 @@ function AdminCouponPanel() {
       </div>
       
       <div className="space-y-6">
-        {/* Stripe Coupon Links */}
         <div>
             <h4 className="text-md font-semibold text-gray-200 mb-2">Stripe Trial Links (Card Usually Required)</h4>
             <Button onClick={generateStripeLinks} className="bg-teal-600 hover:bg-teal-700 text-white w-full sm:w-auto">
@@ -338,7 +334,7 @@ function AdminCouponPanel() {
             </Button>
             {generatedStripeLinks.pro && (
             <div className="mt-3 space-y-3">
-                {(Object.keys(generatedStripeLinks) as Array<'pro' | 'premium'>).map(planKey => (
+                {(['pro', 'premium'] as const).map(planKey => ( // Use 'as const' for literal types
                     <div key={planKey} className="p-3 bg-gray-700/50 rounded border border-gray-600/30">
                         <div className="flex items-center justify-between mb-2">
                         <span className="font-medium text-teal-300">{products[planKey].name} Stripe Trial:</span>
@@ -355,7 +351,6 @@ function AdminCouponPanel() {
             )}
         </div>
 
-        {/* App Trial Links (No Card) */}
         <div>
             <h4 className="text-md font-semibold text-gray-200 mb-2">In-App Trial Links (No Card Required)</h4>
             <Button onClick={generateAppLinks} className="bg-indigo-600 hover:bg-indigo-700 text-white w-full sm:w-auto">
@@ -393,18 +388,17 @@ function AdminCouponPanel() {
   );
 }
 
-// --- MODIFIED SubscribePage Component ---
 export function SubscribePage() {
   const { session, user, isLoading: isAuthLoading } = useAuth();
   const { currentUserSubscriptionTier, isLoading: isSubscriptionLoading, refreshSubscriptionStatus } = useSubscription();
   const [isYearly, setIsYearly] = useState(false);
-  const [isProcessing, setIsProcessing] = useState(false); // Shared processing state
+  const [isProcessing, setIsProcessing] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
 
   const urlParams = new URLSearchParams(location.search);
-  const stripeCouponIdParam = urlParams.get('coupon'); // For Stripe coupons
-  const appPromoCodeParam = urlParams.get('promo_code') as AppTrialPromoCodeKey | null; // For app trials
+  const stripeCouponIdParam = urlParams.get('coupon');
+  const appPromoCodeParam = urlParams.get('promo_code') as AppTrialPromoCodeKey | null;
   const planFromUrlParam = urlParams.get('plan') as Exclude<ProductKey, 'free'> | null;
 
   useEffect(() => {
@@ -420,7 +414,6 @@ export function SubscribePage() {
       loginParams.set('plan', productKey);
       loginParams.set('yearly', String(yearly));
       if (stripeCouponIdForCheckout) loginParams.set('coupon', stripeCouponIdForCheckout);
-      // If an appPromoCode was in URL but user chose Stripe path, don't carry appPromoCode
       navigate(`/login?${loginParams.toString()}`);
       return;
     }
@@ -445,15 +438,13 @@ export function SubscribePage() {
             checkoutBody.success_url = `${productDetails.successUrl}&tier=${productKey}&trial=true`;
         }
 
-        const { data, error } = await supabase.functions.invoke('stripe-checkout', {
-            body: checkoutBody
-        });
+        const { data, error } = await supabase.functions.invoke('stripe-checkout', { body: checkoutBody });
         
         if (error) throw error;
         if (data?.url) {
             window.location.href = data.url;
         } else {
-            throw new Error('Could not create checkout session.');
+            throw new Error('Could not create Stripe checkout session.');
         }
     } catch (error: any) {
         console.error('Stripe Subscription error:', error);
@@ -461,7 +452,7 @@ export function SubscribePage() {
     } finally {
         setIsProcessing(false);
     }
-  }, [user, session, navigate, supabase]); // Added supabase to dependencies
+  }, [user, session, navigate]); 
   
   const handleActivateAppTrial = useCallback(async (promoCodeToActivate: AppTrialPromoCodeKey) => {
     if (!user || !session?.access_token) {
@@ -475,41 +466,40 @@ export function SubscribePage() {
         body: { promo_code: promoCodeToActivate }
       });
 
-      if (error) {
-        throw error; // Let catch block handle it
-      }
+      if (error) throw error; 
 
-      if (data) {
-        alert(data.message || 'Trial activated successfully!');
+      if (data && data.message) { // Check if data and data.message exist
+        alert(data.message);
         await refreshSubscriptionStatus(); 
         navigate('/companies'); 
       } else {
-        throw new Error('Failed to activate trial. No data returned from server.');
+        // Handle case where data might be null or message is missing but no error thrown
+        console.warn('App trial activation returned no specific message, but no error. Data:', data);
+        alert('Trial processed. Please check your account.'); // Generic success
+        await refreshSubscriptionStatus();
+        navigate('/companies');
       }
     } catch (err: any) {
       console.error('App trial activation error:', err);
-      const errorMessage = err.context?.error_description || err.message || 'An unexpected error occurred while activating the trial.';
-      alert(`Trial Activation Error: ${errorMessage}`);
+      const functionError = err.context?.body?.error || err.context?.body?.details || err.message;
+      const displayMessage = typeof functionError === 'string' ? functionError : 'An unexpected error occurred while activating the trial.';
+      alert(`Trial Activation Error: ${displayMessage}`);
     } finally {
       setIsProcessing(false);
     }
-  }, [user, session, navigate, refreshSubscriptionStatus, supabase]); // Added supabase
+  }, [user, session, navigate, refreshSubscriptionStatus]);
 
   const isLoading = isAuthLoading || isSubscriptionLoading;
   const currentTier = currentUserSubscriptionTier || 'free';
   const isLoggedIn = !!(session && user);
 
-  // Message for Stripe coupons, only if no app trial is active for the plan via URL
-  const getStripeCouponMessage = (productKeyToCheck: Exclude<ProductKey, 'free'>) => {
-    if (!stripeCouponIdParam) return '';
-    const appTrialForThisPlan = appPromoCodeParam && isValidAppTrialPromoCode(appPromoCodeParam) && APP_TRIAL_PROMO_CODES[appPromoCodeParam].tier === productKeyToCheck;
-    if (appTrialForThisPlan) return ''; // App trial takes precedence for display
+  const appTrialOfferForPage = (appPromoCodeParam && isValidAppTrialPromoCode(appPromoCodeParam) && APP_TRIAL_PROMO_CODES[appPromoCodeParam].tier === planFromUrlParam)
+    ? APP_TRIAL_PROMO_CODES[appPromoCodeParam]
+    : null;
 
-    const couponName = FREE_TRIAL_COUPONS[stripeCouponIdParam as keyof typeof FREE_TRIAL_COUPONS];
-    if (!couponName || (planFromUrlParam && planFromUrlParam !== productKeyToCheck)) return ''; // Only show if coupon targets this plan or all plans
-    
-    return `Stripe Offer: ${couponName}`;
-  };
+  const stripeCouponOfferForPage = (stripeCouponIdParam && !(appTrialOfferForPage && appTrialOfferForPage.tier === planFromUrlParam))
+    ? FREE_TRIAL_COUPONS[stripeCouponIdParam as keyof typeof FREE_TRIAL_COUPONS] 
+    : null;
 
   return (
     <PageContainer
@@ -529,24 +519,34 @@ export function SubscribePage() {
       )}
 
       <div className="relative z-0 pt-8 pb-12">
-        <div className="flex justify-center mb-8"> {/* Billing Toggle */}
-          {/* ... Switch for Yearly/Monthly ... */}
+        <div className="flex justify-center mb-8">
+           <div className="flex items-center space-x-3 p-2 bg-navy-900/40 rounded-lg backdrop-blur-sm">
+             <Label htmlFor="billing-cycle-toggle" className={cn("text-white", isYearly && "text-gray-400")}>Monthly</Label>
+             <Switch 
+               id="billing-cycle-toggle"
+               checked={isYearly} 
+               onCheckedChange={setIsYearly}
+               disabled={isLoading || isProcessing}
+             />
+             <Label htmlFor="billing-cycle-toggle" className={cn("text-white", !isYearly && "text-gray-400")}>
+               Yearly <span className="text-emerald-400 text-sm font-medium">(Save up to 27%)</span>
+             </Label>
+           </div>
         </div>
 
         <AdminCouponPanel />
 
-        {/* Notification for active URL parameters */}
-        {stripeCouponIdParam && !(appPromoCodeParam && isValidAppTrialPromoCode(appPromoCodeParam) && APP_TRIAL_PROMO_CODES[appPromoCodeParam].tier === planFromUrlParam) && (
+        {stripeCouponOfferForPage && (
           <div className="max-w-lg mx-auto mb-8 p-4 bg-emerald-900/40 border border-emerald-600/60 rounded-lg backdrop-blur-sm text-center shadow-lg">
             <div className="text-emerald-300 font-medium">
-              🎁 Stripe Trial Coupon <code className="text-xs bg-emerald-700/50 px-1 py-0.5 rounded">{stripeCouponIdParam}</code> applied! Select your plan. (Card may be required)
+              🎁 Stripe Trial Offer: {stripeCouponOfferForPage} for <code className="text-xs bg-emerald-700/50 px-1 py-0.5 rounded">{planFromUrlParam || "selected plan"}</code>! (Card may be required)
             </div>
           </div>
         )}
-        {appPromoCodeParam && isValidAppTrialPromoCode(appPromoCodeParam) && APP_TRIAL_PROMO_CODES[appPromoCodeParam].tier === planFromUrlParam && (
+        {appTrialOfferForPage && (
           <div className="max-w-lg mx-auto mb-8 p-4 bg-purple-900/40 border border-purple-600/60 rounded-lg backdrop-blur-sm text-center shadow-lg">
             <div className="text-purple-300 font-medium">
-              <Zap className="inline h-5 w-5 mr-1" /> Special In-App Access Offer <code className="text-xs bg-purple-700/50 px-1 py-0.5 rounded">{appPromoCodeParam}</code> applied! Select the '{APP_TRIAL_PROMO_CODES[appPromoCodeParam].tier}' plan to activate. (No card required)
+              <Zap className="inline h-5 w-5 mr-1" /> Special Offer: {appTrialOfferForPage.description} for the '{appTrialOfferForPage.tier}' plan! (No card required)
             </div>
           </div>
         )}
@@ -556,15 +556,15 @@ export function SubscribePage() {
             isFree
             isYearly={isYearly}
             currentTier={currentTier}
-            onSubscribeStripe={handleStripeSubscribe} // Wont be called
-            onActivateAppTrial={handleActivateAppTrial} // Wont be called
+            onSubscribeStripe={handleStripeSubscribe}
+            onActivateAppTrial={handleActivateAppTrial}
             isProcessing={isProcessing}
             isLoggedIn={isLoggedIn}
           />
           
-          {(['pro', 'premium'] as Exclude<ProductKey, 'free'>[]).map((pKey) => {
-            const isAppTrialOfferForThisPlan = !!(appPromoCodeParam && isValidAppTrialPromoCode(appPromoCodeParam) && APP_TRIAL_PROMO_CODES[appPromoCodeParam].tier === pKey);
-            const stripeCouponIdForThisPlan = (stripeCouponIdParam && !isAppTrialOfferForThisPlan && (planFromUrlParam === pKey || !planFromUrlParam)) ? stripeCouponIdParam : null;
+          {(Object.keys(products) as Array<Exclude<ProductKey, 'free'>>).map((pKey) => {
+            const isAppTrialActiveForThisPlanCard = !!(appPromoCodeParam && isValidAppTrialPromoCode(appPromoCodeParam) && APP_TRIAL_PROMO_CODES[appPromoCodeParam].tier === pKey);
+            const stripeCouponActiveForThisPlanCard = (stripeCouponIdParam && !isAppTrialActiveForThisPlanCard && (planFromUrlParam === pKey || !planFromUrlParam)) ? stripeCouponIdParam : null;
 
             return (
               <PlanCard
@@ -576,21 +576,21 @@ export function SubscribePage() {
                 onActivateAppTrial={handleActivateAppTrial}
                 isProcessing={isProcessing}
                 isLoggedIn={isLoggedIn}
-                
-                activeStripeCouponId={stripeCouponIdForThisPlan}
-                activeAppPromoCode={isAppTrialOfferForThisPlan ? appPromoCodeParam : null}
-                planFromUrl={planFromUrlParam} // Pass this to help PlanCard decide if a general coupon applies
-
-                // For display purposes inside PlanCard (optional, can be derived)
-                // stripeCouponMessage={getStripeCouponMessage(pKey)}
-                // appTrialDescription={isAppTrialOfferForThisPlan ? APP_TRIAL_PROMO_CODES[appPromoCodeParam!].description : undefined}
+                activeStripeCouponIdForThisPlan={stripeCouponActiveForThisPlanCard}
+                activeAppPromoCodeForThisPlan={isAppTrialActiveForThisPlanCard ? appPromoCodeParam : null}
+                planFromUrl={planFromUrlParam}
               />
             );
           })}
         </div>
 
-        <div className="text-center mt-12 px-4"> {/* Support Section */}
-          {/* ... Support email ... */}
+        <div className="text-center mt-12 px-4">
+          <Typography variant="body" className="text-gray-300">
+            Need help choosing? Contact us at{' '}
+            <a href="mailto:support@mapleaurum.com" className="text-cyan-400 hover:underline">
+              support@mapleaurum.com
+            </a>
+          </Typography>
         </div>
       </div>
     </PageContainer>
