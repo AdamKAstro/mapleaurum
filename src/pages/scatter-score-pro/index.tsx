@@ -27,7 +27,7 @@ import { Input } from '../../components/ui/input';
 import { Label } from '../../components/ui/label';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../../components/ui/tooltip';
 import { LoadingIndicator } from '../../components/ui/loading-indicator';
-import { Info, Lock, ArrowUp, ArrowDown, Settings, RefreshCw, ListPlus, X, ZoomIn, ZoomOut, RotateCcw, Loader2, ChevronLeft, Plus, Minus } from 'lucide-react';
+import { Info, Lock, ArrowUp, ArrowDown, Settings, RefreshCw, ListPlus, X, ZoomIn, ZoomOut, RotateCcw, Loader2, ChevronLeft, Plus, Minus, PlayCircle, Sparkles } from 'lucide-react';
 import { MetricSelector } from '../../components/metric-selector';
 import {
   metrics as allMetrics,
@@ -649,6 +649,7 @@ export function ScatterScoreProPage() {
   const [datasetStatsCache, setDatasetStatsCache] = useState<Map<string, MetricDatasetStats>>(new Map());
   const [axisScoreError, setAxisScoreError] = useState<string | null>(null);
   const [isTemplateLoading, setIsTemplateLoading] = useState(false);
+  const [hasInitialLoad, setHasInitialLoad] = useState(false);
 
   const chartRef = useRef<ChartJS<'scatter', (ScatterDataPoint | null)[], unknown> | null>(null);
 
@@ -717,77 +718,6 @@ export function ScatterScoreProPage() {
     
     if (DEBUG_SCATTER_SCORE) console.log(`[ScatterScoreProPage] Template '${template.name}' loaded.`);
   }, [accessibleMetrics, getMetricConfigDetails]);
-
-  useEffect(() => {
-    if (accessibleMetrics.length > 0 && activeTemplateName && !isTemplateLoading) {
-      loadTemplate(activeTemplateName);
-    }
-  }, [accessibleMetrics]);
-
-  const handleTemplateChange = (newTemplateName: string) => {
-    loadTemplate(newTemplateName);
-  };
-  
-  const handleAxisMetricChange = useCallback((
-    axisType: 'X' | 'Y',
-    metricKey: string,
-    action: 'add' | 'remove' | 'updateWeight' | 'toggleHLB',
-    value?: any
-  ) => {
-    const setSelectedMetrics = axisType === 'X' ? setSelectedXMetrics : setSelectedYMetrics;
-    
-    setSelectedMetrics(prevMetrics => {
-      let newMetricsArray = [...prevMetrics];
-      const existingIndex = newMetricsArray.findIndex(m => m.key === metricKey);
-      
-      if (action === 'add') {
-        if (existingIndex === -1) {
-          const metricConfig = getMetricConfigDetails(metricKey);
-          if (metricConfig && accessibleMetrics.some(am => am.key === metricKey)) {
-            newMetricsArray.push({
-              key: metricKey,
-              metricLabel: metricConfig.label,
-              weight: DEFAULT_WEIGHT_FOR_NEW_METRIC,
-              userHigherIsBetter: metricConfig.higherIsBetter,
-              originalHigherIsBetter: metricConfig.higherIsBetter,
-            });
-            setActiveTemplateName(null);
-            return normalizeWeights(newMetricsArray, metricKey, DEFAULT_WEIGHT_FOR_NEW_METRIC, true);
-          }
-        }
-      } else if (action === 'remove') {
-        newMetricsArray = newMetricsArray.filter(m => m.key !== metricKey);
-        setActiveTemplateName(null);
-        return normalizeWeights(newMetricsArray);
-      } else if (existingIndex !== -1) {
-        if (action === 'updateWeight') {
-          const newWeight = Math.max(0, Math.min(100, Number(value) || 0));
-          newMetricsArray[existingIndex].weight = newWeight;
-          setActiveTemplateName(null);
-          return normalizeWeights(newMetricsArray, metricKey, newWeight, false);
-        } else if (action === 'toggleHLB') {
-          newMetricsArray[existingIndex] = {
-            ...newMetricsArray[existingIndex],
-            userHigherIsBetter: !!value
-          };
-          setActiveTemplateName(null);
-          return newMetricsArray;
-        }
-      }
-      
-      return prevMetrics;
-    });
-  }, [getMetricConfigDetails, accessibleMetrics]);
-  
-  const xTotalWeight = useMemo(() => 
-    selectedXMetrics.reduce((sum, m) => sum + m.weight, 0), 
-    [selectedXMetrics]
-  );
-  
-  const yTotalWeight = useMemo(() => 
-    selectedYMetrics.reduce((sum, m) => sum + m.weight, 0), 
-    [selectedYMetrics]
-  );
 
   const handleApplyConfigurationAndCalculateScores = useCallback(async () => {
     if (DEBUG_SCATTER_SCORE) console.log("[ScatterScoreProPage] 'Apply & Plot Scores' clicked.");
@@ -935,6 +865,83 @@ export function ScatterScoreProPage() {
     selectedZMetricKey,
     allMetrics
   ]);
+
+  // Load template and auto-apply on first mount
+  useEffect(() => {
+    if (accessibleMetrics.length > 0 && activeTemplateName && !isTemplateLoading && !hasInitialLoad) {
+      loadTemplate(activeTemplateName);
+      // Add a small delay to ensure state is updated before calculating
+      setTimeout(() => {
+        handleApplyConfigurationAndCalculateScores();
+        setHasInitialLoad(true);
+      }, 100);
+    }
+  }, [accessibleMetrics, activeTemplateName, isTemplateLoading, hasInitialLoad, loadTemplate, handleApplyConfigurationAndCalculateScores]);
+
+  const handleTemplateChange = (newTemplateName: string) => {
+    loadTemplate(newTemplateName);
+  };
+  
+  const handleAxisMetricChange = useCallback((
+    axisType: 'X' | 'Y',
+    metricKey: string,
+    action: 'add' | 'remove' | 'updateWeight' | 'toggleHLB',
+    value?: any
+  ) => {
+    const setSelectedMetrics = axisType === 'X' ? setSelectedXMetrics : setSelectedYMetrics;
+    
+    setSelectedMetrics(prevMetrics => {
+      let newMetricsArray = [...prevMetrics];
+      const existingIndex = newMetricsArray.findIndex(m => m.key === metricKey);
+      
+      if (action === 'add') {
+        if (existingIndex === -1) {
+          const metricConfig = getMetricConfigDetails(metricKey);
+          if (metricConfig && accessibleMetrics.some(am => am.key === metricKey)) {
+            newMetricsArray.push({
+              key: metricKey,
+              metricLabel: metricConfig.label,
+              weight: DEFAULT_WEIGHT_FOR_NEW_METRIC,
+              userHigherIsBetter: metricConfig.higherIsBetter,
+              originalHigherIsBetter: metricConfig.higherIsBetter,
+            });
+            setActiveTemplateName(null);
+            return normalizeWeights(newMetricsArray, metricKey, DEFAULT_WEIGHT_FOR_NEW_METRIC, true);
+          }
+        }
+      } else if (action === 'remove') {
+        newMetricsArray = newMetricsArray.filter(m => m.key !== metricKey);
+        setActiveTemplateName(null);
+        return normalizeWeights(newMetricsArray);
+      } else if (existingIndex !== -1) {
+        if (action === 'updateWeight') {
+          const newWeight = Math.max(0, Math.min(100, Number(value) || 0));
+          newMetricsArray[existingIndex].weight = newWeight;
+          setActiveTemplateName(null);
+          return normalizeWeights(newMetricsArray, metricKey, newWeight, false);
+        } else if (action === 'toggleHLB') {
+          newMetricsArray[existingIndex] = {
+            ...newMetricsArray[existingIndex],
+            userHigherIsBetter: !!value
+          };
+          setActiveTemplateName(null);
+          return newMetricsArray;
+        }
+      }
+      
+      return prevMetrics;
+    });
+  }, [getMetricConfigDetails, accessibleMetrics]);
+  
+  const xTotalWeight = useMemo(() => 
+    selectedXMetrics.reduce((sum, m) => sum + m.weight, 0), 
+    [selectedXMetrics]
+  );
+  
+  const yTotalWeight = useMemo(() => 
+    selectedYMetrics.reduce((sum, m) => sum + m.weight, 0), 
+    [selectedYMetrics]
+  );
 
   const chartDatasets = useMemo(() => {
     if (isCalculatingScores || plotData.length === 0) return [];
@@ -1431,20 +1438,29 @@ export function ScatterScoreProPage() {
                   {/* Apply Button */}
                   <Button 
                     onClick={handleApplyConfigurationAndCalculateScores} 
-                    className="w-full bg-accent-teal hover:bg-accent-teal/90 text-sm font-semibold h-10"
+                    className={cn(
+                      "w-full text-sm font-semibold h-11 relative overflow-hidden group transition-all duration-300",
+                      "bg-gradient-to-r from-accent-teal to-teal-500 hover:from-teal-500 hover:to-accent-teal",
+                      "shadow-lg hover:shadow-xl shadow-teal-900/20 hover:shadow-teal-900/30",
+                      "before:absolute before:inset-0 before:bg-gradient-to-r before:from-transparent before:via-white/20 before:to-transparent",
+                      "before:translate-x-[-200%] hover:before:translate-x-[200%] before:transition-transform before:duration-700"
+                    )}
                     disabled={isCalculatingScores || (selectedXMetrics.length === 0 && selectedYMetrics.length === 0)}
                   >
-                    {isCalculatingScores ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Calculating...
-                      </>
-                    ) : (
-                      <>
-                        <RefreshCw size={16} className="mr-2"/>
-                        Apply & Plot
-                      </>
-                    )}
+                    <span className="relative flex items-center justify-center gap-2">
+                      {isCalculatingScores ? (
+                        <>
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                          <span>Calculating...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Sparkles className="h-4 w-4" />
+                          <span>Apply Configuration & Plot</span>
+                          <PlayCircle className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+                        </>
+                      )}
+                    </span>
                   </Button>
                 </div>
               </motion.div>
@@ -1527,21 +1543,21 @@ export function ScatterScoreProPage() {
             )}
             
             {!isCalculatingScores && !axisScoreError && plotData.length === 0 && 
-             (selectedXMetrics.length > 0 || selectedYMetrics.length > 0) && (
+             (selectedXMetrics.length > 0 || selectedYMetrics.length > 0) && !hasInitialLoad && (
               <div className="h-full flex items-center justify-center">
                 <p className="text-center text-gray-400 p-4">
                   No data to plot. <br/>
                   This can happen if no companies match global filters, or if selected metrics resulted in no valid scores for any company. <br/>
-                  Try adjusting global filters or click "Apply & Plot" again.
+                  Try adjusting global filters or click "Apply Configuration & Plot" again.
                 </p>
               </div>
             )}
             
             {!isCalculatingScores && !axisScoreError && plotData.length === 0 && 
-             selectedXMetrics.length === 0 && selectedYMetrics.length === 0 && (
+             selectedXMetrics.length === 0 && selectedYMetrics.length === 0 && !hasInitialLoad && (
               <div className="h-full flex items-center justify-center">
                 <p className="text-center text-gray-400">
-                  Please select metrics for at least one axis and click "Apply & Plot".
+                  Please select metrics for at least one axis and click "Apply Configuration & Plot".
                 </p>
               </div>
             )}
