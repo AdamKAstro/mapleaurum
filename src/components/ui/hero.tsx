@@ -54,9 +54,9 @@ const templates = [
   },
   {
     id: 'income-generator',
-    name: 'Income Generator',
+    name: 'Producer Profitability',
     emotion: 'Earn Steadily',
-    description: 'Focus on dividend-paying producers',
+    description: 'Evaluates operational excellence by comparing cost metrics (AISC, TCO) against profitability measures (EBITDA, FCF, margins).',
     icon: Shield,
     color: 'from-blue-500 to-cyan-600',
     bgGlow: 'bg-blue-500/20',
@@ -64,9 +64,9 @@ const templates = [
   },
   {
     id: 'risk-mitigator',
-    name: 'Risk Mitigator',
+    name: 'Financial Stability & Low Risk',
     emotion: 'Invest Safely',
-    description: 'Balance returns with safety',
+    description: 'For risk-averse investors, balancing balance sheet strength against operational consistency and longevity.',
     icon: Shield,
     color: 'from-purple-500 to-pink-600',
     bgGlow: 'bg-purple-500/20',
@@ -74,9 +74,9 @@ const templates = [
   },
   {
     id: 'exploration-frontier',
-    name: 'Exploration Frontier',
+    name: 'Precious Metals Pure Play',
     emotion: 'Find 10x Gems',
-    description: 'Spot the next big discovery',
+    description: 'Focuses exclusively on gold/silver exposure, comparing resource base against precious-specific valuation metrics.',
     icon: Target,
     color: 'from-orange-500 to-red-600',
     bgGlow: 'bg-orange-500/20',
@@ -105,7 +105,7 @@ const testimonials = [
   {
     id: 3,
     name: "Mike Thompson",
-    role: "Crypto Trader",
+    role: "Gold Bug",
     quote: "Exploration Frontier helped me spot a 10x opportunity!",
     rating: 5,
     avatar: "MT"
@@ -845,7 +845,7 @@ export function Hero({ className }: HeroProps) {
                   size="lg" 
                   className="text-lg px-10 py-6 shadow-2xl transform hover:scale-110 transition-all animate-pulse"
                 >
-                  <Zap className="h-6 w-6 mr-2" />
+                  <Zap className="h-5 w-5 mr-2" />
                   Try Free Now
                 </Button>
               </a>
@@ -855,8 +855,8 @@ export function Hero({ className }: HeroProps) {
                   variant="outline" 
                   className="border-2 border-yellow-500/50 text-yellow-400 hover:bg-yellow-500/10 px-10 py-6 text-lg"
                 >
-                  <Crown className="h-6 w-6 mr-2" />
-                  Go Pro with SuperGrok
+                  <Crown className="h-5 w-5 mr-2" />
+                  Subscribe to Pro or Premium
                 </Button>
               </a>
             </div>
@@ -864,7 +864,7 @@ export function Hero({ className }: HeroProps) {
             {/* Countdown timer for urgency */}
             <div className="bg-black/50 backdrop-blur-sm rounded-full px-6 py-3 inline-flex items-center gap-2 text-yellow-400 mb-8">
               <Zap className="h-5 w-5 animate-pulse" />
-              <span className="font-medium">Free Quota Resets in 24h</span>
+              <span className="font-medium">Free view lacks Premium valuation metrics</span>
             </div>
 
             {/* Trust badges */}
