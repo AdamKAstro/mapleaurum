@@ -11,9 +11,11 @@ import {
 import { MetricSelector } from '../../../components/metric-selector';
 import type { 
   ScatterScoreTemplate, 
-  AxisMetricConfig 
+  AxisMetricConfig,
+  NormalizationMode, // Import these types
+  ImputationMode   // Import these types
 } from '../types';
-import type { MetricConfig } from '../../../lib/metric-types';
+import type { MetricConfig } from '../../../lib/metric-types'; // Adjusted path
 import { cn } from '../../../lib/utils';
 import { ANIMATION_CONFIG } from '../constants';
 import { AxisMetricConfigurator } from './AxisMetricConfigurator';
@@ -24,13 +26,13 @@ interface ConfigurationPanelProps {
   onClose: () => void;
   templates: ScatterScoreTemplate[];
   activeTemplateName: string | null;
-  onTemplateChange: (templateName: string) => void;
+  onTemplateChange: (templateName: string) => void; // Changed from templateId to templateName to match useTemplateLoader
   selectedXMetrics: AxisMetricConfig[];
   selectedYMetrics: AxisMetricConfig[];
   selectedZMetricKey: string | null;
   zScale: 'linear' | 'log';
-  normalizationMode: string;
-  imputationMode: string;
+  normalizationMode: NormalizationMode; // Use imported type
+  imputationMode: ImputationMode;     // Use imported type
   onAxisMetricChange: (
     axisType: 'X' | 'Y',
     metricKey: string,
@@ -39,12 +41,12 @@ interface ConfigurationPanelProps {
   ) => void;
   onZMetricChange: (value: string | null) => void;
   onZScaleChange: (value: 'linear' | 'log') => void;
-  onNormalizationChange: (value: string) => void;
-  onImputationChange: (value: string) => void;
+  onNormalizationChange: (value: NormalizationMode) => void; // Use imported type
+  onImputationChange: (value: ImputationMode) => void;     // Use imported type
   onApply: () => void;
   isCalculating: boolean;
   accessibleMetrics: MetricConfig[];
-  currentUserTier?: string | null;
+  currentUserTier?: string | null; // Make sure this is passed from index.tsx
 }
 
 export const ConfigurationPanel: React.FC<ConfigurationPanelProps> = ({
@@ -71,7 +73,8 @@ export const ConfigurationPanel: React.FC<ConfigurationPanelProps> = ({
 }) => {
   const xTotalWeight = selectedXMetrics.reduce((sum, m) => sum + m.weight, 0);
   const yTotalWeight = selectedYMetrics.reduce((sum, m) => sum + m.weight, 0);
-  
+
+  // Determine if apply button should be enabled
   const canApply = (selectedXMetrics.length > 0 || selectedYMetrics.length > 0) && !isCalculating;
 
   return (
@@ -81,7 +84,7 @@ export const ConfigurationPanel: React.FC<ConfigurationPanelProps> = ({
           key="config-panel"
           initial={{ width: 0, opacity: 0 }}
           animate={{ 
-            width: "auto",
+            width: "auto", // Or specific width like "380px" / "420px"
             opacity: 1,
             transition: {
               width: ANIMATION_CONFIG.panel,
@@ -93,23 +96,26 @@ export const ConfigurationPanel: React.FC<ConfigurationPanelProps> = ({
             opacity: 0,
             transition: {
               width: ANIMATION_CONFIG.panel,
-              opacity: { duration: 0.1 }
+              opacity: { duration: 0.1 } // Faster fade out
             }
           }}
           className={cn(
             "flex-shrink-0 overflow-hidden",
-            "lg:block fixed inset-0 z-50 lg:relative lg:z-auto lg:inset-auto"
+            // For mobile, it's fixed. For desktop, it's relative within flex row.
+            "lg:block fixed inset-0 z-50 lg:relative lg:z-auto lg:inset-auto" 
           )}
         >
           <motion.div
-            initial={false}
-            animate={{ x: 0 }}
+            // initial={{ x: "-100%" }} // Example for slide-in from left on mobile
+            // animate={{ x: 0 }}
+            // exit={{ x: "-100%" }}
+            // transition={ANIMATION_CONFIG.panel}
             className={cn(
               "h-full flex flex-col space-y-4 overflow-y-auto bg-navy-800/80 backdrop-blur-sm rounded-xl p-3 md:p-4",
-              "lg:w-[380px] xl:w-[420px] lg:h-[calc(100vh-var(--header-height,80px)-3rem)]",
+              "lg:w-[380px] xl:w-[420px] lg:max-h-[calc(100vh-var(--header-height,60px)-2rem)]", // Adjusted max-h for typical header
               "scrollbar-thin scrollbar-thumb-navy-600 scrollbar-track-navy-700/50"
             )}
-            style={{ '--header-height': '80px' } as React.CSSProperties}
+            style={{ '--header-height': '60px' } as React.CSSProperties} // Example header height
           >
             {/* Panel Header */}
             <div className="flex justify-between items-center sticky top-0 bg-navy-800/90 backdrop-blur-sm py-2 -mx-3 md:-mx-4 px-3 md:px-4 z-10 border-b border-navy-700">
@@ -119,20 +125,21 @@ export const ConfigurationPanel: React.FC<ConfigurationPanelProps> = ({
                 size="icon"
                 onClick={onClose} 
                 className="text-muted-foreground hover:text-surface-white h-8 w-8"
+                aria-label="Close configuration panel"
               >
                 <X size={18}/>
               </Button>
             </div>
-            
-            <div className="space-y-4">
+
+            <div className="space-y-4 flex-grow pb-4"> {/* Added flex-grow and pb-4 for better spacing */}
               {/* Template Selector */}
               <div className="bg-navy-700/30 rounded-lg p-3 border border-navy-600/50">
                 <div className="flex items-center justify-between mb-2">
-                  <Label className="text-sm font-semibold text-surface-white">Template</Label>
+                  <Label className="text-sm font-semibold text-surface-white" htmlFor="template-select">Template</Label>
                   <TooltipProvider delayDuration={100}>
                     <Tooltip>
                       <TooltipTrigger asChild>
-                        <button className="text-muted-foreground hover:text-accent-teal">
+                        <button className="text-muted-foreground hover:text-accent-teal" aria-label="View template descriptions">
                           <Info size={14} />
                         </button>
                       </TooltipTrigger>
@@ -157,7 +164,7 @@ export const ConfigurationPanel: React.FC<ConfigurationPanelProps> = ({
                   </TooltipProvider>
                 </div>
                 <Select value={activeTemplateName || ""} onValueChange={onTemplateChange}>
-                  <SelectTrigger className="w-full h-8 text-xs bg-navy-700/50 border-navy-600 font-medium">
+                  <SelectTrigger id="template-select" className="w-full h-8 text-xs bg-navy-700/50 border-navy-600 font-medium">
                     <SelectValue placeholder="Select a template..." />
                   </SelectTrigger>
                   <SelectContent className="z-[60]">
@@ -169,7 +176,7 @@ export const ConfigurationPanel: React.FC<ConfigurationPanelProps> = ({
                   </SelectContent>
                 </Select>
               </div>
-              
+
               {/* Axis Configurations */}
               <AxisMetricConfigurator
                 axisTitle="X-Axis Metrics"
@@ -179,7 +186,7 @@ export const ConfigurationPanel: React.FC<ConfigurationPanelProps> = ({
                 accessibleMetrics={accessibleMetrics}
                 handleAxisMetricChange={onAxisMetricChange}
               />
-              
+
               <AxisMetricConfigurator
                 axisTitle="Y-Axis Metrics"
                 currentSelectedMetricsForAxis={selectedYMetrics}
@@ -193,14 +200,15 @@ export const ConfigurationPanel: React.FC<ConfigurationPanelProps> = ({
               <div className="bg-navy-700/30 rounded-lg p-3 border border-navy-600/50 space-y-2">
                 <h3 className="text-base font-semibold">Bubble Size (Z-Axis)</h3>
                 <MetricSelector
-                  label=""
+                  label="" // No explicit label needed here as per design
                   selectedMetric={selectedZMetricKey || ""}
                   onMetricChange={onZMetricChange}
                   currentTier={currentUserTier}
-                  availableMetrics={accessibleMetrics}
+                  availableMetrics={accessibleMetrics} // Ensure these are correctly filtered if needed
                   filterForNumericOnly={true}
-                  placeholder="Select metric..."
+                  placeholder="Select metric for bubble size..."
                   className="text-xs h-8 font-medium"
+                  triggerClassName="bg-navy-700/50 border-navy-600" // Match other selects
                 />
                 {selectedZMetricKey && (
                   <ScaleToggle 
@@ -214,7 +222,6 @@ export const ConfigurationPanel: React.FC<ConfigurationPanelProps> = ({
               {/* Advanced Settings */}
               <div className="bg-navy-700/30 rounded-lg p-3 border border-navy-600/50 space-y-3">
                 <h3 className="text-base font-semibold">Advanced Settings</h3>
-                
                 <div>
                   <Label htmlFor="norm-mode" className="text-xs text-muted-foreground font-medium">
                     Normalization
@@ -234,7 +241,6 @@ export const ConfigurationPanel: React.FC<ConfigurationPanelProps> = ({
                     </SelectContent>
                   </Select>
                 </div>
-                
                 <div>
                   <Label htmlFor="impute-mode" className="text-xs text-muted-foreground font-medium">
                     Missing Values
@@ -256,32 +262,35 @@ export const ConfigurationPanel: React.FC<ConfigurationPanelProps> = ({
               </div>
 
               {/* Apply Button */}
-              <Button 
-                onClick={onApply} 
-                className={cn(
-                  "w-full text-base font-bold h-12 relative overflow-hidden group transition-all duration-300",
-                  "bg-gradient-to-r from-accent-teal to-teal-500 hover:from-teal-500 hover:to-accent-teal",
-                  "shadow-lg hover:shadow-xl shadow-teal-900/20 hover:shadow-teal-900/30",
-                  "before:absolute before:inset-0 before:bg-gradient-to-r before:from-transparent before:via-white/20 before:to-transparent",
-                  "before:translate-x-[-200%] hover:before:translate-x-[200%] before:transition-transform before:duration-700"
-                )}
-                disabled={!canApply}
-              >
-                <span className="relative flex items-center justify-center gap-2">
-                  {isCalculating ? (
-                    <>
-                      <Loader2 className="h-5 w-5 animate-spin" />
-                      <span>Calculating...</span>
-                    </>
-                  ) : (
-                    <>
-                      <Sparkles className="h-5 w-5" />
-                      <span>Apply Configuration & Plot</span>
-                      <PlayCircle className="h-5 w-5 transition-transform group-hover:translate-x-1" />
-                    </>
+              <div className="mt-auto sticky bottom-0 bg-navy-800/90 backdrop-blur-sm py-3 -mx-3 md:-mx-4 px-3 md:px-4"> {/* Made button sticky */}
+                <Button 
+                  onClick={onApply} 
+                  className={cn(
+                    "w-full text-base font-bold h-12 relative overflow-hidden group transition-all duration-300",
+                    "bg-gradient-to-r from-accent-teal to-teal-500 hover:from-teal-500 hover:to-accent-teal",
+                    "shadow-lg hover:shadow-xl shadow-teal-900/20 hover:shadow-teal-900/30",
+                    "disabled:opacity-50 disabled:cursor-not-allowed", // Standard disabled style
+                    "before:absolute before:inset-0 before:bg-gradient-to-r before:from-transparent before:via-white/20 before:to-transparent",
+                    "before:translate-x-[-200%] hover:before:translate-x-[200%] before:transition-transform before:duration-700"
                   )}
-                </span>
-              </Button>
+                  disabled={!canApply}
+                >
+                  <span className="relative flex items-center justify-center gap-2">
+                    {isCalculating ? (
+                      <>
+                        <Loader2 className="h-5 w-5 animate-spin" />
+                        <span>Calculating...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Sparkles className="h-5 w-5" />
+                        <span>Apply Configuration & Plot</span>
+                        <PlayCircle className="h-5 w-5 transition-transform group-hover:translate-x-1" />
+                      </>
+                    )}
+                  </span>
+                </Button>
+              </div>
             </div>
           </motion.div>
         </motion.div>

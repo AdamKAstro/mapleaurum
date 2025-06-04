@@ -7,8 +7,8 @@ import { Checkbox } from '../../../components/ui/checkbox';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../../../components/ui/tooltip';
 import { ChevronLeft, Plus, X } from 'lucide-react';
 import type { AxisMetricConfig } from '../types';
-import type { MetricConfig } from '../../../lib/metric-types';
-import { metricCategories } from '../../../lib/metric-types';
+import type { MetricConfig } from '../../../lib/metric-types'; // Adjusted path
+import { metricCategories } from '../../../lib/metric-types'; // Adjusted path
 import { cn } from '../../../lib/utils';
 
 interface MetricListItemProps {
@@ -21,7 +21,7 @@ interface MetricListItemProps {
 
 const MetricListItem: React.FC<MetricListItemProps> = ({ 
   metric, 
-  axisType, 
+  // axisType, // axisType is not used in the MetricListItem JSX directly
   onWeightChange, 
   onToggleHLB, 
   onRemove 
@@ -38,7 +38,9 @@ const MetricListItem: React.FC<MetricListItemProps> = ({
         value={metric.weight}
         onChange={(e) => {
           const value = parseInt(e.target.value, 10);
-          if (!isNaN(value)) onWeightChange(value);
+          // Allow setting to 0, but normalizeWeights will handle if it's the only metric or needs adjustment
+          if (!isNaN(value) && value >= 0 && value <= 100) onWeightChange(value);
+          else if (e.target.value === "") onWeightChange(0); // Treat empty as 0 for immediate feedback
         }}
         className="h-7 text-xs w-14 bg-navy-800/50 border-navy-600 text-center font-medium"
         min={0} 
@@ -48,12 +50,14 @@ const MetricListItem: React.FC<MetricListItemProps> = ({
       <span className="text-xs text-muted-foreground font-medium">%</span>
       <Checkbox 
         checked={metric.userHigherIsBetter}
-        onCheckedChange={(checked) => onToggleHLB(!!checked)}
+        onCheckedChange={(checked) => onToggleHLB(!!checked)} // Ensure boolean conversion
         className="border-gray-600 data-[state=checked]:bg-accent-teal data-[state=checked]:border-accent-teal h-3.5 w-3.5" 
+        id={`hlb-${metric.key}`} // Added id for label association if needed
       />
       <TooltipProvider delayDuration={100}>
         <Tooltip>
           <TooltipTrigger asChild>
+            {/* Use a div or span for TooltipTrigger if it's just text, or ensure Button has asChild */}
             <span className="text-xs text-muted-foreground cursor-help font-medium">HLB</span>
           </TooltipTrigger>
           <TooltipContent side="left" className="text-xs max-w-[200px] p-2 z-[70] font-sans">
@@ -66,6 +70,7 @@ const MetricListItem: React.FC<MetricListItemProps> = ({
         size="icon" 
         className="h-6 w-6 p-0 text-red-400 hover:text-red-300 hover:bg-red-500/10" 
         onClick={onRemove}
+        aria-label={`Remove ${metric.metricLabel}`}
       >
         <X size={14} />
       </Button>
@@ -78,7 +83,7 @@ interface AxisMetricConfiguratorProps {
   currentSelectedMetricsForAxis: AxisMetricConfig[];
   axisType: 'X' | 'Y';
   currentTotalWeightForAxis: number;
-  accessibleMetrics: MetricConfig[];
+  accessibleMetrics: MetricConfig[]; // These are the full MetricConfig objects
   handleAxisMetricChange: (
     axisType: 'X' | 'Y',
     metricKey: string,
@@ -102,14 +107,15 @@ export const AxisMetricConfigurator: React.FC<AxisMetricConfiguratorProps> = ({
       <button
         onClick={() => setIsExpanded(!isExpanded)}
         className="w-full flex items-center justify-between p-3 hover:bg-navy-700/20 transition-colors rounded-t-lg"
+        aria-expanded={isExpanded}
       >
-        <h3 className="text-base font-semibold">{axisTitle}</h3>
+        <h3 className="text-base font-semibold text-surface-white">{axisTitle}</h3>
         <div className="flex items-center gap-2">
           <span className={cn(
             "text-xs font-medium px-2 py-0.5 rounded",
             currentTotalWeightForAxis !== 100 && currentSelectedMetricsForAxis.length > 0 
               ? "bg-red-500/20 text-red-400" 
-              : currentTotalWeightForAxis === 100 
+              : currentTotalWeightForAxis === 100 && currentSelectedMetricsForAxis.length > 0 // only green if metrics exist
               ? "bg-green-500/20 text-green-400" 
               : "bg-navy-600/50 text-muted-foreground"
           )}>
@@ -121,7 +127,7 @@ export const AxisMetricConfigurator: React.FC<AxisMetricConfiguratorProps> = ({
           )} />
         </div>
       </button>
-      
+
       {isExpanded && (
         <div className="p-3 pt-0 space-y-3">
           <Select 
@@ -130,7 +136,7 @@ export const AxisMetricConfigurator: React.FC<AxisMetricConfiguratorProps> = ({
                 handleAxisMetricChange(axisType, value, 'add');
               }
             }}
-            value=""
+            // value="" // Control component if needed, or leave uncontrolled
           >
             <SelectTrigger className="text-xs h-8 bg-navy-700/50 border-navy-600 font-medium">
               <div className="flex items-center gap-2">
@@ -169,7 +175,7 @@ export const AxisMetricConfigurator: React.FC<AxisMetricConfiguratorProps> = ({
               )}
             </SelectContent>
           </Select>
-          
+
           <div className="space-y-2 max-h-64 overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-navy-600 scrollbar-track-transparent">
             {currentSelectedMetricsForAxis.length === 0 ? (
               <p className="text-xs text-muted-foreground text-center py-4 font-medium">
@@ -180,7 +186,7 @@ export const AxisMetricConfigurator: React.FC<AxisMetricConfiguratorProps> = ({
                 <MetricListItem
                   key={sm.key}
                   metric={sm}
-                  axisType={axisType}
+                  axisType={axisType} // Pass it down, even if not used by MetricListItem directly
                   onWeightChange={(value) => handleAxisMetricChange(axisType, sm.key, 'updateWeight', value)}
                   onToggleHLB={(value) => handleAxisMetricChange(axisType, sm.key, 'toggleHLB', value)}
                   onRemove={() => handleAxisMetricChange(axisType, sm.key, 'remove')}

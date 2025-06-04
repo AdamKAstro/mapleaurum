@@ -32,7 +32,7 @@ export const normalizeWeights = (
 
   let totalTargetWeight = 100;
   let sumOfFixedWeights = 0;
-  
+
   // Handle new metric addition
   if (isNewMetric && changedMetricKey) {
     const idx = workingMetrics.findIndex(m => m.key === changedMetricKey);
@@ -41,7 +41,7 @@ export const normalizeWeights = (
       userSetWeightForChangedMetric = DEFAULT_WEIGHT_FOR_NEW_METRIC;
     }
   }
-  
+
   // Apply user-set weight for changed metric
   if (changedMetricKey && userSetWeightForChangedMetric !== undefined) {
     const idx = workingMetrics.findIndex(m => m.key === changedMetricKey);
@@ -79,13 +79,13 @@ export const normalizeWeights = (
     // Only one metric and it's the changed one
     workingMetrics[0].weight = 100;
   }
-  
+
   // Round weights to integers
   let roundedMetrics = workingMetrics.map(m => ({ 
     ...m, 
     weight: Math.round(m.weight) 
   }));
-  
+
   // Fix rounding errors to ensure sum is exactly 100
   let currentSum = roundedMetrics.reduce((sum, m) => sum + m.weight, 0);
 
@@ -99,7 +99,7 @@ export const normalizeWeights = (
         .map((m, i) => ({ m, i, weight: m.weight }))
         .filter(item => item.m.key !== changedMetricKey)
         .sort((a, b) => b.weight - a.weight);
-      
+
       if (candidates.length > 0) {
         // Find a candidate that can absorb the difference
         for (const cand of candidates) {
