@@ -29,7 +29,8 @@ export function Sidebar() {
     { path: '/companies', label: 'Companies', icon: Table2 },
     { path: '/filter', label: 'Filters', icon: Filter },
     { path: '/scatter-chart', label: 'Scatter Chart', icon: Scatter },	
-    { path: '/scoring', label: 'Scoring', icon: Calculator },	
+    { path: '/scoring', label: 'Scoring', icon: Calculator },
+    { path: '/scoring-advanced', label: 'AdvScoring', icon: Calculator },	
     { path: '/scatter-score-pro', label: 'ScatterScore', icon: TrendingUp },
     { path: '/subscribe', label: 'Subscribe', icon: Crown },
   ];
