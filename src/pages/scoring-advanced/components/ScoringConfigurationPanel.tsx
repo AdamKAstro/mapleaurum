@@ -22,7 +22,7 @@ interface ScoringConfigurationPanelProps {
   companyCount: number;
 }
 
-const STATUS_TABS: CompanyStatus[] = ['Producer', 'Developer', 'Explorer', 'Royalty'];
+const STATUS_TABS: CompanyStatus[] = ['producer', 'developer', 'explorer', 'royalty'];
 
 export const ScoringConfigurationPanel: React.FC<ScoringConfigurationPanelProps> = ({
   weights,

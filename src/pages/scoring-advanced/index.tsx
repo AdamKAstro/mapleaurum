@@ -1,3 +1,4 @@
+
 import React, { useState, useCallback } from 'react';
 import type { CompanyStatus } from '@/lib/types';
 import type { ScoringStrategy, AdvancedScoringResult } from '@/lib/scoringUtilsAdvanced';
@@ -17,11 +18,11 @@ const initialMetricWeights: Record<string, number> = Object.fromEntries(
 );
 
 const initialScoringStrategies: Record<CompanyStatus, ScoringStrategy> = {
-    Producer: { companyType: 'Producer', metricSelection: 'dynamic', requiredCoverage: 0.10, imputationStrategy: 'conservative', normalization: 'ensemble', transformations: ['sigmoid'], peerGroupFactors: ['companyType', 'marketCap'], transformationSteepness: 10 },
-    Developer: { companyType: 'Developer', metricSelection: 'dynamic', requiredCoverage: 0.05, imputationStrategy: 'conservative', normalization: 'ensemble', transformations: ['sigmoid'], peerGroupFactors: ['companyType', 'marketCap'], transformationSteepness: 12 },
-    Explorer: { companyType: 'Explorer', metricSelection: 'dynamic', requiredCoverage: 0.05, imputationStrategy: 'conservative', normalization: 'ensemble', transformations: ['sigmoid'], peerGroupFactors: ['companyType', 'marketCap'], transformationSteepness: 15 },
-    Royalty: { companyType: 'Royalty', metricSelection: 'dynamic', requiredCoverage: 0.10, imputationStrategy: 'conservative', normalization: 'ensemble', transformations: ['sigmoid'], peerGroupFactors: ['companyType'], transformationSteepness: 8 },
-    Other: { companyType: 'Other', metricSelection: 'dynamic', requiredCoverage: 0.05, imputationStrategy: 'conservative', normalization: 'ensemble', transformations: ['none'], peerGroupFactors: ['companyType'] }
+    producer: { companyType: 'producer', metricSelection: 'dynamic', requiredCoverage: 0.10, imputationStrategy: 'conservative', normalization: 'ensemble', transformations: ['sigmoid'], peerGroupFactors: ['companyType', 'marketCap'], transformationSteepness: 10 },
+    developer: { companyType: 'developer', metricSelection: 'dynamic', requiredCoverage: 0.05, imputationStrategy: 'conservative', normalization: 'ensemble', transformations: ['sigmoid'], peerGroupFactors: ['companyType', 'marketCap'], transformationSteepness: 12 },
+    explorer: { companyType: 'explorer', metricSelection: 'dynamic', requiredCoverage: 0.05, imputationStrategy: 'conservative', normalization: 'ensemble', transformations: ['sigmoid'], peerGroupFactors: ['companyType', 'marketCap'], transformationSteepness: 15 },
+    royalty: { companyType: 'royalty', metricSelection: 'dynamic', requiredCoverage: 0.10, imputationStrategy: 'conservative', normalization: 'ensemble', transformations: ['sigmoid'], peerGroupFactors: ['companyType'], transformationSteepness: 8 },
+    other: { companyType: 'other', metricSelection: 'dynamic', requiredCoverage: 0.05, imputationStrategy: 'conservative', normalization: 'ensemble', transformations: ['none'], peerGroupFactors: ['companyType'] }
 };
 
 export function AdvancedScoringPage() {
