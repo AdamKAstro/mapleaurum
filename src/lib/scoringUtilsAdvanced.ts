@@ -1,51 +1,86 @@
-// src/lib/scoringUtilsAdvanced.ts
-import type { Company, CompanyStatus, MetricConfig, NormalizationMode, ImputationMode } from './types';
+import type { Company, CompanyStatus, MetricConfig } from './types';
 import { isValidNumber, getNestedValue } from './utils';
-import { calculateDatasetMetricStats, type MetricDatasetStats } from './scoringUtils';
+
+// Defines the tiered structure for metric priorities
+interface TieredMetric {
+  key: string;
+  tier: 1 | 2 | 3;
+}
+
+// Defines the priority of metrics for each company status using a tiered system.
+// This is UPDATED to use the 'key' format from your existing `metric-types.ts`.
+export const COMPANY_TYPE_METRIC_PRIORITIES: Record<CompanyStatus, TieredMetric[]> = {
+  Producer: [
+    // --- Tier 1: Core Operations & Profitability ---
+    { key: 'production.current_production_total_aueq_koz', tier: 1 },
+    { key: 'costs.aisc_last_year', tier: 1 },
+    { key: 'financials.ebitda', tier: 1 },
+    { key: 'financials.free_cash_flow', tier: 1 },
+
+    // --- Tier 2: Financial Health & Valuation ---
+    { key: 'production.reserve_life_years', tier: 2 },
+    { key: 'financials.enterprise_to_ebitda', tier: 2 },
+    { key: 'valuation_metrics.ev_per_production_oz', tier: 2 },
+    { key: 'financials.debt_value', tier: 2 },
+    
+    // --- Tier 3: Expansive Context ---
+    { key: 'mineral_estimates.reserves_total_aueq_moz', tier: 3 },
+    { key: 'financials.price_to_book', tier: 3 },
+    { key: 'financials.revenue_value', tier: 3 },
+  ],
+  Developer: [
+    // --- Tier 1: Core Project & Funding Metrics ---
+    { key: 'mineral_estimates.reserves_total_aueq_moz', tier: 1 },
+    { key: 'costs.construction_costs', tier: 1 },
+    { key: 'financials.cash_value', tier: 1 },
+    { key: 'financials.net_financial_assets', tier: 1 },
+
+    // --- Tier 2: Future Economics & Valuation ---
+    { key: 'costs.aisc_future', tier: 2 },
+    { key: 'production.future_production_total_aueq_koz', tier: 2 },
+    { key: 'valuation_metrics.ev_per_reserve_oz_all', tier: 2 },
+    { key: 'financials.debt_value', tier: 2 },
+  ],
+  Explorer: [
+    // --- Tier 1: Core Survival & Discovery Potential ---
+    { key: 'financials.cash_value', tier: 1 },
+    { key: 'financials.net_financial_assets', tier: 1 },
+    { key: 'mineral_estimates.resources_total_aueq_moz', tier: 1 },
+    { key: 'financials.free_cash_flow', tier: 1 },
+
+    // --- Tier 2: Asset Quality & Market Perception ---
+    { key: 'mineral_estimates.measured_indicated_total_aueq_moz', tier: 2 },
+    { key: 'valuation_metrics.ev_per_resource_oz_all', tier: 2 },
+    { key: 'financials.enterprise_value_value', tier: 2 },
+    { key: 'financials.price_to_book', tier: 2 },
+    
+    // --- Tier 3: Expansive Milestone Metrics ---
+    { key: 'mineral_estimates.potential_total_aueq_moz', tier: 3 },
+    { key: 'costs.aisc_future', tier: 3 },
+  ],
+  Royalty: [
+    // --- Tier 1: Core Business Model ---
+    { key: 'financials.revenue_value', tier: 1 },
+    { key: 'financials.free_cash_flow', tier: 1 },
+    { key: 'financials.ebitda', tier: 1 },
+
+    // --- Tier 2: Profitability & Valuation ---
+    { key: 'financials.enterprise_to_revenue', tier: 2 },
+    { key: 'financials.net_income_value', tier: 2 },
+    
+    // --- Tier 3: Expansive Financial Health ---
+    { key: 'financials.price_to_book', tier: 3 },
+    { key: 'financials.debt_value', tier: 3 },
+  ],
+  Other: []
+};
+
 
 // Constants for scoring configuration
 export const METRIC_QUALITY_THRESHOLDS = {
-  MINIMUM_COVERAGE: 0.05, // 5% minimum data coverage
-  GOOD_COVERAGE: 0.50,    // 50% for "good" coverage
-  EXCELLENT_COVERAGE: 0.80 // 80% for "excellent" coverage
-};
-
-export const COMPANY_TYPE_METRIC_PRIORITIES: Record<CompanyStatus, string[]> = {
-  Explorer: [
-    'me_resources_total_aueq_moz',
-    'me_measured_indicated_total_aueq_moz',
-    'f_cash_value',
-    'f_net_financial_assets',
-    'f_free_cash_flow',
-    'f_enterprise_value_value',
-    'vm_ev_per_resource_oz_all'
-  ],
-  Developer: [
-    'me_reserves_total_aueq_moz',
-    'c_construction_costs',
-    'f_cash_value',
-    'f_debt_value',
-    'p_future_production_total_aueq_koz',
-    'c_aisc_future',
-    'vm_ev_per_reserve_oz_all'
-  ],
-  Producer: [
-    'p_current_production_total_aueq_koz',
-    'c_aisc_last_year',
-    'f_ebitda',
-    'f_free_cash_flow',
-    'f_enterprise_to_ebitda',
-    'p_reserve_life_years',
-    'vm_ev_per_production_oz'
-  ],
-  Royalty: [
-    'f_revenue_value',
-    'f_free_cash_flow',
-    'f_dividend_yield',
-    'f_enterprise_to_revenue',
-    'f_net_income_value'
-  ],
-  Other: [] // Will use a balanced approach
+  MINIMUM_COVERAGE: 0.05,
+  GOOD_COVERAGE: 0.50,
+  EXCELLENT_COVERAGE: 0.80
 };
 
 // Scoring strategy configuration
@@ -57,6 +92,7 @@ export interface ScoringStrategy {
   normalization: 'percentile' | 'robust_zscore' | 'min_max' | 'ensemble';
   transformations: ('log' | 'sqrt' | 'sigmoid' | 'none')[];
   peerGroupFactors: ('companyType' | 'marketCap' | 'geography' | 'primaryCommodity')[];
+  transformationSteepness?: number;
 }
 
 export interface MetricQualityScore {
@@ -96,33 +132,22 @@ export interface AdvancedScoringResult {
   warnings: string[];
 }
 
-// Calculate metric quality scores
 export function calculateMetricQuality(
   companies: Company[],
   metric: MetricConfig,
   globalRanges?: Record<string, { min: number; max: number }>
 ): MetricQualityScore {
-  const values: number[] = [];
-  
-  companies.forEach(company => {
-    const value = getNestedValue(company, metric.nested_path);
-    if (isValidNumber(value)) {
-      values.push(value as number);
-    }
-  });
-
+  const values: number[] = companies.map(c => getNestedValue(c, metric.nested_path)).filter(isValidNumber);
   const coverage = values.length / companies.length;
-  
-  // Calculate variance (normalized)
+
   let variance = 0;
   if (values.length > 1) {
     const mean = values.reduce((a, b) => a + b, 0) / values.length;
     const squaredDiffs = values.map(v => Math.pow(v - mean, 2));
     const rawVariance = squaredDiffs.reduce((a, b) => a + b, 0) / values.length;
-    variance = Math.min(rawVariance / (mean * mean + 1), 1); // Coefficient of variation, capped at 1
+    variance = Math.min(rawVariance / (mean * mean + 1), 1);
   }
 
-  // Calculate outlier score (using IQR method)
   let outlierScore = 0;
   if (values.length > 4) {
     const sorted = [...values].sort((a, b) => a - b);
@@ -133,479 +158,213 @@ export function calculateMetricQuality(
     outlierScore = outliers.length / values.length;
   }
 
-  // Data freshness (placeholder - would need timestamp data)
-  const dataFreshness = 1.0; // Assume all data is fresh for now
+  const dataFreshness = 1.0;
+  const overallQuality = (coverage * 0.4 + variance * 0.2 + (1 - outlierScore) * 0.2 + dataFreshness * 0.2);
 
-  // Overall quality score
-  const overallQuality = (
-    coverage * 0.4 +
-    variance * 0.2 +
-    (1 - outlierScore) * 0.2 +
-    dataFreshness * 0.2
-  );
+  let recommendation: MetricQualityScore['recommendation'] = 'use';
+  if (coverage < METRIC_QUALITY_THRESHOLDS.MINIMUM_COVERAGE) recommendation = 'exclude';
+  else if (coverage < METRIC_QUALITY_THRESHOLDS.GOOD_COVERAGE || overallQuality < 0.3) recommendation = 'reduce';
+  else if (coverage > METRIC_QUALITY_THRESHOLDS.EXCELLENT_COVERAGE && overallQuality > 0.7) recommendation = 'prioritize';
 
-  // Recommendation based on coverage and quality
-  let recommendation: MetricQualityScore['recommendation'];
-  if (coverage < METRIC_QUALITY_THRESHOLDS.MINIMUM_COVERAGE) {
-    recommendation = 'exclude';
-  } else if (coverage < METRIC_QUALITY_THRESHOLDS.GOOD_COVERAGE || overallQuality < 0.3) {
-    recommendation = 'reduce';
-  } else if (coverage > METRIC_QUALITY_THRESHOLDS.EXCELLENT_COVERAGE && overallQuality > 0.7) {
-    recommendation = 'prioritize';
-  } else {
-    recommendation = 'use';
-  }
-
-  return {
-    metricKey: metric.key,
-    coverage,
-    variance,
-    outlierScore,
-    dataFreshness,
-    overallQuality,
-    recommendation
-  };
+  return { metricKey: metric.key, coverage, variance, outlierScore, dataFreshness, overallQuality, recommendation };
 }
 
-// Define peer groups based on multiple factors
 export function definePeerGroups(
   companies: Company[],
   factors: ('companyType' | 'marketCap' | 'geography' | 'primaryCommodity')[]
 ): Map<string, PeerGroup> {
   const groups = new Map<string, PeerGroup>();
-
   companies.forEach(company => {
     const groupFactors: Record<string, any> = {};
-    
     factors.forEach(factor => {
       switch (factor) {
-        case 'companyType':
-          groupFactors.companyType = company.status || 'Other';
-          break;
+        case 'companyType': groupFactors.companyType = company.status || 'Other'; break;
         case 'marketCap':
-          // Define market cap buckets
-          const marketCap = company.f_market_cap_value || 0;
-          if (marketCap < 10000000) groupFactors.marketCapBucket = 'micro';
-          else if (marketCap < 50000000) groupFactors.marketCapBucket = 'small';
-          else if (marketCap < 500000000) groupFactors.marketCapBucket = 'mid';
+          const mc = company.financials?.market_cap_value || 0;
+          if (mc < 10e6) groupFactors.marketCapBucket = 'micro';
+          else if (mc < 50e6) groupFactors.marketCapBucket = 'small';
+          else if (mc < 500e6) groupFactors.marketCapBucket = 'mid';
           else groupFactors.marketCapBucket = 'large';
           break;
         case 'geography':
-          groupFactors.geography = company.headquarters?.continent || 'Unknown';
+          // This section is a placeholder for when you add geographical data.
+          // To use it, add 'geography' to the `peerGroupFactors` array in your ScoringStrategy.
+          // Example logic:
+          // const risk = company.sovereign_risk_rating;
+          // if (risk > 80) groupFactors.geography = 'top_tier';
+          // else if (risk > 60) groupFactors.geography = 'mid_tier';
+          // else groupFactors.geography = 'high_risk';
           break;
         case 'primaryCommodity':
-          // Determine primary commodity based on percent_gold/silver
           if ((company.percent_gold || 0) > 80) groupFactors.primaryCommodity = 'gold';
           else if ((company.percent_silver || 0) > 50) groupFactors.primaryCommodity = 'silver';
           else groupFactors.primaryCommodity = 'mixed';
           break;
       }
     });
-
     const groupKey = JSON.stringify(groupFactors);
-    
-    if (!groups.has(groupKey)) {
-      groups.set(groupKey, {
-        companyIds: [],
-        groupKey,
-        factors: groupFactors,
-        size: 0
-      });
-    }
-
+    if (!groups.has(groupKey)) groups.set(groupKey, { companyIds: [], groupKey, factors: groupFactors, size: 0 });
     const group = groups.get(groupKey)!;
     group.companyIds.push(company.company_id);
     group.size++;
   });
-
   return groups;
 }
 
-// Advanced normalization with multiple methods
-export function normalizeWithEnsemble(
-  value: number,
-  values: number[],
-  metric: MetricConfig,
-  method: 'percentile' | 'robust_zscore' | 'min_max' | 'ensemble'
-): number {
+export function normalizeWithEnsemble(value: number, values: number[], metric: MetricConfig, method: 'percentile' | 'robust_zscore' | 'min_max' | 'ensemble'): number {
   if (values.length === 0) return 0.5;
-
   const sorted = [...values].sort((a, b) => a - b);
-  
+  const applyDirection = (v: number) => metric.higherIsBetter ? v : 1 - v;
+
   switch (method) {
-    case 'percentile': {
-      // Percentile rank normalization
-      const rank = sorted.findIndex(v => v >= value);
-      const percentile = rank / values.length;
-      return metric.higherIsBetter ? percentile : 1 - percentile;
-    }
-    
-    case 'robust_zscore': {
-      // Robust Z-score using median and MAD
+    case 'percentile':
+      return applyDirection(sorted.findIndex(v => v >= value) / values.length);
+    case 'robust_zscore':
       const median = sorted[Math.floor(values.length / 2)];
-      const deviations = values.map(v => Math.abs(v - median));
-      const mad = [...deviations].sort((a, b) => a - b)[Math.floor(deviations.length / 2)];
-      
+      const mad = [...values.map(v => Math.abs(v - median))].sort((a,b)=>a-b)[Math.floor(values.length / 2)];
       if (mad === 0) return 0.5;
-      
-      const robustZ = (value - median) / (1.4826 * mad); // 1.4826 is consistency factor
-      const normalized = 1 / (1 + Math.exp(-robustZ / 2)); // Sigmoid to [0,1]
-      
-      return metric.higherIsBetter ? normalized : 1 - normalized;
-    }
-    
-    case 'min_max': {
-      // Standard min-max but with outlier handling
+      const robustZ = (value - median) / (1.4826 * mad);
+      return applyDirection(1 / (1 + Math.exp(-robustZ / 2)));
+    case 'min_max':
       const p5 = sorted[Math.floor(values.length * 0.05)];
       const p95 = sorted[Math.floor(values.length * 0.95)];
-      
       if (p95 === p5) return 0.5;
-      
-      const clampedValue = Math.max(p5, Math.min(p95, value));
-      const normalized = (clampedValue - p5) / (p95 - p5);
-      
-      return metric.higherIsBetter ? normalized : 1 - normalized;
-    }
-    
-    case 'ensemble': {
-      // Combine multiple methods
-      const percentileScore = normalizeWithEnsemble(value, values, metric, 'percentile');
-      const robustScore = normalizeWithEnsemble(value, values, metric, 'robust_zscore');
-      const minMaxScore = normalizeWithEnsemble(value, values, metric, 'min_max');
-      
-      // Weighted average with emphasis on percentile
-      return 0.5 * percentileScore + 0.3 * robustScore + 0.2 * minMaxScore;
-    }
-    
-    default:
-      return 0.5;
+      const clamped = Math.max(p5, Math.min(p95, value));
+      return applyDirection((clamped - p5) / (p95 - p5));
+    case 'ensemble':
+      return (
+        0.5 * normalizeWithEnsemble(value, values, metric, 'percentile') +
+        0.3 * normalizeWithEnsemble(value, values, metric, 'robust_zscore') +
+        0.2 * normalizeWithEnsemble(value, values, metric, 'min_max')
+      );
+    default: return 0.5;
   }
 }
 
-// Apply non-linear transformations to spread scores
-export function applyScoreTransformation(
-  score: number,
-  transformation: 'log' | 'sqrt' | 'sigmoid' | 'none'
-): number {
+export function applyScoreTransformation(score: number, transformation: 'log' | 'sqrt' | 'sigmoid' | 'none', k: number = 10): number {
   switch (transformation) {
-    case 'log':
-      // Log transformation with offset to avoid log(0)
-      return Math.log(score + 0.1) / Math.log(1.1);
-      
-    case 'sqrt':
-      // Square root transformation
-      return Math.sqrt(score);
-      
-    case 'sigmoid':
-      // S-curve transformation to spread middle values
-      const k = 10; // Steepness factor
-      return 1 / (1 + Math.exp(-k * (score - 0.5)));
-      
-    case 'none':
-    default:
-      return score;
+    case 'log': return Math.log(score + 0.1) / Math.log(1.1);
+    case 'sqrt': return Math.sqrt(score);
+    case 'sigmoid': return 1 / (1 + Math.exp(-k * (score - 0.5)));
+    default: return score;
   }
 }
 
-// Smart imputation using peer groups
-export function imputeWithPeerGroup(
-  company: Company,
-  metric: MetricConfig,
-  peerGroup: Company[],
-  strategy: 'mean' | 'median' | 'conservative'
-): number | null {
-  const peerValues: number[] = [];
-  
-  peerGroup.forEach(peer => {
-    if (peer.company_id === company.company_id) return;
-    const value = getNestedValue(peer, metric.nested_path);
-    if (isValidNumber(value)) {
-      peerValues.push(value as number);
-    }
-  });
-
+export function imputeWithPeerGroup(company: Company, metric: MetricConfig, peerGroup: Company[], strategy: 'mean' | 'median' | 'conservative'): number | null {
+  const peerValues = peerGroup.map(p => getNestedValue(p, metric.nested_path)).filter(isValidNumber);
   if (peerValues.length === 0) return null;
-
+  const sorted = [...peerValues].sort((a, b) => a - b);
   switch (strategy) {
-    case 'mean':
-      return peerValues.reduce((a, b) => a + b, 0) / peerValues.length;
-      
-    case 'median':
-      const sorted = [...peerValues].sort((a, b) => a - b);
-      return sorted[Math.floor(peerValues.length / 2)];
-      
+    case 'mean': return peerValues.reduce((a, b) => a + b, 0) / peerValues.length;
+    case 'median': return sorted[Math.floor(sorted.length / 2)];
     case 'conservative':
-      // Use worse quartile for conservative imputation
-      const sortedCons = [...peerValues].sort((a, b) => a - b);
-      const quartileIndex = metric.higherIsBetter 
-        ? Math.floor(peerValues.length * 0.25)  // 25th percentile if higher is better
-        : Math.floor(peerValues.length * 0.75); // 75th percentile if lower is better
-      return sortedCons[quartileIndex];
-      
-    default:
-      return null;
+      const idx = metric.higherIsBetter ? Math.floor(sorted.length * 0.25) : Math.floor(sorted.length * 0.75);
+      return sorted[idx];
+    default: return null;
   }
 }
 
-// Main advanced scoring function
-export function calculateAdvancedScores(
-  companies: Company[],
-  weights: Record<string, number>,
-  metricConfigs: MetricConfig[],
-  scoringStrategies: Record<CompanyStatus, ScoringStrategy>,
-  globalRanges?: Record<string, { min: number; max: number }>
-): AdvancedScoringResult[] {
-  // Step 1: Calculate metric quality scores
-  const metricQualityMap = new Map<string, MetricQualityScore>();
-  metricConfigs.forEach(metric => {
-    if (weights[metric.key] && weights[metric.key] > 0) {
-      const quality = calculateMetricQuality(companies, metric, globalRanges);
-      metricQualityMap.set(metric.key, quality);
+function selectMetricsForCompany(company: Company, allMetrics: MetricConfig[], weights: Record<string, number>, qualityMap: Map<string, MetricQualityScore>, strategy: ScoringStrategy): Array<{ metric: MetricConfig; adjustedWeight: number }> {
+    const companyType = company.status || 'Other';
+    const priorityInfo = COMPANY_TYPE_METRIC_PRIORITIES[companyType] || [];
+    const priorityMap = new Map<string, number>(priorityInfo.map(p => [p.key, p.tier]));
+  
+    const selectedMetrics = allMetrics.map(metric => {
+        const baseWeight = weights[metric.key] || 0;
+        if (baseWeight === 0) return null;
+
+        const quality = qualityMap.get(metric.key);
+        if (!quality || quality.coverage < strategy.requiredCoverage || quality.recommendation === 'exclude') return null;
+
+        let adjustedWeight = baseWeight;
+        const tier = priorityMap.get(metric.key);
+
+        if (tier === 1) adjustedWeight *= 2.0;
+        else if (tier === 2) adjustedWeight *= 1.5;
+        else if (tier === 3) adjustedWeight *= 1.2;
+
+        if (quality.recommendation === 'reduce') adjustedWeight *= 0.5;
+        else if (quality.recommendation === 'prioritize') adjustedWeight *= 1.2;
+
+        return { metric, adjustedWeight };
+    }).filter(m => m !== null) as Array<{ metric: MetricConfig; adjustedWeight: number }>;
+
+    const totalAdjusted = selectedMetrics.reduce((sum, m) => sum + m.adjustedWeight, 0);
+    const totalOriginal = Object.values(weights).reduce((sum, w) => sum + w, 0);
+
+    if (totalAdjusted > 0) {
+        const scaleFactor = totalOriginal / totalAdjusted;
+        selectedMetrics.forEach(m => { m.adjustedWeight *= scaleFactor; });
     }
-  });
+    return selectedMetrics;
+}
 
-  // Step 2: Define peer groups
+function calculateConfidenceScore(breakdown: AdvancedScoringResult['breakdown'], metricsUsed: number): number {
+    if (metricsUsed === 0) return 0;
+    const imputedCount = Object.values(breakdown).filter(b => b.wasImputed).length;
+    return 1 - (imputedCount / metricsUsed);
+}
+
+function applyMicroAdjustments(results: AdvancedScoringResult[]): AdvancedScoringResult[] {
+    results.sort((a, b) => b.finalScore - a.finalScore || b.confidenceScore - a.confidenceScore || a.company.company_name.localeCompare(b.company.company_name));
+    return results;
+}
+
+export function calculateAdvancedScores(companies: Company[], weights: Record<string, number>, metricConfigs: MetricConfig[], scoringStrategies: Record<CompanyStatus, ScoringStrategy>): AdvancedScoringResult[] {
+  const metricQualityMap = new Map<string, MetricQualityScore>(metricConfigs.map(m => [m.key, calculateMetricQuality(companies, m)]));
   const peerGroups = definePeerGroups(companies, ['companyType', 'marketCap']);
-  
-  // Step 3: Calculate scores for each company
-  const results: AdvancedScoringResult[] = [];
-  
-  companies.forEach(company => {
-    const companyType = (company.status as CompanyStatus) || 'Other';
-    const strategy = scoringStrategies[companyType] || scoringStrategies['Other'];
-    
-    // Find peer group
-    const peerGroupKey = JSON.stringify({
-      companyType: company.status || 'Other',
-      marketCapBucket: company.f_market_cap_value < 50000000 ? 'small' : 'large'
-    });
+
+  const results = companies.map(company => {
+    const companyType = company.status || 'Other';
+    const strategy = scoringStrategies[companyType];
+    const peerGroupKey = JSON.stringify({ companyType, marketCapBucket: (company.financials?.market_cap_value || 0) < 50e6 ? 'small' : 'large' });
     const peerGroup = peerGroups.get(peerGroupKey);
-    const peers = peerGroup 
-      ? companies.filter(c => peerGroup.companyIds.includes(c.company_id))
-      : companies.filter(c => c.status === company.status);
-
-    // Select metrics based on strategy and quality
-    const selectedMetrics = selectMetricsForCompany(
-      company,
-      metricConfigs,
-      weights,
-      metricQualityMap,
-      strategy
-    );
-
-    // Calculate normalized scores
+    const peers = peerGroup ? companies.filter(c => peerGroup.companyIds.includes(c.company_id)) : companies;
+    
+    const selectedMetrics = selectMetricsForCompany(company, metricConfigs, weights, metricQualityMap, strategy);
     const breakdown: AdvancedScoringResult['breakdown'] = {};
     let totalWeight = 0;
     let weightedSum = 0;
-    let metricsUsed = 0;
-    const warnings: string[] = [];
-
+    
     selectedMetrics.forEach(({ metric, adjustedWeight }) => {
-      const rawValue = getNestedValue(company, metric.nested_path);
-      let normalizedValue = 0;
-      let wasImputed = false;
-      let imputationMethod: string | undefined;
+        const rawValue = getNestedValue(company, metric.nested_path);
+        let normalizedValue = 0;
+        let wasImputed = false;
+        let imputationMethod: string | undefined;
 
-      if (isValidNumber(rawValue)) {
-        // Use actual value
-        const peerValues = peers
-          .map(p => getNestedValue(p, metric.nested_path))
-          .filter(isValidNumber) as number[];
-        
-        normalizedValue = normalizeWithEnsemble(
-          rawValue as number,
-          peerValues,
-          metric,
-          strategy.normalization as any
-        );
-      } else {
-        // Impute value
-        wasImputed = true;
-        const imputedValue = imputeWithPeerGroup(
-          company,
-          metric,
-          peers,
-          strategy.imputationStrategy === 'peer_group' ? 'median' : 'conservative'
-        );
+        const peerValues = peers.map(p => getNestedValue(p, metric.nested_path)).filter(isValidNumber);
 
-        if (imputedValue !== null) {
-          imputationMethod = strategy.imputationStrategy;
-          const peerValues = peers
-            .map(p => getNestedValue(p, metric.nested_path))
-            .filter(isValidNumber) as number[];
-          
-          normalizedValue = normalizeWithEnsemble(
-            imputedValue,
-            peerValues,
-            metric,
-            strategy.normalization as any
-          );
+        if (isValidNumber(rawValue)) {
+            normalizedValue = normalizeWithEnsemble(rawValue, peerValues, metric, strategy.normalization);
         } else {
-          warnings.push(`Could not impute ${metric.label}`);
-          normalizedValue = metric.higherIsBetter ? 0 : 1;
+            wasImputed = true;
+            imputationMethod = strategy.imputationStrategy;
+            const imputedValue = imputeWithPeerGroup(company, metric, peers, imputationMethod === 'peer_group' ? 'median' : 'conservative');
+            normalizedValue = imputedValue !== null ? normalizeWithEnsemble(imputedValue, peerValues, metric, strategy.normalization) : (metric.higherIsBetter ? 0 : 1);
         }
-      }
+        
+        strategy.transformations.forEach(t => {
+            normalizedValue = applyScoreTransformation(normalizedValue, t, strategy.transformationSteepness);
+        });
 
-      // Apply transformations
-      strategy.transformations.forEach(transform => {
-        if (transform !== 'none') {
-          normalizedValue = applyScoreTransformation(normalizedValue, transform);
-        }
-      });
-
-      breakdown[metric.key] = {
-        rawValue,
-        normalizedValue,
-        weight: adjustedWeight,
-        contribution: normalizedValue * adjustedWeight,
-        wasImputed,
-        imputationMethod
-      };
-
-      totalWeight += adjustedWeight;
-      weightedSum += normalizedValue * adjustedWeight;
-      metricsUsed++;
+        breakdown[metric.key] = { rawValue, normalizedValue, weight: adjustedWeight, contribution: normalizedValue * adjustedWeight, wasImputed, imputationMethod };
+        totalWeight += adjustedWeight;
+        weightedSum += normalizedValue * adjustedWeight;
     });
 
-    // Calculate final score
-    const finalScore = totalWeight > 0 ? (weightedSum / totalWeight) * 100 : 0;
-    
-    // Calculate confidence score based on data coverage
-    const confidenceScore = calculateConfidenceScore(breakdown, metricsUsed);
-    
-    // Calculate peer group rank
-    const peerGroupRank = peers.filter(p => p.company_id !== company.company_id).length;
-
-    results.push({
+    return {
       company,
-      finalScore,
-      confidenceScore,
-      peerGroupRank,
+      finalScore: totalWeight > 0 ? (weightedSum / totalWeight) * 100 : 0,
+      confidenceScore: calculateConfidenceScore(breakdown, selectedMetrics.length),
+      peerGroupRank: 0, // Placeholder, can be calculated later if needed
       peerGroupSize: peers.length,
-      metricsUsed,
-      metricsAvailable: selectedMetrics.length,
+      metricsUsed: selectedMetrics.length,
+      metricsAvailable: selectedMetrics.length, // Simplified for now
       scoringStrategy: strategy,
       breakdown,
-      warnings
-    });
+      warnings: []
+    };
   });
 
-  // Step 4: Apply micro-adjustments to break ties
   return applyMicroAdjustments(results);
-}
-
-// Select metrics dynamically based on company type and data quality
-function selectMetricsForCompany(
-  company: Company,
-  allMetrics: MetricConfig[],
-  weights: Record<string, number>,
-  qualityMap: Map<string, MetricQualityScore>,
-  strategy: ScoringStrategy
-): Array<{ metric: MetricConfig; adjustedWeight: number }> {
-  const companyType = (company.status as CompanyStatus) || 'Other';
-  const priorityMetrics = COMPANY_TYPE_METRIC_PRIORITIES[companyType] || [];
-  
-  const selectedMetrics: Array<{ metric: MetricConfig; adjustedWeight: number }> = [];
-  
-  allMetrics.forEach(metric => {
-    const baseWeight = weights[metric.key] || 0;
-    if (baseWeight === 0) return;
-    
-    const quality = qualityMap.get(metric.key);
-    if (!quality) return;
-    
-    // Check if metric meets coverage requirements
-    if (quality.coverage < strategy.requiredCoverage) return;
-    
-    // Calculate adjusted weight based on quality and priority
-    let adjustedWeight = baseWeight;
-    
-    // Boost priority metrics
-    if (priorityMetrics.includes(metric.key)) {
-      adjustedWeight *= 1.5;
-    }
-    
-    // Adjust based on quality recommendation
-    switch (quality.recommendation) {
-      case 'exclude':
-        return; // Skip this metric
-      case 'reduce':
-        adjustedWeight *= 0.5;
-        break;
-      case 'prioritize':
-        adjustedWeight *= 1.2;
-        break;
-    }
-    
-    selectedMetrics.push({ metric, adjustedWeight });
-  });
-  
-  // Normalize weights to sum to original total
-  const totalAdjusted = selectedMetrics.reduce((sum, m) => sum + m.adjustedWeight, 0);
-  const totalOriginal = Object.values(weights).reduce((sum, w) => sum + w, 0);
-  
-  if (totalAdjusted > 0) {
-    const scaleFactor = totalOriginal / totalAdjusted;
-    selectedMetrics.forEach(m => {
-      m.adjustedWeight *= scaleFactor;
-    });
-  }
-  
-  return selectedMetrics;
-}
-
-// Calculate confidence score based on data completeness
-function calculateConfidenceScore(
-  breakdown: AdvancedScoringResult['breakdown'],
-  metricsUsed: number
-): number {
-  if (metricsUsed === 0) return 0;
-  
-  const imputedCount = Object.values(breakdown).filter(b => b.wasImputed).length;
-  const imputationPenalty = imputedCount / metricsUsed;
-  
-  const avgWeight = Object.values(breakdown).reduce((sum, b) => sum + b.weight, 0) / metricsUsed;
-  const weightBalance = Math.min(avgWeight / 100, 1); // Penalize if weights are too concentrated
-  
-  return (1 - imputationPenalty * 0.5) * (0.7 + weightBalance * 0.3);
-}
-
-// Apply micro-adjustments to break ties
-function applyMicroAdjustments(results: AdvancedScoringResult[]): AdvancedScoringResult[] {
-  // Group by similar scores
-  const scoreGroups = new Map<number, AdvancedScoringResult[]>();
-  
-  results.forEach(result => {
-    const roundedScore = Math.round(result.finalScore * 10) / 10; // Round to 0.1
-    if (!scoreGroups.has(roundedScore)) {
-      scoreGroups.set(roundedScore, []);
-    }
-    scoreGroups.get(roundedScore)!.push(result);
-  });
-  
-  // Apply micro-adjustments to groups with ties
-  scoreGroups.forEach((group, baseScore) => {
-    if (group.length > 1) {
-      // Sort by confidence score and other factors
-      group.sort((a, b) => {
-        // First by confidence
-        if (a.confidenceScore !== b.confidenceScore) {
-          return b.confidenceScore - a.confidenceScore;
-        }
-        // Then by number of metrics used
-        if (a.metricsUsed !== b.metricsUsed) {
-          return b.metricsUsed - a.metricsUsed;
-        }
-        // Finally by company name for stability
-        return a.company.company_name.localeCompare(b.company.company_name);
-      });
-      
-      // Apply micro-adjustments
-      group.forEach((result, index) => {
-        result.finalScore = baseScore + (index * 0.01); // 0.01 point increments
-      });
-    }
-  });
-  
-  return results;
 }

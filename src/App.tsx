@@ -25,8 +25,10 @@ import { CompaniesPage } from './pages/companies';
 import { SubscribePage } from './pages/subscribe';
 import { ScatterChartPage } from './pages/scatter-chart';
 import { FilterPage } from './pages/filter';
+
 import ScoringPage from './pages/scoring';
-import AdvScoringPage from './pages/scoring-advanced';
+
+import { AdvScoringPage } from './pages/scoring-advanced';
 import { ScatterScoreProPage } from './pages/scatter-score-pro';
 import { HelpLandingPage } from './pages/help/index';
 import { HelpMetricsPage } from './pages/help/metrics';
