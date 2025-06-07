@@ -118,7 +118,6 @@ function App() {
                             <Route path="/onboarding" element={<OnboardingPage />} />
                             <Route path="/companies" element={<CompaniesPage />} />
                             <Route path="/filter" element={<FilterPage />} />							
-//                            <Route path="/scoring" element={<ScoringPage />} />	
 							<Route path="/scoring-advanced" element={<AdvScoringPage />} />	
                             <Route path="/scatter-chart" element={<ScatterChartPage />} />
                             <Route path="/scatter-score-pro" element={<ScatterScoreProPage />} />
