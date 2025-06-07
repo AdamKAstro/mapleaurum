@@ -1,16 +1,16 @@
 import React, { useState, useCallback } from 'react';
-import type { CompanyStatus } from '../../lib/types';
-import type { ScoringStrategy, AdvancedScoringResult } from '../../lib/scoringUtilsAdvanced';
-import { calculateAdvancedScores } from '../../lib/scoringUtilsAdvanced';
-import { useFilters } from '../../contexts/filter-context';
+import type { CompanyStatus } from '@/lib/types';
+import type { ScoringStrategy, AdvancedScoringResult } from '@/lib/scoringUtilsAdvanced';
+import { calculateAdvancedScores } from '@/lib/scoringUtilsAdvanced';
+import { useFilters } from '@/contexts/filter-context';
 
 import { ScoringConfigurationPanel } from './components/ScoringConfigurationPanel';
 import { AdvancedScoringDataTable } from './components/AdvancedScoringDataTable';
 
-import { PageContainer } from '../../components/ui/page-container';
-import { LoadingIndicator } from '../../components/ui/loading-indicator';
+import { PageContainer } from '@/components/ui/page-container';
+import { LoadingIndicator } from '@/components/ui/loading-indicator';
 import { AlertCircle } from 'lucide-react';
-import { metrics as ALL_METRICS_CONFIG } from '../../lib/metric-types';
+import { metrics as ALL_METRICS_CONFIG } from '@/lib/metric-types';
 
 const initialMetricWeights: Record<string, number> = Object.fromEntries(
     ALL_METRICS_CONFIG.map(m => [m.key, 5])

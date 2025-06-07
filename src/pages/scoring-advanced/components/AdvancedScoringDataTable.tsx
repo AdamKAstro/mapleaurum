@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
-import type { AdvancedScoringResult } from '../../../lib/scoringUtilsAdvanced';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../../components/ui/table';
+import type { AdvancedScoringResult } from '@/lib/scoringUtilsAdvanced';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronDown, TrendingUp, TrendingDown } from 'lucide-react';
-import { cn } from '../../../lib/utils';
-import { getMetricByKey } from '../../../lib/metric-types';
+import { cn } from '@/lib/utils';
+import { getMetricByKey } from '@/lib/metric-types';
 
 interface AdvancedScoringDataTableProps {
     results: AdvancedScoringResult[];

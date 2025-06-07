@@ -1,14 +1,14 @@
 import React, { useState } from 'react';
-import type { CompanyStatus } from '../../../lib/types';
-import type { ScoringStrategy } from '../../../lib/scoringUtilsAdvanced';
-import { metricCategories, type MetricConfig } from '../../../lib/metric-types';
+import type { CompanyStatus } from '@/lib/types';
+import type { ScoringStrategy } from '@/lib/scoringUtilsAdvanced';
+import { type MetricConfig } from '@/lib/metric-types';
 
-import { Button } from '../../../components/ui/button';
-import { Label } from '../../../components/ui/label';
-import { Input } from '../../../components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../../components/ui/select';
-import { Slider } from '../../../components/ui/slider';
-import { cn } from '../../../lib/utils';
+import { Button } from '@/components/ui/button';
+import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Slider } from '@/components/ui/slider';
+import { cn } from '@/lib/utils';
 import { Sparkles, Loader2 } from 'lucide-react';
 
 interface ScoringConfigurationPanelProps {
@@ -100,7 +100,7 @@ export const ScoringConfigurationPanel: React.FC<ScoringConfigurationPanelProps>
           <h3 className="text-base font-semibold mb-2 flex-shrink-0">Metric Base Weights</h3>
           <div className="flex-grow overflow-y-auto space-y-2 pr-2 scrollbar-thin scrollbar-thumb-navy-600">
              {allMetrics
-                .slice() // Create a shallow copy to avoid mutating the original readonly array
+                .slice() 
                 .sort((a,b) => a.label.localeCompare(b.label))
                 .map(metric => (
                 <div key={metric.key} className="flex items-center justify-between gap-2">
