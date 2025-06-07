@@ -4,9 +4,11 @@ import path from 'path';
 
 export default defineConfig({
   plugins: [react()],
+  // --- ADD THIS BLOCK TO FIX THE BUILD ERROR ---
   resolve: {
     alias: { '@': path.resolve(__dirname, 'src') },
   },
+  // ---------------------------------------------
   optimizeDeps: {
     include: ['lucide-react'],
   },
