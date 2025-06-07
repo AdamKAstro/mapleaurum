@@ -26,7 +26,7 @@ import { SubscribePage } from './pages/subscribe';
 import { ScatterChartPage } from './pages/scatter-chart';
 import { FilterPage } from './pages/filter';
 
-import ScoringPage from './pages/scoring';
+//import ScoringPage from './pages/scoring';
 
 import { AdvScoringPage } from './pages/scoring-advanced';
 import { ScatterScoreProPage } from './pages/scatter-score-pro';
@@ -118,7 +118,7 @@ function App() {
                             <Route path="/onboarding" element={<OnboardingPage />} />
                             <Route path="/companies" element={<CompaniesPage />} />
                             <Route path="/filter" element={<FilterPage />} />							
-                            <Route path="/scoring" element={<ScoringPage />} />	
+//                            <Route path="/scoring" element={<ScoringPage />} />	
 							<Route path="/scoring-advanced" element={<AdvScoringPage />} />	
                             <Route path="/scatter-chart" element={<ScatterChartPage />} />
                             <Route path="/scatter-score-pro" element={<ScatterScoreProPage />} />
