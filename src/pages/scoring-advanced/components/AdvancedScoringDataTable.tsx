@@ -141,6 +141,6 @@ export const AdvancedScoringDataTable: React.FC<AdvancedScoringDataTableProps> =
             <div className="mt-4 flex-shrink-0">
                  <DataTablePagination page={page} pageSize={pageSize} totalCount={results.length} onPageChange={onPageChange} onPageSizeChange={onPageSizeChange} pageSizeOptions={[25, 50, 100, 250]} />
             </div>
-        </>
+        </div>
     );
 }
