@@ -49,6 +49,7 @@
     "string-similarity": "^4.0.4",
     "stripe": "^18.1.0",
     "tailwind-merge": "^2.2.1",
+    "tailwindcss-animate": "^1.0.7",
     "winston": "^3.17.0",
     "yahoo-finance2": "^2.13.3"
   },
