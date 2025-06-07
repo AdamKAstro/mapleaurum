@@ -61,10 +61,10 @@ export const ScoringConfigurationPanel: React.FC<ScoringConfigurationPanelProps>
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-5">
-          <StrategyInput label="Normalization" tooltipContent={<><p className="font-bold mb-1">Scales raw data to a common range.</p><p className="text-xs">Selects the statistical method used to map diverse metric scales (e.g., market cap, P/E ratios) to a comparable 0-1 range for equitable weighting in the final score.</p></>} value={activeStrategy.normalization} onChange={value => onStrategyChange(activeTab, { normalization: value as any })} options={[{ value: 'ensemble', label: 'Ensemble (Recommended)' }, { value: 'percentile', label: 'Percentile Rank' }, { value: 'robust_zscore', label: 'Robust Z-Score' }]} />
-          <StrategyInput label="Missing Values" tooltipContent={<><p className="font-bold mb-1">Defines how to handle missing data.</p><p className="text-xs">'Conservative' is recommended as it avoids rewarding companies for null data by assigning a below-average (25th percentile) value from their peers.</p></>} value={activeStrategy.imputationStrategy} onChange={value => onStrategyChange(activeTab, { imputationStrategy: value as any })} options={[{ value: 'conservative', label: 'Conservative' }, { value: 'peer_group', label: 'Peer Group Median' }, { value: 'none', label: 'Exclude Metric' }]} />
-          <StrategySlider label="Sigmoid Steepness (k)" tooltipContent={<><p className="font-bold mb-1">Controls the score distribution.</p><p className="text-xs">Adjusts the S-shaped transformation curve. Higher values create more separation between similarly-ranked companies, helping to 'spread out' final scores.</p></>} value={activeStrategy.transformationSteepness || 10} onChange={value => onStrategyChange(activeTab, { transformationSteepness: value })} min={1} max={30} step={1} />
-          <StrategySlider label="Min. Data Coverage" tooltipContent={<><p className="font-bold mb-1">Excludes metrics with poor data.</p><p className="text-xs">Sets a threshold for data availability. Any metric with coverage below this percentage for the selected company type will be ignored in the calculation.</p></>} value={activeStrategy.requiredCoverage * 100} onChange={value => onStrategyChange(activeTab, { requiredCoverage: value / 100 })} min={0} max={50} step={1} suffix="%" />
+          <StrategyInput label="Normalization" tooltipContent={<><p className="font-bold mb-1">Scales raw data to a common range.</p><p className="text-xs">Selects the statistical method used to map diverse metric scales to a comparable 0-1 range for equitable weighting.</p></>} value={activeStrategy.normalization} onChange={value => onStrategyChange(activeTab, { normalization: value as any })} options={[{ value: 'ensemble', label: 'Ensemble (Recommended)' }, { value: 'percentile', label: 'Percentile Rank' }, { value: 'robust_zscore', label: 'Robust Z-Score' }]} />
+          <StrategyInput label="Missing Values" tooltipContent={<><p className="font-bold mb-1">Defines how to handle missing data.</p><p className="text-xs">'Conservative' is recommended as it avoids rewarding companies for null data.</p></>} value={activeStrategy.imputationStrategy} onChange={value => onStrategyChange(activeTab, { imputationStrategy: value as any })} options={[{ value: 'conservative', label: 'Conservative' }, { value: 'peer_group', label: 'Peer Group Median' }, { value: 'none', label: 'Exclude Metric' }]} />
+          <StrategySlider label="Sigmoid Steepness (k)" tooltipContent={<><p className="font-bold mb-1">Controls the score distribution.</p><p className="text-xs">Adjusts the S-shaped transformation curve. Higher values create more separation between similarly-ranked companies.</p></>} value={activeStrategy.transformationSteepness || 10} onChange={value => onStrategyChange(activeTab, { transformationSteepness: value })} min={1} max={30} step={1} />
+          <StrategySlider label="Min. Data Coverage" tooltipContent={<><p className="font-bold mb-1">Excludes metrics with poor data.</p><p className="text-xs">Sets a threshold for data availability. Any metric with coverage below this percentage will be ignored.</p></>} value={activeStrategy.requiredCoverage * 100} onChange={value => onStrategyChange(activeTab, { requiredCoverage: value / 100 })} min={0} max={50} step={1} suffix="%" />
           <div className="md:col-span-2 flex items-center space-x-2 mt-2">
             <Checkbox id={`normalize-by-shares-${activeTab}`} checked={activeStrategy.normalizeByShares} onCheckedChange={(checked) => onStrategyChange(activeTab, { normalizeByShares: !!checked })} />
             <div className="grid gap-1.5 leading-none">
@@ -85,7 +85,7 @@ export const ScoringConfigurationPanel: React.FC<ScoringConfigurationPanelProps>
                     <Label htmlFor={`weight-${metric.key}`} className="text-xs text-muted-foreground truncate flex-1" title={metric.label}>{metric.label}</Label>
                     <Input id={`weight-${metric.key}`} type="number" value={weights[metric.key] || 0} onChange={e => onWeightChange(metric.key, parseInt(e.target.value, 10) || 0)} className="h-7 text-xs w-20 bg-navy-900/50 border-navy-600 text-center" min={0} max={100} />
                 </div>
-             )) : <p className="text-xs text-center text-muted-foreground py-4">No metrics available for your current subscription tier.</p>}
+             )) : <p className="text-xs text-center text-muted-foreground py-4">No metrics available for your subscription tier.</p>}
           </div>
       </div>
     </div>
@@ -103,7 +103,10 @@ const StrategyInput: React.FC<{label: string, value: string, onChange: (v: strin
 const StrategySlider: React.FC<{label: string, value: number, onChange: (v: number) => void, min: number, max: number, step: number, suffix?: string, tooltipContent: React.ReactNode}> =
 ({label, value, onChange, min, max, step, suffix, tooltipContent}) => (
      <div className="space-y-1">
-        <div className="flex items-center justify-between"><div className="flex items-center"><Label className="text-xs font-medium text-muted-foreground">{label}</Label><HelpTooltip content={tooltipContent} /></div><span className="text-xs font-mono">{value}{suffix}</span></div>
+        <div className="flex items-center justify-between">
+            <div className="flex items-center"><Label className="text-xs font-medium text-muted-foreground">{label}</Label><HelpTooltip content={tooltipContent} /></div>
+            <span className="text-xs font-mono">{value.toFixed(0)}{suffix}</span>
+        </div>
         <Slider value={[value]} onValueChange={([v]) => onChange(v)} min={min} max={max} step={step} className="mt-2" />
     </div>
 );

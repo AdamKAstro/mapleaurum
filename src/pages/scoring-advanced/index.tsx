@@ -1,7 +1,7 @@
 import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import type { Company, CompanyStatus } from '@/lib/types';
 import type { ScoringStrategy, AdvancedScoringResult } from '@/lib/scoringUtilsAdvanced';
-import { calculateAdvancedScores } from '@/lib/scoringUtilsAdvanced';
+import { calculateAdvancedScores, COMPANY_TYPE_METRIC_PRIORITIES } from '@/lib/scoringUtilsAdvanced';
 import { useFilters } from '@/contexts/filter-context';
 
 import { ScoringConfigurationPanel } from './components/ScoringConfigurationPanel';
@@ -12,17 +12,25 @@ import { LoadingIndicator } from '@/components/ui/loading-indicator';
 import { AlertCircle } from 'lucide-react';
 import { metrics as ALL_METRICS_CONFIG, getAccessibleMetrics } from '@/lib/metric-types';
 
-const initialMetricWeights: Record<string, number> = {
-    ...Object.fromEntries(ALL_METRICS_CONFIG.map(m => [m.key, 2])),
-    'financials.enterprise_to_ebitda': 10,
-    'financials.price_to_book': 8,
-    'costs.aisc_last_year': 10,
-    'financials.free_cash_flow': 8,
-    'financials.net_financial_assets': 7,
-    'production.reserve_life_years': 7,
-    'mineral_estimates.resources_total_aueq_moz': 5,
-    'financials.market_cap_value': 3,
-};
+// Create a set of all unique Tier 1 metric keys
+const tier1MetricKeys = new Set<string>();
+Object.values(COMPANY_TYPE_METRIC_PRIORITIES).forEach(tieredMetrics => {
+    tieredMetrics.forEach(metric => {
+        if (metric.tier === 1) {
+            tier1MetricKeys.add(metric.key);
+        }
+    });
+});
+
+// Set initial weights based on Tier 1 status
+const initialMetricWeights: Record<string, number> = Object.fromEntries(
+    ALL_METRICS_CONFIG.map(m => {
+        if (tier1MetricKeys.has(m.key)) {
+            return [m.key, 10]; // Higher default for Tier 1
+        }
+        return [m.key, 3]; // Standard default for others
+    })
+);
 
 const initialScoringStrategies: Record<CompanyStatus, ScoringStrategy> = {
     producer: { companyType: 'producer', metricSelection: 'dynamic', requiredCoverage: 0.10, imputationStrategy: 'conservative', normalization: 'ensemble', transformations: ['sigmoid'], peerGroupFactors: ['companyType', 'marketCap'], transformationSteepness: 10, normalizeByShares: false },

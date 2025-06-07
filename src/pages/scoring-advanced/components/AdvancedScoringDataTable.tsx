@@ -85,7 +85,7 @@ export const AdvancedScoringDataTable: React.FC<AdvancedScoringDataTableProps> =
                                         <div className="flex items-center gap-3">
                                             <StatusBadge status={result.company.status} />
                                             <div>
-                                                <div className="font-bold text-surface-white">{result.company.company_name}</div>
+                                                <div className="font-bold text-surface-white">{result.company.company_name.toUpperCase()}</div>
                                                 <div className="text-xs text-muted-foreground">{result.company.primary_ticker}</div>
                                             </div>
                                         </div>
@@ -139,7 +139,14 @@ export const AdvancedScoringDataTable: React.FC<AdvancedScoringDataTableProps> =
                 </Table>
             </div>
             <div className="mt-4 flex-shrink-0">
-                 <DataTablePagination page={page} pageSize={pageSize} totalCount={results.length} onPageChange={onPageChange} onPageSizeChange={onPageSizeChange} pageSizeOptions={[25, 50, 100, 250]} />
+                 <DataTablePagination
+                    page={page}
+                    pageSize={pageSize}
+                    totalCount={results.length}
+                    onPageChange={onPageChange}
+                    onPageSizeChange={onPageSizeChange}
+                    pageSizeOptions={[25, 50, 100, 250]}
+                />
             </div>
         </div>
     );
