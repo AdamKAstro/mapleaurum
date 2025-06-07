@@ -34,7 +34,7 @@ export const ScoringConfigurationPanel: React.FC<ScoringConfigurationPanelProps>
   isCalculating,
   companyCount
 }) => {
-  const [activeTab, setActiveTab] = useState<CompanyStatus>('Producer');
+  const [activeTab, setActiveTab] = useState<CompanyStatus>('producer');
   const activeStrategy = strategies[activeTab];
 
   return (
