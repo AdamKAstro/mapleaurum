@@ -5,9 +5,9 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronDown, TrendingUp, TrendingDown, Microscope } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { getMetricByKey } from '@/lib/metric-types';
-import { StatusBadge } from '@/components/status-badge'; // Import status badge
+import { StatusBadge } from '@/components/status-badge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { DataTablePagination } from '@/components/ui/data-table-pagination'; // Assuming you have a standard pagination component
+import { DataTablePagination } from '@/components/ui/data-table-pagination';
 
 interface AdvancedScoringDataTableProps {
     results: AdvancedScoringResult[];
@@ -26,18 +26,19 @@ const RowTooltipContent: React.FC<{ result: AdvancedScoringResult }> = ({ result
     }, [result.breakdown]);
 
     if (topDrivers.length === 0) {
-        return <p>No significant positive score drivers.</p>;
+        return <p className="text-xs">No significant positive score drivers.</p>;
     }
 
     return (
         <div>
-            <p className="font-bold mb-1">Top Score Drivers:</p>
+            <p className="font-bold mb-1 text-surface-white">Top Score Drivers</p>
+            <p className="text-xs text-muted-foreground mb-2">Primary metrics contributing to this company's high rank.</p>
             <ul className="space-y-1 text-xs">
                 {topDrivers.map(([key, data]) => {
                     const metricInfo = getMetricByKey(key);
-                    return <li key={key} className="flex justify-between gap-2">
-                        <span>{metricInfo?.label || key}</span>
-                        <span className="font-mono text-green-400">+{ (data.contribution * 100).toFixed(1) }</span>
+                    return <li key={key} className="flex justify-between gap-4">
+                        <span className="text-gray-300">{metricInfo?.label || key}</span>
+                        <span className="font-mono text-green-400">+{ (data.contribution).toFixed(2) }</span>
                     </li>
                 })}
             </ul>
@@ -57,29 +58,31 @@ export const AdvancedScoringDataTable: React.FC<AdvancedScoringDataTableProps> =
     }, [results, page, pageSize]);
 
     return (
-        <>
-            <div className="overflow-x-auto rounded-lg border border-navy-600/50">
+        <div className="flex flex-col h-full">
+            <div className="flex-grow overflow-auto rounded-lg border border-navy-600/50">
                 <Table>
-                    <TableHeader>
+                    <TableHeader className="sticky top-0 bg-navy-800/80 backdrop-blur-sm z-10">
                         <TableRow>
-                            <TableHead className="w-12">Rank</TableHead>
+                            <TableHead className="w-16">Rank</TableHead>
                             <TableHead>Company</TableHead>
                             <TableHead className="text-right">Final Score</TableHead>
-                            <TableHead className="text-right">Confidence</TableHead>
-                            <TableHead className="text-center">Metrics Used</TableHead>
+                            <TableHead className="text-right w-32">Confidence</TableHead>
+                            <TableHead className="text-center w-28">Metrics Used</TableHead>
                             <TableHead className="w-12 text-center"><Microscope size={16} /></TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {paginatedResults.map((result, index) => (
+                        {paginatedResults.map((result, index) => {
+                            const absoluteIndex = (page - 1) * pageSize + index;
+                            return (
                             <React.Fragment key={result.company.company_id}>
                                 <TooltipProvider delayDuration={100}>
                                 <Tooltip>
                                 <TooltipTrigger asChild>
-                                <TableRow onClick={() => setExpandedRow(expandedRow === (page - 1) * pageSize + index ? null : (page - 1) * pageSize + index)} className="cursor-pointer hover:bg-navy-600/50">
-                                    <TableCell className="font-medium text-lg text-muted-foreground">{(page - 1) * pageSize + index + 1}</TableCell>
+                                <TableRow onClick={() => setExpandedRow(expandedRow === absoluteIndex ? null : absoluteIndex)} className="cursor-pointer hover:bg-navy-600/50">
+                                    <TableCell className="font-medium text-lg text-muted-foreground">{absoluteIndex + 1}</TableCell>
                                     <TableCell>
-                                        <div className="flex items-center gap-2">
+                                        <div className="flex items-center gap-3">
                                             <StatusBadge status={result.company.status} />
                                             <div>
                                                 <div className="font-bold text-surface-white">{result.company.company_name}</div>
@@ -94,8 +97,8 @@ export const AdvancedScoringDataTable: React.FC<AdvancedScoringDataTableProps> =
                                             <span>{(result.confidenceScore * 100).toFixed(0)}%</span>
                                         </div>
                                     </TableCell>
-                                    <TableCell className="text-center text-sm text-muted-foreground">{result.metricsUsed}</TableCell>
-                                    <TableCell className="text-center"><ChevronDown className={cn("h-4 w-4 transition-transform", expandedRow === (page - 1) * pageSize + index && "rotate-180")} /></TableCell>
+                                    <TableCell className="text-center text-sm text-muted-foreground">{Object.keys(result.breakdown).length}</TableCell>
+                                    <TableCell className="text-center"><ChevronDown className={cn("h-4 w-4 transition-transform", expandedRow === absoluteIndex && "rotate-180")} /></TableCell>
                                 </TableRow>
                                 </TooltipTrigger>
                                 <TooltipContent side="top" align="start" className="p-3 z-[100] bg-navy-700/95 border border-navy-600/80 font-sans">
@@ -105,7 +108,7 @@ export const AdvancedScoringDataTable: React.FC<AdvancedScoringDataTableProps> =
                                 </TooltipProvider>
 
                                 <AnimatePresence>
-                                    {expandedRow === (page - 1) * pageSize + index && (
+                                    {expandedRow === absoluteIndex && (
                                         <TableRow className="bg-navy-800/50 hover:bg-navy-800/50">
                                             <TableCell colSpan={6}>
                                                 <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} transition={{ duration: 0.2 }} className="p-4 overflow-hidden">
@@ -131,19 +134,12 @@ export const AdvancedScoringDataTable: React.FC<AdvancedScoringDataTableProps> =
                                     )}
                                 </AnimatePresence>
                             </React.Fragment>
-                        ))}
+                        )})}
                     </TableBody>
                 </Table>
             </div>
-            <div className="mt-4">
-                 <DataTablePagination
-                    page={page}
-                    pageSize={pageSize}
-                    totalCount={results.length}
-                    onPageChange={onPageChange}
-                    onPageSizeChange={onPageSizeChange}
-                    pageSizeOptions={[25, 50, 100, 250]}
-                />
+            <div className="mt-4 flex-shrink-0">
+                 <DataTablePagination page={page} pageSize={pageSize} totalCount={results.length} onPageChange={onPageChange} onPageSizeChange={onPageSizeChange} pageSizeOptions={[25, 50, 100, 250]} />
             </div>
         </>
     );
