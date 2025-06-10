@@ -135,8 +135,11 @@
   }
 
   .sticky-col-1 {
-	   /* Apply the base utilities directly to avoid the compiler bug */
-    @apply sticky bg-navy-500 z-10 border-r border-navy-400/20 left-0;
+    position: sticky;
+    background-color: #1C2526; /* navy-500 */
+    z-index: 10;
+    border-right: 1px solid rgba(71, 89, 93, 0.2); /* navy-400/20 */
+    left: 0;
   }
 
   /* Table background */
