@@ -1,7 +1,13 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
   darkMode: ["class"],
-  content: ['./index.html', './src/**/*.{js,ts,jsx,tsx}'],
+  content: [
+    './pages/**/*.{js,ts,jsx,tsx}',
+    './components/**/*.{js,ts,jsx,tsx}',
+    './app/**/*.{js,ts,jsx,tsx}',
+    './src/**/*.{js,ts,jsx,tsx}',
+    './index.html', // Kept your original index.html path
+  ],
   theme: {
     container: {
       center: true,
@@ -100,5 +106,8 @@ module.exports = {
       },
     },
   },
-  plugins: [require("tailwindcss-animate")],
+  // The fix is to use the keyframes/animation config above and remove the plugin
+  plugins: [
+    // require("tailwindcss-animate") // This plugin is removed to prevent build errors
+  ],
 }
