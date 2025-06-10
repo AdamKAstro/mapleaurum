@@ -1,0 +1,680 @@
+i need you to update / fix / research / populate as many nulls in my existing supabase db as possible Company to fix is 618   Peloton  and ill give you a template for the sql updater we need. FOLLOW THE TEMPLATE. stock price is not as important to update ( i do have a separate script for that)  my db for this company :  
+
+[
+  {
+    "export_company_data_as_json": {
+      "costs_data": {
+        "company_id": 618,
+        "tco_future": null,
+        "aisc_future": null,
+        "tco_current": null,
+        "last_updated": "2025-06-02T06:04:39.495628+00:00",
+        "aic_last_year": null,
+        "aisc_last_year": null,
+        "aic_last_quarter": null,
+        "aisc_last_quarter": null,
+        "construction_costs": null,
+        "tco_future_currency": null,
+        "aisc_future_currency": null,
+        "tco_current_currency": "CAD",
+        "aic_last_year_currency": null,
+        "aisc_last_year_currency": null,
+        "aic_last_quarter_currency": null,
+        "aisc_last_quarter_currency": null,
+        "construction_costs_currency": null
+      },
+      "company_profile": {
+        "status": "explorer",
+        "tsx_code": "PMC.CN",
+        "company_id": 618,
+        "description": "Peloton Minerals Corporation is a junior exploration company focused on gold, silver, and lithium in Nevada, USA. Its flagship North Elko Lithium Project and Independence Gold-Silver Project are key exploration targets for 2025.",
+        "company_name": "Peloton Minerals Corporation",
+        "headquarters": "London, Ontario, Canada",
+        "last_updated": "2025-06-02T06:04:39.495628+00:00",
+        "percent_gold": 70,
+        "percent_silver": 20,
+        "minerals_of_interest": "Gold, Silver, Lithium"
+      },
+      "financials_data": {
+        "ebitda": null,
+        "cash_date": "2024-12-31T00:00:00+00:00",
+        "hedgebook": null,
+        "peg_ratio": null,
+        "cash_value": 0.2,
+        "company_id": 618,
+        "debt_value": null,
+        "forward_pe": null,
+        "liabilities": 0.1,
+        "trailing_pe": null,
+        "gross_profit": null,
+        "last_updated": "2025-06-02T06:04:39.495628+00:00",
+        "cash_currency": "CAD",
+        "debt_currency": "CAD",
+        "price_to_book": null,
+        "revenue_value": null,
+        "free_cash_flow": null,
+        "price_to_sales": null,
+        "cost_of_revenue": null,
+        "investments_json": null,
+        "market_cap_value": 4,
+        "net_income_value": null,
+        "operating_income": null,
+        "revenue_currency": "CAD",
+        "operating_expense": null,
+        "shares_outstanding": 50000000,
+        "market_cap_currency": "CAD",
+        "net_income_currency": "CAD",
+        "enterprise_to_ebitda": null,
+        "liabilities_currency": "CAD",
+        "net_financial_assets": null,
+        "enterprise_to_revenue": null,
+        "enterprise_value_value": 3.9,
+        "financials_data_source": "CSE",
+        "other_financial_assets": null,
+        "enterprise_value_currency": "CAD",
+        "net_financial_assets_currency": "CAD",
+        "other_financial_assets_currency": null
+      },
+      "production_data": {
+        "company_id": 618,
+        "last_updated": "2025-06-02T06:04:39.495628+00:00",
+        "reserve_life_years": null,
+        "future_production_total_aueq_koz": null,
+        "current_production_total_aueq_koz": null,
+        "current_production_precious_aueq_koz": null,
+        "current_production_non_precious_aueq_koz": null
+      },
+      "target_company_id": 618,
+      "capital_structure_data": {
+        "company_id": 618,
+        "last_updated": "2025-06-02T06:04:39.495628+00:00",
+        "existing_shares": 50000000,
+        "options_revenue": null,
+        "fully_diluted_shares": 52000000,
+        "in_the_money_options": null,
+        "options_revenue_currency": null
+      },
+      "mineral_estimates_data": {
+        "company_id": 618,
+        "last_updated": "2025-06-02T06:04:39.495628+00:00",
+        "mineable_total_aueq_moz": null,
+        "reserves_total_aueq_moz": null,
+        "potential_total_aueq_moz": null,
+        "resources_total_aueq_moz": null,
+        "mineable_precious_aueq_moz": null,
+        "reserves_precious_aueq_moz": null,
+        "resources_precious_aueq_moz": null,
+        "mineable_non_precious_aueq_moz": null,
+        "reserves_non_precious_aueq_moz": null,
+        "potential_non_precious_aueq_moz": null,
+        "resources_non_precious_aueq_moz": null,
+        "measured_indicated_total_aueq_moz": null,
+        "measured_indicated_precious_aueq_moz": null,
+        "measured_indicated_non_precious_aueq_moz": null
+      },
+      "valuation_metrics_data": {
+        "company_id": 618,
+        "last_updated": "2025-06-02T06:04:39.495628+00:00",
+        "ev_per_mi_oz_all": null,
+        "ev_per_production_oz": null,
+        "ev_per_mi_oz_precious": null,
+        "ev_per_reserve_oz_all": null,
+        "mkt_cap_per_mi_oz_all": null,
+        "ev_per_mineable_oz_all": null,
+        "ev_per_resource_oz_all": null,
+        "mkt_cap_per_production_oz": null,
+        "ev_per_reserve_oz_precious": null,
+        "mkt_cap_per_mi_oz_precious": null,
+        "mkt_cap_per_reserve_oz_all": null,
+        "ev_per_mineable_oz_precious": null,
+        "ev_per_resource_oz_precious": null,
+        "mkt_cap_per_mineable_oz_all": null,
+        "mkt_cap_per_resource_oz_all": null,
+        "mkt_cap_per_reserve_oz_precious": null,
+        "mkt_cap_per_mineable_oz_precious": null,
+        "mkt_cap_per_resource_oz_precious": null
+      },
+      "latest_stock_price_entry": {
+        "company_id": 618,
+        "share_price": 0.08,
+        "last_updated": "2025-06-02T06:04:39.495628+00:00",
+        "share_price_source": "CSE",
+        "share_price_currency": "CAD",
+        "share_price_actual_date": "2025-06-02"
+      }
+    }
+  }
+]
+
+TEMPLATE TO FOLLOW !!  **also should add yahoo finance url if poss  
+
+Strictly Adhere to the Verification SELECT Syntax: Always use AND for multiple conditions in the company_urls subquery (WHERE cu.company_id = c.company_id AND cu.url_type='company_website' LIMIT 1). Avoid commas or other separators, as they cause syntax errors (e.g., ERROR: 42601: syntax error at or near ","). Double-check this clause, as it’s a common source of errors.
+
+Validate Column Names for Spaces or Typos: Ensure column names like price_to_book are written exactly as defined in the database schema. Spaces (e.g., price_to Book) or typos (e.g., estratégicos_Outstanding_Million) trigger syntax errors. Cross-reference with the database schema or provided JSON data to confirm names.
+
+Preserve Template Structure Exactly: Follow the template’s sequence and formatting for all sections: lock rows, log pre-update states, update/UPSERT tables, verify updates, and final summary. Deviations, even minor ones, risk errors or user dissatisfaction. Copy the template’s SQL structure verbatim, only updating values and comments.
+
+Use COALESCE for Pre-Update Logging: In pre-update logs, use COALESCE(column::TEXT, 'NULL') for all fields to avoid concatenation issues with null values. Ensure logs capture key fields (e.g., market_cap_value, shares_outstanding) and include units (e.g., market_cap_currency) for clarity.
+
+Handle Shares Outstanding Conflicts: When web data (e.g., 42M shares) conflicts with database values (e.g., 50M), prioritize the most recent source (e.g., Yahoo Finance or web data with a clear date like 02/02/2025). Document the choice in comments (e.g., -- Web data: 42M shares) for transparency.
+
+Estimate Missing Data Conservatively: For fields like mineral estimates or construction costs, where no NI 43-101 or financial reports exist, use conservative estimates based on historical grades or exploration-stage norms (e.g., 0.3 Moz AuEq, CAD 3M costs). Clearly note these as estimates in comments and logs (e.g., -- Estimated exploration costs).
+
+Currency Consistency and Conversion: Use CAD for all financial fields unless specified (e.g., valuation metrics in USD). Apply a consistent exchange rate (e.g., 1.38 CAD/USD) for conversions and document it in comments (e.g., -- MCap_USD = 2.33M / 1.38 = 1.69M USD). Ensure currency fields (e.g., market_cap_currency) are set explicitly.
+
+Avoid Trailing Comments in SELECT Statements: Do not include comments or text (e.g., Rosources: ...) after the verification SELECT statement, as they can break the query’s syntax. Keep source citations in the description field or separate comments above the query.
+
+Test JSONB Syntax in investments_json: Ensure keys in jsonb_build_object (e.g., Shares_Outstanding_Million) are free of typos and match intended labels. Use consistent units (e.g., millions for market cap, thousands for cash) and include context (e.g., UpdateContext) to align with exploration-stage data.
+
+Log All Changes with Specificity: In update_log entries, describe exactly what was updated (e.g., Updated share structure: 42M existing, 65M fully diluted, 23M options.). This aids debugging and auditability. Ensure logs are inserted after each table update to capture incremental changes.
+
+-- Peruvian Metals Corp. (PER.V, company_id = 620) Database Updater
+-- Updates for small-scale producer and explorer in Peru, operating Aguila Norte Processing Plant
+-- Based on Yahoo Finance (06/03/2025), company website, and Junior Mining Network (04/03/2025)
+-- Uses UPSERTs to preserve existing data while updating nulls with new information
+-- Excludes stock price updates (handled by separate script)
+-- Currency: CAD for all financials as per company reporting, conversions at 1.38 CAD/USD where applicable
+BEGIN;
+
+-- Lock rows for Company ID 620
+SELECT * FROM public.companies WHERE company_id = 620 FOR UPDATE;
+SELECT * FROM public.financials WHERE company_id = 620 FOR UPDATE;
+SELECT * FROM public.capital_structure WHERE company_id = 620 FOR UPDATE;
+SELECT * FROM public.mineral_estimates WHERE company_id = 620 FOR UPDATE NOWAIT;
+SELECT * FROM public.production WHERE company_id = 620 FOR UPDATE NOWAIT;
+SELECT * FROM public.costs WHERE company_id = 620 FOR UPDATE NOWAIT;
+SELECT * FROM public.valuation_metrics WHERE company_id = 620 FOR UPDATE NOWAIT;
+
+-- Log pre-update state for companies
+INSERT INTO public.update_log (company_id, table_name, update_time, update_description)
+SELECT
+    620,
+    'companies',
+    NOW(),
+    'Pre-update state: name = ' || COALESCE(c.company_name::TEXT, 'NULL') ||
+    ', ticker = ' || COALESCE(c.tsx_code::TEXT, 'NULL') ||
+    ', status = ' || COALESCE(c.status::TEXT, 'NULL') ||
+    ', minerals = ' || COALESCE(c.minerals_of_interest::TEXT, 'NULL') ||
+    ', percent_gold = ' || COALESCE(c.percent_gold::TEXT, 'NULL') ||
+    ', percent_silver = ' || COALESCE(c.percent_silver::TEXT, 'NULL') ||
+    ', description_length = ' || COALESCE(LENGTH(c.description)::TEXT, 'NULL')
+FROM public.companies c
+WHERE c.company_id = 620;
+
+-- Update company information
+UPDATE public.companies
+SET
+    company_name = 'Peruvian Metals Corp.',
+    tsx_code = 'PER.V',
+    status = 'producer',
+    headquarters = COALESCE(headquarters, 'Edmonton, Alberta, Canada'),
+    description = 'Peruvian Metals Corp. is a small-scale producer and exploration company operating the 80%-owned Aguila Norte Processing Plant in Northern Peru, processing third-party and owned ore for silver, copper, zinc, and lead. In Q1 2025, the plant processed 9,168 tonnes, a 38% increase from Q1 2024. The company owns the Palta Dorada Au-Ag-Cu property (100%) and the Mansa Musa Gold-Silver Project (94%), with plans to expand gold production via a potential carbon-in-pulp (CIP) plant. Financials (06/03/2025): market cap CAD 2.52M, cash CAD 0.078M, no debt, shares 126.14M. The company focuses on toll milling, mineral purchases, and exploration, with a 50% stake in San Maurizo Mines Inc. [Sources: Yahoo Finance (https://finance.yahoo.com/quote/PER.V/), Peruvian Metals (https://www.peruvianmetals.com), Junior Mining Network (04/03/2025), Updated: ' || CURRENT_DATE::text || ']',
+    minerals_of_interest = 'silver, copper, zinc, lead, gold',
+    percent_gold = 10,
+    percent_silver = 70,
+    last_updated = NOW()
+WHERE company_id = 620;
+
+INSERT INTO public.update_log (company_id, table_name, update_time, update_description)
+VALUES (620, 'companies', NOW(), 'Updated description with Q1 2025 production (9,168 tonnes), Palta Dorada and Mansa Musa projects, financial summary, and mineral focus.');
+
+-- Log pre-update state for financials
+INSERT INTO public.update_log (company_id, table_name, update_time, update_description)
+SELECT
+    620,
+    'financials',
+    NOW(),
+    'Pre-update state: MCap = ' || COALESCE(f.market_cap_value::TEXT, 'NULL') || ' ' || COALESCE(f.market_cap_currency, 'NULL') ||
+    ', Cash = ' || COALESCE(f.cash_value::TEXT, 'NULL') || ' ' || COALESCE(f.cash_currency, 'NULL') ||
+    ', Debt = ' || COALESCE(f.debt_value::TEXT, 'NULL') || ' ' || COALESCE(f.debt_currency, 'NULL') ||
+    ', Shares = ' || COALESCE(f.shares_outstanding::TEXT, 'NULL') ||
+    ', Revenue = ' || COALESCE(f.revenue_value::TEXT, 'NULL') || ' ' || COALESCE(f.revenue_currency, 'NULL') ||
+    ', Net Income = ' || COALESCE(f.net_income_value::TEXT, 'NULL') || ' ' || COALESCE(f.net_income_currency, 'NULL') ||
+    ', Price to Book = ' || COALESCE(f.price_to_book::TEXT, 'NULL')
+FROM public.financials f
+WHERE f.company_id = 620;
+
+-- Update financial data (Yahoo Finance 06/03/2025, Newsfile 09/12/2024)
+UPDATE public.financials
+SET
+    market_cap_value = 2523000, -- Yahoo Finance: CAD 2.52M (06/03/2025)
+    market_cap_currency = 'CAD',
+    cash_value = 77990, -- Yahoo Finance: CAD 0.078M (06/03/2025)
+    cash_currency = 'CAD',
+    cash_date = '2025-03-31',
+    debt_value = 0, -- Yahoo Finance: No debt reported (06/03/2025)
+    debt_currency = 'CAD',
+    liabilities = 580000, -- Web data (10/06/2023): CAD 0.58M total liabilities
+    liabilities_currency = 'CAD',
+    shares_outstanding = 126140000, -- Yahoo Finance: 126.14M shares (06/03/2025, prioritized over DB 70M due to recency)
+    enterprise_value_value = 2450000, -- Yahoo Finance: CAD 2.45M (06/03/2025)
+    enterprise_value_currency = 'CAD',
+    revenue_value = 2730000, -- Yahoo Finance: CAD 2.73M (ttm)
+    revenue_currency = 'CAD',
+    cost_of_revenue = 2000000, -- Estimate: ~73% of revenue based on processing costs
+    gross_profit = 730000, -- Revenue - Cost of Revenue
+    operating_expense = 847061, -- Newsfile (09/12/2024): CAD 0.847M for 15 months, annualized
+    operating_income = -117061, -- Gross Profit - Operating Expense
+    net_income_value = -377180, -- Yahoo Finance: CAD -0.377M (ttm)
+    net_income_currency = 'CAD',
+    ebitda = COALESCE(ebitda, 100000), -- DB: CAD 0.1M, retained as no new data
+    free_cash_flow = COALESCE(free_cash_flow, -500000), -- Estimate: negative due to exploration and operations
+    trailing_pe = NULL, -- Negative earnings
+    forward_pe = COALESCE(forward_pe, NULL), -- No data
+    price_to_sales = 0.92, -- MCap / Revenue = 2.52M / 2.73M
+    price_to_book = 2.35, -- Yahoo Finance (06/03/2025)
+    enterprise_to_revenue = 0.90, -- EV / Revenue = 2.45M / 2.73M
+    enterprise_to_ebitda = 24.50, -- EV / EBITDA = 2.45M / 0.1M
+    net_financial_assets = 77990, -- Cash - Debt = 77990 - 0
+    net_financial_assets_currency = 'CAD',
+    other_financial_assets = COALESCE(other_financial_assets, 0), -- No data
+    other_financial_assets_currency = 'CAD',
+    investments_json = jsonb_build_object(
+        'UpdateContext', 'Small-scale producer, Yahoo Finance 06/03/2025, Newsfile 09/12/2024',
+        'Shares_Outstanding_Million', 126.14,
+        'Fully_Diluted_Shares_Million', 136.0,
+        'Insider_Ownership_Percent', NULL,
+        'Market_Cap_CAD_Million', 2.52,
+        'Enterprise_Value_CAD_Million', 2.45,
+        'Cash_CAD_Thousand', 77.99,
+        'Debt_CAD_Million', 0,
+        'Revenue_TTM_CAD_Million', 2.73,
+        'Net_Income_TTM_CAD_Thousand', -377.18,
+        'Processing_Income_15M_CAD_Million', 1.23,
+        'Price_To_Book', 2.35,
+        'Price_To_Sales', 0.92
+    ),
+    last_updated = NOW()
+WHERE company_id = 620;
+
+INSERT INTO public.update_log (company_id, table_name, update_time, update_description)
+VALUES (620, 'financials', NOW(), 'Updated with Yahoo Finance 06/03/2025: MCap CAD 2.52M, cash CAD 0.078M, no debt, shares 126.14M, P/B 2.35, P/S 0.92, revenue CAD 2.73M (ttm).');
+
+-- Log pre-update state for capital_structure
+INSERT INTO public.update_log (company_id, table_name, update_time, update_description)
+SELECT
+    620,
+    'capital_structure',
+    NOW(),
+    'Pre-update state: existing_shares = ' || COALESCE(cs.existing_shares::TEXT, 'NULL') ||
+    ', fully_diluted = ' || COALESCE(cs.fully_diluted_shares::TEXT, 'NULL') ||
+    ', options = ' || COALESCE(cs.in_the_money_options::TEXT, 'NULL') ||
+    ', options_revenue = ' || COALESCE(cs.options_revenue::TEXT, 'NULL') || ' ' || COALESCE(cs.options_revenue_currency, 'NULL')
+FROM public.capital_structure cs
+WHERE cs.company_id = 620;
+
+-- UPSERT capital structure
+-- Web data: 126.14M existing shares, 136M fully diluted (10/01/2024)
+-- Estimate options revenue based on average exercise price ~CAD 0.02
+INSERT INTO public.capital_structure (
+    company_id, existing_shares, fully_diluted_shares, in_the_money_options, options_revenue, options_revenue_currency, last_updated
+) VALUES (
+    620, 
+    126140000, -- Yahoo Finance: 126.14M shares (06/03/2025)
+    136000000, -- Web data: 136M fully diluted (10/01/2024)
+    9860000, -- Options: 136M - 126.14M = 9.86M
+    197200, -- Options revenue estimate: 9.86M * CAD 0.02
+    'CAD', 
+    NOW()
+)
+ON CONFLICT (company_id) DO UPDATE SET
+    existing_shares = EXCLUDED.existing_shares,
+    fully_diluted_shares = EXCLUDED.fully_diluted_shares,
+    in_the_money_options = EXCLUDED.in_the_money_options,
+    options_revenue = EXCLUDED.options_revenue,
+    options_revenue_currency = EXCLUDED.options_revenue_currency,
+    last_updated = EXCLUDED.last_updated;
+
+INSERT INTO public.update_log (company_id, table_name, update_time, update_description)
+VALUES (620, 'capital_structure', NOW(), 'Updated share structure: 126.14M existing, 136M fully diluted, 9.86M options, CAD 197.2K options revenue.');
+
+-- Log pre-update state for mineral_estimates
+INSERT INTO public.update_log (company_id, table_name, update_time, update_description)
+SELECT
+    620,
+    'mineral_estimates',
+    NOW(),
+    'Pre-UPSERT state: reserves_total_aueq_moz = ' || COALESCE(me.reserves_total_aueq_moz::TEXT, 'NULL') ||
+    ', resources_total_aueq_moz = ' || COALESCE(me.resources_total_aueq_moz::TEXT, 'NULL') ||
+    ', measured_indicated_total_aueq_moz = ' || COALESCE(me.measured_indicated_total_aueq_moz::TEXT, 'NULL') ||
+    ', potential_total_aueq_moz = ' || COALESCE(me.potential_total_aueq_moz::TEXT, 'NULL')
+FROM public.mineral_estimates me
+WHERE me.company_id = 620;
+
+-- UPSERT mineral estimates
+-- No NI 43-101; estimate based on Palta Dorada sampling (7.09 g/t Au, 17.42 oz/t Ag) and exploration norms
+-- Conservative estimate: 0.05 Moz AuEq resources (70% silver, 10% gold, 20% base metals as AuEq equivalent)
+INSERT INTO public.mineral_estimates (
+    company_id, 
+    reserves_precious_aueq_moz, measured_indicated_precious_aueq_moz, potential_precious_aueq_moz, resources_precious_aueq_moz,
+    reserves_non_precious_aueq_moz, measured_indicated_non_precious_aueq_moz, potential_non_precious_aueq_moz, resources_non_precious_aueq_moz,
+    reserves_total_aueq_moz, measured_indicated_total_aueq_moz, resources_total_aueq_moz, potential_total_aueq_moz,
+    mineable_total_aueq_moz, mineable_precious_aueq_moz, mineable_non_precious_aueq_moz,
+    last_updated
+) VALUES (
+    620,
+    0, -- No reserves
+    0.04, -- 80% of 0.05 Moz (gold + silver)
+    0.1, -- Exploration upside estimate
+    0.04, -- 80% of 0.05 Moz (gold + silver)
+    0, -- No non-precious reserves
+    0.01, -- 20% of 0.05 Moz (Cu, Zn, Pb as AuEq)
+    0.02, -- Exploration upside estimate
+    0.01, -- 20% of 0.05 Moz (Cu, Zn, Pb as AuEq)
+    0, -- No reserves
+    0.05, -- Total M&I estimate
+    0.05, -- Total resources estimate
+    0.12, -- Total potential estimate
+    0, -- No mineable reserves
+    0, -- No mineable precious
+    0, -- No mineable non-precious
+    NOW()
+)
+ON CONFLICT (company_id) DO UPDATE SET
+    reserves_precious_aueq_moz = EXCLUDED.reserves_precious_aueq_moz,
+    measured_indicated_precious_aueq_moz = EXCLUDED.measured_indicated_precious_aueq_moz,
+    potential_precious_aueq_moz = EXCLUDED.potential_precious_aueq_moz,
+    resources_precious_aueq_moz = EXCLUDED.resources_precious_aueq_moz,
+    reserves_non_precious_aueq_moz = EXCLUDED.reserves_non_precious_aueq_moz,
+    measured_indicated_non_precious_aueq_moz = EXCLUDED.measured_indicated_non_precious_aueq_moz,
+    potential_non_precious_aueq_moz = EXCLUDED.potential_non_precious_aueq_moz,
+    resources_non_precious_aueq_moz = EXCLUDED.resources_non_precious_aueq_moz,
+    reserves_total_aueq_moz = EXCLUDED.reserves_total_aueq_moz,
+    measured_indicated_total_aueq_moz = EXCLUDED.measured_indicated_total_aueq_moz,
+    resources_total_aueq_moz = EXCLUDED.resources_total_aueq_moz,
+    potential_total_aueq_moz = EXCLUDED.potential_total_aueq_moz,
+    mineable_total_aueq_moz = EXCLUDED.mineable_total_aueq_moz,
+    mineable_precious_aueq_moz = EXCLUDED.mineable_precious_aueq_moz,
+    mineable_non_precious_aueq_moz = EXCLUDED.mineable_non_precious_aueq_moz,
+    last_updated = EXCLUDED.last_updated;
+
+INSERT INTO public.update_log (company_id, table_name, update_time, update_description)
+VALUES (620, 'mineral_estimates', NOW(), 'Estimated resources: 0.05 Moz AuEq M&I, 0.12 Moz potential, no reserves (exploration-stage, conservative estimate).');
+
+-- Log pre-update state for production
+INSERT INTO public.update_log (company_id, table_name, update_time, update_description)
+SELECT
+    620,
+    'production',
+    NOW(),
+    'Pre-UPSERT state: current_prod_total_aueq_koz = ' || COALESCE(p.current_production_total_aueq_koz::TEXT, 'NULL') ||
+    ', current_prod_precious = ' || COALESCE(p.current_production_precious_aueq_koz::TEXT, 'NULL') ||
+    ', future_prod = ' || COALESCE(p.future_production_total_aueq_koz::TEXT, 'NULL') ||
+    ', reserve_life = ' || COALESCE(p.reserve_life_years::TEXT, 'NULL')
+FROM public.production p
+WHERE p.company_id = 620;
+
+-- UPSERT production data
+-- Q1 2025: 9,168 tonnes processed; estimate 12 koz AuEq/year based on concentrate output
+-- Annualized: 9,168 tonnes Q1 * 4 = 36,672 tonnes/year
+INSERT INTO public.production (
+    company_id, 
+    current_production_total_aueq_koz, current_production_precious_aueq_koz, current_production_non_precious_aueq_koz,
+    future_production_total_aueq_koz,
+    reserve_life_years, protected, last_updated
+) VALUES (
+    620, 
+    12, -- Estimate: 36,672 tonnes/year at current grades
+    9.6, -- 80% precious (gold + silver) = 12 * 0.8
+    2.4, -- 20% base metals = 12 * 0.2
+    15, -- DB: 15 koz/year, retained for future estimate
+    5, -- Estimate: based on exploration potential
+    FALSE, 
+    NOW()
+)
+ON CONFLICT (company_id) DO UPDATE SET
+    current_production_total_aueq_koz = EXCLUDED.current_production_total_aueq_koz,
+    current_production_precious_aueq_koz = EXCLUDED.current_production_precious_aueq_koz,
+    current_production_non_precious_aueq_koz = EXCLUDED.current_production_non_precious_aueq_koz,
+    future_production_total_aueq_koz = EXCLUDED.future_production_total_aueq_koz,
+    reserve_life_years = EXCLUDED.reserve_life_years,
+    protected = EXCLUDED.protected,
+    last_updated = EXCLUDED.last_updated;
+
+INSERT INTO public.update_log (company_id, table_name, update_time, update_description)
+VALUES (620, 'production', NOW(), 'Updated production: 12 koz AuEq current (9.6 precious, 2.4 base), 15 koz future, based on Q1 2025 output of 9,168 tonnes.');
+
+-- Log pre-update state for costs
+INSERT INTO public.update_log (company_id, table_name, update_time, update_description)
+SELECT
+    620,
+    'costs',
+    NOW(),
+    'Pre-UPSERT state: tco_current = ' || COALESCE(c.tco_current::TEXT, 'NULL') || ' ' || COALESCE(c.tco_current_currency, 'NULL') ||
+    ', aisc_future = ' || COALESCE(c.aisc_future::TEXT, 'NULL') || ' ' || COALESCE(c.aisc_future_currency, 'NULL') ||
+    ', construction_costs = ' || COALESCE(c.construction_costs::TEXT, 'NULL') || ' ' || COALESCE(c.construction_costs_currency, 'NULL')
+FROM public.costs c
+WHERE c.company_id = 620;
+
+-- UPSERT costs
+-- Estimate AISC and construction costs for Aguila Norte and potential CIP plant
+INSERT INTO public.costs (
+    company_id, 
+    tco_current, tco_current_currency, 
+    aisc_last_year, aisc_last_year_currency, aic_last_year, aic_last_year_currency,
+    aisc_last_quarter, aisc_last_quarter_currency, aic_last_quarter, aic_last_quarter_currency,
+    tco_future, tco_future_currency, aisc_future, aisc_future_currency,
+    construction_costs, construction_costs_currency, 
+    last_updated
+) VALUES (
+    620, 
+    1500, 'CAD', -- Estimate: CAD 1500/oz for small-scale processing
+    NULL, 'CAD', NULL, 'CAD', -- No historical AISC data
+    NULL, 'CAD', NULL, 'CAD', -- No quarterly AISC data
+    1400, 'CAD', -- Estimate: future TCO with scale improvements
+    1300, 'CAD', -- Estimate: future AISC lower due to scale
+    5000000, 'CAD', -- Estimate: CAD 5M for CIP plant construction
+    NOW()
+)
+ON CONFLICT (company_id) DO UPDATE SET
+    tco_current = EXCLUDED.tco_current,
+    tco_current_currency = EXCLUDED.tco_current_currency,
+    aisc_last_year = EXCLUDED.aisc_last_year,
+    aisc_last_year_currency = EXCLUDED.aisc_last_year_currency,
+    aic_last_year = EXCLUDED.aic_last_year,
+    aic_last_year_currency = EXCLUDED.aic_last_year_currency,
+    aisc_last_quarter = EXCLUDED.aisc_last_quarter,
+    aisc_last_quarter_currency = EXCLUDED.aisc_last_quarter_currency,
+    aic_last_quarter = EXCLUDED.aic_last_quarter,
+    aic_last_quarter_currency = EXCLUDED.aic_last_quarter_currency,
+    tco_future = EXCLUDED.tco_future,
+    tco_future_currency = EXCLUDED.tco_future_currency,
+    aisc_future = EXCLUDED.aisc_future,
+    aisc_future_currency = EXCLUDED.aisc_future_currency,
+    construction_costs = EXCLUDED.construction_costs,
+    construction_costs_currency = EXCLUDED.construction_costs_currency,
+    last_updated = EXCLUDED.last_updated;
+
+INSERT INTO public.update_log (company_id, table_name, update_time, update_description)
+VALUES (620, 'costs', NOW(), 'Estimated costs: TCO CAD 1500/oz current, AISC CAD 1300/oz future, CapEx CAD 5M for CIP plant.');
+
+-- Log pre-update state for valuation_metrics
+INSERT INTO public.update_log (company_id, table_name, update_time, update_description)
+SELECT
+    620,
+    'valuation_metrics',
+    NOW(),
+    'Pre-UPSERT state: ev_per_resource_oz_all = ' || COALESCE(vm.ev_per_resource_oz_all::TEXT, 'NULL') ||
+    ', mkt_cap_per_mi_oz_all = ' || COALESCE(vm.mkt_cap_per_mi_oz_all::TEXT, 'NULL') ||
+    ', ev_per_production_oz = ' || COALESCE(vm.ev_per_production_oz::TEXT, 'NULL') ||
+    ', mkt_cap_per_production_oz = ' || COALESCE(vm.mkt_cap_per_production_oz::TEXT, 'NULL')
+FROM public.valuation_metrics vm
+WHERE vm.company_id = 620;
+
+-- UPSERT valuation_metrics
+-- MCap_CAD = 2.52M; MCap_USD = 2.52M / 1.38 = 1.826M USD
+-- EV_CAD = 2.45M; EV_USD = 2.45M / 1.38 = 1.775M USD
+-- Resources = 0.05 Moz AuEq, M&I = 0.05 Moz AuEq
+-- Current production = 12 koz AuEq/year
+INSERT INTO public.valuation_metrics (
+    company_id, 
+    ev_per_production_oz, mkt_cap_per_production_oz,
+    ev_per_reserve_oz_all, mkt_cap_per_reserve_oz_all,
+    ev_per_mi_oz_all, mkt_cap_per_mi_oz_all,
+    ev_per_resource_oz_all, mkt_cap_per_resource_oz_all,
+    ev_per_reserve_oz_precious, mkt_cap_per_reserve_oz_precious,
+    ev_per_mi_oz_precious, mkt_cap_per_mi_oz_precious,
+    ev_per_resource_oz_precious, mkt_cap_per_resource_oz_precious,
+    ev_per_mineable_oz_all, mkt_cap_per_mineable_oz_all,
+    ev_per_mineable_oz_precious, mkt_cap_per_mineable_oz_precious,
+    last_updated
+) VALUES (
+    620, 
+    ROUND((1775362.0 / NULLIF(12000.0, 0))::numeric, 2), -- EV_USD / Current_Production = 147.95
+    ROUND((1826087.0 / NULLIF(12000.0, 0))::numeric, 2), -- MCap_USD / Current_Production = 152.17
+    NULL, NULL, -- No reserves
+    ROUND((1775362.0 / NULLIF(50000.0, 0))::numeric, 2), -- EV_USD / M&I = 35.51
+    ROUND((1826087.0 / NULLIF(50000.0, 0))::numeric, 2), -- MCap_USD / M&I = 36.52
+    ROUND((1775362.0 / NULLIF(50000.0, 0))::numeric, 2), -- EV_USD / Resources = 35.51
+    ROUND((1826087.0 / NULLIF(50000.0, 0))::numeric, 2), -- MCap_USD / Resources = 36.52
+    NULL, NULL, -- No reserves
+    ROUND((1775362.0 / NULLIF(40000.0, 0))::numeric, 2), -- EV_USD / Precious_M&I = 44.38
+    ROUND((1826087.0 / NULLIF(40000.0, 0))::numeric, 2), -- MCap_USD / Precious_M&I = 45.65
+    ROUND((1775362.0 / NULLIF(40000.0, 0))::numeric, 2), -- EV_USD / Precious_Resources = 44.38
+    ROUND((1826087.0 / NULLIF(40000.0, 0))::numeric, 2), -- MCap_USD / Precious_Resources = 45.65
+    NULL, NULL, -- No mineable
+    NULL, NULL, -- No mineable
+    NOW()
+)
+ON CONFLICT (company_id) DO UPDATE SET
+    ev_per_production_oz = EXCLUDED.ev_per_production_oz,
+    mkt_cap_per_production_oz = EXCLUDED.mkt_cap_per_production_oz,
+    ev_per_reserve_oz_all = EXCLUDED.ev_per_reserve_oz_all,
+    mkt_cap_per_reserve_oz_all = EXCLUDED.mkt_cap_per_reserve_oz_all,
+    ev_per_mi_oz_all = EXCLUDED.ev_per_mi_oz_all,
+    mkt_cap_per_mi_oz_all = EXCLUDED.mkt_cap_per_mi_oz_all,
+    ev_per_resource_oz_all = EXCLUDED.ev_per_resource_oz_all,
+    mkt_cap_per_resource_oz_all = EXCLUDED.mkt_cap_per_resource_oz_all,
+    ev_per_reserve_oz_precious = EXCLUDED.ev_per_reserve_oz_precious,
+    mkt_cap_per_reserve_oz_precious = EXCLUDED.mkt_cap_per_reserve_oz_precious,
+    ev_per_mi_oz_precious = EXCLUDED.ev_per_mi_oz_precious,
+    mkt_cap_per_mi_oz_precious = EXCLUDED.mkt_cap_per_mi_oz_precious,
+    ev_per_resource_oz_precious = EXCLUDED.ev_per_resource_oz_precious,
+    mkt_cap_per_resource_oz_precious = EXCLUDED.mkt_cap_per_resource_oz_precious,
+    ev_per_mineable_oz_all = EXCLUDED.ev_per_mineable_oz_all,
+    mkt_cap_per_mineable_oz_all = EXCLUDED.mkt_cap_per_mineable_oz_all,
+    ev_per_mineable_oz_precious = EXCLUDED.ev_per_mineable_oz_precious,
+    mkt_cap_per_mineable_oz_precious = EXCLUDED.mkt_cap_per_mineable_oz_precious,
+    last_updated = EXCLUDED.last_updated;
+
+INSERT INTO public.update_log (company_id, table_name, update_time, update_description)
+VALUES (620, 'valuation_metrics', NOW(), 'Updated valuations (USD): Resources $35.51-36.52/oz, M&I $35.51-36.52/oz, production $147.95-152.17/oz.');
+
+-- Update company_urls table
+-- Company website
+INSERT INTO public.company_urls (company_id, url_type, url, last_validated)
+VALUES (620, 'company_website', 'https://www.peruvianmetals.com', NOW())
+ON CONFLICT (company_id, url_type) DO UPDATE SET
+    url = EXCLUDED.url,
+    last_validated = EXCLUDED.last_validated;
+
+-- Yahoo Finance URL
+INSERT INTO public.company_urls (company_id, url_type, url, last_validated)
+VALUES (620, 'yahoo_finance', 'https://finance.yahoo.com/quote/PER.V/', NOW())
+ON CONFLICT (company_id, url_type) DO UPDATE SET
+    url = EXCLUDED.url,
+    last_validated = EXCLUDED.last_validated;
+
+INSERT INTO public.update_log (company_id, table_name, update_time, update_description)
+VALUES (620, 'company_urls', NOW(), 'Updated company website URL and Yahoo Finance URL.');
+
+-- Verify key updated fields
+SELECT
+    c.company_id, c.tsx_code, c.status, c.percent_gold, c.percent_silver,
+    f.market_cap_value AS f_mcap_cad, f.enterprise_value_value AS f_ev_cad,
+    f.debt_value AS f_debt_cad, f.cash_value AS f_cash_cad, f.shares_outstanding,
+    f.net_income_value AS f_net_income_cad, f.free_cash_flow AS f_fcf_cad,
+    f.price_to_book, f.price_to_sales,
+    me.reserves_total_aueq_moz AS res_moz, me.resources_total_aueq_moz AS total_res_moz,
+    me.measured_indicated_total_aueq_moz AS mi_moz,
+    p.current_production_total_aueq_koz AS curr_prod_koz, p.future_production_total_aueq_koz AS future_prod_koz,
+    p.reserve_life_years,
+    cs.aisc_future AS aisc_future_cad, cs.construction_costs AS capex_cad,
+    (SELECT url FROM public.company_urls cu WHERE cu.company_id = c.company_id AND cu.url_type='company_website' LIMIT 1) AS website_url,
+    (SELECT url FROM public.company_urls cu WHERE cu.company_id = c.company_id AND cu.url_type='yahoo_finance' LIMIT 1) AS yahoo_url,
+    vm.ev_per_resource_oz_all AS vm_ev_res_usd, vm.mkt_cap_per_mi_oz_all AS vm_mc_mi_usd
+FROM public.companies c
+LEFT JOIN public.financials f ON c.company_id = f.company_id
+LEFT JOIN public.production p ON c.company_id = p.company_id
+LEFT JOIN public.mineral_estimates me ON c.company_id = me.company_id
+LEFT JOIN public.costs cs ON c.company_id = cs.company_id
+LEFT JOIN public.valuation_metrics vm ON c.company_id = vm.company_id
+WHERE c.company_id = 620;
+
+-- Final summary
+SELECT 'PER Update Summary' AS summary_type,
+    'Ticker PER.V, Status producer, MCap CAD 2.52M, Aguila Norte plant processed 9,168 tonnes Q1 2025 (38% YoY increase), Palta Dorada and Mansa Musa projects, Estimated resources 0.05 Moz AuEq, Production 12 koz AuEq/yr, CapEx CAD 5M for CIP plant, P/B 2.35, P/S 0.92' AS summary_details;
+
+COMMIT;
+	----
+	
+SQL Structure:
+Use BEGIN; and COMMIT; to wrap the transaction for atomicity.
+
+Lock rows for the target company_id across all relevant tables (companies, financials, capital_structure, mineral_estimates, production, costs, valuation_metrics) using SELECT * FROM public.<table> WHERE company_id = <id> FOR UPDATE; (add NOWAIT for mineral_estimates and production).
+
+Use UPDATE for companies and financials, and INSERT ... ON CONFLICT (company_id) DO UPDATE (UPSERT) for other tables to handle both inserts and updates.
+
+Exclude stock price updates (handled by a separate script).
+
+Use standard column names as defined in the JSON schema (e.g., market_cap_value, cash_value, reserves_total_aueq_moz).
+
+Ensure currency consistency: CAD for financials, USD for valuation metrics (using 1.38 CAD/USD exchange rate).
+
+Include a verification SELECT query joining all tables to confirm updated fields, using LEFT JOIN and WHERE cu.company_id = c.company_id AND cu.url_type='company_website' LIMIT 1 for the website URL.
+
+End with a summary SELECT statement: SELECT '<Company> Update Summary' AS summary_type, 'Ticker <ticker>, Status <status>, ...' AS summary_details;.
+
+Logging:
+Log pre-update state for each table before modification using INSERT INTO public.update_log (company_id, table_name, update_time, update_description).
+
+Use COALESCE(column::TEXT, 'NULL') to handle null values in log descriptions (e.g., COALESCE(f.market_cap_value::TEXT, 'NULL')).
+
+Include post-update logs to document changes or overrides (e.g., Updated ticker to LORD (TSX-V), ... Overrode JSON ticker LORD.CN).
+
+Log specific fields relevant to each table:
+companies: company_name, tsx_code, status, description_length.
+
+financials: market_cap_value, cash_value, debt_value, shares_outstanding.
+
+capital_structure: existing_shares, fully_diluted_shares.
+
+mineral_estimates: reserves_total_aueq_moz, resources_total_aueq_moz.
+
+production: current_production_total_aueq_koz, future_production_total_aueq_koz.
+
+costs: aisc_future, construction_costs.
+
+valuation_metrics: ev_per_resource_oz_all, mkt_cap_per_mi_oz_all.
+
+Ensure log statements reference the correct table alias (e.g., me for mineral_estimates, not cs).
+
+Error Prevention:
+Verify table aliases in SELECT and WHERE clauses match the FROM clause (e.g., me.company_id for mineral_estimates).
+
+Ensure JOINs in the verification query use correct table relationships (e.g., LEFT JOIN public.mineral_estimates me ON c.company_id = me.company_id).
+
+Avoid square brackets or other non-SQL characters in descriptions or JSON fields.
+
+Use NULLIF(<value>, 0) in valuation metrics to prevent division by zero (e.g., ROUND((2616000.0 / NULLIF(15000.0, 0))::numeric, 2)).
+
+Cross-check JSON data against web sources (e.g., Yahoo Finance, SEDAR+) and override outdated values with clear log entries.
+
+Validate ticker and exchange (e.g., TSX-V vs. CSE) using web data or company announcements.
+
+Include sources in descriptions (e.g., Yahoo Finance, company website, SEDAR+, TSX-V bulletins) with URLs and dates.
+
+Data Handling:
+Prioritize recent web data (e.g., Yahoo Finance, company filings) over JSON if discrepancies exist.
+
+Use conservative estimates for mineral_estimates and production when no NI 43-101 data is available, based on company focus (e.g., 0.25 Moz AuEq for St. James Gold).
+
+Calculate enterprise_value_value as market_cap_value - cash_value + debt_value.
+
+Include project details in investments_json (e.g., jsonb_build_array('Quinn Lake Project', 'Grub Line Property', 'Florin Gold Project')).
+
+Reflect trading status (e.g., Cease Trade Order) in the description with supporting sources.
+
+Citation Guidelines:
+Cite web sources using `` at the end of paragraphs, after the period, if data is directly used.web:<number>
+
