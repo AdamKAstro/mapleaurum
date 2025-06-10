@@ -1,0 +1,603 @@
+explorer stats : 
+[
+  {
+    "column_name": "c_aic_last_quarter",
+    "non_null_count": 1,
+    "min_value": 0,
+    "max_value": 0,
+    "median_value": 0,
+    "stddev_value": null
+  },
+  {
+    "column_name": "c_aic_last_year",
+    "non_null_count": 1,
+    "min_value": 0,
+    "max_value": 0,
+    "median_value": 0,
+    "stddev_value": null
+  },
+  {
+    "column_name": "c_aisc_future",
+    "non_null_count": 59,
+    "min_value": 0,
+    "max_value": 1900,
+    "median_value": 1250,
+    "stddev_value": 365.18269855731
+  },
+  {
+    "column_name": "c_aisc_last_quarter",
+    "non_null_count": 2,
+    "min_value": 0,
+    "max_value": 0,
+    "median_value": 0,
+    "stddev_value": 0
+  },
+  {
+    "column_name": "c_aisc_last_year",
+    "non_null_count": 2,
+    "min_value": 0,
+    "max_value": 1904,
+    "median_value": 952,
+    "stddev_value": 1346.33131137919
+  },
+  {
+    "column_name": "c_construction_costs",
+    "non_null_count": 88,
+    "min_value": 0,
+    "max_value": 500000000,
+    "median_value": 3000000,
+    "stddev_value": 124868763.625036
+  },
+  {
+    "column_name": "cs_existing_shares",
+    "non_null_count": 431,
+    "min_value": 160,
+    "max_value": 1042659968,
+    "median_value": 105148000,
+    "stddev_value": 127197203.810308
+  },
+  {
+    "column_name": "cs_fully_diluted_shares",
+    "non_null_count": 165,
+    "min_value": 9900000,
+    "max_value": 935000000,
+    "median_value": 115000000,
+    "stddev_value": 130414297.624257
+  },
+  {
+    "column_name": "cs_in_the_money_options",
+    "non_null_count": 160,
+    "min_value": 0,
+    "max_value": 211226047,
+    "median_value": 9658530.5,
+    "stddev_value": 27387847.5483756
+  },
+  {
+    "column_name": "cs_options_revenue",
+    "non_null_count": 98,
+    "min_value": 0,
+    "max_value": 20000000,
+    "median_value": 550170.5,
+    "stddev_value": 3186710.11832898
+  },
+  {
+    "column_name": "c_tco_current",
+    "non_null_count": 11,
+    "min_value": 0,
+    "max_value": 20025000,
+    "median_value": 3,
+    "stddev_value": 5993516.61001546
+  },
+  {
+    "column_name": "c_tco_future",
+    "non_null_count": 67,
+    "min_value": 0,
+    "max_value": 5000000,
+    "median_value": 1200,
+    "stddev_value": 784883.302047958
+  },
+  {
+    "column_name": "f_cash_value",
+    "non_null_count": 424,
+    "min_value": 0.014,
+    "max_value": 100738544,
+    "median_value": 894892.5,
+    "stddev_value": 9114888.68042505
+  },
+  {
+    "column_name": "f_cost_of_revenue",
+    "non_null_count": 173,
+    "min_value": 0,
+    "max_value": 1288000,
+    "median_value": 0,
+    "stddev_value": 97937.0999572722
+  },
+  {
+    "column_name": "f_debt_value",
+    "non_null_count": 255,
+    "min_value": 0,
+    "max_value": 57000000,
+    "median_value": 42190,
+    "stddev_value": 3808782.11832875
+  },
+  {
+    "column_name": "f_ebitda",
+    "non_null_count": 328,
+    "min_value": -59194304,
+    "max_value": 38136000,
+    "median_value": -1289632,
+    "stddev_value": 6917634.23614844
+  },
+  {
+    "column_name": "f_enterprise_to_ebitda",
+    "non_null_count": 252,
+    "min_value": -634.446,
+    "max_value": 351.46,
+    "median_value": -6.2355,
+    "stddev_value": 56.9898085993081
+  },
+  {
+    "column_name": "f_enterprise_to_revenue",
+    "non_null_count": 28,
+    "min_value": 0.06,
+    "max_value": 20281.0126582278,
+    "median_value": 43.013236557476,
+    "stddev_value": 3814.07437343445
+  },
+  {
+    "column_name": "f_enterprise_value_value",
+    "non_null_count": 433,
+    "min_value": -18149933,
+    "max_value": 1154619264,
+    "median_value": 10450000,
+    "stddev_value": 120786843.456587
+  },
+  {
+    "column_name": "f_forward_pe",
+    "non_null_count": 23,
+    "min_value": -164.66667,
+    "max_value": 31,
+    "median_value": -18.406898,
+    "stddev_value": 43.3014726325099
+  },
+  {
+    "column_name": "f_free_cash_flow",
+    "non_null_count": 403,
+    "min_value": -53418164,
+    "max_value": 30211624,
+    "median_value": -1037377,
+    "stddev_value": 5630304.24106066
+  },
+  {
+    "column_name": "f_gross_profit",
+    "non_null_count": 190,
+    "min_value": -7717301,
+    "max_value": 70952304,
+    "median_value": 0,
+    "stddev_value": 5232211.50046512
+  },
+  {
+    "column_name": "f_liabilities",
+    "non_null_count": 136,
+    "min_value": 0.1,
+    "max_value": 15862300,
+    "median_value": 327963,
+    "stddev_value": 1966471.14518607
+  },
+  {
+    "column_name": "f_market_cap_value",
+    "non_null_count": 436,
+    "min_value": 0,
+    "max_value": 1198098432,
+    "median_value": 12267187.5,
+    "stddev_value": 128531963.164209
+  },
+  {
+    "column_name": "f_net_financial_assets",
+    "non_null_count": 420,
+    "min_value": -10383793,
+    "max_value": 100606713,
+    "median_value": 738703.5,
+    "stddev_value": 9002835.43468473
+  },
+  {
+    "column_name": "f_net_income_value",
+    "non_null_count": 416,
+    "min_value": -108138000,
+    "max_value": 19284844,
+    "median_value": -1710000,
+    "stddev_value": 8353652.538059
+  },
+  {
+    "column_name": "f_operating_expense",
+    "non_null_count": 188,
+    "min_value": 0,
+    "max_value": 33869500,
+    "median_value": 172826,
+    "stddev_value": 2534919.59569414
+  },
+  {
+    "column_name": "f_operating_income",
+    "non_null_count": 181,
+    "min_value": -8961041,
+    "max_value": 70952304,
+    "median_value": -100000,
+    "stddev_value": 5495742.3096209
+  },
+  {
+    "column_name": "f_other_financial_assets",
+    "non_null_count": 123,
+    "min_value": 0,
+    "max_value": 13576642,
+    "median_value": 0,
+    "stddev_value": 1400925.21555737
+  },
+  {
+    "column_name": "f_peg_ratio",
+    "non_null_count": 0,
+    "min_value": null,
+    "max_value": null,
+    "median_value": null,
+    "stddev_value": null
+  },
+  {
+    "column_name": "f_price_to_book",
+    "non_null_count": 373,
+    "min_value": -0.13,
+    "max_value": 159.21,
+    "median_value": 1.8526784,
+    "stddev_value": 14.903213905085
+  },
+  {
+    "column_name": "f_price_to_sales",
+    "non_null_count": 28,
+    "min_value": -0.618818677669823,
+    "max_value": 28783.7751898734,
+    "median_value": 65.4222316444688,
+    "stddev_value": 5413.78416330189
+  },
+  {
+    "column_name": "f_revenue_value",
+    "non_null_count": 199,
+    "min_value": -7717301,
+    "max_value": 72680000,
+    "median_value": 0,
+    "stddev_value": 9067456.73682306
+  },
+  {
+    "column_name": "f_shares_outstanding",
+    "non_null_count": 434,
+    "min_value": 160,
+    "max_value": 1042659968,
+    "median_value": 106356500,
+    "stddev_value": 126919551.87256
+  },
+  {
+    "column_name": "f_trailing_pe",
+    "non_null_count": 273,
+    "min_value": -151,
+    "max_value": 201,
+    "median_value": -5,
+    "stddev_value": 22.4608482668756
+  },
+  {
+    "column_name": "me_measured_indicated_non_precious_aueq_moz",
+    "non_null_count": 148,
+    "min_value": 0,
+    "max_value": 332,
+    "median_value": 0,
+    "stddev_value": 27.555287515262
+  },
+  {
+    "column_name": "me_measured_indicated_precious_aueq_moz",
+    "non_null_count": 307,
+    "min_value": 0,
+    "max_value": 80,
+    "median_value": 0.12,
+    "stddev_value": 5.03549050129664
+  },
+  {
+    "column_name": "me_measured_indicated_total_aueq_moz",
+    "non_null_count": 309,
+    "min_value": 0,
+    "max_value": 332.5,
+    "median_value": 0.16,
+    "stddev_value": 19.7602549135928
+  },
+  {
+    "column_name": "me_mineable_non_precious_aueq_moz",
+    "non_null_count": 109,
+    "min_value": 0,
+    "max_value": 3.06,
+    "median_value": 0,
+    "stddev_value": 0.304580187116565
+  },
+  {
+    "column_name": "me_mineable_precious_aueq_moz",
+    "non_null_count": 115,
+    "min_value": 0,
+    "max_value": 3.06,
+    "median_value": 0,
+    "stddev_value": 0.371069399591911
+  },
+  {
+    "column_name": "me_mineable_total_aueq_moz",
+    "non_null_count": 115,
+    "min_value": 0,
+    "max_value": 6.12,
+    "median_value": 0,
+    "stddev_value": 0.637118166111771
+  },
+  {
+    "column_name": "me_potential_non_precious_aueq_moz",
+    "non_null_count": 162,
+    "min_value": 0,
+    "max_value": 500,
+    "median_value": 0.18,
+    "stddev_value": 39.5065300912376
+  },
+  {
+    "column_name": "me_potential_total_aueq_moz",
+    "non_null_count": 253,
+    "min_value": 0,
+    "max_value": 502,
+    "median_value": 0.8,
+    "stddev_value": 32.2209783815269
+  },
+  {
+    "column_name": "me_reserves_non_precious_aueq_moz",
+    "non_null_count": 115,
+    "min_value": 0,
+    "max_value": 75,
+    "median_value": 0,
+    "stddev_value": 6.99378606180235
+  },
+  {
+    "column_name": "me_reserves_precious_aueq_moz",
+    "non_null_count": 114,
+    "min_value": 0,
+    "max_value": 50,
+    "median_value": 0,
+    "stddev_value": 4.68406810030852
+  },
+  {
+    "column_name": "me_reserves_total_aueq_moz",
+    "non_null_count": 118,
+    "min_value": 0,
+    "max_value": 75,
+    "median_value": 0,
+    "stddev_value": 8.26388016299845
+  },
+  {
+    "column_name": "me_resources_non_precious_aueq_moz",
+    "non_null_count": 165,
+    "min_value": 0,
+    "max_value": 100,
+    "median_value": 0.015,
+    "stddev_value": 8.73098481402192
+  },
+  {
+    "column_name": "me_resources_precious_aueq_moz",
+    "non_null_count": 357,
+    "min_value": 0,
+    "max_value": 130,
+    "median_value": 0.234,
+    "stddev_value": 7.22386985404662
+  },
+  {
+    "column_name": "me_resources_total_aueq_moz",
+    "non_null_count": 376,
+    "min_value": 0,
+    "max_value": 130,
+    "median_value": 0.3,
+    "stddev_value": 9.13469257827166
+  },
+  {
+    "column_name": "p_current_production_non_precious_aueq_koz",
+    "non_null_count": 107,
+    "min_value": 0,
+    "max_value": 0.016,
+    "median_value": 0,
+    "stddev_value": 0.00154677838247306
+  },
+  {
+    "column_name": "p_current_production_precious_aueq_koz",
+    "non_null_count": 109,
+    "min_value": 0,
+    "max_value": 0,
+    "median_value": 0,
+    "stddev_value": 0
+  },
+  {
+    "column_name": "p_current_production_total_aueq_koz",
+    "non_null_count": 109,
+    "min_value": 0,
+    "max_value": 0.016,
+    "median_value": 0,
+    "stddev_value": 0.00153252205635384
+  },
+  {
+    "column_name": "percent_gold",
+    "non_null_count": 437,
+    "min_value": 0,
+    "max_value": 100,
+    "median_value": 80,
+    "stddev_value": 32.7764027748019
+  },
+  {
+    "column_name": "percent_silver",
+    "non_null_count": 436,
+    "min_value": 0,
+    "max_value": 100,
+    "median_value": 1.42,
+    "stddev_value": 24.720560915335
+  },
+  {
+    "column_name": "p_future_production_total_aueq_koz",
+    "non_null_count": 79,
+    "min_value": 0,
+    "max_value": 500,
+    "median_value": 0,
+    "stddev_value": 65.3371899715527
+  },
+  {
+    "column_name": "p_reserve_life_years",
+    "non_null_count": 50,
+    "min_value": 0,
+    "max_value": 10,
+    "median_value": 0,
+    "stddev_value": 3.85004638190985
+  },
+  {
+    "column_name": "share_price",
+    "non_null_count": 438,
+    "min_value": 0,
+    "max_value": 15.7799997329712,
+    "median_value": 0.115000002086163,
+    "stddev_value": 1.02302708338191
+  },
+  {
+    "column_name": "vm_ev_per_mineable_oz_all",
+    "non_null_count": 9,
+    "min_value": 6.76827896482,
+    "max_value": 510.358721856,
+    "median_value": 80.9109124622,
+    "stddev_value": 175.674400247611
+  },
+  {
+    "column_name": "vm_ev_per_mineable_oz_precious",
+    "non_null_count": 9,
+    "min_value": 6.76827896482,
+    "max_value": 510.358721856,
+    "median_value": 106.5645273622,
+    "stddev_value": 173.383725168193
+  },
+  {
+    "column_name": "vm_ev_per_mi_oz_all",
+    "non_null_count": 196,
+    "min_value": -0.2268741625,
+    "max_value": 157300,
+    "median_value": 28.337151635495,
+    "stddev_value": 11231.9639664084
+  },
+  {
+    "column_name": "vm_ev_per_mi_oz_precious",
+    "non_null_count": 182,
+    "min_value": 0,
+    "max_value": 1573000,
+    "median_value": 33.3257296296539,
+    "stddev_value": 116592.678055025
+  },
+  {
+    "column_name": "vm_ev_per_production_oz",
+    "non_null_count": 32,
+    "min_value": 21.46,
+    "max_value": 943800,
+    "median_value": 167.43,
+    "stddev_value": 166783.456036993
+  },
+  {
+    "column_name": "vm_ev_per_reserve_oz_all",
+    "non_null_count": 6,
+    "min_value": -0.36299866,
+    "max_value": 854.146133333333,
+    "median_value": 97.2281370318365,
+    "stddev_value": 327.122344936303
+  },
+  {
+    "column_name": "vm_ev_per_reserve_oz_precious",
+    "non_null_count": 5,
+    "min_value": -0.36299866,
+    "max_value": 854.146133333333,
+    "median_value": 109.204652173913,
+    "stddev_value": null
+  },
+  {
+    "column_name": "vm_ev_per_resource_oz_all",
+    "non_null_count": 320,
+    "min_value": -13250,
+    "max_value": 99367.4,
+    "median_value": 16.6299854243518,
+    "stddev_value": null
+  },
+  {
+    "column_name": "vm_ev_per_resource_oz_precious",
+    "non_null_count": 302,
+    "min_value": -66250,
+    "max_value": 943800,
+    "median_value": 20.5265417370167,
+    "stddev_value": null
+  },
+  {
+    "column_name": "vm_mkt_cap_per_mineable_oz_all",
+    "non_null_count": 9,
+    "min_value": 6.9664953818,
+    "max_value": 510.358721856,
+    "median_value": 93.6498217515,
+    "stddev_value": 174.386774594191
+  },
+  {
+    "column_name": "vm_mkt_cap_per_mineable_oz_precious",
+    "non_null_count": 9,
+    "min_value": 6.9664953818,
+    "max_value": 510.358721856,
+    "median_value": 134.02,
+    "stddev_value": 171.962634456094
+  },
+  {
+    "column_name": "vm_mkt_cap_per_mi_oz_all",
+    "non_null_count": 196,
+    "min_value": 0.0107809505468872,
+    "max_value": 161183.33,
+    "median_value": 29.7842123132116,
+    "stddev_value": 11509.0821929894
+  },
+  {
+    "column_name": "vm_mkt_cap_per_mi_oz_precious",
+    "non_null_count": 186,
+    "min_value": 0.196376888237705,
+    "max_value": 1611833.33,
+    "median_value": 33.595738825457,
+    "stddev_value": 118177.363642579
+  },
+  {
+    "column_name": "vm_mkt_cap_per_production_oz",
+    "non_null_count": 32,
+    "min_value": 21.76,
+    "max_value": 967100,
+    "median_value": 200,
+    "stddev_value": 170894.189423652
+  },
+  {
+    "column_name": "vm_mkt_cap_per_reserve_oz_all",
+    "non_null_count": 6,
+    "min_value": 0.0477955474245333,
+    "max_value": 134.02,
+    "median_value": 73.8579304347826,
+    "stddev_value": null
+  },
+  {
+    "column_name": "vm_mkt_cap_per_reserve_oz_precious",
+    "non_null_count": 4,
+    "min_value": 34,
+    "max_value": 134.02,
+    "median_value": 119.397178007743,
+    "stddev_value": null
+  },
+  {
+    "column_name": "vm_mkt_cap_per_resource_oz_all",
+    "non_null_count": 320,
+    "min_value": 0,
+    "max_value": 100510.95,
+    "median_value": 17.45601727564,
+    "stddev_value": null
+  },
+  {
+    "column_name": "vm_mkt_cap_per_resource_oz_precious",
+    "non_null_count": 294,
+    "min_value": 0,
+    "max_value": 967100,
+    "median_value": 21.59552151122,
+    "stddev_value": null
+  }
+]
