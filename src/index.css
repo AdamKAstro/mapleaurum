@@ -405,7 +405,7 @@
 /* Dark mode enhancements */
 @media (prefers-color-scheme: dark) {
   .glass-card {
-    @apply bg-gradient-to-br from-white/8 to-white/3;
+    @apply bg-gradient-to-br from-white/[.08] to-white/[.03]
   }
 }
 
