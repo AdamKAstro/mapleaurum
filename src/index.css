@@ -135,7 +135,8 @@
   }
 
   .sticky-col-1 {
-    @apply sticky-col left-0;
+	   /* Apply the base utilities directly to avoid the compiler bug */
+    @apply sticky bg-navy-500 z-10 border-r border-navy-400/20 left-0;
   }
 
   /* Table background */
