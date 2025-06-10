@@ -15,66 +15,67 @@ export function StatusBadge({ status, className }: StatusBadgeProps) {
     if (!status) {
       return {
         icon: HelpCircle,
-        baseColor: 'from-navy-300/90 to-navy-400/90',
-        ringColor: 'ring-navy-400/30',
+        baseColor: 'from-white/5 to-white/10',
+        hoverColor: 'hover:from-white/10 hover:to-white/20',
+        borderColor: 'border-white/20',
         textColor: 'text-surface-white/70',
         iconColor: 'text-surface-white/70',
-        shadowColor: '',
-        bgColor: 'bg-navy-400/10',
+        glowColor: '',
       };
     }
-
+    
     const normalizedStatus = status.toLowerCase();
+    
     switch (normalizedStatus) {
       case 'producer':
         return {
           icon: CircleDot,
-          baseColor: 'from-emerald-500/90 to-emerald-600/90',
-          ringColor: 'ring-emerald-500/40',
+          baseColor: 'from-emerald-500/10 to-emerald-600/20',
+          hoverColor: 'hover:from-emerald-500/20 hover:to-emerald-600/30',
+          borderColor: 'border-emerald-400/30',
           textColor: 'text-emerald-100',
           iconColor: 'text-emerald-200',
-          shadowColor: 'shadow-emerald-500/30',
-          bgColor: 'bg-emerald-500/20',
+          glowColor: 'shadow-emerald-500/20',
         };
       case 'developer':
         return {
           icon: Hammer,
-          baseColor: 'from-blue-500/90 to-blue-600/90',
-          ringColor: 'ring-blue-500/40',
+          baseColor: 'from-blue-500/10 to-blue-600/20',
+          hoverColor: 'hover:from-blue-500/20 hover:to-blue-600/30',
+          borderColor: 'border-blue-400/30',
           textColor: 'text-blue-100',
           iconColor: 'text-blue-200',
-          shadowColor: 'shadow-blue-500/30',
-          bgColor: 'bg-blue-500/20',
+          glowColor: 'shadow-blue-500/20',
         };
       case 'explorer':
         return {
           icon: Pickaxe,
-          baseColor: 'from-purple-500/90 to-purple-600/90',
-          ringColor: 'ring-purple-500/40',
+          baseColor: 'from-purple-500/10 to-purple-600/20',
+          hoverColor: 'hover:from-purple-500/20 hover:to-purple-600/30',
+          borderColor: 'border-purple-400/30',
           textColor: 'text-purple-100',
           iconColor: 'text-purple-200',
-          shadowColor: 'shadow-purple-500/30',
-          bgColor: 'bg-purple-500/20',
+          glowColor: 'shadow-purple-500/20',
         };
       case 'royalty':
         return {
           icon: Crown,
-          baseColor: 'from-amber-500/90 to-amber-600/90',
-          ringColor: 'ring-amber-500/40',
+          baseColor: 'from-amber-500/10 to-amber-600/20',
+          hoverColor: 'hover:from-amber-500/20 hover:to-amber-600/30',
+          borderColor: 'border-amber-400/30',
           textColor: 'text-amber-100',
           iconColor: 'text-amber-200',
-          shadowColor: 'shadow-amber-500/30',
-          bgColor: 'bg-amber-500/20',
+          glowColor: 'shadow-amber-500/20',
         };
       default:
         return {
           icon: HelpCircle,
-          baseColor: 'from-navy-300/90 to-navy-400/90',
-          ringColor: 'ring-navy-400/30',
+          baseColor: 'from-white/5 to-white/10',
+          hoverColor: 'hover:from-white/10 hover:to-white/20',
+          borderColor: 'border-white/20',
           textColor: 'text-surface-white/70',
           iconColor: 'text-surface-white/70',
-          shadowColor: '',
-          bgColor: 'bg-navy-400/10',
+          glowColor: '',
         };
     }
   };
@@ -96,22 +97,29 @@ export function StatusBadge({ status, className }: StatusBadgeProps) {
       whileTap={{ scale: 0.95 }}
       className={cn(
         'relative inline-flex items-center gap-1 px-2 py-1 rounded-full',
-        'bg-gradient-to-r shadow-md transition-all duration-300',
-        'ring-1 ring-offset-1 ring-offset-navy-500',
+        'backdrop-blur-md bg-gradient-to-r transition-all duration-300',
+        'border border-solid shadow-lg',
         config.baseColor,
-        config.ringColor,
-        config.shadowColor,
-        'transform hover:-translate-y-0.5',
-        'max-w-[100px]', // Match column width
+        config.hoverColor,
+        config.borderColor,
+        config.glowColor,
+        'transform hover:-translate-y-0.5 hover:shadow-xl',
+        'before:absolute before:inset-0 before:rounded-full before:bg-white/5',
+        'max-w-[100px]',
         className
       )}
     >
-      {/* Glow effect */}
+      {/* Glass shine effect */}
       <div className={cn(
-        'absolute inset-0 rounded-full blur opacity-50 transition-opacity duration-300',
+        'absolute inset-0 rounded-full bg-gradient-to-t from-transparent to-white/10 pointer-events-none'
+      )} />
+      
+      {/* Subtle inner glow */}
+      <div className={cn(
+        'absolute inset-0 rounded-full blur-sm opacity-30 transition-opacity duration-300',
         'bg-gradient-to-r',
         config.baseColor,
-        'group-hover:opacity-75'
+        'group-hover:opacity-50'
       )} />
       
       {/* Content */}

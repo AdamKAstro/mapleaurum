@@ -60,4 +60,5 @@ src_directory_structure.txt
 # Local development/planning files
 
 bfg-report/
-BackUp_*/
+BackUp_*/.bfg-report/
+BackUp_20052025/

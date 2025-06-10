@@ -1,9 +1,9 @@
 // src/components/ui/tier-badge.tsx
 import React from 'react';
-import { Star, Zap, Crown } from 'lucide-react'; // Zap might be unused if 'medium' is fully replaced by 'pro'
+import { Star, Zap, Crown } from 'lucide-react';
 import { cn } from '../../lib/utils';
-import type { ColumnTier } from '../../lib/types'; // Should be 'free' | 'pro' | 'premium'
-import { getTierLabel } from '../../lib/tier-utils'; // Assuming this function correctly handles 'pro'
+import type { ColumnTier } from '../../lib/types';
+import { getTierLabel } from '../../lib/tier-utils';
 
 interface TierBadgeProps {
   tier: ColumnTier | null | undefined;
@@ -13,29 +13,33 @@ interface TierBadgeProps {
   className?: string;
 }
 
-// Updated to use 'pro'
 const tierIcons = {
   free: Star,
-  pro: Zap, // Or choose a different icon for Pro if Star is for Free and Crown for Premium
+  pro: Zap,
   premium: Crown,
 } as const;
 
-// Updated to use 'pro'
 const tierColors = {
   free: {
-    bg: 'bg-gray-700/50',
-    text: 'text-gray-400',
-    border: 'border-gray-600/20',
+    bg: 'from-gray-400/10 to-gray-500/20',
+    hover: 'hover:from-gray-400/20 hover:to-gray-500/30',
+    text: 'text-gray-200',
+    border: 'border-gray-300/30',
+    glow: 'shadow-gray-400/20',
   },
-  pro: { // Changed from 'medium' to 'pro'
-    bg: 'bg-blue-900/50',
-    text: 'text-blue-400',
-    border: 'border-blue-500/20',
+  pro: {
+    bg: 'from-blue-500/10 to-blue-600/20',
+    hover: 'hover:from-blue-500/20 hover:to-blue-600/30',
+    text: 'text-blue-200',
+    border: 'border-blue-300/30',
+    glow: 'shadow-blue-400/20',
   },
   premium: {
-    bg: 'bg-amber-900/50',
-    text: 'text-amber-400',
-    border: 'border-amber-500/20',
+    bg: 'from-amber-500/10 to-amber-600/20',
+    hover: 'hover:from-amber-500/20 hover:to-amber-600/30',
+    text: 'text-amber-200',
+    border: 'border-amber-300/30',
+    glow: 'shadow-amber-400/20',
   },
 } as const;
 
@@ -48,17 +52,14 @@ export function TierBadge({
 }: TierBadgeProps) {
   if (!tier) return null;
 
-  // Ensure tier is a valid key before accessing.
-  // This guards against unexpected tier values that might come from inconsistent data.
-  const validTier = tier in tierIcons ? tier : 'free'; // Fallback to 'free' or handle error
-
+  // Ensure tier is a valid key before accessing
+  const validTier = tier in tierIcons ? tier : 'free';
   const Icon = tierIcons[validTier];
   const colors = tierColors[validTier];
 
-  // If after fallback, colors is still somehow undefined (e.g. if 'free' was removed from tierColors), add a guard.
   if (!colors) {
     console.warn(`[TierBadge] Colors not found for tier: ${validTier}. Rendering nothing.`);
-    return null; // Or render a default badge
+    return null;
   }
 
   const sizeClasses = {
@@ -76,16 +77,28 @@ export function TierBadge({
   return (
     <div
       className={cn(
-        'inline-flex items-center gap-1.5 rounded border',
+        'inline-flex items-center gap-1.5 rounded-lg',
+        'backdrop-blur-md bg-gradient-to-r border border-solid',
+        'shadow-md transition-all duration-300',
+        'before:absolute before:inset-0 before:rounded-lg before:bg-white/5',
+        'hover:shadow-lg hover:scale-[1.02] active:scale-[0.98]',
         sizeClasses[size],
         colors.bg,
+        colors.hover,
         colors.text,
         colors.border,
+        colors.glow,
         className
       )}
     >
-      {showIcon && Icon && <Icon className={iconSizes[size]} />}
-      {showLabel && <span className="font-medium">{getTierLabel(validTier)}</span>}
+      {/* Glass shine effect */}
+      <div className="absolute inset-0 rounded-lg bg-gradient-to-t from-transparent to-white/10 pointer-events-none" />
+      
+      {/* Content */}
+      <div className="relative z-10 flex items-center gap-1.5">
+        {showIcon && Icon && <Icon className={iconSizes[size]} />}
+        {showLabel && <span className="font-medium">{getTierLabel(validTier)}</span>}
+      </div>
     </div>
   );
 }

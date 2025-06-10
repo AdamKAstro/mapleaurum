@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Font Test</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @tailwind base;
+    @tailwind components;
+    @tailwind utilities;
+    @layer base {
+      body {
+        @apply text-surface-white antialiased font-sans;
+        font-family: 'Inter', sans-serif;
+      }
+      h1, h2, h3, h4, h5, h6 {
+        @apply font-bold tracking-tight font-sans;
+        font-family: 'Inter', sans-serif;
+      }
+    }
+    @layer components {
+      .table-header th {
+        @apply bg-navy-500 font-sans;
+        font-family: 'Inter', sans-serif;
+      }
+      .table-cell {
+        @apply px-3 py-2.5 text-sm border-b border-navy-400/20;
+        font-family: 'Inter', sans-serif;
+      }
+      .group-header {
+        @apply bg-navy-500 font-semibold text-surface-white/90 font-sans;
+        font-family: 'Inter', sans-serif;
+      }
+      .company-code {
+        @apply text-sm font-mono text-accent-yellow/80;
+      }
+    }
+  </style>
+</head>
+<body class="bg-surface-white text-navy">
+  <h1 class="text-5xl md:text-7xl lg:text-8xl font-bold">Hero Heading</h1>
+  <h2 class="text-4xl md:text-6xl font-bold">Section Heading</h2>
+  <h3 class="text-3xl font-bold">Intermediate Heading</h3>
+  <h4 class="text-xl md:text-2xl font-light">Subheading</h4>
+  <p class="text-lg font-medium">Main body text (text-lg).</p>
+  <p class="text-base font-medium">Main body text (text-base).</p>
+  <p class="text-sm font-light">Caption text (text-sm).</p>
+  <p class="text-xs font-light">Fine print (text-xs).</p>
+  <div class="table-container">
+    <table class="table-bg">
+      <thead class="table-header">
+        <tr>
+          <th class="text-sm font-semibold">Column Header</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr class="group-header">
+          <td class="text-3xl font-semibold">Group Header</td>
+        </tr>
+        <tr>
+          <td class="table-cell">Table Cell</td>
+        </tr>
+        <tr>
+          <td class="table-cell"><span class="company-code">ABC123</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</body>
+</html>

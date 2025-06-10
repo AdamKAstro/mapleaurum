@@ -1,3 +1,4 @@
+//src/componenets/mineral-badge.tsx
 import React from 'react';
 import { motion } from 'framer-motion';
 import { cn } from '../lib/utils';
@@ -10,75 +11,75 @@ interface MineralBadgeProps {
 const mineralConfigs: Record<string, {
   baseColor: string;
   hoverColor: string;
-  ringColor: string;
+  borderColor: string;
   textColor: string;
   glowColor: string;
 }> = {
   gold: {
-    baseColor: 'from-accent-yellow/80 to-accent-brown/80',
-    hoverColor: 'group-hover:from-accent-yellow group-hover:to-accent-brown',
-    ringColor: 'ring-accent-yellow/30',
-    textColor: 'text-surface-white',
-    glowColor: 'shadow-glow-yellow',
+    baseColor: 'from-amber-400/10 to-amber-600/20',
+    hoverColor: 'hover:from-amber-400/20 hover:to-amber-600/30',
+    borderColor: 'border-amber-300/30',
+    textColor: 'text-amber-100',
+    glowColor: 'shadow-amber-400/20',
   },
   silver: {
-    baseColor: 'from-navy-200/80 to-navy-300/80',
-    hoverColor: 'group-hover:from-navy-200 group-hover:to-navy-300',
-    ringColor: 'ring-navy-200/30',
-    textColor: 'text-surface-white',
-    glowColor: '',
+    baseColor: 'from-gray-300/10 to-gray-400/20',
+    hoverColor: 'hover:from-gray-300/20 hover:to-gray-400/30',
+    borderColor: 'border-gray-200/30',
+    textColor: 'text-gray-100',
+    glowColor: 'shadow-gray-300/20',
   },
   copper: {
-    baseColor: 'from-accent-red/80 to-accent-brown/80',
-    hoverColor: 'group-hover:from-accent-red group-hover:to-accent-brown',
-    ringColor: 'ring-accent-red/30',
-    textColor: 'text-surface-white',
-    glowColor: 'shadow-glow-red',
+    baseColor: 'from-orange-600/10 to-orange-700/20',
+    hoverColor: 'hover:from-orange-600/20 hover:to-orange-700/30',
+    borderColor: 'border-orange-400/30',
+    textColor: 'text-orange-100',
+    glowColor: 'shadow-orange-500/20',
   },
   zinc: {
-    baseColor: 'from-accent-teal/80 to-navy-400/80',
-    hoverColor: 'group-hover:from-accent-teal group-hover:to-navy-400',
-    ringColor: 'ring-accent-teal/30',
-    textColor: 'text-surface-white',
-    glowColor: 'shadow-glow-teal',
+    baseColor: 'from-teal-500/10 to-cyan-600/20',
+    hoverColor: 'hover:from-teal-500/20 hover:to-cyan-600/30',
+    borderColor: 'border-teal-300/30',
+    textColor: 'text-teal-100',
+    glowColor: 'shadow-teal-400/20',
   },
   uranium: {
-    baseColor: 'from-accent-teal/80 to-accent-yellow/80',
-    hoverColor: 'group-hover:from-accent-teal group-hover:to-accent-yellow',
-    ringColor: 'ring-accent-teal/30',
-    textColor: 'text-surface-white',
-    glowColor: 'shadow-glow-teal',
+    baseColor: 'from-green-400/10 to-emerald-600/20',
+    hoverColor: 'hover:from-green-400/20 hover:to-emerald-600/30',
+    borderColor: 'border-green-300/30',
+    textColor: 'text-green-100',
+    glowColor: 'shadow-green-400/20',
   },
   lithium: {
-    baseColor: 'from-accent-pink/80 to-accent-red/80',
-    hoverColor: 'group-hover:from-accent-pink group-hover:to-accent-red',
-    ringColor: 'ring-accent-pink/30',
-    textColor: 'text-surface-white',
-    glowColor: 'shadow-glow-red',
+    baseColor: 'from-pink-500/10 to-purple-600/20',
+    hoverColor: 'hover:from-pink-500/20 hover:to-purple-600/30',
+    borderColor: 'border-pink-300/30',
+    textColor: 'text-pink-100',
+    glowColor: 'shadow-pink-400/20',
   },
   platinum: {
-    baseColor: 'from-navy-200/80 to-navy-300/80',
-    hoverColor: 'group-hover:from-navy-200 group-hover:to-navy-300',
-    ringColor: 'ring-navy-200/30',
-    textColor: 'text-surface-white',
-    glowColor: '',
+    baseColor: 'from-slate-300/10 to-slate-400/20',
+    hoverColor: 'hover:from-slate-300/20 hover:to-slate-400/30',
+    borderColor: 'border-slate-200/30',
+    textColor: 'text-slate-100',
+    glowColor: 'shadow-slate-300/20',
   },
   palladium: {
-    baseColor: 'from-navy-300/80 to-navy-400/80',
-    hoverColor: 'group-hover:from-navy-300 group-hover:to-navy-400',
-    ringColor: 'ring-navy-300/30',
-    textColor: 'text-surface-white',
-    glowColor: '',
+    baseColor: 'from-indigo-400/10 to-indigo-600/20',
+    hoverColor: 'hover:from-indigo-400/20 hover:to-indigo-600/30',
+    borderColor: 'border-indigo-300/30',
+    textColor: 'text-indigo-100',
+    glowColor: 'shadow-indigo-400/20',
   },
 };
 
 export function MineralBadge({ mineral, className }: MineralBadgeProps) {
   const config = mineralConfigs[mineral.toLowerCase()] || {
-    baseColor: 'from-navy-300/80 to-navy-400/80',
-    hoverColor: 'group-hover:from-navy-300 group-hover:to-navy-400',
-    ringColor: 'ring-navy-300/30',
-    textColor: 'text-surface-white',
-    glowColor: '',
+    baseColor: 'from-gray-300/10 to-gray-400/20',
+    hoverColor: 'hover:from-gray-300/20 hover:to-gray-400/30',
+    borderColor: 'border-gray-300/30',
+    textColor: 'text-gray-100',
+    glowColor: 'shadow-gray-400/20',
   };
 
   return (
@@ -88,22 +89,28 @@ export function MineralBadge({ mineral, className }: MineralBadgeProps) {
       whileHover={{ scale: 1.05 }}
       className={cn(
         'group relative inline-flex items-center px-2 py-0.5 rounded-full',
-        'bg-gradient-to-r shadow-sm transition-all duration-300',
-        'ring-1',
+        'backdrop-blur-md bg-gradient-to-r shadow-md transition-all duration-300',
+        'border border-solid',
         config.baseColor,
         config.hoverColor,
-        config.ringColor,
+        config.borderColor,
         config.glowColor,
-        'transform hover:-translate-y-0.5',
+        'transform hover:-translate-y-0.5 hover:shadow-lg',
+        'before:absolute before:inset-0 before:rounded-full before:bg-white/5',
         className
       )}
     >
-      {/* Subtle glow effect */}
+      {/* Glass shine effect */}
       <div className={cn(
-        'absolute inset-0 rounded-full blur opacity-30 transition-opacity duration-300',
+        'absolute inset-0 rounded-full bg-gradient-to-t from-transparent to-white/10 pointer-events-none'
+      )} />
+      
+      {/* Subtle inner glow */}
+      <div className={cn(
+        'absolute inset-0 rounded-full blur-sm opacity-20 transition-opacity duration-300',
         'bg-gradient-to-r',
         config.baseColor,
-        'group-hover:opacity-50'
+        'group-hover:opacity-40'
       )} />
       
       {/* Content */}

@@ -249,4 +249,172 @@
            px-2 py-1 focus:outline-none focus:ring-2 focus:ring-accent-teal;
     font-family: 'Inter', sans-serif; /* Already uses Inter, unchanged */
   }
+
+  /* Glassmorphic Enhancements */
+  /* Glassmorphic card */
+  .glass-card {
+    @apply backdrop-blur-sm bg-gradient-to-br from-white/10 to-white/5 border border-white/20 shadow-glass;
+  }
+
+  /* Glassmorphic input fields */
+  .input-glass {
+    @apply backdrop-blur-sm bg-white/5 border border-white/20 text-white/90 
+           transition-all duration-300 ease-in-out;
+    font-family: 'Inter', sans-serif;
+  }
+
+  .input-glass:focus {
+    @apply bg-white/10 border-white/40 ring-2 ring-white/10 outline-none;
+  }
+
+  .input-glass::placeholder {
+    @apply text-white/50;
+  }
+
+  /* Glassmorphic scrollbar */
+  .glass-scrollbar::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+
+  .glass-scrollbar::-webkit-scrollbar-track {
+    @apply bg-white/5 rounded-md;
+  }
+
+  .glass-scrollbar::-webkit-scrollbar-thumb {
+    @apply bg-white/20 rounded-md border border-white/10;
+  }
+
+  .glass-scrollbar::-webkit-scrollbar-thumb:hover {
+    @apply bg-white/30;
+  }
+}
+
+@layer utilities {
+  /* Enhanced glass shadows */
+  .shadow-glass {
+    box-shadow: 
+      0 8px 32px 0 rgba(31, 38, 135, 0.37),
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.1);
+  }
+
+  .shadow-glass-lg {
+    box-shadow: 
+      0 16px 48px 0 rgba(31, 38, 135, 0.45),
+      inset 0 2px 0 0 rgba(255, 255, 255, 0.15);
+  }
+
+  /* Animated glass effect on hover */
+  .glass-hover {
+    @apply transition-all duration-300 ease-in-out;
+  }
+
+  .glass-hover:hover {
+    @apply backdrop-blur-lg bg-gradient-to-br from-white/15 to-white/10 
+           border-white/30 -translate-y-0.5 shadow-glass-lg;
+  }
+
+  /* Glass text effects */
+  .text-glass {
+    @apply text-white/90;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  }
+
+  .text-glass-dim {
+    @apply text-white/70;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  }
+
+  /* Utility classes for quick glass effects */
+  .glass-light {
+    @apply backdrop-blur-sm bg-white/5 border border-white/10;
+  }
+
+  .glass-medium {
+    @apply backdrop-blur-md bg-white/10 border border-white/20;
+  }
+
+  .glass-heavy {
+    @apply backdrop-blur-lg bg-white/15 border border-white/30;
+  }
+
+  /* Glassmorphic shimmer animation */
+  .glass-shimmer {
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      rgba(255, 255, 255, 0.1) 50%,
+      transparent 100%
+    );
+    background-size: 200% 100%;
+    animation: glass-shimmer 3s ease-in-out infinite;
+  }
+}
+
+/* Backdrop blur fallbacks for browsers that don't support backdrop-filter */
+@supports not (backdrop-filter: blur(1px)) {
+  .backdrop-blur-sm,
+  .locked-overlay,
+  .glass-card,
+  .input-glass,
+  .glass-light {
+    @apply bg-navy-400/60;
+  }
+
+  .backdrop-blur-md,
+  .glass-medium {
+    @apply bg-navy-400/70;
+  }
+
+  .backdrop-blur-lg,
+  .glass-heavy,
+  .glass-hover:hover {
+    @apply bg-navy-400/80;
+  }
+
+  .backdrop-blur-xl {
+    @apply bg-navy-400/90;
+  }
+}
+
+/* Performance optimization for mobile */
+@media (max-width: 768px) {
+  .backdrop-blur-md,
+  .glass-medium {
+    @apply backdrop-blur-sm; /* Reduced to 8px equivalent */
+  }
+
+  .backdrop-blur-lg,
+  .glass-heavy,
+  .glass-hover:hover {
+    @apply backdrop-blur-md; /* Reduced to 12px equivalent */
+  }
+}
+
+/* Reduced motion preference */
+@media (prefers-reduced-motion: reduce) {
+  .glass-hover,
+  .input-glass,
+  .glass-shimmer,
+  * {
+    transition-duration: 0.01ms !important;
+    animation: none !important;
+  }
+}
+
+/* Dark mode enhancements */
+@media (prefers-color-scheme: dark) {
+  .glass-card {
+    @apply bg-gradient-to-br from-white/8 to-white/3;
+  }
+}
+
+/* Custom glassmorphic animations */
+@keyframes glass-shimmer {
+  0% {
+    background-position: -200% center;
+  }
+  100% {
+    background-position: 200% center;
+  }
 }
