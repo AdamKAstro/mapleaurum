@@ -62,3 +62,11 @@ src_directory_structure.txt
 bfg-report/
 BackUp_*/.bfg-report/
 BackUp_20052025/
+.env
+.bfg-report/
+AllMetrics_MINI_PRD*.txt
+AllMetrics_Overarching_PRD.txt
+companies_detailed_view_backup120625.json
+get_companies_paginated_backup120625.json
+screenshots/
+supabase/.temp/

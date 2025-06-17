@@ -1,6 +1,7 @@
 // src/App.tsx
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { GlassCustomizationPage } from './pages/glass-customization';
 import { Helmet } from 'react-helmet';
 
 // --- Providers ---
@@ -117,6 +118,7 @@ function App() {
                             <Route path="/subscribe" element={<SubscribePage />} />
                             <Route path="/onboarding" element={<OnboardingPage />} />
                             <Route path="/companies" element={<CompaniesPage />} />
+							<Route path="/glass-customization" element={<GlassCustomizationPage />} />
                             <Route path="/filter" element={<FilterPage />} />							
 							<Route path="/scoring-advanced" element={<AdvScoringPage />} />	
                             <Route path="/scatter-chart" element={<ScatterChartPage />} />

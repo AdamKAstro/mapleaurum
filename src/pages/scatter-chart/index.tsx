@@ -70,7 +70,8 @@ function ScaleToggle({ scale, onChange, label }: { scale: 'linear' | 'log', onCh
 export function ScatterChartPage() {
     const {
         currentUserTier,
-        filteredCompanyIds,
+        // OLD: filteredCompanyIds,
+        activeCompanyIds, // NEW: Use activeCompanyIds for the final set
         loadingFilteredSet,
         error: contextError,
         fetchCompaniesByIds,
@@ -106,12 +107,13 @@ export function ScatterChartPage() {
     useEffect(() => {
         let isMounted = true;
         const fetchDataForChart = async () => {
-            if (!loadingFilteredSet && filteredCompanyIds && filteredCompanyIds.length > 0) {
+            // Use activeCompanyIds to determine which companies to fetch
+            if (!loadingFilteredSet && activeCompanyIds && activeCompanyIds.length > 0) {
                 setIsChartDataLoading(true);
                 setChartCompanyData(EMPTY_COMPANY_ARRAY);
                 try {
-                    console.log(`[ScatterChart] Fetching company details for ${filteredCompanyIds.length} IDs.`);
-                    const data = await fetchCompaniesByIds(filteredCompanyIds);
+                    console.log(`[ScatterChart] Fetching company details for ${activeCompanyIds.length} IDs.`);
+                    const data = await fetchCompaniesByIds(activeCompanyIds); // Changed to activeCompanyIds
                     if (isMounted) {
                         setChartCompanyData(Array.isArray(data) ? data : EMPTY_COMPANY_ARRAY);
                         console.log(`[ScatterChart] Received data for ${Array.isArray(data) ? data.length : 0} companies.`);
@@ -123,13 +125,13 @@ export function ScatterChartPage() {
                     if (isMounted) setIsChartDataLoading(false);
                 }
             } else if (!loadingFilteredSet && isMounted && chartCompanyData.length > 0) {
-                console.log("[ScatterChart] No filtered IDs or context loading, clearing chart data.");
+                console.log("[ScatterChart] No active IDs or context loading, clearing chart data.");
                 setChartCompanyData(EMPTY_COMPANY_ARRAY);
             }
         };
         fetchDataForChart();
-        return () => { isMounted = false; };
-    }, [filteredCompanyIds, loadingFilteredSet, fetchCompaniesByIds]);
+        // Dependency changed from filteredCompanyIds to activeCompanyIds
+    }, [activeCompanyIds, loadingFilteredSet, fetchCompaniesByIds]);
 
     const accessibleMetrics = useMemo(() => getAccessibleMetrics(currentUserTier), [currentUserTier]);
     const xMetricConfig = useMemo(() => getMetricByKey(xMetric), [xMetric]);
@@ -149,8 +151,8 @@ export function ScatterChartPage() {
             console.warn("[ScatterChart] chartCompanyData not an array. Value:", chartCompanyData);
             return [];
         }
-        const idsToExclude = excludedCompanyIds instanceof Set ? excludedCompanyIds : new Set<number>();
-        const includedCompanies = chartCompanyData.filter(c => !idsToExclude.has(c.company_id));
+        // No need to filter by excludedCompanyIds here, as chartCompanyData already contains only active companies
+        const includedCompanies = chartCompanyData;
 
         if (isChartDataLoading || !includedCompanies.length || !xMetricConfig?.nested_path || !yMetricConfig?.nested_path || !zMetricConfig?.nested_path) {
             return [];
@@ -215,7 +217,7 @@ export function ScatterChartPage() {
             return acc;
         }, {} as Record<string, any>);
         return Object.values(groupedPoints);
-    }, [chartCompanyData, excludedCompanyIds, isChartDataLoading, xMetricConfig, yMetricConfig, zMetricConfig, xScale, yScale, zScale]);
+    }, [chartCompanyData, isChartDataLoading, xMetricConfig, yMetricConfig, zMetricConfig, xScale, yScale, zScale]);
 
     const chartOptions = useMemo((): ChartOptions<'scatter'> => ({
         responsive: true,
@@ -312,8 +314,9 @@ export function ScatterChartPage() {
     const handleResetZoom = useCallback(() => { chartRef.current?.resetZoom(); }, []);
 
     const pageActions = (<></>);
+    // Effective count should now be derived from the activeCompanyIds directly
+    const effectiveCount = activeCompanyIds?.length ?? 0; // Changed to use activeCompanyIds.length
     const isLoading = loadingFilteredSet || isChartDataLoading;
-    const effectiveCount = totalCount - (excludedCompanyIds.size || 0);
     const descriptionText = isLoading
         ? "Loading chart data..."
         : contextError
@@ -323,9 +326,9 @@ export function ScatterChartPage() {
     const getChartMessage = () => {
         if (isLoading) return "Loading chart data...";
         if (contextError) return `Error: ${contextError}`;
-        if (!filteredCompanyIds || filteredCompanyIds.length === 0) return "No companies match the current filters.";
-        if (!isChartDataLoading && chartCompanyData.length === 0 && filteredCompanyIds.length > 0) return "Could not load company details for the chart.";
-        if (!isChartDataLoading && chartDatasets.length === 0 && chartCompanyData.length > 0) return "No valid data points for the selected metrics/scales. (Check exclusions or try linear scale)";
+        if (!activeCompanyIds || activeCompanyIds.length === 0) return "No companies match the current filters or selection."; // Updated message
+        if (!isChartDataLoading && chartCompanyData.length === 0 && activeCompanyIds.length > 0) return "Could not load company details for the chart.";
+        if (!isChartDataLoading && chartDatasets.length === 0 && chartCompanyData.length > 0) return "No valid data points for the selected metrics/scales. (Check data availability or try linear scale)";
         return null;
     };
     const chartMessage = getChartMessage();

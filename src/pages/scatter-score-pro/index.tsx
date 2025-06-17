@@ -7,8 +7,8 @@ import { Scatter } from 'react-chartjs-2';
 // Contexts & Global Data
 import { useFilters } from '../../contexts/filter-context';
 import { useCurrency } from '../../contexts/currency-context';
-import { useSubscription } from '../../contexts/subscription-context'; // ADDED THIS IMPORT
-import { metrics as allMetricsData, getMetricConfig as getMetricConfigUtil } from '../../lib/metric-types'; // REMOVED getAccessibleMetrics
+import { useSubscription } from '../../contexts/subscription-context';
+import { metrics as allMetricsData, getMetricConfig as getMetricConfigUtil } from '../../lib/metric-types';
 import type { MetricConfig, NormalizationMode, ImputationMode, Company, Currency } from '../../lib/types';
 
 // UI Components
@@ -23,7 +23,7 @@ import { ChartControls } from './components/ChartControls';
 import { useTemplateLoader } from './hooks/useTemplateLoader';
 import { useScoreCalculation } from './hooks/useScoreCalculation';
 import { useScatterScoreChart } from './hooks/useScatterScoreChart';
-import { useAccessibleMetrics } from './hooks/useAccessibleMetrics'; // ADDED THIS IMPORT
+import { useAccessibleMetrics } from './hooks/useAccessibleMetrics';
 import { normalizeWeights } from './utils/normalizeWeights';
 import { PREDEFINED_TEMPLATES, getTemplateByName } from './templates';
 import type { AxisMetricConfig, ScatterScorePlotPoint, TemplateConfig } from './types';
@@ -37,17 +37,16 @@ interface ValidationError {
 }
 
 export function ScatterScoreProPage() {
-  const { 
-    filteredCompanyIds, 
-    fetchCompaniesByIds, 
-    metricFullRanges: globalMetricRangesFromContext 
+  const {
+    activeCompanyIds,
+    fetchCompaniesByIds,
+    metricFullRanges: globalMetricRangesFromContext
   } = useFilters();
   const { currency: selectedDisplayCurrency } = useCurrency();
-  const { currentUserSubscriptionTier, isLoading: isSubscriptionLoading } = useSubscription(); // ADDED THIS
+  const { currentUserSubscriptionTier, isLoading: isSubscriptionLoading } = useSubscription();
 
   const chartRef = useRef<ChartJS<'scatter', (ScatterDataPoint | null)[], unknown> | null>(null);
 
-  // REPLACED the useMemo with the hook
   const accessibleMetrics = useAccessibleMetrics();
   console.log('%c[ScatterScoreProPage] accessibleMetrics from hook:', 'color: green; font-weight: bold;', accessibleMetrics.length, accessibleMetrics.map(m=>m.key).slice(0,10));
 
@@ -87,7 +86,7 @@ export function ScatterScoreProPage() {
     normalizeWeights,
     onTemplateApplied: () => {
       if (DEBUG_SCATTER_SCORE) console.log('[ScatterScoreProPage] onTemplateApplied: Triggering initial score calculation.');
-      handleApplyConfigurationAndCalculateScores(true); 
+      handleApplyConfigurationAndCalculateScores(true);
       setIsInitialLoadComplete(true);
     }
   });
@@ -97,14 +96,14 @@ export function ScatterScoreProPage() {
     allMetrics: allMetricsData,
     globalMetricRangesFromContext
   });
-  
+
   const { chartDatasets, chartOptions } = useScatterScoreChart({
     plotData,
     isCalculatingScores: isCalculating,
     selectedXMetrics,
     selectedYMetrics,
     selectedZMetricKey,
-    zScale,
+    zScale, // Pass zScale to useScatterScoreChart
     currentTemplateConfig,
     getMetricConfigDetails,
     selectedDisplayCurrency: selectedDisplayCurrency as Currency,
@@ -115,7 +114,7 @@ export function ScatterScoreProPage() {
   // Enhanced validation function
   const validateConfiguration = useCallback((): ValidationError[] => {
     const errors: ValidationError[] = [];
-    
+
     if (selectedXMetrics.length === 0 && selectedYMetrics.length === 0) {
       errors.push({ axis: 'general', message: 'Please select at least one metric for X or Y axis.' });
       return errors;
@@ -125,9 +124,9 @@ export function ScatterScoreProPage() {
       const xTotal = selectedXMetrics.reduce((sum, m) => sum + m.weight, 0);
       const roundedXTotal = Math.round(xTotal);
       if (roundedXTotal !== 100) {
-        errors.push({ 
-          axis: 'X', 
-          message: `X-Axis weights sum to ${roundedXTotal}%, must be 100%.` 
+        errors.push({
+          axis: 'X',
+          message: `X-Axis weights sum to ${roundedXTotal}%, must be 100%.`
         });
       }
     }
@@ -136,9 +135,9 @@ export function ScatterScoreProPage() {
       const yTotal = selectedYMetrics.reduce((sum, m) => sum + m.weight, 0);
       const roundedYTotal = Math.round(yTotal);
       if (roundedYTotal !== 100) {
-        errors.push({ 
-          axis: 'Y', 
-          message: `Y-Axis weights sum to ${roundedYTotal}%, must be 100%.` 
+        errors.push({
+          axis: 'Y',
+          message: `Y-Axis weights sum to ${roundedYTotal}%, must be 100%.`
         });
       }
     }
@@ -148,11 +147,11 @@ export function ScatterScoreProPage() {
 
   const handleApplyConfigurationAndCalculateScores = useCallback(async (skipValidation: boolean = false) => {
     if (DEBUG_SCATTER_SCORE) console.log("[ScatterScoreProPage] handleApply called. Skip validation:", skipValidation);
-    
+
     setIsCalculating(true);
     setCalculationError(null);
     setValidationErrors([]);
-    
+
     if (!skipValidation) {
       const errors = validateConfiguration();
       if (errors.length > 0) {
@@ -166,17 +165,17 @@ export function ScatterScoreProPage() {
         return;
       }
     }
-    
+
     try {
-      const companiesToScore = await fetchCompaniesByIds(filteredCompanyIds);
-      
+      const companiesToScore = await fetchCompaniesByIds(activeCompanyIds);
+
       if (!companiesToScore || companiesToScore.length === 0) {
-        if (DEBUG_SCATTER_SCORE) console.log("[ScatterScoreProPage] No companies to score after filtering.");
+        if (DEBUG_SCATTER_SCORE) console.log("[ScatterScoreProPage] No companies to score after filtering/selection.");
         setPlotData([]);
         setIsCalculating(false);
         return;
       }
-      
+
       if (DEBUG_SCATTER_SCORE) {
         console.log(`[ScatterScoreProPage] Scoring ${companiesToScore.length} companies.`);
       }
@@ -186,13 +185,14 @@ export function ScatterScoreProPage() {
         selectedXMetrics,
         selectedYMetrics,
         selectedZMetricKey,
+        zScale, // Pass zScale to calculateScores
         normalizationMode,
         imputationMode
       );
-      
+
       const validResults = results.filter(p => isValidNumber(p.xScore) && isValidNumber(p.yScore));
       setPlotData(validResults);
-      
+
       if (DEBUG_SCATTER_SCORE) {
         console.log(`[ScatterScoreProPage] Calculation complete. Plottable points: ${validResults.length}`);
       }
@@ -205,9 +205,9 @@ export function ScatterScoreProPage() {
       setIsCalculating(false);
     }
   }, [
-    selectedXMetrics, selectedYMetrics, selectedZMetricKey, 
+    selectedXMetrics, selectedYMetrics, selectedZMetricKey, zScale, // Added zScale as dependency
     normalizationMode, imputationMode,
-    fetchCompaniesByIds, filteredCompanyIds, calculateScores,
+    fetchCompaniesByIds, activeCompanyIds, calculateScores,
     validateConfiguration
   ]);
 
@@ -221,7 +221,7 @@ export function ScatterScoreProPage() {
       const currentMetrics = axisType === 'X' ? selectedXMetrics : selectedYMetrics;
       let newMetricsArray = [...currentMetrics];
       const existingIndex = newMetricsArray.findIndex(m => m.key === metricKey);
-      
+
       const activeTpl = activeTemplateName ? getTemplateByName(activeTemplateName) : null;
       const strategy = activeTpl?.metricSelectionStrategy;
 
@@ -245,14 +245,14 @@ export function ScatterScoreProPage() {
         }
       } else if (action === 'remove') {
         if (existingIndex === -1) return; // Metric not found, nothing to remove
-        
+
         const metricToRemove = newMetricsArray[existingIndex];
-        
+
         if (strategy && strategy.minRequired && newMetricsArray.length - 1 < strategy.minRequired) {
           alert(`Cannot remove metric. Minimum ${strategy.minRequired} metrics required for this axis with the current template strategy.`);
           return;
         }
-        
+
         if (strategy && strategy.priorityGroups && metricToRemove) {
           for (const group of strategy.priorityGroups) {
             // Check if the metric belongs to a priority group
@@ -267,7 +267,7 @@ export function ScatterScoreProPage() {
             }
           }
         }
-        
+
         newMetricsArray = newMetricsArray.filter(m => m.key !== metricKey);
         if (newMetricsArray.length > 0) {
           newMetricsArray = normalizeWeights(newMetricsArray);
@@ -278,13 +278,13 @@ export function ScatterScoreProPage() {
           newMetricsArray[existingIndex].weight = newWeight;
           newMetricsArray = normalizeWeights(newMetricsArray, metricKey, newWeight, false);
         } else if (action === 'toggleHLB') {
-          newMetricsArray[existingIndex] = { 
-            ...newMetricsArray[existingIndex], 
-            userHigherIsBetter: !!value 
+          newMetricsArray[existingIndex] = {
+            ...newMetricsArray[existingIndex],
+            userHigherIsBetter: !!value
           };
         }
       }
-      
+
       if (axisType === 'X') {
         updateMetricsFromLoader(newMetricsArray, selectedYMetrics, selectedZMetricKey);
       } else {
@@ -318,7 +318,7 @@ export function ScatterScoreProPage() {
         chartRef.current.resize();
       }
     }, ANIMATION_CONFIG.panel.stiffness ? 350 : 350);
-    
+
     return () => clearTimeout(timer);
   }, [isConfigPanelOpen]);
 
@@ -350,19 +350,19 @@ export function ScatterScoreProPage() {
     <PageContainer
       title="Advanced ScatterScore Analysis"
       description={
-        isCalculating ? "Calculating scores & preparing chart..." 
+        isCalculating ? "Calculating scores & preparing chart..."
         : plotData.length > 0 ? `Displaying ${plotData.length} companies.`
         : "Configure axes and apply to plot scores."
       }
       className="relative isolate flex flex-col flex-grow font-sans"
       contentClassName="flex flex-col flex-grow min-h-0"
     >
-      <motion.div 
+      <motion.div
         className="flex flex-col lg:flex-row gap-4 md:gap-6 p-2 md:p-4 flex-grow overflow-hidden"
       >
-        <Button 
-          onClick={() => setIsConfigPanelOpen(!isConfigPanelOpen)} 
-          variant="outline" 
+        <Button
+          onClick={() => setIsConfigPanelOpen(!isConfigPanelOpen)}
+          variant="outline"
           className="lg:hidden fixed bottom-4 right-4 z-[60] bg-navy-700 border-navy-600 p-2 h-auto shadow-lg"
           aria-label="Toggle Configuration Panel"
         >
@@ -389,21 +389,21 @@ export function ScatterScoreProPage() {
           onApply={() => handleApplyConfigurationAndCalculateScores(false)}
           isCalculating={isCalculating || isTemplateLoading}
           accessibleMetrics={accessibleMetrics}
-          currentUserTier={currentUserSubscriptionTier} // CHANGED THIS
+          currentUserTier={currentUserSubscriptionTier}
         />
-        
+
         <AnimatePresence>
           {!isConfigPanelOpen && (
             <motion.div
-              initial={{ opacity: 0, scale: 0.8 }} 
+              initial={{ opacity: 0, scale: 0.8 }}
               animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.8 }} 
+              exit={{ opacity: 0, scale: 0.8 }}
               transition={{ duration: 0.2 }}
               className="hidden lg:block"
             >
               <Button
-                onClick={() => setIsConfigPanelOpen(true)} 
-                variant="outline" 
+                onClick={() => setIsConfigPanelOpen(true)}
+                variant="outline"
                 size="icon"
                 className="fixed left-3 bottom-3 z-[45] bg-accent-teal/90 border-teal-600 hover:bg-accent-teal shadow-md rounded-lg w-12 h-12"
                 aria-label="Open configuration panel"
@@ -414,33 +414,33 @@ export function ScatterScoreProPage() {
           )}
         </AnimatePresence>
 
-        <motion.div 
-          layout 
+        <motion.div
+          layout
           transition={ANIMATION_CONFIG.panel}
           className="flex-grow relative bg-navy-800/70 backdrop-blur-sm rounded-lg p-4 shadow-lg border border-navy-700/50 flex flex-col min-h-[400px] lg:min-h-0"
         >
           {(plotData.length > 0 || isCalculating) && !calculationError && (
-            <ChartControls 
-              onZoomIn={handleZoomIn} 
-              onZoomOut={handleZoomOut} 
-              onResetZoom={handleResetZoom} 
+            <ChartControls
+              onZoomIn={handleZoomIn}
+              onZoomOut={handleZoomOut}
+              onResetZoom={handleResetZoom}
             />
           )}
-          
+
           <div className="flex-grow min-h-[400px] sm:min-h-[500px] flex items-center justify-center">
             {isCalculating || (isTemplateLoading && !isInitialLoadComplete) ? (
-              <LoadingIndicator 
-                message={isCalculating ? "Calculating scores..." : "Loading template..."} 
+              <LoadingIndicator
+                message={isCalculating ? "Calculating scores..." : "Loading template..."}
               />
             ) : calculationError ? (
               <div className="text-center p-4">
                 <p className="text-destructive font-medium mb-2">{calculationError}</p>
-                <Button 
+                <Button
                   onClick={() => {
                     setCalculationError(null);
                     handleApplyConfigurationAndCalculateScores(false);
-                  }} 
-                  variant="outline" 
+                  }}
+                  variant="outline"
                   size="sm"
                   className="mt-2"
                 >
@@ -465,10 +465,10 @@ export function ScatterScoreProPage() {
                 Please select metrics and click "Apply Configuration & Plot".
               </p>
             ) : plotData.length > 0 && chartDatasets.length > 0 ? (
-              <Scatter 
-                ref={chartRef} 
-                data={{ datasets: chartDatasets }} 
-                options={chartOptions} 
+              <Scatter
+                ref={chartRef}
+                data={{ datasets: chartDatasets }}
+                options={chartOptions}
               />
             ) : isInitialLoadComplete && (
               <p className="text-center text-gray-400 p-4 font-light">

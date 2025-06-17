@@ -1,3 +1,5 @@
+//src/pages/scoring-advanced/components/AdvancedScoringDataTable.tsx
+
 import React, { useState, useMemo } from 'react';
 import type { AdvancedScoringResult } from '@/lib/scoringUtilsAdvanced';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -139,7 +141,7 @@ export const AdvancedScoringDataTable: React.FC<AdvancedScoringDataTableProps> =
                 </Table>
             </div>
             <div className="mt-4 flex-shrink-0">
-                 <DataTablePagination
+                <DataTablePagination
                     page={page}
                     pageSize={pageSize}
                     totalCount={results.length}

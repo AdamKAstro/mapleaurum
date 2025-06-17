@@ -52,11 +52,12 @@ export interface ScatterScorePlotPoint {
   xScore: number | null;
   yScore: number | null;
   zValue?: number | null;
-  r_normalized?: number;
+  r_normalized?: number; // ADDED: Normalized radius for the bubble size
 }
 
+// Keep ScatterScorePlotPointData for consistency with Chart.js's raw data structure
 export interface ScatterScorePlotPointData extends ScatterDataPoint {
-  r_normalized: number;
+  r_normalized: number; // MUST be number for Chart.js pointRadius callback
   company: Company;
   xScore: number;
   yScore: number;

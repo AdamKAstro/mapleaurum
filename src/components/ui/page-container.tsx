@@ -1,17 +1,16 @@
 // src/components/ui/page-container.tsx
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-// Icons - Ensure FilterX is imported, RotateCcw can be removed if not used elsewhere
-import { Home, Table2, LineChart, Filter, Calculator, Crown, FilterX, HelpCircle } from 'lucide-react'; // Changed RotateCcw to FilterX
+import { Home, Table2, LineChart, Filter, Calculator, Crown, FilterX, HelpCircle } from 'lucide-react';
 import { Button } from './button';
 import { cn } from '../../lib/utils';
 import { useFilters } from '../../contexts/filter-context';
 
 interface PageContainerProps {
     title: string;
-    description?: string;
+    description?: React.ReactNode; // Changed from string to ReactNode to support JSX
     children: React.ReactNode;
-    actions?: React.ReactNode; // Keep for page-specific actions (like CurrencySelector)
+    actions?: React.ReactNode;
     className?: string;
     contentClassName?: string;
     showNav?: boolean;
@@ -24,7 +23,7 @@ const navItems = [
     { path: "/filter", label: "Filters", icon: Filter },
     { path: "/scoring", label: "Scoring", icon: Calculator },
     { path: "/subscribe", label: "Subscribe", icon: Crown },
-    { path: "/help", label: "Help", icon: HelpCircle }, // Help Link
+    { path: "/help", label: "Help", icon: HelpCircle },
 ];
 
 export function PageContainer({
@@ -36,7 +35,7 @@ export function PageContainer({
     contentClassName,
     showNav = true
 }: PageContainerProps) {
-    const { resetFilters } = useFilters(); // Get the single global reset function
+    const { resetFilters } = useFilters();
     const location = useLocation();
 
     return (
@@ -50,9 +49,10 @@ export function PageContainer({
                         {title}
                     </h1>
                     {description && (
-                        <p className="text-xs sm:text-sm text-gray-400">
+                        // Fixed: Use div instead of p when description contains JSX
+                        <div className="text-xs sm:text-sm text-gray-400">
                             {description}
-                        </p>
+                        </div>
                     )}
                 </div>
 
@@ -69,24 +69,22 @@ export function PageContainer({
                             </Link>
                         ))}
 
-                    {/* *** MODIFIED Conditional Global Reset Button (provided by PageContainer) *** */}
+                    {/* Global Reset Button */}
                     {showNav && location.pathname !== '/' && (
                         <Button
-                            variant="outline" // Consistent variant
-                            size="sm"          // Consistent size
-                            onClick={resetFilters} // Calls global reset
-                            // Consistent styling (adjust if needed)
+                            variant="outline"
+                            size="sm"
+                            onClick={resetFilters}
                             className="text-xs border-navy-600 text-gray-300 hover:bg-navy-700 hover:text-white flex items-center gap-1.5"
-                            title="Reset all filters & exclusions" // Updated title
+                            title="Reset all filters & exclusions"
                         >
-                            <FilterX className="h-3.5 w-3.5" /> {/* *** Use FilterX icon *** */}
-                            {/* Text can adapt or be consistent */}
+                            <FilterX className="h-3.5 w-3.5" />
                             <span className="hidden md:inline">Reset Filters</span>
                             <span className="md:hidden">Reset</span>
                         </Button>
                     )}
 
-                    {/* Page Specific Actions (Now excludes Reset Button) */}
+                    {/* Page Specific Actions */}
                     {actions && (
                         <div className="flex items-center gap-2 border-l border-navy-700 pl-2 ml-1">
                             {actions}

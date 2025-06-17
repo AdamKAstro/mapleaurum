@@ -3,16 +3,16 @@ import type { ColumnTier, MetricCategory, MetricFormat } from './types';
 
 // The main configuration interface for each metric
 export interface MetricConfig {
-  key: string;             // Unique key for React lists/internal use
-  label: string;           // Display label
-  db_column: string;       // Flat column name from RpcResponseRow
-  nested_path: string;     // Dot-notation path in the nested Company object
-  unit: string;            // e.g., "USD", "$M", "%", "Moz", "x", "yrs", "$/oz"
-  higherIsBetter: boolean; // true = Higher is better (↑), false = Lower is better (↓)
+  key: string;              // Unique key for React lists/internal use
+  label: string;            // Display label
+  db_column: string;        // Flat column name from RpcResponseRow
+  nested_path: string;      // Dot-notation path in the nested Company object
+  unit: string;             // e.g., "USD", "$M", "%", "Moz", "x", "yrs", "$/oz"
+  higherIsBetter: boolean;  // true = Higher is better (↑), false = Lower is better (↓)
   category: MetricCategory; // Grouping for UI
-  tier: ColumnTier;        // 'free' | 'pro' | 'premium'
-  format: MetricFormat;    // How to display the number/value
-  description: string;     // Detailed description for tooltips/help
+  tier: ColumnTier;         // 'free' | 'pro' | 'premium'
+  format: MetricFormat;     // How to display the number/value
+  description: string;      // Detailed description for tooltips/help
 }
 
 // Display names for categories (ensure this matches MetricCategory type from types.ts)
@@ -310,6 +310,7 @@ export const metrics: Readonly<MetricConfig[]> = Object.freeze([
     description: `The sum of all financial obligations, including debt, accounts payable, and other liabilities, reported in millions of dollars ($M). A lower value is preferred, as it reduces financial risk and interest burdens, particularly in the cyclical mining industry. However, moderate liabilities may be acceptable if used to fund high-return projects like mine development. Investors should compare liabilities to assets (e.g., net financial assets) and cash flow to assess repayment capacity and financial stability.`
   },
 
+
   // === Financials - Premium Tier ===
   {
     key: 'financials.free_cash_flow',
@@ -335,104 +336,6 @@ export const metrics: Readonly<MetricConfig[]> = Object.freeze([
     tier: 'premium',
     format: 'currency'
   },
-  { 
-    key: 'financials.total_assets',
-    db_column: 'total_assets', 
-    nested_path: 'financials.total_assets',
-    label: 'Total Assets',
-    description: `Total assets held by the company, representing the sum of all current and non-current assets.`,
-    unit: '$M',
-    higherIsBetter: true,
-    category: 'financials',
-    tier: 'pro', 
-    format: 'currency'
-  },
-  { 
-    key: 'financials.other_financial_assets',
-    db_column: 'f_other_financial_assets', 
-    nested_path: 'financials.other_financial_assets',
-    label: 'Other Financial Assets',
-    description: `Value of other financial assets held by the company.`,
-    unit: '$M',
-    higherIsBetter: true,
-    category: 'financials',
-    tier: 'pro', 
-    format: 'currency'
-  },
-  // NEW METRICS FOR TURNAROUND TEMPLATE - NEED TO BE ADDED IF MISSING
-  {
-    key: 'financials.debt_to_equity',
-    db_column: 'f_debt_to_equity_ratio', // Example - ensure this matches your actual DB column in companies_detailed_view if it exists
-    nested_path: 'financials.debt_to_equity',
-    label: 'Debt/Equity',
-    description: `The debt-to-equity ratio, a leverage ratio that compares a company's total liabilities to its shareholder equity. Used to evaluate how much leverage a company is using. Higher can mean more risk.`,
-    unit: 'x',
-    higherIsBetter: false, // Generally, lower is less risk, but for distress X-axis, we might flip interpretation
-    category: 'financials',
-    tier: 'pro', // Or premium, adjust as needed
-    format: 'ratio'
-  },
-  {
-    key: 'financials.current_ratio',
-    db_column: 'f_current_ratio', // Example
-    nested_path: 'financials.current_ratio',
-    label: 'Current Ratio',
-    description: `The current ratio, a liquidity ratio that measures a company's ability to pay short-term obligations (due within one year).`,
-    unit: 'x',
-    higherIsBetter: true, // Higher is generally better liquidity
-    category: 'financials',
-    tier: 'pro',
-    format: 'ratio'
-  },
-  {
-    key: 'financials.quick_ratio',
-    db_column: 'f_quick_ratio', // Example
-    nested_path: 'financials.quick_ratio',
-    label: 'Quick Ratio',
-    description: `The quick ratio (or acid-test ratio), a liquidity ratio that measures the ability of a company to pay all of its current liabilities if they were to become due immediately.`,
-    unit: 'x',
-    higherIsBetter: true,
-    category: 'financials',
-    tier: 'pro',
-    format: 'ratio'
-  },
-  {
-    key: 'financials.working_capital',
-    db_column: 'f_working_capital', // Example
-    nested_path: 'financials.working_capital',
-    label: 'Working Capital',
-    description: `Working capital (Current Assets - Current Liabilities), indicating operational liquidity. Positive is good.`,
-    unit: '$M',
-    higherIsBetter: true,
-    category: 'financials',
-    tier: 'pro',
-    format: 'currency'
-  },
-  {
-    key: 'financials.total_shareholders_equity',
-    db_column: 'f_total_shareholders_equity', // Example
-    nested_path: 'financials.total_shareholders_equity',
-    label: 'Total Equity',
-    description: `Total shareholders' equity.`,
-    unit: '$M',
-    higherIsBetter: true,
-    category: 'financials',
-    tier: 'pro',
-    format: 'currency'
-  },
-  {
-    key: 'production.number_of_projects',
-    db_column: 'p_number_of_projects', // Example
-    nested_path: 'production.number_of_projects',
-    label: 'Number of Projects',
-    description: `The number of distinct mining projects the company operates or is developing.`,
-    unit: '',
-    higherIsBetter: true,
-    category: 'production',
-    tier: 'pro',
-    format: 'number'
-  },
-
 
   // === Capital Structure - Pro Tier ===
   {
@@ -645,16 +548,16 @@ export const metrics: Readonly<MetricConfig[]> = Object.freeze([
     tier: 'premium',
     format: 'moz'
   },
-  {
-    key: 'mineral_estimates.potential_precious_aueq_moz', 
-    db_column: 'me_potential_precious_aueq_moz', 
+  { // ADDED THIS METRIC
+    key: 'mineral_estimates.potential_precious_aueq_moz',
+    db_column: 'me_potential_precious_aueq_moz',
     nested_path: 'mineral_estimates.potential_precious_aueq_moz',
     label: 'Precious Potential',
-    description: `Estimated exploration potential for additional precious metal resources (Au+Ag eq., Moz).`,
+    description: 'Estimated exploration potential for additional precious metal resources (Au+Ag eq., Moz). This is a speculative metric indicating upside.',
     unit: 'Moz',
     higherIsBetter: true,
     category: 'mineral-estimates',
-    tier: 'premium', 
+    tier: 'premium',
     format: 'moz'
   },
   {

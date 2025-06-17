@@ -50,6 +50,34 @@
     font-family: 'Inter', system-ui, sans-serif; /* font-sans */
   }
 
+	/* Custom Scrollbar for Webkit browsers (Chrome, Safari) */
+  .table-container::-webkit-scrollbar {
+    width: 12px;
+    height: 12px;
+  }
+
+  .table-container::-webkit-scrollbar-track {
+    background: #1c2526; /* navy-500 */
+    border-radius: 10px;
+  }
+
+  .table-container::-webkit-scrollbar-thumb {
+    background-color: #475569; /* A neutral, visible gray */
+    border-radius: 10px;
+    border: 2px solid #1c2526; /* Creates padding around thumb */
+  }
+
+  .table-container::-webkit-scrollbar-thumb:hover {
+    background-color: #64748b; /* Lighter gray on hover */
+  }
+
+	/* Custom Scrollbar for Firefox */
+  .table-container {
+    scrollbar-width: thin;
+    scrollbar-color: #475569 #1c2526;
+  }
+
+
   .col-company {
     width: 180px;
     min-width: 180px;
@@ -432,6 +460,400 @@
     );
     background-size: 200% 100%;
     animation: glass-shimmer 3s ease-in-out infinite;
+  }
+  /* 1. COLOR VARIATIONS */
+  .glass-blue {
+    backdrop-filter: blur(12px);
+    background: linear-gradient(135deg, 
+      rgba(59, 130, 246, 0.1) 0%, 
+      rgba(37, 99, 235, 0.05) 100%);
+    border: 1px solid rgba(59, 130, 246, 0.2);
+  }
+
+  .glass-purple {
+    backdrop-filter: blur(12px);
+    background: linear-gradient(135deg, 
+      rgba(147, 51, 234, 0.1) 0%, 
+      rgba(126, 34, 206, 0.05) 100%);
+    border: 1px solid rgba(147, 51, 234, 0.2);
+  }
+
+  .glass-green {
+    backdrop-filter: blur(12px);
+    background: linear-gradient(135deg, 
+      rgba(34, 197, 94, 0.1) 0%, 
+      rgba(22, 163, 74, 0.05) 100%);
+    border: 1px solid rgba(34, 197, 94, 0.2);
+  }
+
+  .glass-amber {
+    backdrop-filter: blur(12px);
+    background: linear-gradient(135deg, 
+      rgba(245, 158, 11, 0.1) 0%, 
+      rgba(217, 119, 6, 0.05) 100%);
+    border: 1px solid rgba(245, 158, 11, 0.2);
+  }
+
+  .glass-red {
+    backdrop-filter: blur(12px);
+    background: linear-gradient(135deg, 
+      rgba(239, 68, 68, 0.1) 0%, 
+      rgba(220, 38, 38, 0.05) 100%);
+    border: 1px solid rgba(239, 68, 68, 0.2);
+  }
+
+  .glass-teal {
+    backdrop-filter: blur(12px);
+    background: linear-gradient(135deg, 
+      rgba(20, 184, 166, 0.1) 0%, 
+      rgba(13, 148, 136, 0.05) 100%);
+    border: 1px solid rgba(20, 184, 166, 0.2);
+  }
+
+  .glass-aurora {
+    backdrop-filter: blur(16px);
+    background: linear-gradient(135deg, 
+      rgba(59, 130, 246, 0.08) 0%,
+      rgba(147, 51, 234, 0.08) 25%,
+      rgba(236, 72, 153, 0.08) 50%,
+      rgba(245, 158, 11, 0.08) 75%,
+      rgba(34, 197, 94, 0.08) 100%);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+  }
+
+  /* 2. BLUR INTENSITY VARIATIONS */
+  .glass-blur-none {
+    backdrop-filter: none;
+  }
+
+  .glass-blur-xs {
+    backdrop-filter: blur(2px);
+  }
+
+  .glass-blur-sm {
+    backdrop-filter: blur(4px);
+  }
+
+  .glass-blur-md {
+    backdrop-filter: blur(8px);
+  }
+
+  .glass-blur-lg {
+    backdrop-filter: blur(16px);
+  }
+
+  .glass-blur-xl {
+    backdrop-filter: blur(24px);
+  }
+
+  .glass-blur-2xl {
+    backdrop-filter: blur(40px);
+  }
+
+  .glass-blur-3xl {
+    backdrop-filter: blur(64px);
+  }
+
+  /* 3. OPACITY VARIATIONS */
+  .glass-opacity-5 {
+    background: rgba(255, 255, 255, 0.05);
+  }
+
+  .glass-opacity-10 {
+    background: rgba(255, 255, 255, 0.1);
+  }
+
+  .glass-opacity-15 {
+    background: rgba(255, 255, 255, 0.15);
+  }
+
+  .glass-opacity-20 {
+    background: rgba(255, 255, 255, 0.2);
+  }
+
+  .glass-opacity-25 {
+    background: rgba(255, 255, 255, 0.25);
+  }
+
+  /* 4. BORDER VARIATIONS */
+  .glass-border-thin {
+    border: 0.5px solid rgba(255, 255, 255, 0.2);
+  }
+
+  .glass-border-thick {
+    border: 2px solid rgba(255, 255, 255, 0.2);
+  }
+
+  .glass-border-gradient {
+    border: 1px solid transparent;
+    background-image: 
+      linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05)),
+      linear-gradient(135deg, rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0.1));
+    background-origin: border-box;
+    background-clip: padding-box, border-box;
+  }
+
+  .glass-border-glow {
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    box-shadow: 
+      0 0 20px rgba(255, 255, 255, 0.1),
+      inset 0 0 20px rgba(255, 255, 255, 0.05);
+  }
+
+  /* 5. SHADOW VARIATIONS */
+  .glass-shadow-soft {
+    box-shadow: 
+      0 4px 16px 0 rgba(31, 38, 135, 0.2),
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.1);
+  }
+
+  .glass-shadow-hard {
+    box-shadow: 
+      0 8px 32px 0 rgba(31, 38, 135, 0.5),
+      inset 0 2px 0 0 rgba(255, 255, 255, 0.2);
+  }
+
+  .glass-shadow-colored {
+    box-shadow: 
+      0 8px 32px 0 rgba(59, 130, 246, 0.3),
+      inset 0 1px 0 0 rgba(59, 130, 246, 0.1);
+  }
+
+  .glass-shadow-multi {
+    box-shadow: 
+      0 2px 8px 0 rgba(31, 38, 135, 0.15),
+      0 8px 16px 0 rgba(31, 38, 135, 0.15),
+      0 16px 32px 0 rgba(31, 38, 135, 0.15),
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.1);
+  }
+
+  .glass-shadow-inner {
+    box-shadow: 
+      inset 0 2px 4px 0 rgba(0, 0, 0, 0.1),
+      inset 0 -2px 4px 0 rgba(255, 255, 255, 0.1);
+  }
+
+  /* 6. GRADIENT VARIATIONS */
+  .glass-gradient-radial {
+    background: radial-gradient(
+      circle at center,
+      rgba(255, 255, 255, 0.15) 0%,
+      rgba(255, 255, 255, 0.05) 100%
+    );
+  }
+
+  .glass-gradient-conic {
+    background: conic-gradient(
+      from 180deg at 50% 50%,
+      rgba(255, 255, 255, 0.1) 0deg,
+      rgba(255, 255, 255, 0.05) 90deg,
+      rgba(255, 255, 255, 0.1) 180deg,
+      rgba(255, 255, 255, 0.05) 270deg,
+      rgba(255, 255, 255, 0.1) 360deg
+    );
+  }
+
+  .glass-gradient-diagonal {
+    background: linear-gradient(
+      45deg,
+      rgba(255, 255, 255, 0.15) 0%,
+      rgba(255, 255, 255, 0.05) 100%
+    );
+  }
+
+  /* 7. SPECIAL EFFECTS */
+  .glass-frosted {
+    backdrop-filter: blur(20px) saturate(180%);
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.125);
+  }
+
+  .glass-metallic {
+    backdrop-filter: blur(12px) brightness(1.1);
+    background: linear-gradient(
+      135deg,
+      rgba(255, 255, 255, 0.2) 0%,
+      rgba(255, 255, 255, 0.05) 50%,
+      rgba(255, 255, 255, 0.2) 100%
+    );
+    border: 1px solid rgba(255, 255, 255, 0.3);
+  }
+
+  .glass-iridescent {
+    backdrop-filter: blur(12px);
+    background: linear-gradient(
+      135deg,
+      rgba(255, 255, 255, 0.1) 0%,
+      rgba(255, 200, 255, 0.05) 33%,
+      rgba(200, 255, 255, 0.05) 66%,
+      rgba(255, 255, 200, 0.1) 100%
+    );
+    border: 1px solid rgba(255, 255, 255, 0.2);
+  }
+
+  .glass-noise {
+    backdrop-filter: blur(12px);
+    background: 
+      url("data:image/svg+xml,%3Csvg width='100' height='100' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' /%3E%3C/filter%3E%3Crect width='100' height='100' filter='url(%23noise)' opacity='0.05'/%3E%3C/svg%3E"),
+      linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
+    border: 1px solid rgba(255, 255, 255, 0.2);
+  }
+
+  /* 8. ANIMATED EFFECTS */
+  .glass-pulse {
+    animation: glass-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+
+  @keyframes glass-pulse {
+    0%, 100% {
+      backdrop-filter: blur(12px);
+      background: rgba(255, 255, 255, 0.1);
+    }
+    50% {
+      backdrop-filter: blur(16px);
+      background: rgba(255, 255, 255, 0.15);
+    }
+  }
+
+  .glass-shimmer-slow {
+    animation: glass-shimmer 6s ease-in-out infinite;
+  }
+
+  .glass-shimmer-fast {
+    animation: glass-shimmer 1.5s ease-in-out infinite;
+  }
+
+  .glass-rotate {
+    background: conic-gradient(
+      from var(--rotation, 0deg) at 50% 50%,
+      rgba(255, 255, 255, 0.1) 0deg,
+      rgba(255, 255, 255, 0.05) 90deg,
+      rgba(255, 255, 255, 0.1) 180deg,
+      rgba(255, 255, 255, 0.05) 270deg,
+      rgba(255, 255, 255, 0.1) 360deg
+    );
+    animation: glass-rotate 10s linear infinite;
+  }
+
+  @keyframes glass-rotate {
+    to {
+      --rotation: 360deg;
+    }
+  }
+
+  /* 9. MORPHISM VARIATIONS */
+  .glass-neumorphic {
+    backdrop-filter: blur(12px);
+    background: rgba(255, 255, 255, 0.1);
+    box-shadow: 
+      20px 20px 60px rgba(0, 0, 0, 0.3),
+      -20px -20px 60px rgba(255, 255, 255, 0.1);
+    border: none;
+  }
+
+  .glass-neumorphic-inset {
+    backdrop-filter: blur(12px);
+    background: rgba(255, 255, 255, 0.05);
+    box-shadow: 
+      inset 10px 10px 30px rgba(0, 0, 0, 0.3),
+      inset -10px -10px 30px rgba(255, 255, 255, 0.1);
+    border: none;
+  }
+
+  /* 10. INTERACTIVE STATES */
+  .glass-interactive {
+    transition: all 0.3s ease;
+    cursor: pointer;
+  }
+
+  .glass-interactive:hover {
+    backdrop-filter: blur(16px);
+    background: rgba(255, 255, 255, 0.15);
+    border-color: rgba(255, 255, 255, 0.3);
+    transform: translateY(-2px);
+  }
+
+  .glass-interactive:active {
+    backdrop-filter: blur(8px);
+    background: rgba(255, 255, 255, 0.08);
+    transform: translateY(0);
+  }
+
+  /* 11. CONTEXT-SPECIFIC */
+  .glass-navbar {
+    backdrop-filter: blur(16px) saturate(180%);
+    background: rgba(17, 25, 40, 0.75);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.125);
+  }
+
+  .glass-modal {
+    backdrop-filter: blur(24px) brightness(1.1);
+    background: rgba(17, 25, 40, 0.8);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+  }
+
+  .glass-tooltip {
+    backdrop-filter: blur(12px);
+    background: rgba(0, 0, 0, 0.8);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    font-size: 0.875rem;
+  }
+
+  /* 12. COMBINED EFFECTS */
+  .glass-premium {
+    backdrop-filter: blur(20px) saturate(180%) brightness(1.05);
+    background: 
+      linear-gradient(135deg, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0.06) 100%),
+      radial-gradient(circle at 20% 80%, rgba(120, 119, 198, 0.1) 0%, transparent 50%),
+      radial-gradient(circle at 80% 20%, rgba(255, 119, 198, 0.1) 0%, transparent 50%);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 
+      0 8px 32px 0 rgba(31, 38, 135, 0.37),
+      inset 0 2px 0 0 rgba(255, 255, 255, 0.15),
+      inset 0 -2px 0 0 rgba(0, 0, 0, 0.05);
+  }
+
+  .glass-elegant {
+    backdrop-filter: blur(16px) brightness(1.02);
+    background: linear-gradient(
+      135deg,
+      rgba(255, 255, 255, 0.08) 0%,
+      rgba(255, 255, 255, 0.03) 40%,
+      rgba(255, 255, 255, 0.03) 60%,
+      rgba(255, 255, 255, 0.08) 100%
+    );
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    box-shadow: 
+      0 4px 24px 0 rgba(0, 0, 0, 0.2),
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.1);
+  }
+
+  /* 13. DARK MODE SPECIFIC */
+  .glass-dark {
+    backdrop-filter: blur(12px);
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  .glass-dark-subtle {
+    backdrop-filter: blur(8px);
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+  }
+
+  /* 14. CUSTOM GLASS WITH CSS VARIABLES */
+  .glass-custom {
+    --glass-blur: 12px;
+    --glass-bg: rgba(255, 255, 255, 0.1);
+    --glass-border-width: 1px;
+    --glass-border-color: rgba(255, 255, 255, 0.2);
+    --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+    
+    backdrop-filter: blur(var(--glass-blur));
+    background: var(--glass-bg);
+    border: var(--glass-border-width) solid var(--glass-border-color);
+    box-shadow: var(--glass-shadow);
   }
 }
 

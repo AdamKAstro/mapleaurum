@@ -4,16 +4,17 @@ import type { ChartOptions, ScriptableContext } from 'chart.js';
 import type { Context as DataLabelsContext } from 'chartjs-plugin-datalabels';
 import type { Currency } from '../../../lib/types';
 import type { MetricConfig } from '../../../lib/metric-types';
-import type { 
-  ScatterScorePlotPoint, 
+import type {
+  ScatterScorePlotPoint,
   ScatterScorePlotPointData,
   AxisMetricConfig,
   StatusColors,
   ChartSettings,
-  TemplateConfig 
+  TemplateConfig
 } from '../types';
 import { isValidNumber, toTitleCase } from '../../../lib/utils';
-import { normalizeValues as normalizeZValuesForChart, formatValueWrapper } from '../../scatter-chart/chartUtils';
+// import { normalizeValues as normalizeZValuesForChart, formatValueWrapper } from '../../scatter-chart/chartUtils'; // NO LONGER NEEDED HERE for Z-normalization
+import { formatValueWrapper } from '../../scatter-chart/chartUtils'; // Keep only formatValueWrapper
 import { CHART_COLORS, DEBUG_SCATTER_SCORE } from '../constants';
 
 interface UseScatterScoreChartProps {
@@ -36,7 +37,6 @@ interface UseScatterScoreChartReturn {
 }
 
 // Constants for better maintainability
-const DEFAULT_RADIUS_CONTRIBUTION = 0.3;
 const MIN_LABEL_DISPLAY_RADIUS = 0.1;
 const LABEL_FONT_SIZE = 9;
 const AXIS_TITLE_FONT_SIZE = 13;
@@ -60,8 +60,8 @@ export function useScatterScoreChart({
   chartSettings
 }: UseScatterScoreChartProps): UseScatterScoreChartReturn {
 
-  const zMetricConfig = useMemo(() => 
-    selectedZMetricKey ? getMetricConfigDetails(selectedZMetricKey) : null, 
+  const zMetricConfig = useMemo(() =>
+    selectedZMetricKey ? getMetricConfigDetails(selectedZMetricKey) : null,
     [selectedZMetricKey, getMetricConfigDetails]
   );
 
@@ -70,16 +70,16 @@ export function useScatterScoreChart({
     if (currentTemplateConfig.xAxisThemeLabel) {
       return `X-Axis Score: ${currentTemplateConfig.xAxisThemeLabel}`;
     }
-    
+
     if (selectedXMetrics.length === 0) {
       return 'X-Axis Score (Not Set)';
     }
-    
+
     const displayMetrics = selectedXMetrics
       .slice(0, MAX_AXIS_METRICS_DISPLAY)
       .map(m => m.metricLabel)
       .join(', ');
-    
+
     const suffix = selectedXMetrics.length > MAX_AXIS_METRICS_DISPLAY ? ' & others' : '';
     return `X-Axis Score (${displayMetrics}${suffix})`;
   }, [currentTemplateConfig.xAxisThemeLabel, selectedXMetrics]);
@@ -88,16 +88,16 @@ export function useScatterScoreChart({
     if (currentTemplateConfig.yAxisThemeLabel) {
       return `Y-Axis Score: ${currentTemplateConfig.yAxisThemeLabel}`;
     }
-    
+
     if (selectedYMetrics.length === 0) {
       return 'Y-Axis Score (Not Set)';
     }
-    
+
     const displayMetrics = selectedYMetrics
       .slice(0, MAX_AXIS_METRICS_DISPLAY)
       .map(m => m.metricLabel)
       .join(', ');
-    
+
     const suffix = selectedYMetrics.length > MAX_AXIS_METRICS_DISPLAY ? ' & others' : '';
     return `Y-Axis Score (${displayMetrics}${suffix})`;
   }, [currentTemplateConfig.yAxisThemeLabel, selectedYMetrics]);
@@ -110,49 +110,27 @@ export function useScatterScoreChart({
     }
 
     try {
-      // Process Z-axis normalization
-      let zValueToNormalizedMap = new Map<number, number>();
-      
-      if (selectedZMetricKey && zMetricConfig) {
-        const validZValues = plotData
-          .map(p => p.zValue)
-          .filter(isValidNumber) as number[];
-        
-        if (validZValues.length > 0) {
-          const normalizedZArray = normalizeZValuesForChart(validZValues, zScale);
-          
-          // Create mapping with better collision handling
-          validZValues.forEach((originalZ, index) => {
-            if (index < normalizedZArray.length) {
-              zValueToNormalizedMap.set(originalZ, normalizedZArray[index]);
-            }
-          });
-        }
-      }
-
       // Group data points by status
       const dataPointsByStatus: Record<string, ScatterScorePlotPointData[]> = {};
 
       plotData.forEach((point) => {
-        if (!isValidNumber(point.xScore) || !isValidNumber(point.yScore)) return;
+        // Ensure xScore, yScore, and r_normalized are valid numbers for charting
+        if (!isValidNumber(point.xScore) || !isValidNumber(point.yScore) || !isValidNumber(point.r_normalized)) {
+            if (DEBUG_SCATTER_SCORE) {
+                console.warn(`[useScatterScoreChart] Skipping point for ${point.company.company_name} due to invalid score or normalized radius.`, point);
+            }
+            return;
+        }
 
         const status = point.company.status?.toLowerCase() || 'default';
         if (!dataPointsByStatus[status]) {
           dataPointsByStatus[status] = [];
         }
 
-        let r_normalized = DEFAULT_RADIUS_CONTRIBUTION;
-        if (selectedZMetricKey && zMetricConfig && isValidNumber(point.zValue)) {
-          const normalizedValue = zValueToNormalizedMap.get(point.zValue as number);
-          if (normalizedValue !== undefined) {
-            r_normalized = normalizedValue;
-          }
-        }
-
         dataPointsByStatus[status].push({
           x: point.xScore as number,
           y: point.yScore as number,
-          r_normalized,
+          r_normalized: point.r_normalized as number, // Use the pre-calculated normalized radius
           company: point.company,
           xScore: point.xScore as number,
           yScore: point.yScore as number,
@@ -170,11 +148,11 @@ export function useScatterScoreChart({
         hoverBorderWidth: 2,
         pointRadius: (ctx: ScriptableContext<'scatter'>) => {
           const point = ctx.raw as ScatterScorePlotPointData;
-          return chartSettings.pointRadius(point?.r_normalized || DEFAULT_RADIUS_CONTRIBUTION);
+          return chartSettings.pointRadius(point?.r_normalized || 0); // Ensure fallback to 0
         },
         pointHoverRadius: (ctx: ScriptableContext<'scatter'>) => {
           const point = ctx.raw as ScatterScorePlotPointData;
-          return chartSettings.pointHoverRadius(point?.r_normalized || DEFAULT_RADIUS_CONTRIBUTION);
+          return chartSettings.pointHoverRadius(point?.r_normalized || 0); // Ensure fallback to 0
         },
         datalabels: {
           display: (ctx: DataLabelsContext) => {
@@ -189,10 +167,10 @@ export function useScatterScoreChart({
           borderRadius: 3,
           padding: { top: 2, bottom: 1, left: 4, right: 4 },
           color: '#F8FAFC',
-          font: { 
-            size: LABEL_FONT_SIZE, 
-            weight: '500' as const, 
-            family: 'font-sans' 
+          font: {
+            size: LABEL_FONT_SIZE,
+            weight: '500' as const,
+            family: 'font-sans'
           },
           textAlign: 'center' as const,
           anchor: 'center' as const,
@@ -205,7 +183,7 @@ export function useScatterScoreChart({
       console.error('[useScatterScoreChart] Error building datasets:', error);
       return [];
     }
-  }, [plotData, isCalculatingScores, selectedZMetricKey, zMetricConfig, zScale, statusColors, chartSettings]);
+  }, [plotData, isCalculatingScores, statusColors, chartSettings]); // Removed zMetricConfig, zScale from dependencies as r_normalized is pre-calculated
 
   const chartOptions = useMemo((): ChartOptions<'scatter'> => {
     // Helper function for consistent axis configuration
@@ -216,7 +194,7 @@ export function useScatterScoreChart({
         display: true,
         text: axisLabel,
         color: CHART_COLORS.axisTitle,
-        font: { 
+        font: {
           size: AXIS_TITLE_FONT_SIZE,
           family: 'font-sans',
           weight: '500' as const
@@ -224,7 +202,7 @@ export function useScatterScoreChart({
       },
       ticks: {
         color: CHART_COLORS.axisTicks,
-        font: { 
+        font: {
           size: AXIS_TICK_FONT_SIZE,
           family: 'font-sans'
         },
@@ -232,6 +210,7 @@ export function useScatterScoreChart({
         precision: 0,
         autoSkipPadding: 15,
         callback: function(value: any) {
+          // Only show integer ticks for score axes
           return Number.isInteger(value) ? value : undefined;
         }
       },
@@ -263,7 +242,7 @@ export function useScatterScoreChart({
             usePointStyle: true,
             pointStyle: 'circle',
             padding: 20,
-            font: { 
+            font: {
               size: LEGEND_FONT_SIZE,
               family: 'font-sans'
             }
@@ -297,14 +276,14 @@ export function useScatterScoreChart({
             label: (ctx: any) => {
               const dp = ctx.raw as ScatterScorePlotPointData;
               if (!dp || !dp.company) return '';
-              
+
               const lines: string[] = [];
               const { company, xScore, yScore, zRawValue } = dp;
-              
+
               lines.push(` ${company.tsx_code || 'N/A'}`);
               lines.push(` X-Score: ${xScore?.toFixed(0) ?? 'N/A'}`);
               lines.push(` Y-Score: ${yScore?.toFixed(0) ?? 'N/A'}`);
-              
+
               if (zMetricConfig && zRawValue !== undefined && zRawValue !== null) {
                 try {
                   const formattedZ = formatValueWrapper(
@@ -318,7 +297,7 @@ export function useScatterScoreChart({
                   lines.push(` ${zMetricConfig.label}: ${zRawValue}`);
                 }
               }
-              
+
               return lines;
             }
           }
@@ -341,7 +320,7 @@ export function useScatterScoreChart({
           }
         },
         datalabels: {
-          display: false 
+          display: false
         }
       },
       layout: {

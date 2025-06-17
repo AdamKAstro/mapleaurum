@@ -2,18 +2,19 @@
 import { useState, useCallback, useRef } from 'react';
 import type { Company, NormalizationMode, ImputationMode } from '../../../lib/types';
 import type { MetricConfig } from '../../../lib/metric-types';
-import type { 
-  AxisMetricConfig, 
-  ScatterScorePlotPoint 
+import {
+  AxisMetricConfig,
+  ScatterScorePlotPoint // Import ScatterScorePlotPoint
 } from '../types';
-import { 
-  calculateAxisSpecificScore, 
-  calculateDatasetMetricStats, 
+import {
+  calculateAxisSpecificScore,
+  calculateDatasetMetricStats,
   type MetricDatasetStats,
   type AxisMetricScoreInput
 } from '../../../lib/scoringUtils';
 import { isValidNumber, getNestedValue } from '../../../lib/utils';
 import { DEBUG_SCATTER_SCORE } from '../constants';
+import { normalizeValues as normalizeZValuesForChart } from '../../scatter-chart/chartUtils'; // Import normalization for Z-axis
 
 interface UseScoreCalculationProps {
   getMetricConfigDetails: (key: string) => MetricConfig | undefined;
@@ -27,6 +28,7 @@ interface UseScoreCalculationReturn {
     xMetrics: AxisMetricConfig[],
     yMetrics: AxisMetricConfig[],
     zMetricKey: string | null,
+    zScale: 'linear' | 'log', // ADDED: Pass zScale here
     normalizationMode: NormalizationMode,
     imputationMode: ImputationMode
   ) => Promise<ScatterScorePlotPoint[]>;
@@ -37,6 +39,7 @@ interface UseScoreCalculationReturn {
 // Performance constants
 const BATCH_SIZE = 50; // Process companies in batches for better performance
 const LOG_ERROR_THRESHOLD = 5; // Only log first N companies with errors to avoid spam
+const DEFAULT_RADIUS_CONTRIBUTION = 0.3; // Default for non-valid Z-values
 
 export function useScoreCalculation({
   getMetricConfigDetails,
@@ -77,13 +80,14 @@ export function useScoreCalculation({
     xMetrics: AxisMetricConfig[],
     yMetrics: AxisMetricConfig[],
     zMetricKey: string | null,
+    zScale: 'linear' | 'log', // ADDED zScale parameter
     normalizationMode: NormalizationMode,
     imputationMode: ImputationMode
   ): Promise<ScatterScorePlotPoint[]> => {
     if (DEBUG_SCATTER_SCORE) {
       console.log(`[useScoreCalculation] Starting score calculation for ${companies.length} companies`);
       console.log(`[useScoreCalculation] Metrics - X: ${xMetrics.length}, Y: ${yMetrics.length}, Z: ${zMetricKey ? 'Yes' : 'No'}`);
-      console.log(`[useScoreCalculation] Modes - Normalization: ${normalizationMode}, Imputation: ${imputationMode}`);
+      console.log(`[useScoreCalculation] Modes - Normalization: ${normalizationMode}, Imputation: ${imputationMode}, Z-Scale: ${zScale}`); // Log zScale
     }
 
     // Reset error counter for new calculation
@@ -108,15 +112,20 @@ export function useScoreCalculation({
       // Build dataset stats cache if needed
       const newDatasetStatsCache = new Map<string, MetricDatasetStats>();
       const requiresDatasetStats = normalizationMode.startsWith('dataset_') || imputationMode.startsWith('dataset_');
-      
+
       if (requiresDatasetStats && companies.length > 0) {
         const uniqueMetricKeys = new Set<string>();
-        
+
         // Collect all unique metric keys
         [...xMetrics, ...yMetrics].forEach(m => {
           const conf = getMetricConfigDetails(m.key);
           if (conf) uniqueMetricKeys.add(conf.key);
         });
+        if (zMetricKey) { // Also add Z-metric key if it exists
+            const zConf = getMetricConfigDetails(zMetricKey);
+            if (zConf) uniqueMetricKeys.add(zConf.key);
+        }
+
 
         if (DEBUG_SCATTER_SCORE && uniqueMetricKeys.size > 0) {
           console.log(`[useScoreCalculation] Calculating dataset stats for ${uniqueMetricKeys.size} metrics`);
@@ -127,18 +136,41 @@ export function useScoreCalculation({
           getMetricStats(metricKey, companies, newDatasetStatsCache);
         }
       }
-      
+
       setDatasetStatsCache(newDatasetStatsCache);
+
+      // Collect Z-values for global normalization if Z-metric is selected
+      const zValues: number[] = [];
+      const zMetricConfig = zMetricKey ? getMetricConfigDetails(zMetricKey) : null;
+      if (zMetricConfig) {
+          companies.forEach(company => {
+              const rawZ = getNestedValue(company, zMetricConfig.nested_path);
+              if (isValidNumber(rawZ)) {
+                  zValues.push(rawZ as number);
+              }
+          });
+      }
+      const normalizedZValuesMap = new Map<number, number>();
+      if (zValues.length > 0) {
+          const normalizedZArray = normalizeZValuesForChart(zValues, zScale);
+          zValues.forEach((val, index) => {
+              // Map original z-value to its normalized counterpart.
+              // Note: If multiple companies have the exact same raw Z-value,
+              // they will share the same normalized value.
+              normalizedZValuesMap.set(val, normalizedZArray[index]);
+          });
+      }
+
 
       // Process companies in batches for better performance
       const results: ScatterScorePlotPoint[] = [];
       const totalBatches = Math.ceil(companies.length / BATCH_SIZE);
-      
+
       for (let batchIndex = 0; batchIndex < totalBatches; batchIndex++) {
         const start = batchIndex * BATCH_SIZE;
         const end = Math.min(start + BATCH_SIZE, companies.length);
         const batchCompanies = companies.slice(start, end);
-        
+
         if (DEBUG_SCATTER_SCORE && totalBatches > 1) {
           console.log(`[useScoreCalculation] Processing batch ${batchIndex + 1}/${totalBatches}`);
         }
@@ -190,15 +222,14 @@ export function useScoreCalculation({
               );
             }
 
-            // Get Z-axis value if specified
+            // Get Z-axis value and its normalized equivalent for plot radius
             let zValueForPlot: number | null = null;
-            if (zMetricKey) {
-              const zConfig = getMetricConfigDetails(zMetricKey);
-              if (zConfig) {
-                const rawZ = getNestedValue(company, zConfig.nested_path);
-                if (isValidNumber(rawZ)) {
-                  zValueForPlot = rawZ as number;
-                }
+            let r_normalized: number = DEFAULT_RADIUS_CONTRIBUTION;
+            if (zMetricKey && zMetricConfig) {
+              const rawZ = getNestedValue(company, zMetricConfig.nested_path);
+              if (isValidNumber(rawZ)) {
+                zValueForPlot = rawZ as number;
+                r_normalized = normalizedZValuesMap.get(zValueForPlot) ?? DEFAULT_RADIUS_CONTRIBUTION;
               }
             }
 
@@ -210,12 +241,13 @@ export function useScoreCalculation({
                 errorCountRef.current++;
               }
             }
-            
+
             return {
               company,
               xScore: xScoreResult.score,
               yScore: yScoreResult.score,
-              zValue: zValueForPlot
+              zValue: zValueForPlot,
+              r_normalized: r_normalized // ADDED: normalized radius directly here
             };
           } catch (companyError) {
             console.error(`[useScoreCalculation] Error scoring company ${company.company_name}:`, companyError);
@@ -223,7 +255,8 @@ export function useScoreCalculation({
               company,
               xScore: null,
               yScore: null,
-              zValue: null
+              zValue: null,
+              r_normalized: DEFAULT_RADIUS_CONTRIBUTION // Default for failed companies
             };
           }
         });
@@ -234,7 +267,7 @@ export function useScoreCalculation({
 
       if (DEBUG_SCATTER_SCORE) {
         const validPoints = results.filter(p => isValidNumber(p.xScore) && isValidNumber(p.yScore));
-        const partialPoints = results.filter(p => 
+        const partialPoints = results.filter(p =>
           (isValidNumber(p.xScore) && !isValidNumber(p.yScore)) ||
           (!isValidNumber(p.xScore) && isValidNumber(p.yScore))
         );
@@ -242,7 +275,7 @@ export function useScoreCalculation({
         console.log(`  - Valid points: ${validPoints.length}`);
         console.log(`  - Partial points: ${partialPoints.length}`);
         console.log(`  - Failed points: ${results.length - validPoints.length - partialPoints.length}`);
-        
+
         if (errorCountRef.current >= LOG_ERROR_THRESHOLD) {
           console.log(`  - Additional errors suppressed (${errorCountRef.current} total)`);
         }
@@ -253,7 +286,7 @@ export function useScoreCalculation({
       console.error('[useScoreCalculation] Fatal error during score calculation:', error);
       throw new Error(`Score calculation failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
-  }, [getMetricConfigDetails, allMetrics, globalMetricRangesFromContext, getMetricStats]);
+  }, [getMetricConfigDetails, allMetrics, globalMetricRangesFromContext, getMetricStats]); // Removed zScale from dependencies here since it's passed directly
 
   const clearCache = useCallback(() => {
     setDatasetStatsCache(new Map());

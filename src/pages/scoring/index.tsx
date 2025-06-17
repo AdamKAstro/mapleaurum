@@ -6,14 +6,19 @@ import {
     CompanyScore,
     NormalizationMode,
     ImputationMode,
-    ScoreComponent
 } from '../../lib/scoringUtils';
 import { metrics as allMetricsFromTypes, MetricConfig, metricCategories, MetricCategory } from '../../lib/metric-types';
 import { isFeatureAccessible } from '../../lib/tier-utils';
-import { isValidNumber, cn } from '../../lib/utils';
-import { Lock, Info, ChevronsUp, ChevronsDown, AlertTriangle, ListChecks, Microscope, ChevronDown } from 'lucide-react';
+import { isValidNumber, cn, deepEqual } from '../../lib/utils';
+import {
+    Info,
+    ChevronsUp,
+    ChevronsDown,
+    AlertTriangle,
+    Microscope,
+    ChevronDown
+} from 'lucide-react';
 
-// Using relative paths as confirmed by your working scatter chart examples and git ls-files
 import { PageContainer } from '../../components/ui/page-container';
 import { Slider } from '../../components/ui/slider';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
@@ -23,7 +28,7 @@ import { CompanyNameBadge } from '../../components/company-name-badge';
 import { Button } from '../../components/ui/button';
 import { LoadingIndicator } from '../../components/ui/loading-indicator';
 import { StatusBadge } from '../../components/status-badge';
-import { ScrollArea } from '../../components/ui/scroll-area'; // Using your created component
+import { ScrollArea } from '../../components/ui/scroll-area';
 
 import type { Company, CompanyStatus, ColumnTier } from '../../lib/types';
 
@@ -51,16 +56,17 @@ const ScoringPage: React.FC = () => {
     const {
         metricFullRanges,
         currentUserTier,
-        filteredCompanyIds,
-        excludedCompanyIds,
-        loadingFilteredSet,
+        activeCompanyIds, // <<<<< CRUCIAL: Using activeCompanyIds
+        loadingFilteredSet, // Indicates if the filtered IDs are still loading in context
         error: contextError,
         fetchCompaniesByIds,
         effectiveTotalCount,
         loadingRanges,
+        loading: overallContextLoading, // Aggregate loading state from FilterContext
     } = useFilters();
 
     const [scoringCompanyData, setScoringCompanyData] = useState<Company[]>(EMPTY_COMPANY_ARRAY);
+    // This state specifically for loading company details for the ScoringPage
     const [isScoringDataLoading, setIsScoringDataLoading] = useState<boolean>(false);
     const [normalizationMode, setNormalizationMode] = useState<NormalizationMode>('global_min_max');
     const [imputationMode, setImputationMode] = useState<ImputationMode>('zero_worst');
@@ -68,8 +74,9 @@ const ScoringPage: React.FC = () => {
     const [selectedDebugCompany, setSelectedDebugCompany] = useState<CompanyScore | null>(null);
     const [selectedStatusFilter, setSelectedStatusFilter] = useState<string>('all');
 
-    const B2GOLD_ID = 68; // B2Gold Corp company_id
+    // const B2GOLD_ID = 68; // Removed: Legacy debugging reference
 
+    // Memoize metricsForScoring to prevent recomputation
     const metricsForScoring = useMemo(() => {
         if (!currentUserTier) {
             console.warn("[ScoringPage] currentUserTier not available for metricsForScoring memo.");
@@ -83,36 +90,37 @@ const ScoringPage: React.FC = () => {
         return accessible;
     }, [currentUserTier]);
 
-    const [metricWeights, setMetricWeights] = useState<Record<string, number>>({});
+    // Initialize metric weights, and update when metricsForScoring changes
+    const [metricWeights, setMetricWeights] = useState<Record<string, number>>(() => {
+        const initialWeights: Record<string, number> = {};
+        metricsForScoring.forEach(metric => {
+            initialWeights[metric.db_column] = 100;
+        });
+        return initialWeights;
+    });
 
     useEffect(() => {
-        console.log("[ScoringPage] Effect: Updating metricWeights based on accessible metrics. Count:", metricsForScoring.length);
-        setMetricWeights(prevWeights => {
-            const newWeights: Record<string, number> = {};
-            let hasChanges = false;
-            metricsForScoring.forEach(metric => {
-                newWeights[metric.db_column] = prevWeights.hasOwnProperty(metric.db_column)
-                    ? prevWeights[metric.db_column] : 100;
-                if (newWeights[metric.db_column] !== prevWeights[metric.db_column]) hasChanges = true;
-            });
-            if (Object.keys(prevWeights).some(key => !newWeights.hasOwnProperty(key)) ||
-                Object.keys(newWeights).length !== Object.keys(prevWeights).length) {
-                hasChanges = true;
-            }
-            if (hasChanges) {
-                console.log("[ScoringPage] Metric weights have been updated/initialized:", newWeights);
-                return newWeights;
-            }
-            return prevWeights;
+        const newWeights: Record<string, number> = {};
+        metricsForScoring.forEach(metric => {
+            newWeights[metric.db_column] = metricWeights[metric.db_column] ?? 100;
         });
-    }, [metricsForScoring]);
 
+        // Only update state if there's a deep change to prevent unnecessary re-renders
+        if (!deepEqual(metricWeights, newWeights)) {
+            console.log("[ScoringPage] Effect: Updating metricWeights based on accessible metrics. Count:", metricsForScoring.length);
+            setMetricWeights(newWeights);
+        }
+    }, [metricsForScoring, metricWeights]);
+
+
+    // Memoize metricConfigsMap
     const metricConfigsMap = useMemo(() => {
         const map: Record<string, MetricConfig> = {};
         allMetricsFromTypes.forEach(metric => { if (metric.db_column) map[metric.db_column] = metric; });
         return map;
     }, []);
 
+    // Memoize groupedMetricsForUI
     const groupedMetricsForUI = useMemo(() => {
         const groups: Record<string, MetricConfig[]> = {};
         const allPotentiallyScorableMetrics = allMetricsFromTypes.filter(metric => metric.db_column !== SHARE_PRICE_DB_COLUMN);
@@ -127,25 +135,42 @@ const ScoringPage: React.FC = () => {
         return groups;
     }, []);
 
+    // --- Core Data Fetching for Scoring Page ---
     useEffect(() => {
         let isMounted = true;
         const fetchDataForScoring = async () => {
-            if (loadingFilteredSet) {
-                setIsScoringDataLoading(true);
-                console.log("[ScoringPage][DataFetchEffect] Waiting: filteredCompanyIds from context are still loading.");
-                return;
-            }
-            const idsToFetch = filteredCompanyIds ? Array.from(new Set(filteredCompanyIds)) : [];
-            if (idsToFetch.length === 0) {
-                if (isMounted) {
-                    console.log("[ScoringPage][DataFetchEffect] No filteredCompanyIds available. Clearing scoring data.");
-                    setScoringCompanyData(EMPTY_COMPANY_ARRAY);
-                    setIsScoringDataLoading(false);
+            // Wait if FilterContext is still busy determining the final list of active IDs
+            // or if a fetch is already in progress for this component.
+            if (overallContextLoading || isScoringDataLoading) {
+                if (overallContextLoading) {
+                    console.log("[ScoringPage][DataFetchEffect] Waiting: overall context or activeCompanyIds are still loading.");
                 }
                 return;
             }
+
+            const idsToFetch = activeCompanyIds ? Array.from(new Set(activeCompanyIds)) : []; // Use activeCompanyIds
+
+            // Check if the data we already have matches the activeCompanyIds
+            const currentScoredIds = new Set(scoringCompanyData.map(c => c.company_id));
+            const needsRefetch = idsToFetch.length !== scoringCompanyData.length ||
+                                 idsToFetch.some(id => !currentScoredIds.has(id));
+
+            if (idsToFetch.length === 0) {
+                if (isMounted && scoringCompanyData.length > 0) { // Only clear if there was data previously
+                    console.log("[ScoringPage][DataFetchEffect] No activeCompanyIds available. Clearing scoring data.");
+                    setScoringCompanyData(EMPTY_COMPANY_ARRAY);
+                    setIsScoringDataLoading(false); // Ensure loading is false if no data to fetch
+                }
+                return;
+            }
+
+            if (!needsRefetch) {
+                console.log('[ScoringPage][DataFetchEffect] Scoring data already matches activeCompanyIds. Skipping refetch.');
+                return;
+            }
+
             setIsScoringDataLoading(true);
-            setScoringCompanyData(EMPTY_COMPANY_ARRAY);
+            setScoringCompanyData(EMPTY_COMPANY_ARRAY); // Clear previous data while loading new
             console.log(`[ScoringPage][DataFetchEffect] Fetching full company details for ${idsToFetch.length} unique companies. Sample IDs: ${idsToFetch.slice(0, 5).join(', ')}...`);
             try {
                 const data = await fetchCompaniesByIds(idsToFetch);
@@ -153,12 +178,6 @@ const ScoringPage: React.FC = () => {
                     const fetchedData = Array.isArray(data) ? data : EMPTY_COMPANY_ARRAY;
                     setScoringCompanyData(fetchedData);
                     console.log(`[ScoringPage][DataFetchEffect] Success: Loaded details for ${fetchedData.length} companies.`);
-                    const b2GoldData = fetchedData.find(c => c.company_id === B2GOLD_ID);
-                    if (b2GoldData) {
-                        console.log(`[ScoringPage][DataFetchEffect][B2GoldCheck] B2Gold (ID: ${B2GOLD_ID}) IS PRESENT in scoringCompanyData. Status: ${b2GoldData.status}`);
-                    } else {
-                        console.warn(`[ScoringPage][DataFetchEffect][B2GoldCheck] B2Gold (ID: ${B2GOLD_ID}) NOT FOUND in scoringCompanyData after fetch.`);
-                    }
                 }
             } catch (e: any) {
                 console.error('[ScoringPage][DataFetchEffect] Error fetching company details for scoring:', e.message, e);
@@ -169,16 +188,12 @@ const ScoringPage: React.FC = () => {
         };
         fetchDataForScoring();
         return () => { isMounted = false; };
-    }, [filteredCompanyIds, loadingFilteredSet, fetchCompaniesByIds, B2GOLD_ID]);
+    }, [activeCompanyIds, overallContextLoading, fetchCompaniesByIds, scoringCompanyData, isScoringDataLoading]); // Simplified dependencies
 
-     useEffect(() => {
-        console.log(`[ScoringPage][ContextWatchEffect] Global filteredCompanyIds updated. Count: ${filteredCompanyIds?.length ?? 'N/A'}. Sample IDs (first 3): ${filteredCompanyIds?.slice(0,3).join(',')}`);
-        if (filteredCompanyIds?.includes(B2GOLD_ID)) {
-             console.log(`[ScoringPage][ContextWatchEffect][B2GoldCheck] B2Gold (ID ${B2GOLD_ID}) IS IN current filteredCompanyIds from context.`);
-        } else if (filteredCompanyIds) {
-             console.warn(`[ScoringPage][ContextWatchEffect][B2GoldCheck] B2Gold (ID ${B2GOLD_ID}) IS NOT IN current filteredCompanyIds from context.`);
-        }
-    }, [filteredCompanyIds, B2GOLD_ID]);
+    // Log activeCompanyIds changes for debugging (no B2GOLD_ID specific checks needed)
+    useEffect(() => {
+        console.log(`[ScoringPage][ContextWatchEffect] Global activeCompanyIds updated. Count: ${activeCompanyIds?.length ?? 'N/A'}.`);
+    }, [activeCompanyIds]);
 
     const handleWeightChange = useCallback((db_column: string, value: number[]) => {
         setMetricWeights(prev => ({ ...prev, [db_column]: value[0] }));
@@ -202,23 +217,33 @@ const ScoringPage: React.FC = () => {
         }
     }, [showDebugForCompanyId]);
 
+    // Calculate scores with stabilized inputs
     const calculatedScores: CompanyScore[] = useMemo(() => {
         console.log("[ScoringPage][CalcScoresMemo] Recalculating scores. Triggered.");
-        const idsToExcludeSet = excludedCompanyIds instanceof Set ? excludedCompanyIds : new Set<number>();
+
+        // Use scoringCompanyData directly, as it should already be the active set
         const includedScoringData = Array.isArray(scoringCompanyData)
-            ? scoringCompanyData.filter(company => !idsToExcludeSet.has(company.company_id))
+            ? scoringCompanyData
             : EMPTY_COMPANY_ARRAY;
-        console.log(`[ScoringPage][CalcScoresMemo] Scoring ${includedScoringData.length} companies (after ${idsToExcludeSet.size} exclusions).`);
-        if (isScoringDataLoading || loadingRanges || includedScoringData.length === 0 ||
+
+        console.log(`[ScoringPage][CalcScoresMemo] Attempting to score ${includedScoringData.length} companies.`);
+
+        // Combine all relevant loading states for calculation precondition
+        const isAnyLoading = overallContextLoading || isScoringDataLoading || loadingRanges;
+
+        if (isAnyLoading ||
+            includedScoringData.length === 0 ||
             !metricFullRanges || Object.keys(metricFullRanges).length === 0 ||
             !metricConfigsMap || Object.keys(metricConfigsMap).length === 0 ||
-            !currentUserTier) {
+            !currentUserTier)
+        {
             console.warn("[ScoringPage][CalcScoresMemo] Pre-conditions for scoring not met. Loadings:",
-                `data=${isScoringDataLoading}, ranges=${loadingRanges}. Data:`,
+                `overallContext=${overallContextLoading}, scoringDataFetch=${isScoringDataLoading}, ranges=${loadingRanges}. Data:`,
                 `companies=${includedScoringData.length}, globalRanges=${Object.keys(metricFullRanges || {}).length > 0},`,
                 `configs=${Object.keys(metricConfigsMap || {}).length > 0}, tier=${!!currentUserTier}`);
             return EMPTY_SCORE_ARRAY;
         }
+
         const activeAndAccessibleWeights: Record<string, number> = {};
         metricsForScoring.forEach(metric => {
             if (metricWeights.hasOwnProperty(metric.db_column) &&
@@ -227,10 +252,12 @@ const ScoringPage: React.FC = () => {
                 activeAndAccessibleWeights[metric.db_column] = metricWeights[metric.db_column] as number;
             }
         });
+
         if (Object.keys(activeAndAccessibleWeights).length === 0) {
             console.log("[ScoringPage][CalcScoresMemo] No active weights > 0. Returning empty scores.");
             return EMPTY_SCORE_ARRAY;
         }
+
         console.log(`[ScoringPage][CalcScoresMemo] Calling calculateScores. NormMode: ${normalizationMode}, ImputeMode: ${imputationMode}`);
         try {
             const scores = calculateScores(
@@ -238,23 +265,15 @@ const ScoringPage: React.FC = () => {
                 metricFullRanges, metricConfigsMap, currentUserTier,
                 normalizationMode, imputationMode
             );
-            const b2GoldScoreData = scores.find(s => s.companyId === B2GOLD_ID);
-            if (b2GoldScoreData) {
-                console.log(`[ScoringPage][CalcScoresMemo][B2GoldCheck] B2Gold (ID: ${B2GOLD_ID}) IS PRESENT in calculatedScores output. Score: ${b2GoldScoreData.score}, Status: ${b2GoldScoreData.status}`);
-            } else if (scores.length > 0) {
-                 console.warn(`[ScoringPage][CalcScoresMemo][B2GoldCheck] B2Gold (ID: ${B2GOLD_ID}) NOT FOUND in final calculatedScores list (Total scores: ${scores.length}).`);
-            } else {
-                 console.log(`[ScoringPage][CalcScoresMemo][B2GoldCheck] No scores produced, so B2Gold (ID: ${B2GOLD_ID}) would not be present.`);
-            }
             return Array.isArray(scores) ? scores : EMPTY_SCORE_ARRAY;
         } catch (error: any) {
             console.error('[ScoringPage][CalcScoresMemo] Error in calculateScores:', error.message, error.stack);
             return EMPTY_SCORE_ARRAY;
         }
     }, [
-        scoringCompanyData, excludedCompanyIds, isScoringDataLoading, loadingRanges,
+        scoringCompanyData, isScoringDataLoading, loadingRanges, overallContextLoading,
         metricWeights, metricFullRanges, metricConfigsMap, currentUserTier, metricsForScoring,
-        normalizationMode, imputationMode, B2GOLD_ID
+        normalizationMode, imputationMode
     ]);
 
     const filteredScores = useMemo(() => {
@@ -263,14 +282,17 @@ const ScoringPage: React.FC = () => {
         return calculatedScores.filter(score => score.status?.toLowerCase() === selectedStatusFilter.toLowerCase());
     }, [calculatedScores, selectedStatusFilter]);
 
-    const overallLoading = loadingFilteredSet || isScoringDataLoading || loadingRanges;
+    // Consolidate loading states for the UI
+    const overallLoading = overallContextLoading || isScoringDataLoading || loadingRanges;
 
     const getEmptyStateMessage = () => {
         if (overallLoading) return 'Loading data for scoring...';
         if (contextError) return `Error from data context: ${contextError}`;
-        if (!loadingFilteredSet && (!filteredCompanyIds || filteredCompanyIds.length === 0)) return 'No companies found with global filters. Adjust filters on other pages.';
-        if (!isScoringDataLoading && scoringCompanyData.length === 0 && filteredCompanyIds && filteredCompanyIds.length > 0) return 'Company details could not be loaded for the filtered set.';
-        if (effectiveTotalCount === 0 && !loadingFilteredSet) return 'No companies available to score based on global filters/exclusions.';
+        // Adjusted to use activeCompanyIds for selection logic clarity
+        if (!overallContextLoading && (!activeCompanyIds || activeCompanyIds.length === 0)) return 'No companies found with current filters or selection. Adjust filters on companies page.';
+        // Use isScoringDataLoading for data fetching specific to this page
+        if (!isScoringDataLoading && scoringCompanyData.length === 0 && activeCompanyIds && activeCompanyIds.length > 0) return 'Company details could not be loaded for the selected set.';
+        if (effectiveTotalCount === 0 && !overallContextLoading) return 'No companies available to score based on global filters/exclusions.';
         if (metricsForScoring.length === 0 && !overallLoading) return 'No metrics accessible for your current tier.';
         if (Object.values(metricWeights).every(w => w === 0) && metricsForScoring.length > 0 && !overallLoading) return 'No metrics weighted. Adjust weights or use "Set Max".';
         if (calculatedScores.length > 0 && filteredScores.length === 0 && selectedStatusFilter !== 'all') return `No ranked companies match '${selectedStatusFilter}'. Try 'All Statuses'.`;
@@ -284,7 +306,7 @@ const ScoringPage: React.FC = () => {
 
     // Function to extract summary from debug logs
     const getDebugSummary = (logs: string[]): string => {
-        const summaryLines = logs.filter(log => 
+        const summaryLines = logs.filter(log =>
             log.includes("--- Company Score Summary ---") ||
             log.includes("Total Weighted Score Sum:") ||
             log.includes("Final Calculated Score:")
@@ -339,7 +361,7 @@ const ScoringPage: React.FC = () => {
                                     <Select value={imputationMode} onValueChange={(value) => setImputationMode(value as ImputationMode)} disabled={overallLoading}>
                                         <SelectTrigger id="imputationMode" className="w-full bg-navy-700 border-navy-600 text-white text-xs focus:ring-cyan-500"><SelectValue /></SelectTrigger>
                                         <SelectContent className="bg-navy-700 border-navy-600 text-white text-xs z-[51]">
-                                             {IMPUTATION_MODES.map(opt => (
+                                            {IMPUTATION_MODES.map(opt => (
                                                 <TooltipProvider key={opt.value} delayDuration={100}>
                                                     <Tooltip>
                                                         <TooltipTrigger asChild><SelectItem value={opt.value}>{opt.label}</SelectItem></TooltipTrigger>

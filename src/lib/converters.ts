@@ -135,13 +135,12 @@ export function convertRpcRowsToCompanies(
     if (isRowCriticallyInvalid) {
       overallConversionErrors.push(...rowSpecificFieldErrors);
       if (debugMode) {
-          logDebug(`Row ${rowIndex} skipped due to critical errors (company_id or company_name). Errors for this row:`, rowSpecificFieldErrors);
+        logDebug(`Row ${rowIndex} skipped due to critical errors (company_id or company_name). Errors for this row:`, rowSpecificFieldErrors);
       }
       return; // Skips to the next row in forEach, this row will not be added.
     }
 
-    // Construct the Company object now that essential fields are validated (though might still be null if not throwing earlier)
-    // All validateX functions will set non-critical invalid fields to null.
+    // Construct the Company object now that essential fields are validated
     const company: Company = {
       company_id: company_id as number, // Safe due to above check
       company_name: company_name as string, // Safe due to above check
@@ -190,6 +189,8 @@ export function convertRpcRowsToCompanies(
         operating_income: validateNumber(row.f_operating_income, `row[${rowIndex}].f_operating_income`),
         liabilities: validateNumber(row.f_liabilities, `row[${rowIndex}].f_liabilities`),
         liabilities_currency: validateString(row.f_liabilities_currency, `row[${rowIndex}].f_liabilities_currency`),
+        other_financial_assets: validateNumber(row.f_other_financial_assets, `row[${rowIndex}].f_other_financial_assets`), // Added
+        other_financial_assets_currency: validateString(row.f_other_financial_assets_currency, `row[${rowIndex}].f_other_financial_assets_currency`), // Added
       },
       capital_structure: {
         existing_shares: validateNumber(row.cs_existing_shares, `row[${rowIndex}].cs_existing_shares`),
@@ -213,6 +214,7 @@ export function convertRpcRowsToCompanies(
         mineable_total_aueq_moz: validateNumber(row.me_mineable_total_aueq_moz, `row[${rowIndex}].me_mineable_total_aueq_moz`),
         mineable_precious_aueq_moz: validateNumber(row.me_mineable_precious_aueq_moz, `row[${rowIndex}].me_mineable_precious_aueq_moz`),
         mineable_non_precious_aueq_moz: validateNumber(row.me_mineable_non_precious_aueq_moz, `row[${rowIndex}].me_mineable_non_precious_aueq_moz`),
+        potential_precious_aueq_moz: validateNumber(row.me_potential_precious_aueq_moz, `row[${rowIndex}].me_potential_precious_aueq_moz`), // Added
       },
       valuation_metrics: {
         ev_per_resource_oz_all: validateNumber(row.vm_ev_per_resource_oz_all, `row[${rowIndex}].vm_ev_per_resource_oz_all`),
@@ -265,10 +267,10 @@ export function convertRpcRowsToCompanies(
 
     // Consolidate non-critical field errors from this successfully processed row
     if (rowSpecificFieldErrors.length > 0) {
-        overallConversionErrors.push(...rowSpecificFieldErrors);
-        if (debugMode) {
-            logDebug(`Row ${rowIndex} (ID: ${company_id}) converted with ${rowSpecificFieldErrors.length} non-critical field validation warnings (values set to null). Details:`, rowSpecificFieldErrors);
-        }
+      overallConversionErrors.push(...rowSpecificFieldErrors);
+      if (debugMode) {
+        logDebug(`Row ${rowIndex} (ID: ${company_id}) converted with ${rowSpecificFieldErrors.length} non-critical field validation warnings (values set to null). Details:`, rowSpecificFieldErrors);
+      }
     }
   }); // End of rows.forEach
 
@@ -279,10 +281,10 @@ export function convertRpcRowsToCompanies(
 
     let summaryMessage = `Conversion of ${rows.length} rows completed. Resulted in ${companies.length} valid Company objects.`;
     if (criticalRowCount > 0) {
-        summaryMessage += ` ${criticalRowCount} row(s) were skipped due to missing/invalid essential identifiers (company_id or company_name).`;
+      summaryMessage += ` ${criticalRowCount} row(s) were skipped due to missing/invalid essential identifiers (company_id or company_name).`;
     }
     if (fieldErrorCount > 0) {
-        summaryMessage += ` Encountered ${fieldErrorCount} non-critical field validation issue(s) where problematic values were set to null.`;
+      summaryMessage += ` Encountered ${fieldErrorCount} non-critical field validation issue(s) where problematic values were set to null.`;
     }
     
     if (throwOnError && criticalRowCount > 0) {
@@ -292,21 +294,21 @@ export function convertRpcRowsToCompanies(
       // Log as a warning if not throwing, or if errors were only non-critical field issues
       console.warn(`[CONVERTERS] ${summaryMessage}`);
       if (debugMode && fieldErrorCount > 0) { 
-          logDebug("Details of non-critical field conversion warnings:");
-          overallConversionErrors.forEach(err => {
-              if (err.field !== 'company_id' && err.field !== 'company_name') {
-                console.warn(`  Row ${err.row}, Field '${err.field}', Msg: '${err.error}', Received Value:`, err.value);
-              }
-          });
+        logDebug("Details of non-critical field conversion warnings:");
+        overallConversionErrors.forEach(err => {
+          if (err.field !== 'company_id' && err.field !== 'company_name') {
+            console.warn(`  Row ${err.row}, Field '${err.field}', Msg: '${err.error}', Received Value:`, err.value);
+          }
+        });
       }
-       if (debugMode && criticalRowCount > 0) {
-          logDebug("Details of critical row errors (rows skipped):");
-           overallConversionErrors.forEach(err => {
-              if (err.field === 'company_id' || err.field === 'company_name') {
-                console.warn(`  Row ${err.row}, Field '${err.field}', Msg: '${err.error}', Received Value:`, err.value);
-              }
-          });
-       }
+      if (debugMode && criticalRowCount > 0) {
+        logDebug("Details of critical row errors (rows skipped):");
+        overallConversionErrors.forEach(err => {
+          if (err.field === 'company_id' || err.field === 'company_name') {
+            console.warn(`  Row ${err.row}, Field '${err.field}', Msg: '${err.error}', Received Value:`, err.value);
+          }
+        });
+      }
     }
   } else {
     if (debugMode) logDebug(`Successfully converted ${companies.length} Company objects from ${rows.length} RPC rows with no field validation warnings.`);
