@@ -1,7 +1,7 @@
 // src/components/ui/hero.tsx
-import React, { useState, useRef, useEffect } from 'react';
-import { ArrowRight, Crown, TrendingUp, Shield, Sparkles, ChevronDown, Check, Zap, Target, Gem, Filter, BarChart3, Layers, Database, LineChart, Search, TrendingDown, Play, Star } from 'lucide-react';
-import { motion, useScroll, useTransform, useInView, AnimatePresence } from 'framer-motion';
+import React, { useState, useRef } from 'react';
+import { ArrowRight, Crown, TrendingUp, Shield, Sparkles, ChevronDown, Check, Zap, Target, Gem, Filter, BarChart3, Layers, Database, LineChart, Search, TrendingDown } from 'lucide-react';
+import { motion, useScroll, useTransform } from 'framer-motion';
 
 // Simple button component with proper font
 const Button = ({ children, className, size = "default", variant = "default", ...props }) => {
@@ -84,41 +84,12 @@ const templates = [
   }
 ];
 
-// Testimonials with avatars
-const testimonials = [
-  {
-    id: 1,
-    name: "John Carter",
-    role: "Retail Investor",
-    quote: "I found a hidden gem in minutes—ScatterScore made it so easy!",
-    rating: 5,
-    avatar: "JC"
-  },
-  {
-    id: 2,
-    name: "Sarah Chen",
-    role: "Portfolio Manager",
-    quote: "The templates save me hours of analysis while delivering deep insights.",
-    rating: 5,
-    avatar: "SC"
-  },
-  {
-    id: 3,
-    name: "Mike Thompson",
-    role: "Gold Bug",
-    quote: "Exploration Frontier helped me spot a 10x opportunity!",
-    rating: 5,
-    avatar: "MT"
-  }
-];
-
 interface HeroProps {
   className?: string;
 }
 
 export function Hero({ className }: HeroProps) {
   const [selectedTemplate, setSelectedTemplate] = useState(templates[0]);
-  const [isVideoPlaying, setIsVideoPlaying] = useState(false);
   const [hoveredBubble, setHoveredBubble] = useState<number | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   
@@ -409,26 +380,6 @@ export function Hero({ className }: HeroProps) {
                 </div>
               </motion.div>
             </div>
-
-            {/* Video Demo CTA */}
-            <motion.div
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.8 }}
-              className="text-center mt-12"
-            >
-              <Button 
-                onClick={() => setIsVideoPlaying(true)}
-                size="lg"
-                variant="outline"
-                className="border-yellow-500/50 text-yellow-400 hover:bg-yellow-500/10"
-              >
-                <Play className="h-5 w-5 mr-2" />
-                See How It Works
-              </Button>
-              <p className="text-sm text-gray-500 mt-2">15-second demo</p>
-            </motion.div>
           </div>
         </div>
       </section>
@@ -538,37 +489,33 @@ export function Hero({ className }: HeroProps) {
                     />
                     
                     {/* Tooltip */}
-                    <AnimatePresence>
-                      {hoveredBubble === company.id && (
-                        <motion.div
-                          initial={{ opacity: 0, y: 10 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          exit={{ opacity: 0, y: 10 }}
-                          className="absolute -top-20 left-1/2 -translate-x-1/2 bg-black/90 text-white p-3 rounded-lg text-sm whitespace-nowrap"
-                        >
-                          <div className="font-bold">{company.name}</div>
-                          <div className="text-xs text-gray-300">{company.value}</div>
-                          <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-black/90" />
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
+                    {hoveredBubble === company.id && (
+                      <motion.div
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: 10 }}
+                        className="absolute -top-20 left-1/2 -translate-x-1/2 bg-black/90 text-white p-3 rounded-lg text-sm whitespace-nowrap"
+                      >
+                        <div className="font-bold">{company.name}</div>
+                        <div className="text-xs text-gray-300">{company.value}</div>
+                        <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-black/90" />
+                      </motion.div>
+                    )}
                   </motion.div>
                 ))}
 
                 {/* Achievement sparkle */}
-                <AnimatePresence>
-                  {hoveredBubble && (
-                    <motion.div
-                      initial={{ opacity: 0, scale: 0 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      exit={{ opacity: 0, scale: 0 }}
-                      className="absolute top-4 right-4 bg-green-500/20 text-green-400 px-4 py-2 rounded-full text-sm font-medium"
-                    >
-                      <Sparkles className="h-4 w-4 inline mr-2" />
-                      Great Find!
-                    </motion.div>
-                  )}
-                </AnimatePresence>
+                {hoveredBubble && (
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0 }}
+                    className="absolute top-4 right-4 bg-green-500/20 text-green-400 px-4 py-2 rounded-full text-sm font-medium"
+                  >
+                    <Sparkles className="h-4 w-4 inline mr-2" />
+                    Great Find!
+                  </motion.div>
+                )}
               </div>
 
               {/* Template info overlay */}
@@ -712,7 +659,7 @@ export function Hero({ className }: HeroProps) {
         </div>
       </section>
 
-      {/* Section 5: Testimonials & Trust - Build Credibility */}
+      {/* Section 5: ScatterScore Power - Highlight Analysis Capabilities */}
       <section className="relative py-32 bg-gradient-to-b from-navy-900 to-navy-800">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <motion.div
@@ -723,74 +670,37 @@ export function Hero({ className }: HeroProps) {
             className="text-center mb-16"
           >
             <h2 className="text-4xl md:text-6xl font-bold text-white mb-6">
-              Trusted by Investors Like You
+              Compare and Rank with Precision
             </h2>
-            <div className="flex items-center justify-center gap-1 mb-4">
-              {[...Array(5)].map((_, i) => (
-                <Star key={i} className="h-8 w-8 fill-yellow-400 text-yellow-400" />
-              ))}
-            </div>
-            <p className="text-lg text-gray-300">Join the community finding hidden gems</p>
+            <p className="text-xl text-gray-300 max-w-3xl mx-auto">
+              {/* Hook paragraph (Option 1 used as default, choose one from below) */}
+              Harness the power of ScatterScore™ to compare and rank any number of companies using over 50 key metrics simultaneously. From valuation ratios to operational efficiency, uncover hidden opportunities with unparalleled precision and speed.
+            </p>
           </motion.div>
 
-          {/* Testimonial carousel */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
-            {testimonials.map((testimonial, index) => (
-              <motion.div
-                key={testimonial.id}
-                initial={{ opacity: 0, scale: 0.9 }}
-                whileInView={{ opacity: 1, scale: 1 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.5, delay: index * 0.1 }}
-                whileHover={{ y: -5 }}
-                className="bg-navy-800/50 backdrop-blur-sm rounded-2xl p-8 border border-yellow-400/20 relative overflow-hidden"
-              >
-                {/* Gold frame effect */}
-                <div className="absolute inset-0 bg-gradient-to-br from-yellow-400/5 via-transparent to-amber-400/5" />
-                
-                {/* Quote */}
-                <div className="relative">
-                  <div className="text-6xl text-yellow-400/20 absolute -top-4 -left-2">"</div>
-                  <p className="text-lg text-gray-300 italic relative z-10 pl-8">
-                    {testimonial.quote}
-                  </p>
-                </div>
-
-                {/* Author */}
-                <div className="flex items-center gap-4 mt-6">
-                  <div className="h-14 w-14 rounded-full bg-gradient-to-br from-yellow-400 to-amber-600 flex items-center justify-center text-white font-bold text-lg">
-                    {testimonial.avatar}
-                  </div>
-                  <div>
-                    <p className="text-white font-semibold">{testimonial.name}</p>
-                    <p className="text-gray-400 text-sm">{testimonial.role}</p>
-                  </div>
-                </div>
-
-                {/* Rating */}
-                <div className="flex gap-1 mt-4">
-                  {[...Array(testimonial.rating)].map((_, i) => (
-                    <Star key={i} className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                  ))}
-                </div>
-              </motion.div>
-            ))}
-          </div>
-
-          {/* Join CTA */}
           <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
+            initial={{ opacity: 0, scale: 0.9 }}
+            whileInView={{ opacity: 1, scale: 1 }}
             viewport={{ once: true }}
             transition={{ duration: 0.8 }}
-            className="text-center mt-12"
+            className="relative rounded-2xl overflow-hidden bg-gradient-to-br from-navy-800 to-navy-900 shadow-2xl border border-yellow-400/20"
           >
-            <a href="/subscribe">
-              <Button size="lg" className="shadow-2xl">
-                <Users className="h-5 w-5 mr-2" />
-                Join Them Today
-              </Button>
-            </a>
+            <img
+              src="/ScatterScore3.jpg"
+              alt="ScatterScore Analysis Interface"
+              className="w-full h-auto object-cover"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+            <div className="absolute bottom-0 left-0 right-0 p-8 text-center">
+              <h3 className="text-2xl font-bold text-white mb-2">Advanced Analytics at Your Fingertips</h3>
+              <p className="text-gray-300 mb-6">Visualize complex data effortlessly and make informed investment decisions.</p>
+              <a href="/scatter-score-pro">
+                <Button size="lg" className="shadow-2xl">
+                  Explore ScatterScore™ Now
+                  <ArrowRight className="h-5 w-5 ml-2" />
+                </Button>
+              </a>
+            </div>
           </motion.div>
         </div>
       </section>
@@ -885,44 +795,6 @@ export function Hero({ className }: HeroProps) {
           </motion.div>
         </div>
       </section>
-
-      {/* Video Modal */}
-      <AnimatePresence>
-        {isVideoPlaying && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 bg-black/90 backdrop-blur-sm flex items-center justify-center p-4"
-            onClick={() => setIsVideoPlaying(false)}
-          >
-            <motion.div
-              initial={{ scale: 0.9 }}
-              animate={{ scale: 1 }}
-              exit={{ scale: 0.9 }}
-              className="relative w-full max-w-4xl aspect-video bg-black rounded-2xl overflow-hidden"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="absolute inset-0 flex items-center justify-center">
-                <p className="text-white">15-second demo video placeholder</p>
-              </div>
-              <button
-                onClick={() => setIsVideoPlaying(false)}
-                className="absolute top-4 right-4 text-white/80 hover:text-white bg-black/50 rounded-full p-2"
-              >
-                ✕
-              </button>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
     </div>
   );
 }
-
-// Add missing import
-const Users = ({ className }: { className?: string }) => (
-  <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-  </svg>
-);
