@@ -1,48 +1,92 @@
 <!DOCTYPE html>
-<html lang="en" class="bg-pattern">
+<html lang="en-CA" dir="ltr" class="bg-pattern"> <!-- Updated lang to en-CA, added dir for accessibility -->
   <head>
     <meta charset="UTF-8" />
+    <!-- Favicon enhancements for device compatibility -->
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
+    <link rel="manifest" href="/site.webmanifest" /> <!-- Add web manifest for PWA support -->
+    <meta name="theme-color" content="#1e3a8a" /> <!-- Navy blue to match hero.tsx gradient -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>MapleAurum - Financial Data for Canadian Precious Metals</title>
+    <!-- Updated title and meta tags for SEO and consistency with hero.tsx -->
+    <title>Maple Aurum: Uncover Winning Mining Stocks with ScatterScore™</title>
     <meta
       name="description"
-      content="MapleAurum provides advanced financial data and analytics for Canadian precious metals companies, including gold, silver, and more. Contact support@mapleaurum.com for insights."
+      content="Uncover winning Canadian precious metals stocks with Maple Aurum’s ScatterScore™, comparing 50+ metrics like valuation, financial health, and growth potential. Start analyzing now."
     />
     <meta
       name="keywords"
-      content="Canadian precious metals, gold investing Canada, mining analytics, financial data mining, MapleAurum"
+      content="Canadian precious metals, gold investing Canada, mining stock analysis, compare mining stocks, ScatterScore, financial data mining, Maple Aurum"
     />
-    <meta name="author" content="MapleAurum" />
+    <meta name="author" content="Maple Aurum" />
     <meta name="robots" content="index, follow" />
     <link rel="canonical" href="https://mapleaurum.com" />
-    <meta property="og:title" content="MapleAurum - Financial Data for Canadian Precious Metals" />
+    <!-- Updated Open Graph and Twitter Card tags -->
+    <meta property="og:title" content="Maple Aurum: Uncover Winning Mining Stocks with ScatterScore™" />
     <meta
       property="og:description"
-      content="Explore financial data and analytics for Canadian gold, silver, and precious metals companies with MapleAurum."
+      content="Compare and rank Canadian gold, silver, and precious metals stocks using ScatterScore™ with 50+ metrics for value, growth, and stability."
     />
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://mapleaurum.com" />
-    <meta property="og:image" content="https://mapleaurum.com/og-image.jpg" />
-    <meta property="og:site_name" content="MapleAurum" />
+    <meta property="og:image" content="https://mapleaurum.com/GeminiMALBig3.jpg" /> <!-- Updated to use hero.tsx logo -->
+    <meta property="og:site_name" content="Maple Aurum" />
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="MapleAurum - Financial Data for Canadian Precious Metals" />
+    <meta name="twitter:title" content="Maple Aurum: Uncover Winning Mining Stocks with ScatterScore™" />
     <meta
       property="twitter:description"
-      content="Explore financial data for Canadian gold, silver, and precious metals companies with MapleAurum."
+      content="Analyze Canadian precious metals stocks with ScatterScore™, leveraging 50+ metrics for smarter investment decisions."
     />
-    <meta name="twitter:image" content="https://mapleaurum.com/og-image.jpg" />
+    <meta name="twitter:image" content="https://mapleaurum.com/GeminiMALBig3.jpg" />
+    <!-- Content Security Policy for security -->
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self' https://js.stripe.com https://fonts.googleapis.com; style-src 'self' https://fonts.googleapis.com 'unsafe-inline'; img-src 'self' https://mapleaurum.com data:; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https://api.stripe.com;"
+    />
+    <!-- Preload critical assets for performance -->
+    <link rel="preload" href="/GeminiMALBig3.jpg" as="image" />
+    <link rel="preload" href="/ScatterScore3.jpg" as="image" />
+    <link rel="dns-prefetch" href="https://js.stripe.com" /> <!-- DNS prefetch for Stripe -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
       href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@400;700&display=swap"
       rel="stylesheet"
-    />
+      media="print" onload="this.media='all'" /> <!-- Optimize font loading -->
+    <!-- Structured data for SEO -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "Organization",
+        "name": "Maple Aurum",
+        "url": "https://mapleaurum.com",
+        "logo": "https://mapleaurum.com/GeminiMALBig3.jpg",
+        "description": "Maple Aurum provides advanced analytics for Canadian precious metals companies using ScatterScore™, comparing 50+ metrics for value, growth, and stability.",
+        "contactPoint": {
+          "@type": "ContactPoint",
+          "email": "support@mapleaurum.com",
+          "contactType": "Customer Support"
+        }
+      }
+    </script>
     <script async src="https://js.stripe.com/v3/buy-button.js"></script>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root" role="main"></div> <!-- Added ARIA role for accessibility -->
     <div id="portal-root"></div>
+    <!-- Noscript fallback for accessibility -->
+    <noscript>
+      <div style="text-align: center; padding: 20px; background: #1e3a8a; color: white;">
+        <p>JavaScript is disabled. Please enable JavaScript to use Maple Aurum fully.</p>
+        <p>
+          <a href="/subscribe" style="color: #fbbf24; text-decoration: underline;">
+            Try ScatterScore™ for free
+          </a>
+        </p>
+      </div>
+    </noscript>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
