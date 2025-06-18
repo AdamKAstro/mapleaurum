@@ -1,5 +1,5 @@
 // src/pages/companies/index.tsx
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback, useMemo, useState, useEffect } from 'react';
 import { useFilters } from '../../contexts/filter-context';
 import { CompanyDataTable } from '../../components/company-data-table';
 import { CurrencySelector } from '../../components/currency-selector';
@@ -54,6 +54,7 @@ export function CompaniesPage() {
     toggleShowDeselected,
     searchCompanies,
     filteredCompanyIds,
+    activeCompanyIds,
     setDevelopmentStatusFilter,
     setMetricRange,
     resetFilters,
@@ -62,6 +63,10 @@ export function CompaniesPage() {
     fetchCompaniesByIds,
     isCompanySelected,
   } = useFilters();
+
+  // NEW: State to track additional selected companies not on current page
+  const [additionalSelectedCompanies, setAdditionalSelectedCompanies] = useState<Company[]>([]);
+  const [loadingAdditional, setLoadingAdditional] = useState(false);
 
   const selectedStatuses = useMemo(
     () => filterSettings.developmentStatus || FILTERABLE_STATUSES,
@@ -76,19 +81,143 @@ export function CompaniesPage() {
     return !isDefaultStatus || !isDefaultMetricRanges || !isDefaultSearchTerm || hasActiveSelection;
   }, [selectedStatuses, filterSettings.metricRanges, filterSettings.searchTerm, effectiveTotalCount, totalCount]);
 
+  // NEW: Effect to fetch selected companies not in displayData
+  useEffect(() => {
+    let mounted = true;
+    
+    const fetchAdditionalSelectedCompanies = async () => {
+      // Only fetch when not showing deselected and we have selected companies
+      if (!showDeselected && activeCompanyIds.length > 0) {
+        // Find selected company IDs that aren't in the current displayData
+        const displayDataIds = new Set(displayData.map(c => c.company_id));
+        const missingSelectedIds = activeCompanyIds.filter(id => !displayDataIds.has(id));
+        
+        if (missingSelectedIds.length > 0) {
+          logDebug(`[CompaniesPage] Fetching ${missingSelectedIds.length} additional selected companies not in current page`);
+          setLoadingAdditional(true);
+          
+          try {
+            const additionalCompanies = await fetchCompaniesByIds(missingSelectedIds);
+            if (mounted) {
+              setAdditionalSelectedCompanies(additionalCompanies);
+              logDebug(`[CompaniesPage] Fetched ${additionalCompanies.length} additional companies`);
+            }
+          } catch (error) {
+            console.error('[CompaniesPage] Error fetching additional selected companies:', error);
+            if (mounted) {
+              setAdditionalSelectedCompanies([]);
+            }
+          } finally {
+            if (mounted) {
+              setLoadingAdditional(false);
+            }
+          }
+        } else {
+          // No missing companies to fetch
+          if (mounted) {
+            setAdditionalSelectedCompanies([]);
+            setLoadingAdditional(false);
+          }
+        }
+      } else {
+        // Clear additional companies when showing all or no selection
+        if (mounted) {
+          setAdditionalSelectedCompanies([]);
+          setLoadingAdditional(false);
+        }
+      }
+    };
+
+    fetchAdditionalSelectedCompanies();
+    
+    return () => {
+      mounted = false;
+    };
+  }, [activeCompanyIds, displayData, showDeselected, fetchCompaniesByIds]);
+
+  // UPDATED: companiesForTable now includes additional selected companies
   const companiesForTable = useMemo(() => {
-    logDebug('[CompaniesPage] Recalculating companiesForTable');
+    logDebug('[CompaniesPage] Recalculating companiesForTable', {
+      displayDataLength: displayData.length,
+      additionalLength: additionalSelectedCompanies.length,
+      showDeselected,
+      activeCompanyIdsLength: activeCompanyIds.length
+    });
+    
     if (!displayData) return [];
 
     if (showDeselected) {
+      // When showing deselected, we show all companies from current page with ghost styling
       return displayData.map(company => ({
         ...company,
         _isGhosted: !isCompanySelected(company.company_id),
       }));
     }
 
-    return displayData.filter(company => isCompanySelected(company.company_id));
-  }, [displayData, showDeselected, isCompanySelected]);
+    // When not showing deselected, we need to show only selected companies
+    if (activeCompanyIds.length === 0) {
+      // No companies selected
+      return [];
+    }
+
+    // Combine companies from current page and additional fetched companies
+    const allCompanies = new Map<number, Company>();
+    
+    // Add selected companies from current page
+    displayData.forEach(company => {
+      if (isCompanySelected(company.company_id)) {
+        allCompanies.set(company.company_id, company);
+      }
+    });
+    
+    // Add additional selected companies (this will override if duplicate, which is fine)
+    additionalSelectedCompanies.forEach(company => {
+      if (isCompanySelected(company.company_id)) {
+        allCompanies.set(company.company_id, company);
+      }
+    });
+    
+    // Convert back to array and sort
+    const combined = Array.from(allCompanies.values());
+    
+    // Apply current sort
+    combined.sort((a, b) => {
+      const { key, direction } = sortState;
+      
+      // Handle company_name sort
+      if (key === 'company_name') {
+        const aVal = a.company_name || '';
+        const bVal = b.company_name || '';
+        return direction === 'asc' 
+          ? aVal.localeCompare(bVal)
+          : bVal.localeCompare(aVal);
+      }
+      
+      // Handle tsx_code sort
+      if (key === 'tsx_code') {
+        const aVal = a.tsx_code || '';
+        const bVal = b.tsx_code || '';
+        return direction === 'asc' 
+          ? aVal.localeCompare(bVal)
+          : bVal.localeCompare(aVal);
+      }
+      
+      // Handle status sort
+      if (key === 'status') {
+        const aVal = a.status || '';
+        const bVal = b.status || '';
+        return direction === 'asc' 
+          ? aVal.localeCompare(bVal)
+          : bVal.localeCompare(aVal);
+      }
+      
+      // For other sorts, maintain original order for now
+      // You can add more sort handlers as needed
+      return 0;
+    });
+    
+    return combined;
+  }, [displayData, showDeselected, isCompanySelected, activeCompanyIds, additionalSelectedCompanies, sortState]);
 
   const handlePageChange = useCallback((newPage: number) => {
     logDebug(`[CompaniesPage] Calling setPage(${newPage})`);
@@ -205,7 +334,7 @@ export function CompaniesPage() {
           className="bg-navy-700/30 backdrop-blur-sm rounded-xl shadow-xl border border-navy-600/50 flex flex-col flex-grow overflow-hidden min-h-[500px] relative"
         >
           <AnimatePresence>
-            {loadingData && (
+            {(loadingData || loadingAdditional) && (
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
@@ -214,7 +343,9 @@ export function CompaniesPage() {
                 className="absolute inset-0 bg-navy-800/50 backdrop-blur-sm z-20 flex flex-col justify-center items-center"
               >
                 <RefreshCw className="h-8 w-8 text-accent-teal animate-spin" />
-                <p className="text-surface-white/60 text-sm mt-4">Loading...</p>
+                <p className="text-surface-white/60 text-sm mt-4">
+                  {loadingAdditional && !loadingData ? 'Loading selected companies...' : 'Loading...'}
+                </p>
               </motion.div>
             )}
           </AnimatePresence>

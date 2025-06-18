@@ -41,6 +41,7 @@ interface SelectionState {
   selectedIds: Set<number>;
   showDeselected: boolean;
   selectionMode: 'include' | 'exclude';
+  isAllSelected: boolean; // NEW: Explicit flag for "all selected" state
 }
 
 interface FilterContextType {
@@ -97,6 +98,7 @@ const DEFAULT_SELECTION_STATE: SelectionState = {
   selectedIds: new Set(),
   showDeselected: false,
   selectionMode: 'include',
+  isAllSelected: true, // Start with all selected by default
 };
 const DEFAULT_SORT_STATE: SortState = { key: 'company_name', direction: 'asc' };
 const DEFAULT_PAGE = 1;
@@ -180,6 +182,7 @@ export const FilterProvider: React.FC<{ children: ReactNode }> = ({ children }) 
             selectedIds: new Set(parsed.selectedIds),
             selectionMode: parsed.selectionMode || 'include',
             showDeselected: false,
+            isAllSelected: parsed.isAllSelected ?? false,
           };
         }
       }
@@ -191,11 +194,16 @@ export const FilterProvider: React.FC<{ children: ReactNode }> = ({ children }) 
   });
 
   const isInitialLoadRef = useRef(true);
-  const dependenciesReadyRef = useRef(false);
+  const augmentedDataCacheRef = useRef<{ key: string; data: Company[] } | null>(null);
 
   const debouncedSearchHandler = useMemo(() => debounce((term: string) => {
     setDebouncedSearchTerm(term);
   }, 350), []);
+
+  // Debounced filter update to prevent rapid re-fetches
+  const debouncedFilterUpdate = useMemo(() => debounce(() => {
+    isInitialLoadRef.current = false;
+  }, 100), []);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -203,6 +211,7 @@ export const FilterProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         sessionStorage.setItem('companySelectionState', JSON.stringify({
           selectedIds: Array.from(selectionState.selectedIds),
           selectionMode: selectionState.selectionMode,
+          isAllSelected: selectionState.isAllSelected,
         }));
         logDebug('[FC] Saved selection state to session storage');
       }
@@ -210,15 +219,21 @@ export const FilterProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     return () => clearTimeout(timer);
   }, [selectionState]);
 
+  // FIXED: Proper active company IDs computation
   const activeCompanyIds = useMemo(() => {
-    if (selectionState.selectionMode === 'exclude') {
-      return Array.from(filteredCompanyIds).filter(id => !selectionState.selectedIds.has(id));
-    }
-    if (selectionState.selectedIds.size === 0) {
+    if (selectionState.isAllSelected && selectionState.selectionMode === 'include') {
+      // All selected means all filtered companies
       return Array.from(filteredCompanyIds);
     }
+    
+    if (selectionState.selectionMode === 'exclude') {
+      // Exclude mode: all filtered companies except those in selectedIds
+      return Array.from(filteredCompanyIds).filter(id => !selectionState.selectedIds.has(id));
+    }
+    
+    // Include mode: only those explicitly in selectedIds that are also in filtered
     return Array.from(selectionState.selectedIds).filter(id => filteredCompanyIds.has(id));
-  }, [filteredCompanyIds, selectionState.selectionMode, selectionState.selectedIds]);
+  }, [filteredCompanyIds, selectionState]);
 
   const excludedCompanyIds = useMemo(() => {
     const activeSet = new Set(activeCompanyIds);
@@ -306,12 +321,20 @@ export const FilterProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     [loadingExchangeRates]
   );
 
+  // FIXED: Memoized augmentation to prevent repeated calls
   const augmentCompaniesWithStockPrices = useCallback(
     async (companiesToAugment: Company[]): Promise<Company[]> => {
       if (DEBUG_FILTER_CONTEXT)
         console.log('%c[FC][Augment] augmentCompaniesWithStockPrices called.', 'color: #4682B4;');
       if (!companiesToAugment || companiesToAugment.length === 0) {
         return companiesToAugment;
+      }
+
+      // Check cache
+      const cacheKey = companiesToAugment.map(c => c.company_id).join(',');
+      if (augmentedDataCacheRef.current?.key === cacheKey) {
+        if (DEBUG_FILTER_CONTEXT) console.log('%c[FC][Augment] Returning cached augmented data.', 'color: #4682B4;');
+        return augmentedDataCacheRef.current.data;
       }
 
       const companyIds = companiesToAugment
@@ -420,6 +443,9 @@ export const FilterProvider: React.FC<{ children: ReactNode }> = ({ children }) 
           return updatedCompany;
         });
 
+        // Cache the result
+        augmentedDataCacheRef.current = { key: cacheKey, data: augmentedOutput };
+
         if (DEBUG_FILTER_CONTEXT)
           console.log(
             `%c[FC][Augment] Price augmentation applied. Output companies: ${augmentedOutput.length}`,
@@ -441,7 +467,7 @@ export const FilterProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         setLoadingPriceAugmentation(false);
       }
     },
-    [selectedDisplayCurrency, exchangeRates]
+    []
   );
 
   const loading = useMemo(
@@ -591,7 +617,7 @@ export const FilterProvider: React.FC<{ children: ReactNode }> = ({ children }) 
 
     fetchAllNewData();
     return () => { active = false; };
-  }, [filterSettings, debouncedSearchTerm, sortState, pageSize, isSubscriptionLoading, loadingRanges, loadingExchangeRates, buildFiltersJson, augmentCompaniesWithStockPrices, selectedDisplayCurrency, exchangeRates]);
+  }, [filterSettings, debouncedSearchTerm, sortState, pageSize, isSubscriptionLoading, loadingRanges, loadingExchangeRates, buildFiltersJson, augmentCompaniesWithStockPrices, selectedDisplayCurrency, exchangeRates, convertCompanyMonetaryFields]);
 
   useEffect(() => {
     let active = true;
@@ -634,19 +660,21 @@ export const FilterProvider: React.FC<{ children: ReactNode }> = ({ children }) 
 
     fetchPageData();
     return () => { active = false; };
-  }, [currentPage, filterSettings, debouncedSearchTerm, sortState, pageSize, loadingFilters, augmentCompaniesWithStockPrices, selectedDisplayCurrency, exchangeRates]);
+  }, [currentPage, filterSettings, debouncedSearchTerm, sortState, pageSize, loadingFilters, buildFiltersJson, augmentCompaniesWithStockPrices, selectedDisplayCurrency, exchangeRates, convertCompanyMonetaryFields]);
 
   const setSearchTerm = useCallback((term: string) => {
     setFilterSettings(prev => ({ ...prev, searchTerm: term }));
     debouncedSearchHandler(term);
-  }, [debouncedSearchHandler]);
+    debouncedFilterUpdate();
+  }, [debouncedSearchHandler, debouncedFilterUpdate]);
 
   const setDevelopmentStatusFilter = useCallback((statuses: CompanyStatus[]) => {
     setFilterSettings((prev) => {
       if (deepEqual(prev.developmentStatus, statuses)) return prev;
       return { ...prev, developmentStatus: statuses };
     });
-  }, []);
+    debouncedFilterUpdate();
+  }, [debouncedFilterUpdate]);
 
   const setMetricRange = useCallback((db_column: string, min: number | null, max: number | null) => {
     setFilterSettings((prev) => {
@@ -657,7 +685,8 @@ export const FilterProvider: React.FC<{ children: ReactNode }> = ({ children }) 
       if (deepEqual(prev.metricRanges, newRanges)) return prev;
       return { ...prev, metricRanges: newRanges };
     });
-  }, []);
+    debouncedFilterUpdate();
+  }, [debouncedFilterUpdate]);
 
   const resetFilters = useCallback(() => {
     logDebug('[FC] Resetting all filters');
@@ -666,21 +695,24 @@ export const FilterProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     setSortState(DEFAULT_SORT_STATE);
     setSelectionState(DEFAULT_SELECTION_STATE);
     setCurrentPage(DEFAULT_PAGE);
-  }, []);
+    debouncedFilterUpdate();
+  }, [debouncedFilterUpdate]);
 
   const setSort = useCallback((newSortState: SortState) => {
     setSortState(prev => {
       if (deepEqual(prev, newSortState)) return prev;
       return newSortState;
     });
-  }, []);
+    debouncedFilterUpdate();
+  }, [debouncedFilterUpdate]);
 
   const setPageSize = useCallback((size: number) => {
     setPageSizeState(prev => {
       if (prev === size) return prev;
       return size;
     });
-  }, []);
+    debouncedFilterUpdate();
+  }, [debouncedFilterUpdate]);
 
   const setPage = useCallback((page: number) => {
     const maxPage = Math.max(1, Math.ceil(effectiveTotalCount / pageSize));
@@ -691,26 +723,32 @@ export const FilterProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     });
   }, [effectiveTotalCount, pageSize]);
 
+  // FIXED: Proper toggle logic
   const toggleCompanySelection = useCallback((companyId: number) => {
     if (!Number.isFinite(companyId)) return;
+    
     setSelectionState(prev => {
-      const { selectedIds, selectionMode } = prev;
+      const { selectedIds, selectionMode, isAllSelected } = prev;
       const newSelectedIds = new Set(selectedIds);
 
-      if (selectionMode === 'include' && selectedIds.size === 0) {
-        const allIds = new Set(filteredCompanyIds);
-        allIds.delete(companyId);
-        return { ...prev, selectedIds: allIds };
+      // If we're in "all selected" mode, we need to switch to explicit selection
+      if (isAllSelected && selectionMode === 'include') {
+        // Create a set of all filtered companies except this one
+        const allExceptOne = new Set(filteredCompanyIds);
+        allExceptOne.delete(companyId);
+        return {
+          ...prev,
+          selectedIds: allExceptOne,
+          isAllSelected: false,
+          selectionMode: 'exclude', // Switch to exclude mode to deselect this one
+        };
       }
 
+      // Normal toggle logic
       if (newSelectedIds.has(companyId)) {
         newSelectedIds.delete(companyId);
       } else {
         newSelectedIds.add(companyId);
-      }
-
-      if (selectionMode === 'include' && newSelectedIds.size === filteredCompanyIds.size) {
-        return { ...prev, selectedIds: EMPTY_SET };
       }
 
       return { ...prev, selectedIds: newSelectedIds };
@@ -722,45 +760,73 @@ export const FilterProvider: React.FC<{ children: ReactNode }> = ({ children }) 
       ...prev,
       selectedIds: EMPTY_SET,
       selectionMode: 'include',
+      isAllSelected: true,
     }));
   }, []);
 
   const deselectAll = useCallback(() => {
     setSelectionState(prev => ({
       ...prev,
-      selectedIds: new Set(filteredCompanyIds),
-      selectionMode: 'exclude',
+      selectedIds: EMPTY_SET,
+      selectionMode: 'include',
+      isAllSelected: false,
     }));
-  }, [filteredCompanyIds]);
+  }, []);
 
   const invertSelection = useCallback(() => {
-    logDebug('[FC] Inverting selection and resetting filters.');
-
-    // 1. Capture the set of companies that are currently selected.
-    const currentlySelectedIds = new Set(activeCompanyIds);
-
-    // 2. Immediately reset all filters to their default state.
-    setFilterSettings(DEFAULT_FILTER_SETTINGS);
-    setDebouncedSearchTerm('');
-
-    // 3. Update the selection state to EXCLUDE the set of companies that were previously selected.
-    setSelectionState(prev => ({
-      ...prev,
-      selectionMode: 'exclude',
-      selectedIds: currentlySelectedIds,
-    }));
-  }, [activeCompanyIds]);
+    logDebug('[FC] Inverting selection.');
+    
+    setSelectionState(prev => {
+      if (prev.isAllSelected && prev.selectionMode === 'include') {
+        // If all are selected, deselect all
+        return {
+          ...prev,
+          selectedIds: EMPTY_SET,
+          selectionMode: 'include',
+          isAllSelected: false,
+        };
+      }
+      
+      if (!prev.isAllSelected && prev.selectedIds.size === 0) {
+        // If none are selected, select all
+        return {
+          ...prev,
+          selectedIds: EMPTY_SET,
+          selectionMode: 'include',
+          isAllSelected: true,
+        };
+      }
+      
+      // Otherwise, invert the current selection
+      const currentlySelected = new Set(activeCompanyIds);
+      const inverted = new Set(Array.from(filteredCompanyIds).filter(id => !currentlySelected.has(id)));
+      
+      return {
+        ...prev,
+        selectedIds: inverted,
+        selectionMode: 'include',
+        isAllSelected: false,
+      };
+    });
+  }, [activeCompanyIds, filteredCompanyIds]);
 
   const toggleShowDeselected = useCallback(() => {
     setSelectionState(prev => ({ ...prev, showDeselected: !prev.showDeselected }));
   }, []);
 
+  // FIXED: Proper isCompanySelected logic
   const isCompanySelected = useCallback((companyId: number): boolean => {
-    if (selectionState.selectionMode === 'include') {
-      return selectionState.selectedIds.size === 0 || selectionState.selectedIds.has(companyId);
+    if (selectionState.isAllSelected && selectionState.selectionMode === 'include') {
+      return true;
     }
+    
+    if (selectionState.selectionMode === 'include') {
+      return selectionState.selectedIds.has(companyId);
+    }
+    
+    // Exclude mode
     return !selectionState.selectedIds.has(companyId);
-  }, [selectionState.selectedIds, selectionState.selectionMode]);
+  }, [selectionState]);
 
   const getSelectedCount = useCallback(() => effectiveTotalCount, [effectiveTotalCount]);
 
@@ -865,7 +931,12 @@ export const FilterProvider: React.FC<{ children: ReactNode }> = ({ children }) 
       const idsMatchingStatus = new Set((data as { company_id: number }[] || []).map(r => r.company_id));
       const newSelectedIds = new Set(Array.from(filteredCompanyIds).filter(id => idsMatchingStatus.has(id)));
 
-      setSelectionState(prev => ({ ...prev, selectedIds: newSelectedIds, selectionMode: 'include' }));
+      setSelectionState(prev => ({ 
+        ...prev, 
+        selectedIds: newSelectedIds, 
+        selectionMode: 'include',
+        isAllSelected: false 
+      }));
     } catch (err: any) {
       console.error('[FC] Error selecting by status:', err.message);
       setError('Could not select companies by status.');
