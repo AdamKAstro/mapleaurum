@@ -7,96 +7,84 @@ import { cn } from '../../lib/utils';
 import { useFilters } from '../../contexts/filter-context';
 
 interface PageContainerProps {
-    title: string;
-    description?: React.ReactNode; // Changed from string to ReactNode to support JSX
-    children: React.ReactNode;
-    actions?: React.ReactNode;
-    className?: string;
-    contentClassName?: string;
-    showNav?: boolean;
+  title: string;
+  description?: React.ReactNode;
+  children: React.ReactNode;
+  actions?: React.ReactNode;
+  className?: string;
+  contentClassName?: string;
+  showNav?: boolean;
 }
 
-// Navigation items definition - Includes HELP
 const navItems = [
-    { path: "/companies", label: "Companies", icon: Table2 },
-    { path: "/scatter-chart", label: "Analysis", icon: LineChart },
-    { path: "/filter", label: "Filters", icon: Filter },
-    { path: "/scoring", label: "Scoring", icon: Calculator },
-    { path: "/subscribe", label: "Subscribe", icon: Crown },
-    { path: "/help", label: "Help", icon: HelpCircle },
+  { path: '/companies', label: 'Companies', icon: Table2 },
+  { path: '/scatter-chart', label: 'Analysis', icon: LineChart },
+  { path: '/filter', label: 'Filters', icon: Filter },
+  { path: '/scoring', label: 'Scoring', icon: Calculator },
+  { path: '/subscribe', label: 'Subscribe', icon: Crown },
+  { path: '/help', label: 'Help', icon: HelpCircle },
 ];
 
 export function PageContainer({
-    title,
-    description,
-    children,
-    actions,
-    className,
-    contentClassName,
-    showNav = true
+  title,
+  description,
+  children,
+  actions,
+  className,
+  contentClassName,
+  showNav = true,
 }: PageContainerProps) {
-    const { resetFilters } = useFilters();
-    const location = useLocation();
+  const { resetFilters } = useFilters();
+  const location = useLocation();
 
-    return (
-        <div className={cn("container mx-auto px-4 py-4 space-y-4", className)}>
-
-            {/* Top Bar: Title/Description on Left, Nav/Actions on Right */}
-            <div className="flex items-center justify-between flex-wrap gap-4 border-b border-navy-700 pb-3 mb-4">
-                {/* Left Side: Title and Description */}
-                <div>
-                    <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-white">
-                        {title}
-                    </h1>
-                    {description && (
-                        // Fixed: Use div instead of p when description contains JSX
-                        <div className="text-xs sm:text-sm text-gray-400">
-                            {description}
-                        </div>
-                    )}
-                </div>
-
-                {/* Right Side: Nav Icons, Reset Button, Page Actions */}
-                <div className="flex items-center gap-2 flex-wrap">
-                    {/* Conditional Navigation Icons */}
-                    {showNav && navItems
-                        .filter(item => item.path !== location.pathname)
-                        .map((item) => (
-                            <Link key={item.path} to={item.path} className="hidden sm:block" >
-                                <Button variant="ghost" size="icon-sm" className="text-gray-400 hover:text-white hover:bg-navy-700/50" title={item.label} >
-                                    <item.icon className="h-4 w-4" />
-                                </Button>
-                            </Link>
-                        ))}
-
-                    {/* Global Reset Button */}
-                    {showNav && location.pathname !== '/' && (
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={resetFilters}
-                            className="text-xs border-navy-600 text-gray-300 hover:bg-navy-700 hover:text-white flex items-center gap-1.5"
-                            title="Reset all filters & exclusions"
-                        >
-                            <FilterX className="h-3.5 w-3.5" />
-                            <span className="hidden md:inline">Reset Filters</span>
-                            <span className="md:hidden">Reset</span>
-                        </Button>
-                    )}
-
-                    {/* Page Specific Actions */}
-                    {actions && (
-                        <div className="flex items-center gap-2 border-l border-navy-700 pl-2 ml-1">
-                            {actions}
-                        </div>
-                    )}
-                </div>
-            </div>
-
-            {/* Page Content */}
-            <div className={cn(contentClassName)}>
-                {children}
-            </div>
+  return (
+    <div className={cn('page-container', className)}>
+      <div className="page-header">
+        <div>
+          <h1 className="page-title">{title}</h1>
+          {description && (
+            <div className="page-description">{description}</div>
+          )}
         </div>
-    );
+        <div className="page-actions">
+          {showNav &&
+            navItems
+              .filter(item => item.path !== location.pathname)
+              .map(item => (
+                <Link key={item.path} to={item.path} className="hidden sm:block">
+                  <Button
+                    variant="outline"
+                    size="icon-sm"
+                    className="text-gray-200 border-navy-600/50 hover:bg-navy-700/50 hover:text-gray-200"
+                    title={item.label}
+                    aria-label={item.label}
+                  >
+                    <item.icon className="h-4 w-4" />
+                  </Button>
+                </Link>
+              ))}
+          {showNav && location.pathname !== '/' && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={resetFilters}
+              className="text-xs border-navy-600/50 text-gray-200 hover:bg-navy-700/50 hover:text-gray-200 flex items-center gap-1.5"
+              title="Reset all filters & exclusions"
+              aria-label="Reset all filters"
+            >
+              <FilterX className="h-3.5 w-3.5" />
+              <span className="hidden md:inline">Reset Filters</span>
+              <span className="md:hidden">Reset</span>
+            </Button>
+          )}
+          {actions && (
+            <div className="flex items-center gap-2 border-l border-navy-600/50 pl-2 ml-1">
+              {actions}
+            </div>
+          )}
+        </div>
+      </div>
+      <div className={cn('relative', contentClassName)}>{children}</div>
+    </div>
+  );
 }

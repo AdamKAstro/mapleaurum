@@ -43,11 +43,11 @@
     <!-- Content Security Policy for security -->
     <meta
       http-equiv="Content-Security-Policy"
-      content="default-src 'self'; script-src 'self' https://js.stripe.com https://fonts.googleapis.com 'unsafe-inline'; style-src 'self' https://fonts.googleapis.com 'unsafe-inline'; img-src 'self' https://mapleaurum.com data:; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https://api.stripe.com https://dvagrllvivewyxolrhsh.supabase.co;"
+      content="default-src 'self'; script-src 'self' https://js.stripe.com https://fonts.googleapis.com 'unsafe-inline'; 'unsafe-eval' blob: https://js.stripe.com https://fonts.googleapis.com; worker-src 'self' blob:; style-src 'self' https://fonts.googleapis.com 'unsafe-inline'; img-src 'self' https://mapleaurum.com https://ui-avatars.com https://dvagrllvivewyxolrhsh.supabase.co data:; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https://api.stripe.com https://dvagrllvivewyxolrhsh.supabase.co;"
     />
     <!-- Preload critical assets for performance -->
     <link rel="preload" href="/GeminiMALBig3.jpg" as="image" />
-    <link rel="preload" href="/ScatterScore3.jpg" as="image" />
+    <!--<link rel="preload" href="/ScatterScore3.jpg" as="image" /-->
     <link rel="dns-prefetch" href="https://js.stripe.com" /> <!-- DNS prefetch for Stripe -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />

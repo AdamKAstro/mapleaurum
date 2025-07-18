@@ -23,6 +23,8 @@ dist-ssr
 # Local files
 *.local
 .env
+.env.*
+!.env.example
 mapleaurum_importer/.env
 webhooksStripe01.txt # If you want to ignore this
 create_checkout.js   # If you want to ignore this
@@ -60,6 +62,7 @@ src_directory_structure.txt
 # Local development/planning files
 
 bfg-report/
+/BackUp_*/
 BackUp_*/.bfg-report/
 BackUp_20052025/
 .env
@@ -70,3 +73,14 @@ companies_detailed_view_backup120625.json
 get_companies_paginated_backup120625.json
 screenshots/
 supabase/.temp/
+
+*.zip
+*.bak
+*.csv
+*.json
+*.txt
+*.xlsx
+*.lock
+
+!supabase/company_mappings.csv 
+!supabase/companiesIDsTickers.json

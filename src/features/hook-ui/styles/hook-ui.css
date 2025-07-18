@@ -1,0 +1,129 @@
+/* src/features/hook-ui/styles/hook-ui.css */
+
+/* Slider Styling */
+.custom-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 12px;
+  border-radius: 6px;
+  outline: none;
+  opacity: 0.9;
+  transition: opacity 0.2s;
+  background: linear-gradient(to right, var(--gradient-start), var(--gradient-mid), var(--gradient-end));
+}
+
+.custom-slider:hover {
+  opacity: 1;
+}
+
+/* Webkit browsers */
+.custom-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: white;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  transition: transform 0.2s;
+}
+
+.custom-slider::-webkit-slider-thumb:hover {
+  transform: scale(1.1);
+}
+
+/* Firefox */
+.custom-slider::-moz-range-thumb {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: white;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  border: none;
+  transition: transform 0.2s;
+}
+
+.custom-slider::-moz-range-thumb:hover {
+  transform: scale(1.1);
+}
+
+/* Risk Tolerance Gradient */
+.slider-risk {
+  --gradient-start: #10b981;
+  --gradient-mid: #eab308;
+  --gradient-end: #ef4444;
+}
+
+/* Investment Horizon Gradient */
+.slider-horizon {
+  --gradient-start: #3b82f6;
+  --gradient-mid: #8b5cf6;
+  --gradient-end: #ec4899;
+}
+
+/* Diversification Gradient */
+.slider-diversification {
+  --gradient-start: #fb923c;
+  --gradient-mid: #14b8a6;
+  --gradient-end: #6366f1;
+}
+
+/* Liquidity Gradient */
+.slider-liquidity {
+  --gradient-start: #9ca3af;
+  --gradient-mid: #06b6d4;
+  --gradient-end: #3b82f6;
+}
+
+/* Growth vs Value Gradient */
+.slider-growth {
+  --gradient-start: #10b981;
+  --gradient-mid: #eab308;
+  --gradient-end: #f43f5e;
+}
+
+/* ESG Gradient */
+.slider-esg {
+  --gradient-start: #64748b;
+  --gradient-mid: #84cc16;
+  --gradient-end: #22c55e;
+}
+
+/* Playing Card 3D Effects */
+.playing-card-3d {
+  transform-style: preserve-3d;
+  transition: transform 0.6s;
+}
+
+.playing-card-3d.flipped {
+  transform: rotateY(180deg);
+}
+
+.playing-card-face {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+.playing-card-back {
+  transform: rotateY(180deg);
+}
+
+/* Smooth animations */
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.animate-pulse-slow {
+  animation: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}

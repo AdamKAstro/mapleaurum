@@ -1,3 +1,4 @@
+// vite.config.ts
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import path from 'path';
@@ -8,12 +9,19 @@ export default defineConfig({
     alias: { '@': path.resolve(__dirname, 'src') },
   },
   optimizeDeps: {
-    include: ['lucide-react'],
+    include: [
+      'react',
+      'react-dom',
+      'react-router-dom',
+      'lucide-react',
+      'react-hot-toast',
+      'react-lazy-load-image-component',
+      'lodash',
+    ],
   },
   build: {
-    minify: false,
-    terserOptions: { compress: false, mangle: false },
-    sourcemap: true,
+    minify: true,
+    sourcemap: false,
     chunkSizeWarningLimit: 1000,
     cssCodeSplit: false,
     rollupOptions: {
@@ -21,23 +29,35 @@ export default defineConfig({
         manualChunks: {
           vendor: ['react', 'react-dom', 'react-router-dom'],
           lucide: ['lucide-react'],
+          utilities: ['react-hot-toast', 'react-lazy-load-image-component', 'lodash'],
         },
-        assetFileNames: (assetInfo) => {
-          if (assetInfo.name === 'index.css') {
-            return 'assets/css/index[extname]'; // Force consistent CSS name
-          }
-          return 'assets/[name]-[hash][extname]';
-        },
+        assetFileNames: 'assets/[name]-[hash][extname]', // Ensures CSS goes to dist/assets/
         entryFileNames: 'assets/[name]-[hash].js',
         chunkFileNames: 'assets/[name]-[hash].js',
       },
     },
   },
-  esbuild: {
-    minify: false,
-  },
   css: {
     devSourcemap: true,
-    preload: false, // Disable CSS preloading
+    preprocessorOptions: {
+      // Add support for SCSS if used in the future
+      scss: {
+        additionalData: `@import "@/styles/variables.scss";`, // Optional
+      },
+    },
+  },
+  server: {
+    // Ensure correct MIME types for CSS
+    mimeTypes: {
+      'text/css': ['css'],
+    },
+    fs: {
+      // Allow serving files from src/
+      allow: ['.'],
+    },
+    // Add Content Security Policy for development
+    headers: {
+      'Content-Security-Policy': "default-src 'self'; img-src 'self' https://mapleaurum.com https://ui-avatars.com https://dvagrllvivewyxolrhsh.supabase.co data:; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; connect-src 'self' https://dvagrllvivewyxolrhsh.supabase.co; font-src 'self' data:; blob:; worker-src 'self' blob:;"
+    },
   },
 });

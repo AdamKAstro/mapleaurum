@@ -1,4 +1,4 @@
-//src/components/ui/card.tsx
+//src/contexts/ui/card.tsx
 import React from 'react';
 import { cn } from '../../lib/utils';
 

@@ -1,0 +1,3292 @@
+[
+  {
+    "company_id": 1,
+    "company_name": "Aberdeen International Inc.",
+    "tsx_code": "AAB.TO"
+  },
+  {
+    "company_id": 2,
+    "company_name": "IRVING RESOURCES",
+    "tsx_code": "IRV.CN"
+  },
+  {
+    "company_id": 3,
+    "company_name": "INTL. TOWER HILL MINES",
+    "tsx_code": "ITH.TO"
+  },
+  {
+    "company_id": 4,
+    "company_name": "Integra Resources Corp.",
+    "tsx_code": "ITR.V"
+  },
+  {
+    "company_id": 5,
+    "company_name": "AFTERMATH SILVER",
+    "tsx_code": "AAG.V"
+  },
+  {
+    "company_id": 6,
+    "company_name": "AbraSilver Resource Corp.",
+    "tsx_code": "ABRA.TO"
+  },
+  {
+    "company_id": 7,
+    "company_name": "Allied Gold",
+    "tsx_code": "AAUC.TO"
+  },
+  {
+    "company_id": 8,
+    "company_name": "ABCOURT MINES",
+    "tsx_code": "ABI.V"
+  },
+  {
+    "company_id": 9,
+    "company_name": "ATON RESOURCES",
+    "tsx_code": "AAN.V"
+  },
+  {
+    "company_id": 10,
+    "company_name": "Agnico Eagle Mines Limited",
+    "tsx_code": "AEM.TO"
+  },
+  {
+    "company_id": 11,
+    "company_name": "Aero Energy Limited",
+    "tsx_code": "AERO.V"
+  },
+  {
+    "company_id": 12,
+    "company_name": "Adamera Minerals Corp.",
+    "tsx_code": "ADZ.V"
+  },
+  {
+    "company_id": 13,
+    "company_name": "SILVER47 EXPLORATION",
+    "tsx_code": "AGA.V"
+  },
+  {
+    "company_id": 14,
+    "company_name": "ARGENTA SILVER",
+    "tsx_code": "AGAG.V"
+  },
+  {
+    "company_id": 15,
+    "company_name": "FIRST MAJESTIC SILVER CORP.",
+    "tsx_code": "AG.TO"
+  },
+  {
+    "company_id": 16,
+    "company_name": "AUSTRAL GOLD LIMITED",
+    "tsx_code": "AGLD.V"
+  },
+  {
+    "company_id": 17,
+    "company_name": "SILVER MOUNTAIN RESOURCES",
+    "tsx_code": "AGMR.V"
+  },
+  {
+    "company_id": 18,
+    "company_name": "Silver X Mining Corp.",
+    "tsx_code": "AGX.V"
+  },
+  {
+    "company_id": 19,
+    "company_name": "Aldebaran Resources Inc.",
+    "tsx_code": "ALDE.V"
+  },
+  {
+    "company_id": 20,
+    "company_name": "Alpha Exploration Ltd",
+    "tsx_code": "ALEX.V"
+  },
+  {
+    "company_id": 21,
+    "company_name": "Adyton Resources Corporation",
+    "tsx_code": "ADY.V"
+  },
+  {
+    "company_id": 22,
+    "company_name": "Arizona Metals Corp.",
+    "tsx_code": "AMC.TO"
+  },
+  {
+    "company_id": 23,
+    "company_name": "Abitibi Metals Corp.",
+    "tsx_code": "AMQ.CN"
+  },
+  {
+    "company_id": 24,
+    "company_name": "Altamira Gold Corp.",
+    "tsx_code": "ALTA.V"
+  },
+  {
+    "company_id": 25,
+    "company_name": "Amex Exploration Inc.",
+    "tsx_code": "AMX.V"
+  },
+  {
+    "company_id": 26,
+    "company_name": "ANGKOR RESOURCES CORP.",
+    "tsx_code": "ANK.V"
+  },
+  {
+    "company_id": 27,
+    "company_name": "Amaroq Minerals Ltd.",
+    "tsx_code": "AMRQ.V"
+  },
+  {
+    "company_id": 28,
+    "company_name": "ASCOT RESOURCES",
+    "tsx_code": "AOT.TO"
+  },
+  {
+    "company_id": 29,
+    "company_name": "APOLLO SILVER",
+    "tsx_code": "APGO.V"
+  },
+  {
+    "company_id": 30,
+    "company_name": "ANDEAN PRECIOUS METALS",
+    "tsx_code": "APM.TO"
+  },
+  {
+    "company_id": 31,
+    "company_name": "ANTLER GOLD",
+    "tsx_code": "ANTL.V"
+  },
+  {
+    "company_id": 32,
+    "company_name": "ARIS MINING CORPORATION",
+    "tsx_code": "ARIS.TO"
+  },
+  {
+    "company_id": 33,
+    "company_name": "AMERICAN EAGLE GOLD",
+    "tsx_code": "AE.V"
+  },
+  {
+    "company_id": 34,
+    "company_name": "ARTEMIS GOLD INC.",
+    "tsx_code": "ARTG.V"
+  },
+  {
+    "company_id": 35,
+    "company_name": "AURANIA RESOURCES LTD.",
+    "tsx_code": "ARU.V"
+  },
+  {
+    "company_id": 36,
+    "company_name": "ASANTE GOLD CORPORATION",
+    "tsx_code": "ASE.CN"
+  },
+  {
+    "company_id": 37,
+    "company_name": "Arras Minerals Corp.",
+    "tsx_code": "ARK.V"
+  },
+  {
+    "company_id": 38,
+    "company_name": "ASTRA EXPLORATION INC.",
+    "tsx_code": "ASTR.V"
+  },
+  {
+    "company_id": 39,
+    "company_name": "Alamos Gold Inc.",
+    "tsx_code": "AGI.TO"
+  },
+  {
+    "company_id": 40,
+    "company_name": "AURION RESOURCES LTD.",
+    "tsx_code": "AU.V"
+  },
+  {
+    "company_id": 41,
+    "company_name": "AWALÉ RESOURCES LIMITED",
+    "tsx_code": "ARIC.V"
+  },
+  {
+    "company_id": 42,
+    "company_name": "Angel Wing Metals Inc.",
+    "tsx_code": "AWM.V"
+  },
+  {
+    "company_id": 43,
+    "company_name": "AUMEGA METALS LTD.",
+    "tsx_code": "AUM.V"
+  },
+  {
+    "company_id": 44,
+    "company_name": "1911 Gold Corporation",
+    "tsx_code": "AUMB.V"
+  },
+  {
+    "company_id": 45,
+    "company_name": "ATHENA GOLD CORPORATION",
+    "tsx_code": "ATHA.CN"
+  },
+  {
+    "company_id": 46,
+    "company_name": "Aurora Royalties Inc.",
+    "tsx_code": "AUR-H.V"
+  },
+  {
+    "company_id": 47,
+    "company_name": "Allegiant Gold Ltd.",
+    "tsx_code": "AUAU.V"
+  },
+  {
+    "company_id": 48,
+    "company_name": "Aya Gold & Silver Inc.",
+    "tsx_code": "AYA.TO"
+  },
+  {
+    "company_id": 49,
+    "company_name": "Avino Silver & Gold Mines Ltd.",
+    "tsx_code": "ASM.TO"
+  },
+  {
+    "company_id": 50,
+    "company_name": "ARIZONA GOLD & SILVER",
+    "tsx_code": "AZS.V"
+  },
+  {
+    "company_id": 51,
+    "company_name": "AZTEC MINERALS",
+    "tsx_code": "AZT.V"
+  },
+  {
+    "company_id": 52,
+    "company_name": "EMPEROR METALS",
+    "tsx_code": "AUOZ.CN"
+  },
+  {
+    "company_id": 53,
+    "company_name": "Blue Star Gold Corp.",
+    "tsx_code": "BAU.V"
+  },
+  {
+    "company_id": 54,
+    "company_name": "Brixton Metals Corporation",
+    "tsx_code": "BBB.V"
+  },
+  {
+    "company_id": 55,
+    "company_name": "Bear Creek Mining Corporation",
+    "tsx_code": "BCM.V"
+  },
+  {
+    "company_id": 56,
+    "company_name": "BATERO GOLD",
+    "tsx_code": "BAT.V"
+  },
+  {
+    "company_id": 57,
+    "company_name": "Beauce Gold Fields Inc.",
+    "tsx_code": "BGF.V"
+  },
+  {
+    "company_id": 58,
+    "company_name": "Baroyeca Gold & Silver Inc.",
+    "tsx_code": "BGS.V"
+  },
+  {
+    "company_id": 59,
+    "company_name": "Bayhorse Silver Inc.",
+    "tsx_code": "BHS.V"
+  },
+  {
+    "company_id": 60,
+    "company_name": "Benton Resources Inc.",
+    "tsx_code": "BEX.V"
+  },
+  {
+    "company_id": 61,
+    "company_name": "BLUE LAGOON RESOURCES",
+    "tsx_code": "BLLG.CN"
+  },
+  {
+    "company_id": 62,
+    "company_name": "Black Mammoth Metals Corp.",
+    "tsx_code": "BMM.V"
+  },
+  {
+    "company_id": 63,
+    "company_name": "Borealis Mining Company",
+    "tsx_code": "BOGO.V"
+  },
+  {
+    "company_id": 64,
+    "company_name": "AZIMUT EXPLORATION",
+    "tsx_code": "AZM.V"
+  },
+  {
+    "company_id": 65,
+    "company_name": "AXMIN",
+    "tsx_code": "AXM.H.V"
+  },
+  {
+    "company_id": 66,
+    "company_name": "BLACKROCK SILVER CORP.",
+    "tsx_code": "BRC.V"
+  },
+  {
+    "company_id": 67,
+    "company_name": "Belo Sun Mining Corp",
+    "tsx_code": "BSX.TO"
+  },
+  {
+    "company_id": 68,
+    "company_name": "B2GOLD CORP.",
+    "tsx_code": "BTO.TO"
+  },
+  {
+    "company_id": 69,
+    "company_name": "Canary Gold Corp",
+    "tsx_code": "BRAZ.CN"
+  },
+  {
+    "company_id": 70,
+    "company_name": "Banyan Gold Corp.",
+    "tsx_code": "BYN.V"
+  },
+  {
+    "company_id": 71,
+    "company_name": "BENZ MINING",
+    "tsx_code": "BZ.V"
+  },
+  {
+    "company_id": 72,
+    "company_name": "CANEX METALS",
+    "tsx_code": "CANX.V"
+  },
+  {
+    "company_id": 73,
+    "company_name": "Bonterra Resources Inc.",
+    "tsx_code": "BTR.V"
+  },
+  {
+    "company_id": 74,
+    "company_name": "COLIBRI RESOURCE",
+    "tsx_code": "CBI.V"
+  },
+  {
+    "company_id": 75,
+    "company_name": "HERCULES METALS",
+    "tsx_code": "BIG.V"
+  },
+  {
+    "company_id": 76,
+    "company_name": "Core Silver Corp",
+    "tsx_code": "CC.CN"
+  },
+  {
+    "company_id": 77,
+    "company_name": "CAPITAN SILVER",
+    "tsx_code": "CAPT.V"
+  },
+  {
+    "company_id": 78,
+    "company_name": "CERRO DE PASCO RESOURCES",
+    "tsx_code": "CDPR.V"
+  },
+  {
+    "company_id": 79,
+    "company_name": "BIG RIDGE GOLD",
+    "tsx_code": "BRAU.V"
+  },
+  {
+    "company_id": 80,
+    "company_name": "CARTIER SILVER CORPORATION",
+    "tsx_code": "CFE.CN"
+  },
+  {
+    "company_id": 81,
+    "company_name": "CENTERRA GOLD INC",
+    "tsx_code": "CG.TO"
+  },
+  {
+    "company_id": 82,
+    "company_name": "CANADIAN GOLD CORP",
+    "tsx_code": "CGC.V"
+  },
+  {
+    "company_id": 83,
+    "company_name": "China Gold International Resources Corp Ltd.",
+    "tsx_code": "CGG.TO"
+  },
+  {
+    "company_id": 84,
+    "company_name": "CHESAPEAKE GOLD",
+    "tsx_code": "CKG.V"
+  },
+  {
+    "company_id": 85,
+    "company_name": "Cabral Gold Inc.",
+    "tsx_code": "CBR.V"
+  },
+  {
+    "company_id": 86,
+    "company_name": "CMC METALS",
+    "tsx_code": "CMB.V"
+  },
+  {
+    "company_id": 87,
+    "company_name": "Condor Resources Inc.",
+    "tsx_code": "CN.V"
+  },
+  {
+    "company_id": 88,
+    "company_name": "COLLECTIVE MINING",
+    "tsx_code": "CNL.TO"
+  },
+  {
+    "company_id": 89,
+    "company_name": "COPAUR MINERALS",
+    "tsx_code": "CPAU.V"
+  },
+  {
+    "company_id": 90,
+    "company_name": "CARIBOO ROSE RESOURCES",
+    "tsx_code": "CRB.V"
+  },
+  {
+    "company_id": 91,
+    "company_name": "Churchill Resources Inc.",
+    "tsx_code": "CRI.V"
+  },
+  {
+    "company_id": 92,
+    "company_name": "COPPER STANDARD RESOURCES",
+    "tsx_code": "CSR.CN"
+  },
+  {
+    "company_id": 93,
+    "company_name": "Canasil Resources Inc.",
+    "tsx_code": "CLZ.V"
+  },
+  {
+    "company_id": 94,
+    "company_name": "CENTURION MINERALS",
+    "tsx_code": "CTN.V"
+  },
+  {
+    "company_id": 95,
+    "company_name": "CANAGOLD RESOURCES",
+    "tsx_code": "CCM.TO"
+  },
+  {
+    "company_id": 96,
+    "company_name": "CANTERRA MINERALS",
+    "tsx_code": "CTM.V"
+  },
+  {
+    "company_id": 97,
+    "company_name": "Cerrado Gold Inc.",
+    "tsx_code": "CERT.V"
+  },
+  {
+    "company_id": 98,
+    "company_name": "DESERT GOLD VENTURES",
+    "tsx_code": "DAU.V"
+  },
+  {
+    "company_id": 99,
+    "company_name": "COMPASS GOLD",
+    "tsx_code": "CVB.V"
+  },
+  {
+    "company_id": 100,
+    "company_name": "CALIBRE MINING",
+    "tsx_code": "CXB.TO"
+  },
+  {
+    "company_id": 101,
+    "company_name": "CYGNUS METALS",
+    "tsx_code": "CYG.V"
+  },
+  {
+    "company_id": 102,
+    "company_name": "Dynacor Group Inc.",
+    "tsx_code": "DNG.TO"
+  },
+  {
+    "company_id": 103,
+    "company_name": "Almadex Minerals Ltd.",
+    "tsx_code": "DEX.V"
+  },
+  {
+    "company_id": 104,
+    "company_name": "DRYDEN GOLD CORP.",
+    "tsx_code": "DRY.V"
+  },
+  {
+    "company_id": 105,
+    "company_name": "Defiance Silver Corp.",
+    "tsx_code": "DEF.V"
+  },
+  {
+    "company_id": 106,
+    "company_name": "DOLLY VARDEN SILVER CORPORATION",
+    "tsx_code": "DV.V"
+  },
+  {
+    "company_id": 107,
+    "company_name": "Dundee Precious Metals Inc.",
+    "tsx_code": "DPM.TO"
+  },
+  {
+    "company_id": 108,
+    "company_name": "EAST AFRICA METALS INC.",
+    "tsx_code": "EAM.V"
+  },
+  {
+    "company_id": 109,
+    "company_name": "CARTIER RESOURCES",
+    "tsx_code": "ECR.V"
+  },
+  {
+    "company_id": 110,
+    "company_name": "ENDURANCE GOLD",
+    "tsx_code": "EDG.V"
+  },
+  {
+    "company_id": 111,
+    "company_name": "DYNASTY GOLD CORP.",
+    "tsx_code": "DYG.V"
+  },
+  {
+    "company_id": 112,
+    "company_name": "DELTA RESOURCES LIMITED",
+    "tsx_code": "DLTA.V"
+  },
+  {
+    "company_id": 113,
+    "company_name": "DISCOVERY SILVER CORP.",
+    "tsx_code": "DSV.TO"
+  },
+  {
+    "company_id": 114,
+    "company_name": "ELEMENTAL ALTUS ROYALTIES",
+    "tsx_code": "ELE.V"
+  },
+  {
+    "company_id": 115,
+    "company_name": "Silver Elephant Mining Corp.",
+    "tsx_code": "ELEF.TO"
+  },
+  {
+    "company_id": 116,
+    "company_name": "ENDEAVOUR SILVER",
+    "tsx_code": "EDR.TO"
+  },
+  {
+    "company_id": 117,
+    "company_name": "Elevation Gold Mining Corp.",
+    "tsx_code": "ELVT.V"
+  },
+  {
+    "company_id": 118,
+    "company_name": "EMINENT GOLD",
+    "tsx_code": "EMNT.V"
+  },
+  {
+    "company_id": 119,
+    "company_name": "EMERITA RESOURCES CORP",
+    "tsx_code": "EMO.V"
+  },
+  {
+    "company_id": 120,
+    "company_name": "ELORO RESOURCES LTD",
+    "tsx_code": "ELO.TO"
+  },
+  {
+    "company_id": 121,
+    "company_name": "EMX Royalty Corporation",
+    "tsx_code": "EMX.V"
+  },
+  {
+    "company_id": 122,
+    "company_name": "Enduro Metals Corporation",
+    "tsx_code": "ENDR.V"
+  },
+  {
+    "company_id": 123,
+    "company_name": "Eagle Plains Resources Ltd.",
+    "tsx_code": "EPL.V"
+  },
+  {
+    "company_id": 124,
+    "company_name": "Equity Metals Corporation",
+    "tsx_code": "EQTY.V"
+  },
+  {
+    "company_id": 125,
+    "company_name": "Equinox Gold Corp.",
+    "tsx_code": "EQX.TO"
+  },
+  {
+    "company_id": 126,
+    "company_name": "EAGLE ROYALTIES",
+    "tsx_code": "ER.CN"
+  },
+  {
+    "company_id": 127,
+    "company_name": "Erdene Resource Development",
+    "tsx_code": "ERD.TO"
+  },
+  {
+    "company_id": 128,
+    "company_name": "Eskay Mining Corp.",
+    "tsx_code": "ESK.V"
+  },
+  {
+    "company_id": 129,
+    "company_name": "ELDORADO GOLD",
+    "tsx_code": "ELD.TO"
+  },
+  {
+    "company_id": 130,
+    "company_name": "ETRUSCUS RESOURCES",
+    "tsx_code": "ETR.CN"
+  },
+  {
+    "company_id": 131,
+    "company_name": "Excellon Resources Inc.",
+    "tsx_code": "EXN.V"
+  },
+  {
+    "company_id": 132,
+    "company_name": "Euro Sun Mining Inc.",
+    "tsx_code": "ESM.TO"
+  },
+  {
+    "company_id": 133,
+    "company_name": "FOUNDERS METALS",
+    "tsx_code": "FDR.V"
+  },
+  {
+    "company_id": 134,
+    "company_name": "FIRST MINING GOLD",
+    "tsx_code": "FF.TO"
+  },
+  {
+    "company_id": 135,
+    "company_name": "EMPRESS ROYALTY",
+    "tsx_code": "EMPR.V"
+  },
+  {
+    "company_id": 136,
+    "company_name": "First Andes Silver Ltd.",
+    "tsx_code": "FAS.V"
+  },
+  {
+    "company_id": 137,
+    "company_name": "SAILFISH ROYALTY",
+    "tsx_code": "FISH.V"
+  },
+  {
+    "company_id": 138,
+    "company_name": "FOKUS MINING",
+    "tsx_code": "FKM.V"
+  },
+  {
+    "company_id": 139,
+    "company_name": "Freeman Gold Corp.",
+    "tsx_code": "FMAN.V"
+  },
+  {
+    "company_id": 140,
+    "company_name": "EDGEMONT GOLD",
+    "tsx_code": "EDGM.CN"
+  },
+  {
+    "company_id": 141,
+    "company_name": "FUERTE METALS CORPORATION",
+    "tsx_code": "FMT.V"
+  },
+  {
+    "company_id": 142,
+    "company_name": "Four Nines Gold Inc.",
+    "tsx_code": "FNAU.CN"
+  },
+  {
+    "company_id": 143,
+    "company_name": "FIRST NORDIC METALS",
+    "tsx_code": "FNM.V"
+  },
+  {
+    "company_id": 144,
+    "company_name": "Franco-Nevada Corporation",
+    "tsx_code": "FNV.TO"
+  },
+  {
+    "company_id": 145,
+    "company_name": "FORTUNE BAY",
+    "tsx_code": "FOR.V"
+  },
+  {
+    "company_id": 146,
+    "company_name": "Grit Metals Corp.",
+    "tsx_code": "FIN.V"
+  },
+  {
+    "company_id": 147,
+    "company_name": "FORUM ENERGY METALS",
+    "tsx_code": "FMC.V"
+  },
+  {
+    "company_id": 148,
+    "company_name": "FORGE RESOURCES CORP.",
+    "tsx_code": "FRG.CN"
+  },
+  {
+    "company_id": 149,
+    "company_name": "FURY GOLD MINES",
+    "tsx_code": "FURY.TO"
+  },
+  {
+    "company_id": 150,
+    "company_name": "FORTUNA MINING",
+    "tsx_code": "FVI.TO"
+  },
+  {
+    "company_id": 151,
+    "company_name": "FIREFOX GOLD",
+    "tsx_code": "FFOX.V"
+  },
+  {
+    "company_id": 152,
+    "company_name": "Galantas Gold Corporation",
+    "tsx_code": "GAL.V"
+  },
+  {
+    "company_id": 153,
+    "company_name": "FREDONIA MINING",
+    "tsx_code": "FRED.V"
+  },
+  {
+    "company_id": 155,
+    "company_name": "Freegold Ventures Limited",
+    "tsx_code": "FVL.TO"
+  },
+  {
+    "company_id": 156,
+    "company_name": "FALCO RESOURCES",
+    "tsx_code": "FPC.V"
+  },
+  {
+    "company_id": 157,
+    "company_name": "AUGUSTA GOLD",
+    "tsx_code": "G.TO"
+  },
+  {
+    "company_id": 158,
+    "company_name": "GOLDEN CARIBOO RESOURCES",
+    "tsx_code": "GCC.CN"
+  },
+  {
+    "company_id": 159,
+    "company_name": "GREENHEART GOLD",
+    "tsx_code": "GHRT.V"
+  },
+  {
+    "company_id": 160,
+    "company_name": "Galiano Gold Inc.",
+    "tsx_code": "GAU.TO"
+  },
+  {
+    "company_id": 161,
+    "company_name": "GOLDEX RESOURCES",
+    "tsx_code": "GDX.V"
+  },
+  {
+    "company_id": 162,
+    "company_name": "GOGOLD RESOURCES INC.",
+    "tsx_code": "GGD.TO"
+  },
+  {
+    "company_id": 163,
+    "company_name": "Golconda Gold Ltd.",
+    "tsx_code": "GG.V"
+  },
+  {
+    "company_id": 164,
+    "company_name": "GRANADA GOLD MINE",
+    "tsx_code": "GGM.V"
+  },
+  {
+    "company_id": 165,
+    "company_name": "Galleon Gold Corp.",
+    "tsx_code": "GGO.V"
+  },
+  {
+    "company_id": 166,
+    "company_name": "Cassiar Gold Corp.",
+    "tsx_code": "GLDC.V"
+  },
+  {
+    "company_id": 167,
+    "company_name": "GGL RESOURCES",
+    "tsx_code": "GGL.V"
+  },
+  {
+    "company_id": 168,
+    "company_name": "GOLDGROUP MINING",
+    "tsx_code": "GGA.V"
+  },
+  {
+    "company_id": 169,
+    "company_name": "GFG Resources Inc.",
+    "tsx_code": "GFG.V"
+  },
+  {
+    "company_id": 170,
+    "company_name": "GOLD MOUNTAIN MINING",
+    "tsx_code": "GMTN.TO"
+  },
+  {
+    "company_id": 171,
+    "company_name": "GOLDEN LAKE EXPLORATION",
+    "tsx_code": "GLM.CN"
+  },
+  {
+    "company_id": 172,
+    "company_name": "G MINING VENTURES",
+    "tsx_code": "GMIN.TO"
+  },
+  {
+    "company_id": 173,
+    "company_name": "Golden Ridge Resources Ltd.",
+    "tsx_code": "GLDN.V"
+  },
+  {
+    "company_id": 174,
+    "company_name": "GoldMining Inc.",
+    "tsx_code": "GOLD.TO"
+  },
+  {
+    "company_id": 175,
+    "company_name": "GOLIATH RESOURCES",
+    "tsx_code": "GOT.V"
+  },
+  {
+    "company_id": 176,
+    "company_name": "GREAT PACIFIC GOLD",
+    "tsx_code": "GPAC.V"
+  },
+  {
+    "company_id": 177,
+    "company_name": "GRANDE PORTAGE RESOURCES",
+    "tsx_code": "GPG.V"
+  },
+  {
+    "company_id": 178,
+    "company_name": "G2 GOLDFIELDS",
+    "tsx_code": "GTWO.TO"
+  },
+  {
+    "company_id": 179,
+    "company_name": "Globex Mining Enterprises Inc.",
+    "tsx_code": "GMX.TO"
+  },
+  {
+    "company_id": 180,
+    "company_name": "GOLDEN GOLIATH RESOURCES",
+    "tsx_code": "GNG.V"
+  },
+  {
+    "company_id": 181,
+    "company_name": "GOLD SPRINGS RESOURCE",
+    "tsx_code": "GRC.TO"
+  },
+  {
+    "company_id": 182,
+    "company_name": "GOLDEN ARROW RESOURCES",
+    "tsx_code": "GRG.V"
+  },
+  {
+    "company_id": 183,
+    "company_name": "GR SILVER MINING",
+    "tsx_code": "GRSL.V"
+  },
+  {
+    "company_id": 184,
+    "company_name": "GOLDSHORE RESOURCES",
+    "tsx_code": "GSHR.V"
+  },
+  {
+    "company_id": 185,
+    "company_name": "GMV MINERALS",
+    "tsx_code": "GMV.V"
+  },
+  {
+    "company_id": 186,
+    "company_name": "GUANAJUATO SILVER COMPANY LTD.",
+    "tsx_code": "GSVR.V"
+  },
+  {
+    "company_id": 187,
+    "company_name": "GREAT QUEST GOLD",
+    "tsx_code": "GQ.V"
+  },
+  {
+    "company_id": 188,
+    "company_name": "GUNPOINT EXPLORATION",
+    "tsx_code": "GUN.V"
+  },
+  {
+    "company_id": 189,
+    "company_name": "GOLDSTORM METALS",
+    "tsx_code": "GSTM.V"
+  },
+  {
+    "company_id": 190,
+    "company_name": "GALWAY METALS",
+    "tsx_code": "GWM.V"
+  },
+  {
+    "company_id": 191,
+    "company_name": "Getchell Gold Corp.",
+    "tsx_code": "GTCH.CN"
+  },
+  {
+    "company_id": 192,
+    "company_name": "GOLDQUEST MINING",
+    "tsx_code": "GQC.V"
+  },
+  {
+    "company_id": 193,
+    "company_name": "Angus Gold Inc.",
+    "tsx_code": "GUS.V"
+  },
+  {
+    "company_id": 194,
+    "company_name": "HIGHLANDER SILVER",
+    "tsx_code": "HSLV.CN"
+  },
+  {
+    "company_id": 195,
+    "company_name": "Heliostar Metals Ltd.",
+    "tsx_code": "HSTR.V"
+  },
+  {
+    "company_id": 196,
+    "company_name": "GOLD HUNTER RESOURCES",
+    "tsx_code": "HUNT.CN"
+  },
+  {
+    "company_id": 197,
+    "company_name": "HIGHWAY 50 GOLD",
+    "tsx_code": "HWY.V"
+  },
+  {
+    "company_id": 198,
+    "company_name": "i-80 Gold Corp",
+    "tsx_code": "IAU.TO"
+  },
+  {
+    "company_id": 199,
+    "company_name": "INDEPENDENCE GOLD",
+    "tsx_code": "IGO.V"
+  },
+  {
+    "company_id": 200,
+    "company_name": "HERITAGE MINING",
+    "tsx_code": "HML.CN"
+  },
+  {
+    "company_id": 201,
+    "company_name": "GOLD BASIN RESOURCES",
+    "tsx_code": "GXX.V"
+  },
+  {
+    "company_id": 202,
+    "company_name": "INVENTUS MINING",
+    "tsx_code": "IVS.V"
+  },
+  {
+    "company_id": 203,
+    "company_name": "Jaguar Mining Inc.",
+    "tsx_code": "JAG.TO"
+  },
+  {
+    "company_id": 204,
+    "company_name": "IAMGOLD",
+    "tsx_code": "IMG.TO"
+  },
+  {
+    "company_id": 206,
+    "company_name": "JUGGERNAUT EXPLORATION LTD",
+    "tsx_code": "JUGR.V"
+  },
+  {
+    "company_id": 207,
+    "company_name": "JAPAN GOLD",
+    "tsx_code": "JG.V"
+  },
+  {
+    "company_id": 208,
+    "company_name": "KINROSS GOLD CORPORATION",
+    "tsx_code": "K.TO"
+  },
+  {
+    "company_id": 209,
+    "company_name": "KALO GOLD",
+    "tsx_code": "KALO.V"
+  },
+  {
+    "company_id": 210,
+    "company_name": "KAPA GOLD INC",
+    "tsx_code": "KAPA.V"
+  },
+  {
+    "company_id": 211,
+    "company_name": "JZR GOLD INC",
+    "tsx_code": "JZR.V"
+  },
+  {
+    "company_id": 212,
+    "company_name": "KLONDIKE GOLD",
+    "tsx_code": "KG.V"
+  },
+  {
+    "company_id": 213,
+    "company_name": "SILVER HAMMER MINING",
+    "tsx_code": "HAMR.CN"
+  },
+  {
+    "company_id": 214,
+    "company_name": "KENORLAND MINERALS",
+    "tsx_code": "KLD.V"
+  },
+  {
+    "company_id": 215,
+    "company_name": "KERMODE RESOURCES",
+    "tsx_code": "KLM.V"
+  },
+  {
+    "company_id": 216,
+    "company_name": "IMPACT SILVER CORP.",
+    "tsx_code": "IPT.V"
+  },
+  {
+    "company_id": 217,
+    "company_name": "K92 MINING",
+    "tsx_code": "KNT.TO"
+  },
+  {
+    "company_id": 218,
+    "company_name": "KO Gold Inc.",
+    "tsx_code": "KOG.CN"
+  },
+  {
+    "company_id": 219,
+    "company_name": "KORE MINING",
+    "tsx_code": "KORE.V"
+  },
+  {
+    "company_id": 220,
+    "company_name": "KINGSMEN RESOURCES",
+    "tsx_code": "KNG.V"
+  },
+  {
+    "company_id": 221,
+    "company_name": "KESTREL GOLD",
+    "tsx_code": "KGC.V"
+  },
+  {
+    "company_id": 222,
+    "company_name": "Kootenay Silver Inc.",
+    "tsx_code": "KTN.V"
+  },
+  {
+    "company_id": 224,
+    "company_name": "Kuya Silver Corporation",
+    "tsx_code": "KUYA.CN"
+  },
+  {
+    "company_id": 225,
+    "company_name": "KLONDIKE SILVER CORP.",
+    "tsx_code": "KS.V"
+  },
+  {
+    "company_id": 226,
+    "company_name": "Leocor Mining",
+    "tsx_code": "LECR.CN"
+  },
+  {
+    "company_id": 227,
+    "company_name": "K2 GOLD",
+    "tsx_code": "KTO.V"
+  },
+  {
+    "company_id": 228,
+    "company_name": "LaFleur Minerals",
+    "tsx_code": "LFLR.CN"
+  },
+  {
+    "company_id": 230,
+    "company_name": "LAVRAS GOLD",
+    "tsx_code": "LGC.V"
+  },
+  {
+    "company_id": 231,
+    "company_name": "KOBO RESOURCES",
+    "tsx_code": "KRI.V"
+  },
+  {
+    "company_id": 232,
+    "company_name": "Lion One Metals Limited",
+    "tsx_code": "LIO.V"
+  },
+  {
+    "company_id": 233,
+    "company_name": "Legacy Gold Mines",
+    "tsx_code": "LEGY.V"
+  },
+  {
+    "company_id": 234,
+    "company_name": "Lincoln Gold Mining Inc.",
+    "tsx_code": "LMG.V"
+  },
+  {
+    "company_id": 235,
+    "company_name": "LONCOR GOLD",
+    "tsx_code": "LN.TO"
+  },
+  {
+    "company_id": 236,
+    "company_name": "LABRADOR GOLD",
+    "tsx_code": "LAB.V"
+  },
+  {
+    "company_id": 237,
+    "company_name": "Laurion Mineral Exploration Inc.",
+    "tsx_code": "LME.V"
+  },
+  {
+    "company_id": 238,
+    "company_name": "Liberty Gold Corp.",
+    "tsx_code": "LGD.TO"
+  },
+  {
+    "company_id": 239,
+    "company_name": "Lode Gold Resources Inc.",
+    "tsx_code": "LOD.V"
+  },
+  {
+    "company_id": 240,
+    "company_name": "TOMAGOLD",
+    "tsx_code": "LOT.V"
+  },
+  {
+    "company_id": 241,
+    "company_name": "LUPAKA GOLD",
+    "tsx_code": "LPK.V"
+  },
+  {
+    "company_id": 242,
+    "company_name": "LUMINA GOLD",
+    "tsx_code": "LUM.V"
+  },
+  {
+    "company_id": 243,
+    "company_name": "LAKE VICTORIA GOLD",
+    "tsx_code": "LVG.V"
+  },
+  {
+    "company_id": 244,
+    "company_name": "Luca Mining Corp.",
+    "tsx_code": "LUCA.V"
+  },
+  {
+    "company_id": 245,
+    "company_name": "Lundin Gold Inc.",
+    "tsx_code": "LUG.TO"
+  },
+  {
+    "company_id": 246,
+    "company_name": "MINERA ALAMOS",
+    "tsx_code": "MAI.V"
+  },
+  {
+    "company_id": 247,
+    "company_name": "LODESTAR METALS",
+    "tsx_code": "LSTR.V"
+  },
+  {
+    "company_id": 248,
+    "company_name": "METALS CREEK RESOURCES",
+    "tsx_code": "MEK.V"
+  },
+  {
+    "company_id": 249,
+    "company_name": "MAG SILVER CORP.",
+    "tsx_code": "MAG.TO"
+  },
+  {
+    "company_id": 250,
+    "company_name": "Mayfair Gold Corp.",
+    "tsx_code": "MFG.V"
+  },
+  {
+    "company_id": 251,
+    "company_name": "MAWSON FINLAND",
+    "tsx_code": "MFL.V"
+  },
+  {
+    "company_id": 252,
+    "company_name": "MINAURUM GOLD",
+    "tsx_code": "MGG.V"
+  },
+  {
+    "company_id": 253,
+    "company_name": "MONTAGE GOLD",
+    "tsx_code": "MAU.V"
+  },
+  {
+    "company_id": 254,
+    "company_name": "MISTANGO RIVER RESOURCES",
+    "tsx_code": "MIS.CN"
+  },
+  {
+    "company_id": 255,
+    "company_name": "MAJESTIC GOLD",
+    "tsx_code": "MJS.V"
+  },
+  {
+    "company_id": 256,
+    "company_name": "Mako Mining Corp.",
+    "tsx_code": "MKO.V"
+  },
+  {
+    "company_id": 257,
+    "company_name": "McFarlane Lake Mining Limited",
+    "tsx_code": "MLM.NE"
+  },
+  {
+    "company_id": 258,
+    "company_name": "Miata Metals Corp.",
+    "tsx_code": "MMET.CN"
+  },
+  {
+    "company_id": 259,
+    "company_name": "METALLIC MINERALS",
+    "tsx_code": "MMG.V"
+  },
+  {
+    "company_id": 260,
+    "company_name": "MONARCA MINERALS",
+    "tsx_code": "MMN.V"
+  },
+  {
+    "company_id": 261,
+    "company_name": "MONUMENT MINING",
+    "tsx_code": "MMY.V"
+  },
+  {
+    "company_id": 262,
+    "company_name": "Mandalay Resources Corporation",
+    "tsx_code": "MND.TO"
+  },
+  {
+    "company_id": 263,
+    "company_name": "MAPLE GOLD MINES",
+    "tsx_code": "MGM.V"
+  },
+  {
+    "company_id": 264,
+    "company_name": "MARITIME RESOURCES",
+    "tsx_code": "MAE.V"
+  },
+  {
+    "company_id": 265,
+    "company_name": "MEXICAN GOLD MINING",
+    "tsx_code": "MEX.V"
+  },
+  {
+    "company_id": 266,
+    "company_name": "MERIDIAN MINING",
+    "tsx_code": "MNO.TO"
+  },
+  {
+    "company_id": 267,
+    "company_name": "MIRASOL RESOURCES",
+    "tsx_code": "MRZ.V"
+  },
+  {
+    "company_id": 268,
+    "company_name": "Minco Silver Corporation",
+    "tsx_code": "MSV.TO"
+  },
+  {
+    "company_id": 269,
+    "company_name": "METALLA ROYALTY & STREAMING",
+    "tsx_code": "MTA.V"
+  },
+  {
+    "company_id": 270,
+    "company_name": "METALLIS RESOURCES",
+    "tsx_code": "MTS.V"
+  },
+  {
+    "company_id": 271,
+    "company_name": "MAGNA TERRA MINERALS",
+    "tsx_code": "MTT.V"
+  },
+  {
+    "company_id": 272,
+    "company_name": "Mineros S.A.",
+    "tsx_code": "MSA.TO"
+  },
+  {
+    "company_id": 273,
+    "company_name": "MITHRIL SILVER AND GOLD",
+    "tsx_code": "MSG.V"
+  },
+  {
+    "company_id": 274,
+    "company_name": "NEVGOLD",
+    "tsx_code": "NAU.V"
+  },
+  {
+    "company_id": 275,
+    "company_name": "New Break Resources Ltd",
+    "tsx_code": "NBRK.CN"
+  },
+  {
+    "company_id": 276,
+    "company_name": "Newcore Gold Ltd.",
+    "tsx_code": "NCAU.V"
+  },
+  {
+    "company_id": 277,
+    "company_name": "McEwen Mining Inc.",
+    "tsx_code": "MUX.TO"
+  },
+  {
+    "company_id": 278,
+    "company_name": "Northern Dynasty Minerals Ltd.",
+    "tsx_code": "NDM.TO"
+  },
+  {
+    "company_id": 279,
+    "company_name": "NEVADA SUNRISE METALS CORPORATION",
+    "tsx_code": "NEV.V"
+  },
+  {
+    "company_id": 280,
+    "company_name": "NEXGOLD MINING CORP.",
+    "tsx_code": "NEXG.V"
+  },
+  {
+    "company_id": 281,
+    "company_name": "NEW FOUND GOLD CORP.",
+    "tsx_code": "NFG.V"
+  },
+  {
+    "company_id": 282,
+    "company_name": "NOVAGOLD RESOURCES INC.",
+    "tsx_code": "NG"
+  },
+  {
+    "company_id": 283,
+    "company_name": "NEW GOLD",
+    "tsx_code": "NGD.TO"
+  },
+  {
+    "company_id": 284,
+    "company_name": "NGEx Minerals Ltd.",
+    "tsx_code": "NGEX.TO"
+  },
+  {
+    "company_id": 285,
+    "company_name": "SURGE BATTERY METALS",
+    "tsx_code": "NILI.V"
+  },
+  {
+    "company_id": 286,
+    "company_name": "Nicola Mining Inc.",
+    "tsx_code": "NIM.V"
+  },
+  {
+    "company_id": 287,
+    "company_name": "NEVADA KING GOLD CORP.",
+    "tsx_code": "NKG.V"
+  },
+  {
+    "company_id": 288,
+    "company_name": "EXPLOITS DISCOVERY",
+    "tsx_code": "NFLD.CN"
+  },
+  {
+    "company_id": 289,
+    "company_name": "Northern Lion Gold Corp.",
+    "tsx_code": "NL.V"
+  },
+  {
+    "company_id": 290,
+    "company_name": "Norsemont Mining Inc.",
+    "tsx_code": "NOM.CN"
+  },
+  {
+    "company_id": 291,
+    "company_name": "NORTH PEAK RESOURCES",
+    "tsx_code": "NPR.V"
+  },
+  {
+    "company_id": 292,
+    "company_name": "NATIONS ROYALTY",
+    "tsx_code": "NRC.V"
+  },
+  {
+    "company_id": 293,
+    "company_name": "NORTHSTAR GOLD",
+    "tsx_code": "NSG.CN"
+  },
+  {
+    "company_id": 294,
+    "company_name": "NORD PRECIOUS METALS",
+    "tsx_code": "NTH.V"
+  },
+  {
+    "company_id": 295,
+    "company_name": "New Pacific Metals Corp.",
+    "tsx_code": "NUAG.TO"
+  },
+  {
+    "company_id": 296,
+    "company_name": "Novo Resources Corp.",
+    "tsx_code": "NVO.TO"
+  },
+  {
+    "company_id": 297,
+    "company_name": "Nova Pacific Metals Corp.",
+    "tsx_code": "NVPC.CN"
+  },
+  {
+    "company_id": 298,
+    "company_name": "Outcrop Silver & Gold Corporation",
+    "tsx_code": "OCG.V"
+  },
+  {
+    "company_id": 299,
+    "company_name": "OROCO RESOURCE CORP",
+    "tsx_code": "OCO.V"
+  },
+  {
+    "company_id": 300,
+    "company_name": "OSISKO DEVELOPMENT",
+    "tsx_code": "ODV.V"
+  },
+  {
+    "company_id": 301,
+    "company_name": "MUNDORO",
+    "tsx_code": "MUN.V"
+  },
+  {
+    "company_id": 302,
+    "company_name": "OROGEN ROYALTIES",
+    "tsx_code": "OGN.V"
+  },
+  {
+    "company_id": 303,
+    "company_name": "NorthIsle Copper and Gold Inc.",
+    "tsx_code": "NCX.V"
+  },
+  {
+    "company_id": 304,
+    "company_name": "MINSUD RESOURCES",
+    "tsx_code": "MSR.V"
+  },
+  {
+    "company_id": 305,
+    "company_name": "OCEANAGOLD",
+    "tsx_code": "OGC.TO"
+  },
+  {
+    "company_id": 306,
+    "company_name": "Omega Pacific Resources Inc.",
+    "tsx_code": "OMGA.CN"
+  },
+  {
+    "company_id": 308,
+    "company_name": "OMINECA MINING",
+    "tsx_code": "OMM.V"
+  },
+  {
+    "company_id": 309,
+    "company_name": "OnGold Resources Ltd.",
+    "tsx_code": "ONAU.V"
+  },
+  {
+    "company_id": 310,
+    "company_name": "ONYX GOLD",
+    "tsx_code": "ONYX.V"
+  },
+  {
+    "company_id": 311,
+    "company_name": "OPAWICA EXPLORATIONS",
+    "tsx_code": "OPW.V"
+  },
+  {
+    "company_id": 312,
+    "company_name": "OSISKO GOLD ROYALTIES",
+    "tsx_code": "OR.TO"
+  },
+  {
+    "company_id": 313,
+    "company_name": "Aura Minerals Inc.",
+    "tsx_code": "ORA.TO"
+  },
+  {
+    "company_id": 314,
+    "company_name": "Orezone Gold Corporation",
+    "tsx_code": "ORE.TO"
+  },
+  {
+    "company_id": 315,
+    "company_name": "ORVANA MINERALS",
+    "tsx_code": "ORV.TO"
+  },
+  {
+    "company_id": 316,
+    "company_name": "VALKEA RESOURCES",
+    "tsx_code": "OZ.V"
+  },
+  {
+    "company_id": 317,
+    "company_name": "PALAMINA",
+    "tsx_code": "PA.V"
+  },
+  {
+    "company_id": 318,
+    "company_name": "PAN AMERICAN SILVER CORP.",
+    "tsx_code": "PAAS.TO"
+  },
+  {
+    "company_id": 320,
+    "company_name": "PROVENANCE GOLD",
+    "tsx_code": "PAU.CN"
+  },
+  {
+    "company_id": 321,
+    "company_name": "OMAI GOLD MINES",
+    "tsx_code": "OMG.V"
+  },
+  {
+    "company_id": 322,
+    "company_name": "Plato Gold Corp.",
+    "tsx_code": "PGC.V"
+  },
+  {
+    "company_id": 323,
+    "company_name": "Patagonia Gold Corp.",
+    "tsx_code": "PGDC.V"
+  },
+  {
+    "company_id": 324,
+    "company_name": "ORLA MINING",
+    "tsx_code": "OLA.TO"
+  },
+  {
+    "company_id": 325,
+    "company_name": "PROSPER GOLD",
+    "tsx_code": "PGX.V"
+  },
+  {
+    "company_id": 326,
+    "company_name": "PJX RESOURCES",
+    "tsx_code": "PJX.V"
+  },
+  {
+    "company_id": 327,
+    "company_name": "PLAYFAIR MINING",
+    "tsx_code": "PLY.V"
+  },
+  {
+    "company_id": 328,
+    "company_name": "P2 GOLD",
+    "tsx_code": "PGLD.V"
+  },
+  {
+    "company_id": 329,
+    "company_name": "PROSPECTOR METALS",
+    "tsx_code": "PPP.V"
+  },
+  {
+    "company_id": 330,
+    "company_name": "PPX MINING",
+    "tsx_code": "PPX.V"
+  },
+  {
+    "company_id": 331,
+    "company_name": "PROBE GOLD",
+    "tsx_code": "PRB.TO"
+  },
+  {
+    "company_id": 332,
+    "company_name": "PANTERA SILVER",
+    "tsx_code": "PNTR.V"
+  },
+  {
+    "company_id": 333,
+    "company_name": "PACIFIC RIDGE",
+    "tsx_code": "PEX.V"
+  },
+  {
+    "company_id": 334,
+    "company_name": "PERSEUS MINING",
+    "tsx_code": "PRU.TO"
+  },
+  {
+    "company_id": 335,
+    "company_name": "Prime Mining Corp.",
+    "tsx_code": "PRYM.TO"
+  },
+  {
+    "company_id": 336,
+    "company_name": "PRECIPITATE GOLD",
+    "tsx_code": "PRG.V"
+  },
+  {
+    "company_id": 337,
+    "company_name": "PELANGIO EXPLORATION",
+    "tsx_code": "PX.V"
+  },
+  {
+    "company_id": 338,
+    "company_name": "Quimbaya Gold Inc.",
+    "tsx_code": "QIM.CN"
+  },
+  {
+    "company_id": 339,
+    "company_name": "QUARTZ MOUNTAIN RESOURCES",
+    "tsx_code": "QZM.V"
+  },
+  {
+    "company_id": 340,
+    "company_name": "RENEGADE GOLD",
+    "tsx_code": "RAGE.V"
+  },
+  {
+    "company_id": 341,
+    "company_name": "RAMP METALS",
+    "tsx_code": "RAMP.V"
+  },
+  {
+    "company_id": 342,
+    "company_name": "ROBEX RESOURCES",
+    "tsx_code": "RBX.V"
+  },
+  {
+    "company_id": 343,
+    "company_name": "RIDGELINE MINERALS",
+    "tsx_code": "RDG.V"
+  },
+  {
+    "company_id": 344,
+    "company_name": "RADISSON MINING",
+    "tsx_code": "RDS.V"
+  },
+  {
+    "company_id": 345,
+    "company_name": "PRISMO METALS",
+    "tsx_code": "PRIZ.CN"
+  },
+  {
+    "company_id": 346,
+    "company_name": "OREX MINERALS",
+    "tsx_code": "REX.V"
+  },
+  {
+    "company_id": 347,
+    "company_name": "ROMIOS GOLD RESOURCES",
+    "tsx_code": "RG.V"
+  },
+  {
+    "company_id": 348,
+    "company_name": "RADIUS GOLD",
+    "tsx_code": "RDU.V"
+  },
+  {
+    "company_id": 349,
+    "company_name": "RED LAKE GOLD",
+    "tsx_code": "RGLD.CN"
+  },
+  {
+    "company_id": 350,
+    "company_name": "RIO2",
+    "tsx_code": "RIO.V"
+  },
+  {
+    "company_id": 351,
+    "company_name": "ROCKHAVEN RESOURCES",
+    "tsx_code": "RK.V"
+  },
+  {
+    "company_id": 352,
+    "company_name": "ROKMASTER RESOURCES",
+    "tsx_code": "RKR.V"
+  },
+  {
+    "company_id": 353,
+    "company_name": "RILEY GOLD",
+    "tsx_code": "RLYG.V"
+  },
+  {
+    "company_id": 354,
+    "company_name": "EROS RESOURCES",
+    "tsx_code": "ROCK.V"
+  },
+  {
+    "company_id": 355,
+    "company_name": "ROSCAN GOLD",
+    "tsx_code": "ROS.V"
+  },
+  {
+    "company_id": 356,
+    "company_name": "OROSUR MINING",
+    "tsx_code": "OMI.V"
+  },
+  {
+    "company_id": 357,
+    "company_name": "RED PINE EXPLORATION",
+    "tsx_code": "RPX.V"
+  },
+  {
+    "company_id": 358,
+    "company_name": "RECHARGE RESOURCES",
+    "tsx_code": "RR.CN"
+  },
+  {
+    "company_id": 359,
+    "company_name": "RIVERSIDE RESOURCES",
+    "tsx_code": "RRI.V"
+  },
+  {
+    "company_id": 360,
+    "company_name": "ROCKY SHORE GOLD",
+    "tsx_code": "RSG.CN"
+  },
+  {
+    "company_id": 361,
+    "company_name": "REYNA SILVER",
+    "tsx_code": "RSLV.V"
+  },
+  {
+    "company_id": 362,
+    "company_name": "Resouro Strategic Metals Inc.",
+    "tsx_code": "RSM.V"
+  },
+  {
+    "company_id": 363,
+    "company_name": "REGENCY SILVER",
+    "tsx_code": "RSMX.V"
+  },
+  {
+    "company_id": 364,
+    "company_name": "RTG MINING",
+    "tsx_code": "RTG.TO"
+  },
+  {
+    "company_id": 365,
+    "company_name": "PUMA EXPLORATION",
+    "tsx_code": "PUMA.V"
+  },
+  {
+    "company_id": 366,
+    "company_name": "RELEVANT GOLD",
+    "tsx_code": "RGC.V"
+  },
+  {
+    "company_id": 367,
+    "company_name": "CANSTAR RESOURCES",
+    "tsx_code": "ROX.V"
+  },
+  {
+    "company_id": 368,
+    "company_name": "RUA GOLD",
+    "tsx_code": "RUA.V"
+  },
+  {
+    "company_id": 369,
+    "company_name": "REVIVAL GOLD INC.",
+    "tsx_code": "RVG.V"
+  },
+  {
+    "company_id": 370,
+    "company_name": "RHYOLITE RESOURCES",
+    "tsx_code": "RYE.V"
+  },
+  {
+    "company_id": 371,
+    "company_name": "ROYAL ROAD MINERALS",
+    "tsx_code": "RYR.V"
+  },
+  {
+    "company_id": 372,
+    "company_name": "STERLING METALS",
+    "tsx_code": "SAG.V"
+  },
+  {
+    "company_id": 373,
+    "company_name": "Starcore International Mines Ltd.",
+    "tsx_code": "SAM.TO"
+  },
+  {
+    "company_id": 374,
+    "company_name": "SANU GOLD",
+    "tsx_code": "SANU.CN"
+  },
+  {
+    "company_id": 375,
+    "company_name": "SILVER BULLET MINES CORP.",
+    "tsx_code": "SBMI.V"
+  },
+  {
+    "company_id": 376,
+    "company_name": "SCOTTIE RESOURCES",
+    "tsx_code": "SCOT.V"
+  },
+  {
+    "company_id": 377,
+    "company_name": "Santacruz Silver Mining Ltd.",
+    "tsx_code": "SCZ.V"
+  },
+  {
+    "company_id": 378,
+    "company_name": "STROUD RESOURCES",
+    "tsx_code": "SDR.V"
+  },
+  {
+    "company_id": 379,
+    "company_name": "SEABRIDGE GOLD",
+    "tsx_code": "SEA.TO"
+  },
+  {
+    "company_id": 380,
+    "company_name": "SERRA ENERGY METALS",
+    "tsx_code": "SEEM.CN"
+  },
+  {
+    "company_id": 381,
+    "company_name": "SOLSTICE GOLD CORP",
+    "tsx_code": "SGC.V"
+  },
+  {
+    "company_id": 382,
+    "company_name": "SNOWLINE GOLD CORP",
+    "tsx_code": "SGD.V"
+  },
+  {
+    "company_id": 384,
+    "company_name": "RUGBY RESOURCES",
+    "tsx_code": "RUG.V"
+  },
+  {
+    "company_id": 385,
+    "company_name": "Scorpio Gold Corporation",
+    "tsx_code": "SGN.V"
+  },
+  {
+    "company_id": 386,
+    "company_name": "SIGNATURE RESOURCES",
+    "tsx_code": "SGU.V"
+  },
+  {
+    "company_id": 387,
+    "company_name": "CAROLINA RUSH",
+    "tsx_code": "RUSH.V"
+  },
+  {
+    "company_id": 388,
+    "company_name": "HOMELAND NICKEL",
+    "tsx_code": "SHL.V"
+  },
+  {
+    "company_id": 389,
+    "company_name": "RUPERT RESOURCES",
+    "tsx_code": "RUP.TO"
+  },
+  {
+    "company_id": 390,
+    "company_name": "SITKA GOLD",
+    "tsx_code": "SIG.V"
+  },
+  {
+    "company_id": 392,
+    "company_name": "Silver Valley Metals Inc.",
+    "tsx_code": "SILV.V"
+  },
+  {
+    "company_id": 393,
+    "company_name": "SKEENA RESOURCES LIMITED",
+    "tsx_code": "SKE.TO"
+  },
+  {
+    "company_id": 394,
+    "company_name": "STRIKEPOINT GOLD",
+    "tsx_code": "SKP.V"
+  },
+  {
+    "company_id": 395,
+    "company_name": "STANDARD LITHIUM",
+    "tsx_code": "SLI.V"
+  },
+  {
+    "company_id": 396,
+    "company_name": "Solitario Resources Corp.",
+    "tsx_code": "SLR.TO"
+  },
+  {
+    "company_id": 397,
+    "company_name": "SILVER DOLLAR RESOURCES",
+    "tsx_code": "SLV.CN"
+  },
+  {
+    "company_id": 398,
+    "company_name": "SILVER TIGER METALS",
+    "tsx_code": "SLVR.V"
+  },
+  {
+    "company_id": 399,
+    "company_name": "Sierra Madre Gold and Silver Ltd.",
+    "tsx_code": "SM.V"
+  },
+  {
+    "company_id": 400,
+    "company_name": "SUN SUMMIT MINERALS",
+    "tsx_code": "SMN.V"
+  },
+  {
+    "company_id": 401,
+    "company_name": "Sierra Metals Inc.",
+    "tsx_code": "SMT.TO"
+  },
+  {
+    "company_id": 402,
+    "company_name": "SILVER NORTH RESOURCES",
+    "tsx_code": "SNAG.V"
+  },
+  {
+    "company_id": 403,
+    "company_name": "SILVER RANGE RESOURCES",
+    "tsx_code": "SNG.V"
+  },
+  {
+    "company_id": 404,
+    "company_name": "SIRIOS RESOURCES",
+    "tsx_code": "SOI.V"
+  },
+  {
+    "company_id": 405,
+    "company_name": "SOMA GOLD CORP.",
+    "tsx_code": "SOMA.V"
+  },
+  {
+    "company_id": 406,
+    "company_name": "SPANISH MOUNTAIN GOLD LTD.",
+    "tsx_code": "SPA.V"
+  },
+  {
+    "company_id": 407,
+    "company_name": "SOUTH PACIFIC METALS CORP.",
+    "tsx_code": "SPMC.V"
+  },
+  {
+    "company_id": 408,
+    "company_name": "SONORO GOLD",
+    "tsx_code": "SGO.V"
+  },
+  {
+    "company_id": 409,
+    "company_name": "SOKOMAN MINERALS",
+    "tsx_code": "SIC.V"
+  },
+  {
+    "company_id": 410,
+    "company_name": "SALAZAR RESOURCES",
+    "tsx_code": "SRL.V"
+  },
+  {
+    "company_id": 411,
+    "company_name": "SEGO RESOURCES",
+    "tsx_code": "SGZ.V"
+  },
+  {
+    "company_id": 412,
+    "company_name": "SSR Mining Inc",
+    "tsx_code": "SSRM.TO"
+  },
+  {
+    "company_id": 413,
+    "company_name": "Southern Silver Exploration Corp.",
+    "tsx_code": "SSV.V"
+  },
+  {
+    "company_id": 414,
+    "company_name": "SUMMA SILVER",
+    "tsx_code": "SSVR.V"
+  },
+  {
+    "company_id": 415,
+    "company_name": "Steppe Gold Ltd.",
+    "tsx_code": "STGO.TO"
+  },
+  {
+    "company_id": 416,
+    "company_name": "STAKEHOLDER GOLD",
+    "tsx_code": "SRC.V"
+  },
+  {
+    "company_id": 417,
+    "company_name": "STAR ROYALTIES",
+    "tsx_code": "STRR.V"
+  },
+  {
+    "company_id": 418,
+    "company_name": "SOUTH STAR BATTERY METALS",
+    "tsx_code": "STS.V"
+  },
+  {
+    "company_id": 419,
+    "company_name": "Stuhini Exploration Ltd.",
+    "tsx_code": "STU.V"
+  },
+  {
+    "company_id": 420,
+    "company_name": "STLLR GOLD",
+    "tsx_code": "STLR.TO"
+  },
+  {
+    "company_id": 421,
+    "company_name": "SANDSTORM GOLD ROYALTIES",
+    "tsx_code": "SSL.TO"
+  },
+  {
+    "company_id": 422,
+    "company_name": "Silver One Resources Inc",
+    "tsx_code": "SVE.V"
+  },
+  {
+    "company_id": 423,
+    "company_name": "Northern Superior Resources Inc",
+    "tsx_code": "SUP.V"
+  },
+  {
+    "company_id": 424,
+    "company_name": "Silver Storm Mining Ltd",
+    "tsx_code": "SVRS.V"
+  },
+  {
+    "company_id": 425,
+    "company_name": "Sarama Resources Ltd",
+    "tsx_code": "SWA.V"
+  },
+  {
+    "company_id": 426,
+    "company_name": "Silver Wolf Exploration Ltd",
+    "tsx_code": "SWLF.V"
+  },
+  {
+    "company_id": 427,
+    "company_name": "Southern Cross Gold Consolidated Ltd",
+    "tsx_code": "SXGC.V"
+  },
+  {
+    "company_id": 428,
+    "company_name": "TAJIRI RESOURCES",
+    "tsx_code": "TAJ.V"
+  },
+  {
+    "company_id": 429,
+    "company_name": "STELLAR AFRICAGOLD INC.",
+    "tsx_code": "SPX.V"
+  },
+  {
+    "company_id": 430,
+    "company_name": "TRAILBREAKER RESOURCES",
+    "tsx_code": "TBK.V"
+  },
+  {
+    "company_id": 431,
+    "company_name": "Silvercorp Metals Inc.",
+    "tsx_code": "SVM.TO"
+  },
+  {
+    "company_id": 432,
+    "company_name": "Surge Copper Corp",
+    "tsx_code": "SURG.V"
+  },
+  {
+    "company_id": 433,
+    "company_name": "TDG GOLD",
+    "tsx_code": "TDG.V"
+  },
+  {
+    "company_id": 434,
+    "company_name": "TECTONIC METALS",
+    "tsx_code": "TECT.V"
+  },
+  {
+    "company_id": 435,
+    "company_name": "King Copper Discovery Corp",
+    "tsx_code": "KCP.V"
+  },
+  {
+    "company_id": 436,
+    "company_name": "TRANSATLANTIC MINING",
+    "tsx_code": "TCO.V"
+  },
+  {
+    "company_id": 437,
+    "company_name": "THESIS GOLD",
+    "tsx_code": "TAU.V"
+  },
+  {
+    "company_id": 438,
+    "company_name": "THUNDER GOLD",
+    "tsx_code": "TGOL.V"
+  },
+  {
+    "company_id": 439,
+    "company_name": "THOR EXPLORATIONS LTD.",
+    "tsx_code": "THX.V"
+  },
+  {
+    "company_id": 440,
+    "company_name": "TINCORP METALS",
+    "tsx_code": "TIN.V"
+  },
+  {
+    "company_id": 441,
+    "company_name": "TINKA RESOURCES",
+    "tsx_code": "TK.V"
+  },
+  {
+    "company_id": 442,
+    "company_name": "Troilus Gold Corp.",
+    "tsx_code": "TLG.TO"
+  },
+  {
+    "company_id": 443,
+    "company_name": "TRISTAR GOLD",
+    "tsx_code": "TSG.V"
+  },
+  {
+    "company_id": 444,
+    "company_name": "Triple Flag Precious Metals Corp.",
+    "tsx_code": "TFPM.TO"
+  },
+  {
+    "company_id": 445,
+    "company_name": "TRILOGY METALS",
+    "tsx_code": "TMQ.TO"
+  },
+  {
+    "company_id": 446,
+    "company_name": "TNR GOLD",
+    "tsx_code": "TNR.V"
+  },
+  {
+    "company_id": 447,
+    "company_name": "TRIGON METALS",
+    "tsx_code": "TM.V"
+  },
+  {
+    "company_id": 448,
+    "company_name": "TORQ RESOURCES",
+    "tsx_code": "TORQ.V"
+  },
+  {
+    "company_id": 449,
+    "company_name": "Terra Balcanica Resources Corp.",
+    "tsx_code": "TERA.CN"
+  },
+  {
+    "company_id": 450,
+    "company_name": "TRX GOLD",
+    "tsx_code": "TRX.TO"
+  },
+  {
+    "company_id": 451,
+    "company_name": "TRIFECTA GOLD",
+    "tsx_code": "TG.V"
+  },
+  {
+    "company_id": 452,
+    "company_name": "TARANIS RESOURCES",
+    "tsx_code": "TRO.V"
+  },
+  {
+    "company_id": 453,
+    "company_name": "TOCVAN VENTURES",
+    "tsx_code": "TOC.CN"
+  },
+  {
+    "company_id": 454,
+    "company_name": "TUDOR GOLD",
+    "tsx_code": "TUD.V"
+  },
+  {
+    "company_id": 456,
+    "company_name": "TEUTON RESOURCES",
+    "tsx_code": "TUO.V"
+  },
+  {
+    "company_id": 457,
+    "company_name": "TOWER RESOURCES",
+    "tsx_code": "TWR.V"
+  },
+  {
+    "company_id": 458,
+    "company_name": "Torex Gold Resources Inc.",
+    "tsx_code": "TXG.TO"
+  },
+  {
+    "company_id": 459,
+    "company_name": "HONEY BADGER SILVER",
+    "tsx_code": "TUF.V"
+  },
+  {
+    "company_id": 460,
+    "company_name": "TALISKER RESOURCES",
+    "tsx_code": "TSK.TO"
+  },
+  {
+    "company_id": 461,
+    "company_name": "American Pacific Mining Corp.",
+    "tsx_code": "USGD.CN"
+  },
+  {
+    "company_id": 462,
+    "company_name": "VIVA GOLD",
+    "tsx_code": "VAU.V"
+  },
+  {
+    "company_id": 463,
+    "company_name": "PASOFINO GOLD",
+    "tsx_code": "VEIN.V"
+  },
+  {
+    "company_id": 464,
+    "company_name": "VOLCANIC GOLD MINES INC.",
+    "tsx_code": "VG.V"
+  },
+  {
+    "company_id": 465,
+    "company_name": "VICTORIA GOLD",
+    "tsx_code": "VGCX.TO"
+  },
+  {
+    "company_id": 466,
+    "company_name": "VIOR INC.",
+    "tsx_code": "VIO.V"
+  },
+  {
+    "company_id": 467,
+    "company_name": "SILVER VIPER MINERALS",
+    "tsx_code": "VIPR.V"
+  },
+  {
+    "company_id": 468,
+    "company_name": "VELOCITY MINERALS",
+    "tsx_code": "VLC.V"
+  },
+  {
+    "company_id": 469,
+    "company_name": "VISCOUNT MINING",
+    "tsx_code": "VML.V"
+  },
+  {
+    "company_id": 470,
+    "company_name": "VOX ROYALTY",
+    "tsx_code": "VOXR.TO"
+  },
+  {
+    "company_id": 471,
+    "company_name": "Americas Gold and Silver Corporation",
+    "tsx_code": "USA.TO"
+  },
+  {
+    "company_id": 472,
+    "company_name": "VVC EXPLORATION",
+    "tsx_code": "VVC.V"
+  },
+  {
+    "company_id": 473,
+    "company_name": "VIZSLA SILVER CORP.",
+    "tsx_code": "VZLA.TO"
+  },
+  {
+    "company_id": 474,
+    "company_name": "WESTERN ALASKA MINERALS",
+    "tsx_code": "WAM.V"
+  },
+  {
+    "company_id": 475,
+    "company_name": "VIZSLA ROYALTIES",
+    "tsx_code": "VROY.V"
+  },
+  {
+    "company_id": 476,
+    "company_name": "WESTERN EXPLORATION",
+    "tsx_code": "WEX.V"
+  },
+  {
+    "company_id": 477,
+    "company_name": "WESTWARD GOLD",
+    "tsx_code": "WG.CN"
+  },
+  {
+    "company_id": 478,
+    "company_name": "WESCAN GOLDFIELDS",
+    "tsx_code": "WGF.V"
+  },
+  {
+    "company_id": 479,
+    "company_name": "WESTERN GOLD EXPLORATION",
+    "tsx_code": "WGLD.V"
+  },
+  {
+    "company_id": 480,
+    "company_name": "White Gold Corp.",
+    "tsx_code": "WGO.V"
+  },
+  {
+    "company_id": 481,
+    "company_name": "WESDOME GOLD MINES",
+    "tsx_code": "WDO.TO"
+  },
+  {
+    "company_id": 482,
+    "company_name": "WESTHAVEN GOLD",
+    "tsx_code": "WHN.V"
+  },
+  {
+    "company_id": 483,
+    "company_name": "WEST HIGH YIELD RESOURCES",
+    "tsx_code": "WHY.V"
+  },
+  {
+    "company_id": 484,
+    "company_name": "UNIGOLD",
+    "tsx_code": "UGD.V"
+  },
+  {
+    "company_id": 485,
+    "company_name": "WESTGOLD RESOURCES",
+    "tsx_code": "WGX.TO"
+  },
+  {
+    "company_id": 486,
+    "company_name": "WEST POINT GOLD",
+    "tsx_code": "WPG.V"
+  },
+  {
+    "company_id": 487,
+    "company_name": "Wheaton Precious Metals Corp.",
+    "tsx_code": "WPM.TO"
+  },
+  {
+    "company_id": 488,
+    "company_name": "West Red Lake Gold Mines Ltd.",
+    "tsx_code": "WRLG.V"
+  },
+  {
+    "company_id": 489,
+    "company_name": "Western Copper and Gold Corporation",
+    "tsx_code": "WRN.TO"
+  },
+  {
+    "company_id": 490,
+    "company_name": "WALKER RIVER RESOURCES",
+    "tsx_code": "WRR.V"
+  },
+  {
+    "company_id": 491,
+    "company_name": "WEST VAULT MINING",
+    "tsx_code": "WVM.V"
+  },
+  {
+    "company_id": 492,
+    "company_name": "XIMEN MINING",
+    "tsx_code": "XIM.V"
+  },
+  {
+    "company_id": 493,
+    "company_name": "XTRA-GOLD RESOURCES",
+    "tsx_code": "XTG.TO"
+  },
+  {
+    "company_id": 494,
+    "company_name": "TRANSITION METALS",
+    "tsx_code": "XTM.V"
+  },
+  {
+    "company_id": 495,
+    "company_name": "GOLD TERRA RESOURCE",
+    "tsx_code": "YGT.V"
+  },
+  {
+    "company_id": 496,
+    "company_name": "YORBEAU RESOURCES",
+    "tsx_code": "YRB.TO"
+  },
+  {
+    "company_id": 497,
+    "company_name": "ZACATECAS SILVER",
+    "tsx_code": "ZAC.V"
+  },
+  {
+    "company_id": 498,
+    "company_name": "WOLFDEN RESOURCES",
+    "tsx_code": "WLF.V"
+  },
+  {
+    "company_id": 499,
+    "company_name": "Wallbridge Mining Company Ltd.",
+    "tsx_code": "WM.TO"
+  },
+  {
+    "company_id": 500,
+    "company_name": "TIER ONE SILVER",
+    "tsx_code": "TSLV.V"
+  },
+  {
+    "company_id": 501,
+    "company_name": "ZODIAC GOLD",
+    "tsx_code": "ZAU.V"
+  },
+  {
+    "company_id": 502,
+    "company_name": "SIXTY NORTH GOLD MINING LTD",
+    "tsx_code": "SXTY.CN"
+  },
+  {
+    "company_id": 503,
+    "company_name": "Great Atlantic Resources Corp",
+    "tsx_code": "GR.V"
+  },
+  {
+    "company_id": 504,
+    "company_name": "Serabi Gold plc",
+    "tsx_code": "SBI.TO"
+  },
+  {
+    "company_id": 505,
+    "company_name": "55 North Mining Inc.",
+    "tsx_code": "FFF.CN"
+  },
+  {
+    "company_id": 506,
+    "company_name": "Abacus Mining & Exploration Corp.",
+    "tsx_code": "AME.V"
+  },
+  {
+    "company_id": 507,
+    "company_name": "Aben Gold Corp.",
+    "tsx_code": "ABM.V"
+  },
+  {
+    "company_id": 508,
+    "company_name": "Almaden Minerals Ltd.",
+    "tsx_code": "AMM.TO"
+  },
+  {
+    "company_id": 509,
+    "company_name": "Aloro Mining Corp.",
+    "tsx_code": "AORO.V"
+  },
+  {
+    "company_id": 510,
+    "company_name": "Altiplano Metals Inc.",
+    "tsx_code": "APN.V"
+  },
+  {
+    "company_id": 511,
+    "company_name": "Amarc Resources Ltd.",
+    "tsx_code": "AHR.V"
+  },
+  {
+    "company_id": 512,
+    "company_name": "American Creek Resources Ltd.",
+    "tsx_code": "AMK.V"
+  },
+  {
+    "company_id": 513,
+    "company_name": "ArcWest Exploration Inc.",
+    "tsx_code": "AWX.V"
+  },
+  {
+    "company_id": 514,
+    "company_name": "Argentum Silver Corp.",
+    "tsx_code": "ASL.V"
+  },
+  {
+    "company_id": 515,
+    "company_name": "Argo Gold Inc.",
+    "tsx_code": "ARQ.CN"
+  },
+  {
+    "company_id": 516,
+    "company_name": "Ascendant Resources Inc.",
+    "tsx_code": "ASND.TO"
+  },
+  {
+    "company_id": 517,
+    "company_name": "ATEX Resources Inc.",
+    "tsx_code": "ATX.V"
+  },
+  {
+    "company_id": 518,
+    "company_name": "Atico Mining Corp.",
+    "tsx_code": "ATY.V"
+  },
+  {
+    "company_id": 519,
+    "company_name": "Aurwest Resources Corp.",
+    "tsx_code": "AWR.CN"
+  },
+  {
+    "company_id": 520,
+    "company_name": "Avidian Gold Corp.",
+    "tsx_code": "AVG.V"
+  },
+  {
+    "company_id": 521,
+    "company_name": "Avrupa Minerals Ltd.",
+    "tsx_code": "AVU.V"
+  },
+  {
+    "company_id": 522,
+    "company_name": "Azarga Metals Corp.",
+    "tsx_code": "AZR.V"
+  },
+  {
+    "company_id": 523,
+    "company_name": "Azucar Minerals Ltd.",
+    "tsx_code": "AMZ.V"
+  },
+  {
+    "company_id": 524,
+    "company_name": "Badlands Resources Inc.",
+    "tsx_code": "BLDS.V"
+  },
+  {
+    "company_id": 525,
+    "company_name": "Barksdale Resources Corp.",
+    "tsx_code": "BRO.V"
+  },
+  {
+    "company_id": 526,
+    "company_name": "BeMetals Corp.",
+    "tsx_code": "BMET.V"
+  },
+  {
+    "company_id": 527,
+    "company_name": "Blende Silver Corp.",
+    "tsx_code": "BAG.V"
+  },
+  {
+    "company_id": 528,
+    "company_name": "Bold Ventures Inc.",
+    "tsx_code": "BOL.V"
+  },
+  {
+    "company_id": 529,
+    "company_name": "Bond Resources Inc.",
+    "tsx_code": "BJB.CN"
+  },
+  {
+    "company_id": 530,
+    "company_name": "Bravada Gold Corp.",
+    "tsx_code": "BVA.V"
+  },
+  {
+    "company_id": 531,
+    "company_name": "BTU Metals Corp.",
+    "tsx_code": "BTU.V"
+  },
+  {
+    "company_id": 532,
+    "company_name": "Bunker Hill Mining Corp.",
+    "tsx_code": "BNKR.V"
+  },
+  {
+    "company_id": 534,
+    "company_name": "Callinex Mines Inc.",
+    "tsx_code": "CNX.V"
+  },
+  {
+    "company_id": 535,
+    "company_name": "Cantex Mine Development Corp.",
+    "tsx_code": "CD.V"
+  },
+  {
+    "company_id": 536,
+    "company_name": "Capella Minerals Ltd.",
+    "tsx_code": "CMIL.V"
+  },
+  {
+    "company_id": 537,
+    "company_name": "Carlin Gold Corp.",
+    "tsx_code": "CGD.V"
+  },
+  {
+    "company_id": 538,
+    "company_name": "Chakana Copper Corp.",
+    "tsx_code": "PERU.V"
+  },
+  {
+    "company_id": 539,
+    "company_name": "Champion Bear Resources Ltd.",
+    "tsx_code": "CBA.V"
+  },
+  {
+    "company_id": 540,
+    "company_name": "Chibougamau Independent Mines Inc.",
+    "tsx_code": "CBG.V"
+  },
+  {
+    "company_id": 541,
+    "company_name": "Commander Resources Ltd.",
+    "tsx_code": "CMD.NE"
+  },
+  {
+    "company_id": 542,
+    "company_name": "Comstock Metals Ltd.",
+    "tsx_code": "CSL-H.V"
+  },
+  {
+    "company_id": 543,
+    "company_name": "Conquest Resources Limited",
+    "tsx_code": "CQR.V"
+  },
+  {
+    "company_id": 545,
+    "company_name": "Decade Resources Ltd.",
+    "tsx_code": "DEC.V"
+  },
+  {
+    "company_id": 546,
+    "company_name": "Denarius Metals Corp.",
+    "tsx_code": "DMET.NE"
+  },
+  {
+    "company_id": 547,
+    "company_name": "Dios Exploration Inc.",
+    "tsx_code": "DOS.V"
+  },
+  {
+    "company_id": 548,
+    "company_name": "District Metals Corp.",
+    "tsx_code": "DMX.V"
+  },
+  {
+    "company_id": 549,
+    "company_name": "Dixie Gold Inc.",
+    "tsx_code": "DG.V"
+  },
+  {
+    "company_id": 550,
+    "company_name": "Doubleview Gold Corp.",
+    "tsx_code": "DBG.V"
+  },
+  {
+    "company_id": 551,
+    "company_name": "E2Gold Inc.",
+    "tsx_code": "ETU.V"
+  },
+  {
+    "company_id": 552,
+    "company_name": "Element79 Gold Corp.",
+    "tsx_code": "ELEM.CN"
+  },
+  {
+    "company_id": 553,
+    "company_name": "Emergent Metals Corp.",
+    "tsx_code": "EMR.V"
+  },
+  {
+    "company_id": 554,
+    "company_name": "EnviroGold Global Ltd.",
+    "tsx_code": "NVRO.CN"
+  },
+  {
+    "company_id": 555,
+    "company_name": "ESGold Corp.",
+    "tsx_code": "ESAU.CN"
+  },
+  {
+    "company_id": 556,
+    "company_name": "Euromax Resources Ltd.",
+    "tsx_code": "EOX.V"
+  },
+  {
+    "company_id": 557,
+    "company_name": "Evergold Corp.",
+    "tsx_code": "EVER.V"
+  },
+  {
+    "company_id": 558,
+    "company_name": "Fabled Silver Gold Corp.",
+    "tsx_code": "FCO.H"
+  },
+  {
+    "company_id": 559,
+    "company_name": "Falcon Gold Corp.",
+    "tsx_code": "FG.V"
+  },
+  {
+    "company_id": 560,
+    "company_name": "Fancamp Exploration Ltd.",
+    "tsx_code": "FNC.V"
+  },
+  {
+    "company_id": 561,
+    "company_name": "Finlay Minerals Ltd.",
+    "tsx_code": "FYL.V"
+  },
+  {
+    "company_id": 562,
+    "company_name": "Fireweed Metals Corp.",
+    "tsx_code": "FWZ.V"
+  },
+  {
+    "company_id": 563,
+    "company_name": "First Tellurium Corp.",
+    "tsx_code": "FTEL.CN"
+  },
+  {
+    "company_id": 564,
+    "company_name": "Fortune Minerals Limited",
+    "tsx_code": "FT.TO"
+  },
+  {
+    "company_id": 565,
+    "company_name": "Gabriel Resources Ltd.",
+    "tsx_code": "GBU.V"
+  },
+  {
+    "company_id": 566,
+    "company_name": "Garibaldi Resources Corp.",
+    "tsx_code": "GGI.V"
+  },
+  {
+    "company_id": 567,
+    "company_name": "Generic Gold Corp.",
+    "tsx_code": "GGC.CN"
+  },
+  {
+    "company_id": 568,
+    "company_name": "GGX Gold Corp.",
+    "tsx_code": "GGX.V"
+  },
+  {
+    "company_id": 569,
+    "company_name": "Goldcliff Resource Corporation",
+    "tsx_code": "GCN.V"
+  },
+  {
+    "company_id": 570,
+    "company_name": "Golden Sky Minerals Corp.",
+    "tsx_code": "AUEN.V"
+  },
+  {
+    "company_id": 571,
+    "company_name": "Goldflare Exploration Inc.",
+    "tsx_code": "GOFL.V"
+  },
+  {
+    "company_id": 572,
+    "company_name": "Gold Finder Resources Ltd.",
+    "tsx_code": "GLD.V"
+  },
+  {
+    "company_id": 573,
+    "company_name": "Gossan Resources Limited",
+    "tsx_code": "GSS.V"
+  },
+  {
+    "company_id": 574,
+    "company_name": "Graycliff Exploration Ltd.",
+    "tsx_code": "GRAY.CN"
+  },
+  {
+    "company_id": 575,
+    "company_name": "Grizzly Discoveries Inc.",
+    "tsx_code": "GZD.V"
+  },
+  {
+    "company_id": 576,
+    "company_name": "Group Eleven Resources Corp.",
+    "tsx_code": "ZNG.V"
+  },
+  {
+    "company_id": 577,
+    "company_name": "Gungnir Resources Inc.",
+    "tsx_code": "GUG.V"
+  },
+  {
+    "company_id": 578,
+    "company_name": "Hannan Metals Ltd.",
+    "tsx_code": "HAN.V"
+  },
+  {
+    "company_id": 579,
+    "company_name": "Hanstone Gold Corp.",
+    "tsx_code": "HANS.V"
+  },
+  {
+    "company_id": 580,
+    "company_name": "Harfang Exploration Inc.",
+    "tsx_code": "HAR.V"
+  },
+  {
+    "company_id": 581,
+    "company_name": "Headwater Gold Inc.",
+    "tsx_code": "HWG.CN"
+  },
+  {
+    "company_id": 582,
+    "company_name": "Iconic Minerals Ltd.",
+    "tsx_code": "ICM.V"
+  },
+  {
+    "company_id": 583,
+    "company_name": "iMetal Resources Inc.",
+    "tsx_code": "IMR.V"
+  },
+  {
+    "company_id": 584,
+    "company_name": "Inca One Gold Corp.",
+    "tsx_code": "INCA.H"
+  },
+  {
+    "company_id": 585,
+    "company_name": "Inflection Resources Ltd.",
+    "tsx_code": "AUCU.CN"
+  },
+  {
+    "company_id": 586,
+    "company_name": "International Iconic Gold Exploration Corp.",
+    "tsx_code": "ICON.V"
+  },
+  {
+    "company_id": 587,
+    "company_name": "International Prospect Ventures Ltd.",
+    "tsx_code": "IZZ.V"
+  },
+  {
+    "company_id": 588,
+    "company_name": "Ivanhoe Mines Ltd.",
+    "tsx_code": "IVN.TO"
+  },
+  {
+    "company_id": 589,
+    "company_name": "Kesselrun Resources Ltd.",
+    "tsx_code": "KES.V"
+  },
+  {
+    "company_id": 590,
+    "company_name": "Kingfisher Metals Corp.",
+    "tsx_code": "KFR.V"
+  },
+  {
+    "company_id": 591,
+    "company_name": "Kintavar Exploration Inc.",
+    "tsx_code": "KTR.V"
+  },
+  {
+    "company_id": 592,
+    "company_name": "Kodiak Copper Corp.",
+    "tsx_code": "KDK.V"
+  },
+  {
+    "company_id": 593,
+    "company_name": "Labrador Gold Corp.",
+    "tsx_code": "LAB.V"
+  },
+  {
+    "company_id": 594,
+    "company_name": "Lahontan Gold Corp.",
+    "tsx_code": "LG.V"
+  },
+  {
+    "company_id": 595,
+    "company_name": "Lara Exploration Ltd.",
+    "tsx_code": "LRA.V"
+  },
+  {
+    "company_id": 596,
+    "company_name": "Latin Metals Inc.",
+    "tsx_code": "LMS.V"
+  },
+  {
+    "company_id": 597,
+    "company_name": "Leviathan Gold Ltd.",
+    "tsx_code": "LVX.V"
+  },
+  {
+    "company_id": 598,
+    "company_name": "M3 Metals Corp.",
+    "tsx_code": "MT.V"
+  },
+  {
+    "company_id": 599,
+    "company_name": "MacDonald Mines Exploration Ltd.",
+    "tsx_code": "BMK.V"
+  },
+  {
+    "company_id": 600,
+    "company_name": "Masivo Silver Corp.",
+    "tsx_code": "MASS.V"
+  },
+  {
+    "company_id": 601,
+    "company_name": "Max Resource Corp.",
+    "tsx_code": "MAX.V"
+  },
+  {
+    "company_id": 602,
+    "company_name": "McLaren Resources Inc.",
+    "tsx_code": "MCL.CN"
+  },
+  {
+    "company_id": 603,
+    "company_name": "Melkior Resources Inc.",
+    "tsx_code": "MKR.V"
+  },
+  {
+    "company_id": 604,
+    "company_name": "Midland Exploration Inc.",
+    "tsx_code": "MD.V"
+  },
+  {
+    "company_id": 605,
+    "company_name": "Mines D'Or Orbec Inc.",
+    "tsx_code": "BLUE.V"
+  },
+  {
+    "company_id": 606,
+    "company_name": "Minnova Corp.",
+    "tsx_code": "MCI.V"
+  },
+  {
+    "company_id": 607,
+    "company_name": "MTB Metals Corp.",
+    "tsx_code": "MTB.V"
+  },
+  {
+    "company_id": 608,
+    "company_name": "Newlox Gold Ventures Corp.",
+    "tsx_code": "LUX.CN"
+  },
+  {
+    "company_id": 609,
+    "company_name": "Newfoundland Discovery Corp.",
+    "tsx_code": "NEWD.CN"
+  },
+  {
+    "company_id": 610,
+    "company_name": "Newmont Corporation",
+    "tsx_code": "NGT.TO"
+  },
+  {
+    "company_id": 611,
+    "company_name": "Noble Mineral Exploration Inc.",
+    "tsx_code": "NOB.V"
+  },
+  {
+    "company_id": 612,
+    "company_name": "Northern Shield Resources Inc.",
+    "tsx_code": "NRN.V"
+  },
+  {
+    "company_id": 613,
+    "company_name": "Nubian Resources Ltd.",
+    "tsx_code": "NBR.V"
+  },
+  {
+    "company_id": 614,
+    "company_name": "NuLegacy Gold Corporation",
+    "tsx_code": "NUG.V"
+  },
+  {
+    "company_id": 615,
+    "company_name": "NV Gold Corporation",
+    "tsx_code": "NVX.V"
+  },
+  {
+    "company_id": 616,
+    "company_name": "Ophir Metals Corp.",
+    "tsx_code": "OPHR.V"
+  },
+  {
+    "company_id": 617,
+    "company_name": "OreCap Invest Corp.",
+    "tsx_code": "OCI.V"
+  },
+  {
+    "company_id": 618,
+    "company_name": "Peloton Minerals Corporation",
+    "tsx_code": "PMC.CN"
+  },
+  {
+    "company_id": 619,
+    "company_name": "Perpetua Resources Corp.",
+    "tsx_code": "PPTA.TO"
+  },
+  {
+    "company_id": 620,
+    "company_name": "Peruvian Metals Corp.",
+    "tsx_code": "PER.V"
+  },
+  {
+    "company_id": 621,
+    "company_name": "Phenom Resources Corp.",
+    "tsx_code": "PHNM.V"
+  },
+  {
+    "company_id": 622,
+    "company_name": "Providence Gold Mines Inc.",
+    "tsx_code": "PHD.V"
+  },
+  {
+    "company_id": 623,
+    "company_name": "PTX Metals Inc.",
+    "tsx_code": "PTX.V"
+  },
+  {
+    "company_id": 626,
+    "company_name": "Rackla Metals Inc.",
+    "tsx_code": "RAK.V"
+  },
+  {
+    "company_id": 627,
+    "company_name": "Ranchero Gold Corp.",
+    "tsx_code": "RNCH.V"
+  },
+  {
+    "company_id": 628,
+    "company_name": "Regulus Resources Inc.",
+    "tsx_code": "REG.V"
+  },
+  {
+    "company_id": 629,
+    "company_name": "Renforth Resources Inc.",
+    "tsx_code": "RFR.CN"
+  },
+  {
+    "company_id": 630,
+    "company_name": "Ridgestone Mining Inc.",
+    "tsx_code": "RMI.V"
+  },
+  {
+    "company_id": 631,
+    "company_name": "Rise Gold Corp.",
+    "tsx_code": "RISE.CN"
+  },
+  {
+    "company_id": 632,
+    "company_name": "Rover Critical Minerals Corp.",
+    "tsx_code": "ROVR.V"
+  },
+  {
+    "company_id": 633,
+    "company_name": "Rusoro Mining Ltd.",
+    "tsx_code": "RML.V"
+  },
+  {
+    "company_id": 634,
+    "company_name": "Sable Resources Ltd.",
+    "tsx_code": "SAE.V"
+  },
+  {
+    "company_id": 635,
+    "company_name": "San Lorenzo Gold Corp.",
+    "tsx_code": "SLG.V"
+  },
+  {
+    "company_id": 636,
+    "company_name": "Sanatana Resources Inc.",
+    "tsx_code": "STA.V"
+  },
+  {
+    "company_id": 637,
+    "company_name": "Seasif Exploration Inc.",
+    "tsx_code": "SAF.V"
+  },
+  {
+    "company_id": 638,
+    "company_name": "Silver Bear Resources Plc",
+    "tsx_code": "SBR.TO"
+  },
+  {
+    "company_id": 639,
+    "company_name": "Silver Bull Resources Inc.",
+    "tsx_code": "SVB.TO"
+  },
+  {
+    "company_id": 640,
+    "company_name": "Silver Crown Royalties Inc.",
+    "tsx_code": "SCRI.NE"
+  },
+  {
+    "company_id": 641,
+    "company_name": "Silver Grail Resources Ltd.",
+    "tsx_code": "SVG.V"
+  },
+  {
+    "company_id": 642,
+    "company_name": "Silver Predator Corp.",
+    "tsx_code": "SPD.V"
+  },
+  {
+    "company_id": 643,
+    "company_name": "Silver Sands Resources Corp.",
+    "tsx_code": "SAND.CN"
+  },
+  {
+    "company_id": 644,
+    "company_name": "Silver Spruce Resources Inc.",
+    "tsx_code": "SSE.V"
+  },
+  {
+    "company_id": 645,
+    "company_name": "Sky Gold Corp.",
+    "tsx_code": "SKYG.V"
+  },
+  {
+    "company_id": 646,
+    "company_name": "Slam Exploration Ltd.",
+    "tsx_code": "SXL.V"
+  },
+  {
+    "company_id": 647,
+    "company_name": "Southern Arc Minerals Inc.",
+    "tsx_code": "SA.H"
+  },
+  {
+    "company_id": 648,
+    "company_name": "Spearmint Resources Inc.",
+    "tsx_code": "SPMT.CN"
+  },
+  {
+    "company_id": 649,
+    "company_name": "St. James Gold Corp.",
+    "tsx_code": "LORD"
+  },
+  {
+    "company_id": 650,
+    "company_name": "Starr Peak Mining Ltd.",
+    "tsx_code": "STE.V"
+  },
+  {
+    "company_id": 651,
+    "company_name": "Stelmine Canada Ltd.",
+    "tsx_code": "STH.V"
+  },
+  {
+    "company_id": 652,
+    "company_name": "Stillwater Critical Minerals Corp.",
+    "tsx_code": "PGE.V"
+  },
+  {
+    "company_id": 653,
+    "company_name": "Strategic Metals Ltd.",
+    "tsx_code": "SMD.V"
+  },
+  {
+    "company_id": 654,
+    "company_name": "Sulliden Mining Capital Inc.",
+    "tsx_code": "SMC.TO"
+  },
+  {
+    "company_id": 655,
+    "company_name": "Sun Peak Metals Corp.",
+    "tsx_code": "PEAK.V"
+  },
+  {
+    "company_id": 656,
+    "company_name": "Tarachi Gold Corp.",
+    "tsx_code": "TRG.CN"
+  },
+  {
+    "company_id": 657,
+    "company_name": "ThreeD Capital Inc.",
+    "tsx_code": "IDK.CN"
+  },
+  {
+    "company_id": 658,
+    "company_name": "Thunderstruck Resources Ltd.",
+    "tsx_code": "AWE.V"
+  },
+  {
+    "company_id": 659,
+    "company_name": "TRU Precious Metals Corp.",
+    "tsx_code": "TRU.V"
+  },
+  {
+    "company_id": 661,
+    "company_name": "Visible Gold Mines Inc.",
+    "tsx_code": "VGD.V"
+  },
+  {
+    "company_id": 662,
+    "company_name": "Vista Gold Corp.",
+    "tsx_code": "VGZ.TO"
+  },
+  {
+    "company_id": 663,
+    "company_name": "VR Resources Ltd.",
+    "tsx_code": "VRR.V"
+  },
+  {
+    "company_id": 664,
+    "company_name": "Vulcan Minerals Inc.",
+    "tsx_code": "VUL.V"
+  },
+  {
+    "company_id": 665,
+    "company_name": "Walker Lane Resources Ltd.",
+    "tsx_code": "WLR.V"
+  },
+  {
+    "company_id": 666,
+    "company_name": "Winshear Gold Corp.",
+    "tsx_code": "WINS.V"
+  },
+  {
+    "company_id": 667,
+    "company_name": "Xali Gold Corp.",
+    "tsx_code": "XGC.V"
+  },
+  {
+    "company_id": 668,
+    "company_name": "Xanadu Mines Ltd.",
+    "tsx_code": "XAM.TO"
+  },
+  {
+    "company_id": 669,
+    "company_name": "Yukon Metals Corp.",
+    "tsx_code": "YMC.CN"
+  },
+  {
+    "company_id": 670,
+    "company_name": "Zephyr Minerals Ltd.",
+    "tsx_code": "ZFR.V"
+  },
+  {
+    "company_id": 671,
+    "company_name": "Zonte Metals Inc.",
+    "tsx_code": "ZON.V"
+  },
+  {
+    "company_id": 672,
+    "company_name": "Bullion Gold Resources Corp",
+    "tsx_code": "BGD.V"
+  }
+]

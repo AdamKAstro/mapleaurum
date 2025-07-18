@@ -1,0 +1,659 @@
+company_id,company_name,tsx_code,goldstock_id,goldstock_name,match_status,confidence_score,match_method
+1,Aberdeen International Inc.,AAB.TO,,,unmatched,0,none
+2,IRVING RESOURCES,IRV.CN,867,Irving Resources Inc,matched,95,exact_name
+3,INTL. TOWER HILL MINES,ITH.TO,245,Intl. Tower Hill Mines Ltd,matched,100,exact_ticker
+4,Integra Resources Corp.,ITR.V,1383,Integra Resources,matched,100,exact_ticker
+5,AFTERMATH SILVER,AAG.V,1160,Aftermath Silver,matched,100,exact_ticker
+6,AbraSilver Resource Corp.,ABRA.TO,1166,AbraSilver Resource Corp,matched,100,exact_ticker
+7,Allied Gold,AAUC.TO,1491,Allied Gold Corp,matched,100,exact_ticker
+8,ABCOURT MINES,ABI.V,1,Abcourt Mines Inc,matched,100,known_mapping
+9,ATON RESOURCES,AAN.V,13,Aton Resources Inc,matched,100,exact_ticker
+10,Agnico Eagle Mines Limited,AEM.TO,8,Agnico Eagle Mines Ltd,matched,100,known_mapping
+11,Aero Energy Limited,AERO.V,,,unmatched,0,none
+12,Adamera Minerals Corp.,ADZ.V,768,Adamera Minerals Corp,matched,100,exact_ticker
+13,SILVER47 EXPLORATION,AGA.V,770,Silver Mines Ltd,matched,86,fuzzy_name
+14,ARGENTA SILVER,AGAG.V,975,Argentum Silver Corp,manual,80,fuzzy_name
+15,FIRST MAJESTIC SILVER CORP.,AG.TO,1293,First Majestic Silver Corp,matched,100,exact_ticker
+16,AUSTRAL GOLD LIMITED,AGLD.V,732,Austral Gold Ltd,matched,100,exact_ticker
+17,SILVER MOUNTAIN RESOURCES,AGMR.V,1418,Silver Mountain Resources Inc,matched,100,exact_ticker
+18,Silver X Mining Corp.,AGX.V,1314,Silver X Mining,matched,100,exact_ticker
+19,Aldebaran Resources Inc.,ALDE.V,,,unmatched,0,none
+20,Alpha Exploration Ltd,ALEX.V,1423,Alpha Exploration Ltd,matched,100,exact_ticker
+21,Adyton Resources Corporation,ADY.V,1344,Adyton Resources Corp,matched,100,exact_ticker
+22,Arizona Metals Corp.,AMC.TO,1337,Arizona Metals Corp,matched,100,exact_ticker
+23,Abitibi Metals Corp.,AMQ.CN,1498,Abitibi Metals Corp,matched,100,exact_ticker
+24,Altamira Gold Corp.,ALTA.V,766,Altamira Gold Corp,matched,100,exact_ticker
+25,Amex Exploration Inc.,AMX.V,1156,Amex Exploration Inc,matched,100,exact_ticker
+26,ANGKOR RESOURCES CORP.,ANK.V,30,Angkor Resources,matched,100,exact_ticker
+27,Amaroq Minerals Ltd.,AMRQ.V,1017,Amaroq Minerals Ltd,matched,100,exact_ticker
+28,ASCOT RESOURCES,AOT.TO,394,Ascot Resources Ltd,matched,100,exact_ticker
+29,APOLLO SILVER,APGO.V,1236,Apollo Silver,matched,100,exact_ticker
+30,ANDEAN PRECIOUS METALS,APM.TO,1335,Andean Precious Metals Corp,matched,100,exact_ticker
+31,ANTLER GOLD,ANTL.V,903,Antler Gold Inc,matched,100,exact_ticker
+32,ARIS MINING CORPORATION,ARIS.TO,1222,Aris Mining Corp,matched,100,exact_ticker
+33,AMERICAN EAGLE GOLD,AE.V,1470,American Eagle Gold Corp,matched,100,exact_ticker
+34,ARTEMIS GOLD INC.,ARTG.V,1226,Artemis Gold Inc,matched,100,exact_ticker
+35,AURANIA RESOURCES LTD.,ARU.V,910,Aurania Resources Ltd,matched,100,exact_ticker
+36,ASANTE GOLD CORPORATION,ASE.CN,43,Asante Gold Corp,matched,95,exact_name
+37,Arras Minerals Corp.,ARK.V,1432,Lavras Gold Corp,manual,73,fuzzy_name
+38,ASTRA EXPLORATION INC.,ASTR.V,39,Austral Gold Ltd,manual,83,fuzzy_name
+39,Alamos Gold Inc.,AGI.TO,1181,Alamos Gold Inc,matched,100,exact_ticker
+40,AURION RESOURCES LTD.,AU.V,821,Aurion Resources Ltd,matched,100,exact_ticker
+41,AWALÉ RESOURCES LIMITED,ARIC.V,1031,Awale Resources,matched,100,exact_ticker
+42,Angel Wing Metals Inc.,AWM.V,,,unmatched,0,none
+43,AUMEGA METALS LTD.,AUM.V,1159,AuMEGA Metals Ltd,matched,95,exact_name
+44,1911 Gold Corporation,AUMB.V,1203,1911 Gold Corp,matched,100,exact_ticker
+45,ATHENA GOLD CORPORATION,ATHA.CN,,,unmatched,0,none
+46,Aurora Royalties Inc.,AUR-H.V,175,Orogen Royalties Inc,manual,75,fuzzy_name
+47,Allegiant Gold Ltd.,AUAU.V,1021,Allegiant Gold,matched,100,exact_ticker
+48,Aya Gold & Silver Inc.,AYA.TO,1470,Aya Gold & Silver Inc.,matched,100,known_mapping
+49,Avino Silver & Gold Mines Ltd.,ASM.TO,522,Avino Silver & Gold Mines Ltd,matched,100,exact_ticker
+50,ARIZONA GOLD & SILVER,AZS.V,888,Arizona Gold & Silver,matched,100,exact_ticker
+51,AZTEC MINERALS,AZT.V,954,Aztec Minerals Corp,matched,100,exact_ticker
+52,EMPEROR METALS,AUOZ.CN,,,unmatched,0,none
+53,Blue Star Gold Corp.,BAU.V,871,Blue Star Gold Corp,matched,100,exact_ticker
+54,Brixton Metals Corporation,BBB.V,602,Brixton Metals Corp,matched,100,exact_ticker
+55,Bear Creek Mining Corporation,BCM.V,75,Bear Creek Mining Corp,matched,100,exact_ticker
+56,BATERO GOLD,BAT.V,72,Batero Gold Corp,matched,100,exact_ticker
+57,Beauce Gold Fields Inc.,BGF.V,198,Gold Fields Ltd,manual,76,fuzzy_name
+58,Baroyeca Gold & Silver Inc.,BGS.V,1416,Baroyeca Gold & Silver Inc,matched,100,exact_ticker
+59,Bayhorse Silver Inc.,BHS.V,257,Bayhorse Silver Inc,matched,100,exact_ticker
+60,Benton Resources Inc.,BEX.V,80,Benton Resources Inc,matched,100,exact_ticker
+61,BLUE LAGOON RESOURCES,BLLG.CN,1264,Blue Lagoon Resources Inc,matched,95,exact_name
+62,Black Mammoth Metals Corp.,BMM.V,,,unmatched,0,none
+63,Borealis Mining Company,BOGO.V,853,Borealis Mining Company Ltd,matched,100,exact_ticker
+64,AZIMUT EXPLORATION,AZM.V,65,Azimut Exploration Inc,matched,100,exact_ticker
+65,AXMIN,AXM.H.V,64,AXMIN Inc,matched,95,exact_name
+66,BLACKROCK SILVER CORP.,BRC.V,1033,Blackrock Silver,matched,100,exact_ticker
+67,Belo Sun Mining Corp,BSX.TO,79,Belo Sun Mining Corp,matched,100,exact_ticker
+68,B2GOLD CORP.,BTO.TO,978,B2Gold Corp,matched,100,exact_ticker
+69,Canary Gold Corp,BRAZ.CN,101,Canstar Resources Inc,manual,77,fuzzy_name
+70,Banyan Gold Corp.,BYN.V,598,Banyan Gold Corp,matched,100,exact_ticker
+71,BENZ MINING,BZ.V,1299,Benz Mining Corp,matched,100,exact_ticker
+72,CANEX METALS,CANX.V,661,Callinex Mines Inc,manual,77,fuzzy_name
+73,Bonterra Resources Inc.,BTR.V,303,Bonterra Resources Inc,matched,100,exact_ticker
+74,COLIBRI RESOURCE,CBI.V,38,Gold Resource Corp,manual,76,fuzzy_name
+75,HERCULES METALS,BIG.V,1464,Hercules Metals Corp,matched,100,exact_ticker
+76,Core Silver Corp,CC.CN,1471,Core Assets Corp,matched,100,exact_ticker
+77,CAPITAN SILVER,CAPT.V,1249,Capitan Silver,matched,100,exact_ticker
+78,CERRO DE PASCO RESOURCES,CDPR.V,1188,Cerro de Pasco Resources Inc,matched,100,exact_ticker
+79,BIG RIDGE GOLD,BRAU.V,21,Big Ridge Gold Corp,matched,100,exact_ticker
+80,CARTIER SILVER CORPORATION,CFE.CN,1485,Cartier Silver Corp,matched,100,exact_ticker
+81,CENTERRA GOLD INC,CG.TO,740,Centerra Gold Inc,matched,100,exact_ticker
+82,CANADIAN GOLD CORP,CGC.V,862,Canadian Gold Corp,matched,100,exact_ticker
+83,China Gold International Resources Corp Ltd.,CGG.TO,116,China Gold Intl. Resrcs Corp Ltd,matched,100,exact_ticker
+84,CHESAPEAKE GOLD,CKG.V,114,Chesapeake Gold Corp,matched,100,exact_ticker
+85,Cabral Gold Inc.,CBR.V,1036,Cabral Gold,matched,100,exact_ticker
+86,CMC METALS,CMB.V,1340,Canterra Minerals Corp,matched,95,exact_name
+87,Condor Resources Inc.,CN.V,131,Condor Resources Inc,matched,100,exact_ticker
+88,COLLECTIVE MINING,CNL.TO,1381,Collective Mining Ltd,matched,100,exact_ticker
+89,COPAUR MINERALS,CPAU.V,1379,CopAur Minerals Inc,matched,100,exact_ticker
+90,CARIBOO ROSE RESOURCES,CRB.V,1011,Cariboo Rose Resources,matched,100,exact_ticker
+91,Churchill Resources Inc.,CRI.V,,,unmatched,0,none
+92,COPPER STANDARD RESOURCES,CSR.CN,,,unmatched,0,none
+93,Canasil Resources Inc.,CLZ.V,99,Canasil Resources Inc,matched,100,exact_ticker
+94,CENTURION MINERALS,CTN.V,,,unmatched,0,none
+95,CANAGOLD RESOURCES,CCM.TO,98,Canagold Resources,matched,100,exact_ticker
+96,CANTERRA MINERALS,CTM.V,1340,Canterra Minerals Corp,matched,100,exact_ticker
+97,Cerrado Gold Inc.,CERT.V,1325,Cerrado Gold Inc,matched,100,exact_ticker
+98,DESERT GOLD VENTURES,DAU.V,990,Desert Gold Ventures Inc,matched,100,exact_ticker
+99,COMPASS GOLD,CVB.V,1158,Compass Gold Corp,matched,100,exact_ticker
+100,CALIBRE MINING,CXB.TO,,,unmatched,0,none
+101,CYGNUS METALS,CYG.V,,,unmatched,0,none
+102,Dynacor Group Inc.,DNG.TO,152,Dynacor Group,matched,100,exact_ticker
+103,Almadex Minerals Ltd.,DEX.V,744,Almadex Minerals Ltd,matched,100,exact_ticker
+104,DRYDEN GOLD CORP.,DRY.V,1500,Dryden Gold Corp,matched,100,exact_ticker
+105,Defiance Silver Corp.,DEF.V,519,Defiance Silver Corp,matched,100,exact_ticker
+106,DOLLY VARDEN SILVER CORPORATION,DV.V,559,Dolly Varden Silver Corp,matched,100,exact_ticker
+107,Dundee Precious Metals Inc.,DPM.TO,555,Dundee Precious Metals Inc,matched,100,exact_ticker
+108,EAST AFRICA METALS INC.,EAM.V,556,East Africa Metals Inc,matched,100,exact_ticker
+109,CARTIER RESOURCES,ECR.V,105,Cartier Resources Inc,matched,100,exact_ticker
+110,ENDURANCE GOLD,EDG.V,902,Endurance Gold Corp,matched,100,exact_ticker
+111,DYNASTY GOLD CORP.,DYG.V,1477,Dynasty Gold Corp,matched,100,exact_ticker
+112,DELTA RESOURCES LIMITED,DLTA.V,207,Delta Resources Ltd,matched,100,exact_ticker
+113,DISCOVERY SILVER CORP.,DSV.TO,1101,Discovery Silver Corp,matched,100,exact_ticker
+114,ELEMENTAL ALTUS ROYALTIES,ELE.V,1304,Elemental Altius Royalties Corp,matched,100,exact_ticker
+115,Silver Elephant Mining Corp.,ELEF.TO,745,Silver Elephant Mining,matched,100,exact_ticker
+116,ENDEAVOUR SILVER,EDR.TO,562,Endeavour Silver Corp,matched,100,exact_ticker
+117,Elevation Gold Mining Corp.,ELVT.V,1205,Elevation Gold Mining Corp,matched,100,exact_ticker
+118,EMINENT GOLD,EMNT.V,1411,Eminent Gold Corp,matched,100,exact_ticker
+119,EMERITA RESOURCES CORP,EMO.V,1353,Emerita Resources Corp,matched,100,exact_ticker
+120,ELORO RESOURCES LTD,ELO.TO,905,Eloro Resources Ltd,matched,100,exact_ticker
+121,EMX Royalty Corporation,EMX.V,170,Emx Royalty Corp,matched,100,exact_ticker
+122,Enduro Metals Corporation,ENDR.V,1163,Enduro Metals,matched,100,exact_ticker
+123,Eagle Plains Resources Ltd.,EPL.V,155,Eagle Plains Resources Ltd,matched,100,exact_ticker
+124,Equity Metals Corporation,EQTY.V,1294,Equity Metals Corp,matched,100,exact_ticker
+125,Equinox Gold Corp.,EQX.TO,939,Equinox Gold Corp,matched,100,exact_ticker
+126,EAGLE ROYALTIES,ER.CN,1490,Eagle Royalties Ltd,matched,100,exact_ticker
+127,Erdene Resource Development,ERD.TO,527,Erdene Resource Development Corp,matched,100,exact_ticker
+128,Eskay Mining Corp.,ESK.V,832,Eskay Mining Corp,matched,100,exact_ticker
+129,ELDORADO GOLD,ELD.TO,246,Eldorado Gold Corp,matched,100,exact_ticker
+130,ETRUSCUS RESOURCES,ETR.CN,,,unmatched,0,none
+131,Excellon Resources Inc.,EXN.V,355,Excellon Resources Inc,matched,100,exact_ticker
+132,Euro Sun Mining Inc.,ESM.TO,104,Euro Sun Mining Inc,matched,100,exact_ticker
+133,FOUNDERS METALS,FDR.V,1489,Founders Metals Inc,matched,100,exact_ticker
+134,FIRST MINING GOLD,FF.TO,673,First Mining Gold,matched,100,exact_ticker
+135,EMPRESS ROYALTY,EMPR.V,1318,Empress Royalty Corp,matched,100,exact_ticker
+136,First Andes Silver Ltd.,FAS.V,1358,First Andes Silver Ltd,matched,100,exact_ticker
+137,SAILFISH ROYALTY,FISH.V,1113,Sailfish Royalty Corp,matched,100,exact_ticker
+138,FOKUS MINING,FKM.V,1295,Fokus Mining Corp,matched,100,exact_ticker
+139,Freeman Gold Corp.,FMAN.V,1241,Freeman Gold Corp,matched,100,exact_ticker
+140,EDGEMONT GOLD,EDGM.CN,,,unmatched,0,none
+141,FUERTE METALS CORPORATION,FMT.V,,,unmatched,0,none
+142,Four Nines Gold Inc.,FNAU.CN,,,unmatched,0,none
+143,FIRST NORDIC METALS,FNM.V,1406,First Nordic Metals Corp,matched,100,exact_ticker
+144,Franco-Nevada Corporation,FNV.TO,186,Franco-Nevada Corp,matched,100,exact_ticker
+145,FORTUNE BAY,FOR.V,1048,Fortune Bay Corp,matched,100,exact_ticker
+146,Grit Metals Corp.,FIN.V,,,unmatched,0,none
+147,FORUM ENERGY METALS,FMC.V,,,unmatched,0,none
+148,FORGE RESOURCES CORP.,FRG.CN,,,unmatched,0,none
+149,FURY GOLD MINES,FURY.TO,665,Fury Gold Mines Ltd,matched,100,exact_ticker
+150,FORTUNA MINING,FVI.TO,1165,Fortuna Mining,matched,100,exact_ticker
+151,FIREFOX GOLD,FFOX.V,1135,Firefox Gold,matched,100,exact_ticker
+152,Galantas Gold Corporation,GAL.V,687,Galantas Gold Corp,matched,100,exact_ticker
+153,FREDONIA MINING,FRED.V,,,unmatched,0,none
+155,Freegold Ventures Limited,FVL.TO,187,Freegold Ventures Ltd,matched,100,exact_ticker
+156,FALCO RESOURCES,FPC.V,594,Falco Resources Ltd,matched,100,exact_ticker
+157,AUGUSTA GOLD,G.TO,89,Augusta Gold Corp,matched,100,exact_ticker
+158,GOLDEN CARIBOO RESOURCES,GCC.CN,1011,Cariboo Rose Resources,manual,77,fuzzy_name
+159,GREENHEART GOLD,GHRT.V,,,unmatched,0,none
+160,Galiano Gold Inc.,GAU.TO,368,Galiano Gold Inc,matched,100,exact_ticker
+161,GOLDEX RESOURCES,GDX.V,1461,Newlox Gold Ventures Corp,manual,71,fuzzy_name
+162,GOGOLD RESOURCES INC.,GGD.TO,33,Gogold Resources,matched,100,exact_ticker
+163,Golconda Gold Ltd.,GG.V,640,Golconda Gold,matched,100,exact_ticker
+164,GRANADA GOLD MINE,GGM.V,196,Granada Gold,matched,100,exact_ticker
+165,Galleon Gold Corp.,GGO.V,179,Galleon Gold Corp,matched,100,exact_ticker
+166,Cassiar Gold Corp.,GLDC.V,889,Cassiar Gold Corp,matched,100,exact_ticker
+167,GGL RESOURCES,GGL.V,,,unmatched,0,none
+168,GOLDGROUP MINING,GGA.V,217,Goldgroup Mining Inc,matched,100,exact_ticker
+169,GFG Resources Inc.,GFG.V,942,GFG Resources Inc,matched,100,exact_ticker
+170,GOLD MOUNTAIN MINING,GMTN.TO,1320,Gold Mountain Mining Corp,matched,100,exact_ticker
+171,GOLDEN LAKE EXPLORATION,GLM.CN,1324,Golden Lake Exploration Inc,matched,95,exact_name
+172,G MINING VENTURES,GMIN.TO,1388,G Mining Ventures Corp,matched,100,exact_ticker
+173,Golden Ridge Resources Ltd.,GLDN.V,1051,Golden Ridge Resources,matched,100,exact_ticker
+174,GoldMining Inc.,GOLD.TO,85,Goldmining Inc,matched,100,exact_ticker
+175,GOLIATH RESOURCES,GOT.V,1053,Goliath Resources,matched,100,exact_ticker
+176,GREAT PACIFIC GOLD,GPAC.V,1223,Great Pacific Gold Corp,matched,100,exact_ticker
+177,GRANDE PORTAGE RESOURCES,GPG.V,1240,Grande Portage Resources Ltd,matched,100,exact_ticker
+178,G2 GOLDFIELDS,GTWO.TO,1103,G2 Goldfields Inc,matched,100,exact_ticker
+179,Globex Mining Enterprises Inc.,GMX.TO,548,Globex Mining Enterprises Inc,matched,100,exact_ticker
+180,GOLDEN GOLIATH RESOURCES,GNG.V,206,Golden Goliath Resources Ltd,matched,100,exact_ticker
+181,GOLD SPRINGS RESOURCE,GRC.TO,537,Gold Springs Resources,matched,100,exact_ticker
+182,GOLDEN ARROW RESOURCES,GRG.V,529,Golden Arrow Res Corp,matched,100,exact_ticker
+183,GR SILVER MINING,GRSL.V,1115,GR Silver Mining Ltd,matched,100,exact_ticker
+184,GOLDSHORE RESOURCES,GSHR.V,1385,Goldshore Resources Inc,matched,100,exact_ticker
+185,GMV MINERALS,GMV.V,194,GMV Minerals Inc,matched,100,exact_ticker
+186,GUANAJUATO SILVER COMPANY LTD.,GSVR.V,1220,Guanajuato Silver,matched,100,exact_ticker
+187,GREAT QUEST GOLD,GQ.V,,,unmatched,0,none
+188,GUNPOINT EXPLORATION,GUN.V,228,Gunpoint Exploration Ltd,matched,100,exact_ticker
+189,GOLDSTORM METALS,GSTM.V,1465,Goldstorm Metals Corp,matched,100,exact_ticker
+190,GALWAY METALS,GWM.V,883,Galway Metals Inc,matched,100,exact_ticker
+191,Getchell Gold Corp.,GTCH.CN,1302,Getchell Gold Corp,matched,95,exact_name
+192,GOLDQUEST MINING,GQC.V,218,Goldquest Mining Corp,matched,100,exact_ticker
+193,Angus Gold Inc.,GUS.V,1355,Angus Gold Inc,matched,100,exact_ticker
+194,HIGHLANDER SILVER,HSLV.CN,1497,Highlander Silver Corp,matched,100,exact_ticker
+195,Heliostar Metals Ltd.,HSTR.V,388,Heliostar Metals Ltd,matched,100,exact_ticker
+196,GOLD HUNTER RESOURCES,HUNT.CN,635,Gold Terra Corp,manual,76,fuzzy_name
+197,HIGHWAY 50 GOLD,HWY.V,937,Highway 50 Gold Corp,matched,100,exact_ticker
+198,i-80 Gold Corp,IAU.TO,1439,i-80 Gold Corp,matched,100,exact_ticker
+199,INDEPENDENCE GOLD,IGO.V,244,Independence Gold Corp,matched,100,exact_ticker
+200,HERITAGE MINING,HML.CN,,,unmatched,0,none
+201,GOLD BASIN RESOURCES,GXX.V,1420,Gold Basin Resources Corp,matched,100,exact_ticker
+202,INVENTUS MINING,IVS.V,550,Inventus Mining Corp,matched,100,exact_ticker
+203,Jaguar Mining Inc.,JAG.TO,252,Jaguar Mining Inc,matched,100,exact_ticker
+204,IAMGOLD,IMG.TO,1285,IAMGOLD Corp,matched,100,exact_ticker
+206,JUGGERNAUT EXPLORATION LTD,JUGR.V,1058,Juggernaut Exploration,matched,100,exact_ticker
+207,JAPAN GOLD,JG.V,824,Japan Gold Corp,matched,100,exact_ticker
+208,KINROSS GOLD CORPORATION,K.TO,830,Kinross Gold Corp,matched,100,exact_ticker
+209,KALO GOLD,KALO.V,,,unmatched,0,none
+210,KAPA GOLD INC,KAPA.V,,,unmatched,0,none
+211,JZR GOLD INC,JZR.V,1443,JZR Gold Inc,matched,100,exact_ticker
+212,KLONDIKE GOLD,KG.V,666,Klondike Gold Corp,matched,100,exact_ticker
+213,SILVER HAMMER MINING,HAMR.CN,1380,Silver Hammer Mining Corp,matched,95,exact_name
+214,KENORLAND MINERALS,KLD.V,1316,Kenorland Minerals Ltd,matched,100,exact_ticker
+215,KERMODE RESOURCES,KLM.V,,,unmatched,0,none
+216,IMPACT SILVER CORP.,IPT.V,243,Impact Silver Corp,matched,100,exact_ticker
+217,K92 MINING,KNT.TO,761,K92 Mining Inc,matched,100,exact_ticker
+218,KO Gold Inc.,KOG.CN,,,unmatched,0,none
+219,KORE MINING,KORE.V,893,Kore Mining,matched,100,exact_ticker
+220,KINGSMEN RESOURCES,KNG.V,480,Kingsmen Resources Ltd,matched,100,exact_ticker
+221,KESTREL GOLD,KGC.V,1016,Kestrel Gold Inc,matched,100,exact_ticker
+222,Kootenay Silver Inc.,KTN.V,266,Kootenay Silver Inc,matched,100,exact_ticker
+224,Kuya Silver Corporation,KUYA.CN,1281,Kuya Silver Corp,matched,95,exact_name
+225,KLONDIKE SILVER CORP.,KS.V,265,Klondike Silver Corp,matched,100,exact_ticker
+226,Leocor Mining,LECR.CN,1377,Leocor Gold Inc,matched,100,exact_ticker
+227,K2 GOLD,KTO.V,881,K2 Gold Corp,matched,100,exact_ticker
+228,LaFleur Minerals,LFLR.CN,,,unmatched,0,none
+230,LAVRAS GOLD,LGC.V,1432,Lavras Gold Corp,matched,100,exact_ticker
+231,KOBO RESOURCES,KRI.V,,,unmatched,0,none
+232,Lion One Metals Limited,LIO.V,278,Lion One Metals Ltd,matched,100,exact_ticker
+233,Legacy Gold Mines,LEGY.V,553,Nulegacy Gold Corp,matched,86,fuzzy_name
+234,Lincoln Gold Mining Inc.,LMG.V,,,unmatched,0,none
+235,LONCOR GOLD,LN.TO,279,Loncor Resources Inc,matched,100,exact_ticker
+236,LABRADOR GOLD,LAB.V,1062,Labrador Gold Corp,matched,100,exact_ticker
+237,Laurion Mineral Exploration Inc.,LME.V,1274,Laurion Mineral Exploration Inc,matched,100,exact_ticker
+238,Liberty Gold Corp.,LGD.TO,367,Liberty Gold,matched,100,exact_ticker
+239,Lode Gold Resources Inc.,LOD.V,1137,Lode Gold Resources Inc,matched,100,exact_ticker
+240,TOMAGOLD,LOT.V,611,Tomagold Corp,matched,100,exact_ticker
+241,LUPAKA GOLD,LPK.V,282,Lupaka Gold Corp,matched,100,exact_ticker
+242,LUMINA GOLD,LUM.V,793,Lumina Gold Corp,matched,100,exact_ticker
+243,LAKE VICTORIA GOLD,LVG.V,464,Lake Victoria Gold,matched,100,exact_ticker
+244,Luca Mining Corp.,LUCA.V,441,Luca Mining,matched,100,exact_ticker
+245,Lundin Gold Inc.,LUG.TO,664,Lundin Gold Inc,matched,100,exact_ticker
+246,MINERA ALAMOS,MAI.V,778,Minera Alamos Inc,matched,100,exact_ticker
+247,LODESTAR METALS,LSTR.V,388,Heliostar Metals Ltd,manual,71,fuzzy_name
+248,METALS CREEK RESOURCES,MEK.V,746,Metals Creek Resources Corp,matched,100,exact_ticker
+249,MAG SILVER CORP.,MAG.TO,1132,MAG Silver Corp,matched,100,exact_ticker
+250,Mayfair Gold Corp.,MFG.V,1351,Mayfair Gold Corp,matched,100,exact_ticker
+251,MAWSON FINLAND,MFL.V,,,unmatched,0,none
+252,MINAURUM GOLD,MGG.V,588,Minaurum Gold Inc,matched,100,exact_ticker
+253,MONTAGE GOLD,MAU.V,1286,Montage Gold Corp,matched,100,exact_ticker
+254,MISTANGO RIVER RESOURCES,MIS.CN,1221,Mistango River Resources Inc,matched,95,exact_name
+255,MAJESTIC GOLD,MJS.V,287,Majestic Gold Corp,matched,100,exact_ticker
+256,Mako Mining Corp.,MKO.V,604,Mako Mining Corp,matched,100,exact_ticker
+257,McFarlane Lake Mining Limited,MLM.NE,,,unmatched,0,none
+258,Miata Metals Corp.,MMET.CN,,,unmatched,0,none
+259,METALLIC MINERALS,MMG.V,318,Metallic Minerals Corp,matched,100,exact_ticker
+260,MONARCA MINERALS,MMN.V,1238,Monarca Minerals Inc,matched,100,exact_ticker
+261,MONUMENT MINING,MMY.V,319,Monument Mining Ltd,matched,100,exact_ticker
+262,Mandalay Resources Corporation,MND.TO,288,Mandalay Resources Corp,matched,100,exact_ticker
+263,MAPLE GOLD MINES,MGM.V,58,Maple Gold Mines Ltd,matched,100,exact_ticker
+264,MARITIME RESOURCES,MAE.V,789,Maritime Resources Corp,matched,100,exact_ticker
+265,MEXICAN GOLD MINING,MEX.V,667,Mexican Gold Mining,matched,100,exact_ticker
+266,MERIDIAN MINING,MNO.TO,1330,Meridian Mining UK Societas,matched,100,exact_ticker
+267,MIRASOL RESOURCES,MRZ.V,316,Mirasol Resources Ltd,matched,100,exact_ticker
+268,Minco Silver Corporation,MSV.TO,310,Minco Silver Corp,matched,100,exact_ticker
+269,METALLA ROYALTY & STREAMING,MTA.V,815,Metalla Royalty,matched,100,exact_ticker
+270,METALLIS RESOURCES,MTS.V,977,Metallis Resources Inc,matched,100,exact_ticker
+271,MAGNA TERRA MINERALS,MTT.V,1237,Magna Terra Minerals Inc,matched,100,exact_ticker
+272,Mineros S.A.,MSA.TO,1476,Mineros S.A.,matched,100,exact_ticker
+273,MITHRIL SILVER AND GOLD,MSG.V,125,Pinnacle Silver and Gold,manual,70,fuzzy_name
+274,NEVGOLD,NAU.V,1392,NevGold Corp,matched,100,exact_ticker
+275,New Break Resources Ltd,NBRK.CN,,,unmatched,0,none
+276,Newcore Gold Ltd.,NCAU.V,656,Newcore Gold Ltd,matched,100,exact_ticker
+277,McEwen Mining Inc.,MUX.TO,470,Mcewen Mining Inc,matched,100,exact_ticker
+278,Northern Dynasty Minerals Ltd.,NDM.TO,599,Northern Dynasty Minerals Ltd,matched,100,exact_ticker
+279,NEVADA SUNRISE METALS CORPORATION,NEV.V,,,unmatched,0,none
+280,NEXGOLD MINING CORP.,NEXG.V,1429,NexGold Mining Corp,matched,100,exact_ticker
+281,NEW FOUND GOLD CORP.,NFG.V,1247,New Found Gold Corp,matched,100,exact_ticker
+282,NOVAGOLD RESOURCES INC.,NG,342,Novagold Resources Inc,matched,100,exact_ticker
+283,NEW GOLD,NGD.TO,383,New Gold Inc,matched,100,exact_ticker
+284,NGEx Minerals Ltd.,NGEX.TO,1356,NGEx Minerals Ltd,matched,100,exact_ticker
+285,SURGE BATTERY METALS,NILI.V,,,unmatched,0,none
+286,Nicola Mining Inc.,NIM.V,239,Nicola Mining Inc,matched,100,exact_ticker
+287,NEVADA KING GOLD CORP.,NKG.V,1347,Nevada King Gold Corp,matched,100,exact_ticker
+288,EXPLOITS DISCOVERY,NFLD.CN,1298,Exploits Discovery Corp,matched,95,exact_name
+289,Northern Lion Gold Corp.,NL.V,,,unmatched,0,none
+290,Norsemont Mining Inc.,NOM.CN,1265,Norsemont Mining Inc,matched,95,exact_name
+291,NORTH PEAK RESOURCES,NPR.V,1339,North Peak Resources Ltd,matched,100,exact_ticker
+292,NATIONS ROYALTY,NRC.V,,,unmatched,0,none
+293,NORTHSTAR GOLD,NSG.CN,1207,Northstar Gold Corp,matched,95,exact_name
+294,NORD PRECIOUS METALS,NTH.V,870,Nord Precious Metals Mining,matched,100,exact_ticker
+295,New Pacific Metals Corp.,NUAG.TO,601,New Pacific Metals Corp,matched,100,exact_ticker
+296,Novo Resources Corp.,NVO.TO,679,Novo Resources Corp,matched,100,exact_ticker
+297,Nova Pacific Metals Corp.,NVPC.CN,601,New Pacific Metals Corp,manual,78,fuzzy_name
+298,Outcrop Silver & Gold Corporation,OCG.V,1424,Outcrop Silver & Gold,matched,100,exact_ticker
+299,OROCO RESOURCE CORP,OCO.V,38,Gold Resource Corp,manual,74,fuzzy_name
+300,OSISKO DEVELOPMENT,ODV.V,1308,Osisko Development Corp,matched,100,exact_ticker
+301,MUNDORO,MUN.V,323,Mundoro Capital,matched,100,exact_ticker
+302,OROGEN ROYALTIES,OGN.V,391,Orogen Royalties Inc,matched,100,exact_ticker
+303,NorthIsle Copper and Gold Inc.,NCX.V,863,Northisle Copper & Gold Inc,matched,100,exact_ticker
+304,MINSUD RESOURCES,MSR.V,,,unmatched,0,none
+305,OCEANAGOLD,OGC.TO,402,Oceanagold Corp,matched,100,exact_ticker
+306,Omega Pacific Resources Inc.,OMGA.CN,1223,Great Pacific Gold Corp,manual,77,fuzzy_name
+308,OMINECA MINING,OMM.V,1194,Omineca Mining & Metals Ltd,matched,100,exact_ticker
+309,OnGold Resources Ltd.,ONAU.V,195,Gogold Resources,manual,83,fuzzy_name
+310,ONYX GOLD,ONYX.V,1493,Onyx Gold Corp,matched,100,exact_ticker
+311,OPAWICA EXPLORATIONS,OPW.V,999,Opawica Explorations Inc,matched,100,exact_ticker
+312,OSISKO GOLD ROYALTIES,OR.TO,662,Osisko Gold Royalties Ltd,matched,100,exact_ticker
+313,Aura Minerals Inc.,ORA.TO,605,Aura Minerals Inc.,matched,100,known_mapping
+314,Orezone Gold Corporation,ORE.TO,349,Orezone Gold Corp,matched,100,exact_ticker
+315,ORVANA MINERALS,ORV.TO,353,Orvana Minerals Corp,matched,100,exact_ticker
+316,VALKEA RESOURCES,OZ.V,1341,Valkea Resources Corp,matched,100,exact_ticker
+317,PALAMINA,PA.V,798,Palamina Corp,matched,100,exact_ticker
+318,PAN AMERICAN SILVER CORP.,PAAS.TO,465,Pan American Silver Corp,matched,100,exact_ticker
+320,PROVENANCE GOLD,PAU.CN,1094,Provenance Gold Corp,matched,95,exact_name
+321,OMAI GOLD MINES,OMG.V,1310,Omai Gold Mines Corp,matched,100,exact_ticker
+322,Plato Gold Corp.,PGC.V,1093,Plato Gold,matched,100,exact_ticker
+323,Patagonia Gold Corp.,PGDC.V,514,Patagonia Gold Plc,matched,100,exact_ticker
+324,ORLA MINING,OLA.TO,986,Orla Mining Ltd,matched,100,exact_ticker
+325,PROSPER GOLD,PGX.V,753,Prosper Gold Corp,matched,100,exact_ticker
+326,PJX RESOURCES,PJX.V,,,unmatched,0,none
+327,PLAYFAIR MINING,PLY.V,1351,Mayfair Gold Corp,manual,80,fuzzy_name
+328,P2 GOLD,PGLD.V,1396,P2 Gold Inc,matched,100,exact_ticker
+329,PROSPECTOR METALS,PPP.V,169,Prospector Metals Corp,matched,100,exact_ticker
+330,PPX MINING,PPX.V,424,PPX Mining Corp,matched,100,exact_ticker
+331,PROBE GOLD,PRB.TO,374,Probe Gold Inc,matched,100,known_mapping
+332,PANTERA SILVER,PNTR.V,1421,Pantera Silver Corp,matched,100,exact_ticker
+333,PACIFIC RIDGE,PEX.V,356,Pacific Ridge Exploration Ltd,matched,100,exact_ticker
+334,PERSEUS MINING,PRU.TO,1144,Perseus Mining Ltd,matched,100,exact_ticker
+335,Prime Mining Corp.,PRYM.TO,1214,Prime Mining Corp,matched,100,exact_ticker
+336,PRECIPITATE GOLD,PRG.V,516,Precipitate Gold Corp,matched,100,exact_ticker
+337,PELANGIO EXPLORATION,PX.V,362,Pelangio Exploration Inc,matched,100,exact_ticker
+338,Quimbaya Gold Inc.,QIM.CN,,,unmatched,0,none
+339,QUARTZ MOUNTAIN RESOURCES,QZM.V,469,Thunder Mountain Gold Inc,manual,71,fuzzy_name
+340,RENEGADE GOLD,RAGE.V,1090,Renegade Gold,matched,100,exact_ticker
+341,RAMP METALS,RAMP.V,,,unmatched,0,none
+342,ROBEX RESOURCES,RBX.V,401,Robex Resources Inc,matched,100,exact_ticker
+343,RIDGELINE MINERALS,RDG.V,1276,Ridgeline Minerals Corp,matched,100,exact_ticker
+344,RADISSON MINING,RDS.V,849,Radisson Mining,matched,100,exact_ticker
+345,PRISMO METALS,PRIZ.CN,1487,Prismo Metals Inc,matched,100,exact_ticker
+346,OREX MINERALS,REX.V,348,Orex Minerals Inc,matched,100,exact_ticker
+347,ROMIOS GOLD RESOURCES,RG.V,834,Romios Gold Resources Inc,matched,100,exact_ticker
+348,RADIUS GOLD,RDU.V,381,Radius Gold Inc,matched,100,exact_ticker
+349,RED LAKE GOLD,RGLD.CN,1198,Red Lake Gold Inc,matched,95,exact_name
+350,RIO2,RIO.V,47,Rio2 Ltd,matched,100,exact_ticker
+351,ROCKHAVEN RESOURCES,RK.V,636,Rockhaven Resources Ltd,matched,100,exact_ticker
+352,ROKMASTER RESOURCES,RKR.V,1217,Rokmaster Resources Corp,matched,100,exact_ticker
+353,RILEY GOLD,RLYG.V,1400,Riley Gold Corp,matched,100,exact_ticker
+354,EROS RESOURCES,ROCK.V,1401,Trident Resources Corp,matched,100,exact_ticker
+355,ROSCAN GOLD,ROS.V,1169,RosCan Gold Corp,matched,100,exact_ticker
+356,OROSUR MINING,OMI.V,534,Orosur Mining Inc,matched,100,exact_ticker
+357,RED PINE EXPLORATION,RPX.V,750,Red Pine Exploration Inc,matched,100,exact_ticker
+358,RECHARGE RESOURCES,RR.CN,,,unmatched,0,none
+359,RIVERSIDE RESOURCES,RRI.V,399,Riverside Resources Inc,matched,100,exact_ticker
+360,ROCKY SHORE GOLD,RSG.CN,957,Rocky Shore Gold Ltd,matched,95,exact_name
+361,REYNA SILVER,RSLV.V,1428,Reyna Silver Mining Inc,matched,100,exact_ticker
+362,Resouro Strategic Metals Inc.,RSM.V,,,unmatched,0,none
+363,REGENCY SILVER,RSMX.V,1463,Regency Silver Corp,matched,100,exact_ticker
+364,RTG MINING,RTG.TO,626,RTG Mining Inc,matched,100,exact_ticker
+365,PUMA EXPLORATION,PUMA.V,377,Puma Exploration Inc,matched,100,exact_ticker
+366,RELEVANT GOLD,RGC.V,1484,Relevant Gold Corp,matched,100,exact_ticker
+367,CANSTAR RESOURCES,ROX.V,101,Canstar Resources Inc,matched,100,exact_ticker
+368,RUA GOLD,RUA.V,,,unmatched,0,none
+369,REVIVAL GOLD INC.,RVG.V,994,Revival Gold Inc,matched,100,exact_ticker
+370,RHYOLITE RESOURCES,RYE.V,,,unmatched,0,none
+371,ROYAL ROAD MINERALS,RYR.V,754,Royal Road Minerals Ltd,matched,100,exact_ticker
+372,STERLING METALS,SAG.V,777,Sterling Metals Corp,matched,100,exact_ticker
+373,Starcore International Mines Ltd.,SAM.TO,451,Starcore Intl. Mines Ltd,matched,100,exact_ticker
+374,SANU GOLD,SANU.CN,1459,Sanu Gold Corp,matched,100,exact_ticker
+375,SILVER BULLET MINES CORP.,SBMI.V,1417,Silver Bullet Mines Corp,matched,100,exact_ticker
+376,SCOTTIE RESOURCES,SCOT.V,976,Scottie Resources,matched,100,exact_ticker
+377,Santacruz Silver Mining Ltd.,SCZ.V,417,Santacruz Silver Mining Ltd,matched,100,exact_ticker
+378,STROUD RESOURCES,SDR.V,1251,Stroud Resources Ltd,matched,100,exact_ticker
+379,SEABRIDGE GOLD,SEA.TO,440,Seabridge Gold Inc,matched,100,exact_ticker
+380,SERRA ENERGY METALS,SEEM.CN,,,unmatched,0,none
+381,SOLSTICE GOLD CORP,SGC.V,1146,Solstice Gold Corp,matched,100,exact_ticker
+382,SNOWLINE GOLD CORP,SGD.V,1360,Snowline Gold Corp,matched,100,exact_ticker
+384,RUGBY RESOURCES,RUG.V,763,Rugby Resources Ltd,matched,100,exact_ticker
+385,Scorpio Gold Corporation,SGN.V,418,Scorpio Gold Corp,matched,100,exact_ticker
+386,SIGNATURE RESOURCES,SGU.V,1393,Signature Resources Ltd,matched,100,exact_ticker
+387,CAROLINA RUSH,RUSH.V,1272,Carolina Rush Corp,matched,100,exact_ticker
+388,HOMELAND NICKEL,SHL.V,,,unmatched,0,none
+389,RUPERT RESOURCES,RUP.TO,779,Rupert Resources Ltd,matched,100,exact_ticker
+390,SITKA GOLD,SIG.V,1196,Sitka Gold Corp,matched,100,exact_ticker
+392,Silver Valley Metals Inc.,SILV.V,1079,Silver Viper Minerals Corp,manual,72,fuzzy_name
+393,SKEENA RESOURCES LIMITED,SKE.TO,694,Skeena Gold & Silver,matched,100,exact_ticker
+394,STRIKEPOINT GOLD,SKP.V,865,Strikepoint Gold Inc,matched,100,exact_ticker
+395,STANDARD LITHIUM,SLI.V,,,unmatched,0,none
+396,Solitario Resources Corp.,SLR.TO,517,Solitario Resources Corp,matched,100,exact_ticker
+397,SILVER DOLLAR RESOURCES,SLV.CN,1231,Silver Dollar Resources Inc,matched,95,exact_name
+398,SILVER TIGER METALS,SLVR.V,738,Silver Tiger Metals,matched,100,exact_ticker
+399,Sierra Madre Gold and Silver Ltd.,SM.V,1397,Sierra Madre Gold and Silver Ltd,matched,100,exact_ticker
+400,SUN SUMMIT MINERALS,SMN.V,854,Sun Summit Minerals,matched,100,exact_ticker
+401,Sierra Metals Inc.,SMT.TO,148,Sierra Metals Inc,matched,100,exact_ticker
+402,SILVER NORTH RESOURCES,SNAG.V,462,Silver North Resources,matched,100,exact_ticker
+403,SILVER RANGE RESOURCES,SNG.V,431,Silver Range Resources Ltd,matched,100,exact_ticker
+404,SIRIOS RESOURCES,SOI.V,616,Sirios Resources Inc,matched,100,exact_ticker
+405,SOMA GOLD CORP.,SOMA.V,980,Soma Gold Corp,matched,100,exact_ticker
+406,SPANISH MOUNTAIN GOLD LTD.,SPA.V,447,Spanish Mountain Gold Ltd,matched,100,exact_ticker
+407,SOUTH PACIFIC METALS CORP.,SPMC.V,,,unmatched,0,none
+408,SONORO GOLD,SGO.V,928,Sonoro Gold Corp,matched,100,exact_ticker
+409,SOKOMAN MINERALS,SIC.V,1099,Sokoman Minerals Corp,matched,100,exact_ticker
+410,SALAZAR RESOURCES,SRL.V,411,Salazar Resources Ltd,matched,100,exact_ticker
+411,SEGO RESOURCES,SGZ.V,,,unmatched,0,none
+412,SSR Mining Inc,SSRM.TO,1206,SSR Mining Inc,matched,100,exact_ticker
+413,Southern Silver Exploration Corp.,SSV.V,518,Southern Silver Exploration Corp,matched,100,exact_ticker
+414,SUMMA SILVER,SSVR.V,1230,Summa Silver Corp,matched,100,exact_ticker
+415,Steppe Gold Ltd.,STGO.TO,1126,Steppe Gold Ltd,matched,100,exact_ticker
+416,STAKEHOLDER GOLD,SRC.V,,,unmatched,0,none
+417,STAR ROYALTIES,STRR.V,1389,Star Royalties Ltd,matched,100,exact_ticker
+418,SOUTH STAR BATTERY METALS,STS.V,,,unmatched,0,none
+419,Stuhini Exploration Ltd.,STU.V,,,unmatched,0,none
+420,STLLR GOLD,STLR.TO,335,STLLR Gold,matched,100,exact_ticker
+421,SANDSTORM GOLD ROYALTIES,SSL.TO,1234,Sandstorm Gold Ltd,matched,100,exact_ticker
+422,Silver One Resources Inc,SVE.V,817,Silver One Resources Inc,matched,100,exact_ticker
+423,Northern Superior Resources Inc,SUP.V,1431,Northern Superior Resources Inc,matched,100,exact_ticker
+424,Silver Storm Mining Ltd,SVRS.V,214,Silver Storm Mining Ltd,matched,100,exact_ticker
+425,Sarama Resources Ltd,SWA.V,634,Sarama Resources Ltd,matched,100,exact_ticker
+426,Silver Wolf Exploration Ltd,SWLF.V,1314,Silver X Mining,manual,74,fuzzy_name
+427,Southern Cross Gold Consolidated Ltd,SXGC.V,1435,Southern Cross Gold Ltd,matched,100,exact_ticker
+428,TAJIRI RESOURCES,TAJ.V,1292,Tajiri Resources Corp,matched,100,exact_ticker
+429,STELLAR AFRICAGOLD INC.,SPX.V,,,unmatched,0,none
+430,TRAILBREAKER RESOURCES,TBK.V,675,Trailbreaker Resources,matched,100,exact_ticker
+431,Silvercorp Metals Inc.,SVM.TO,1374,Silvercorp Metals Inc,matched,100,exact_ticker
+432,Surge Copper Corp,SURG.V,,,unmatched,0,none
+433,TDG GOLD,TDG.V,1412,TDG Gold Corp,matched,100,exact_ticker
+434,TECTONIC METALS,TECT.V,1183,Tectonic Metals Inc,matched,100,exact_ticker
+435,King Copper Discovery Corp,KCP.V,,,unmatched,0,none
+436,TRANSATLANTIC MINING,TCO.V,857,Transatlantic Mining,matched,100,exact_ticker
+437,THESIS GOLD,TAU.V,1395,Thesis Gold Inc,matched,100,exact_ticker
+438,THUNDER GOLD,TGOL.V,920,Thunderstruck Resources Ltd,manual,70,fuzzy_name
+439,THOR EXPLORATIONS LTD.,THX.V,787,Thor Explorations Ltd,matched,100,exact_ticker
+440,TINCORP METALS,TIN.V,,,unmatched,0,none
+441,TINKA RESOURCES,TK.V,472,Tinka Resources Ltd,matched,100,exact_ticker
+442,Troilus Gold Corp.,TLG.TO,1083,Troilus Gold Corp,matched,100,exact_ticker
+443,TRISTAR GOLD,TSG.V,477,Tristar Gold Inc,matched,100,exact_ticker
+444,Triple Flag Precious Metals Corp.,TFPM.TO,1375,Triple Flag Precious Metals Corp,matched,100,exact_ticker
+445,TRILOGY METALS,TMQ.TO,,,unmatched,0,none
+446,TNR GOLD,TNR.V,473,TNR Gold Corp,matched,100,exact_ticker
+447,TRIGON METALS,TM.V,,,unmatched,0,none
+448,TORQ RESOURCES,TORQ.V,904,Torq Resources Inc,matched,100,exact_ticker
+449,Terra Balcanica Resources Corp.,TERA.CN,1340,Canterra Minerals Corp,manual,70,fuzzy_name
+450,TRX GOLD,TRX.TO,461,TRX Gold Corp,matched,100,exact_ticker
+451,TRIFECTA GOLD,TG.V,974,Trifecta Gold Ltd,matched,100,exact_ticker
+452,TARANIS RESOURCES,TRO.V,222,Aris Mining Corp,manual,73,fuzzy_name
+453,TOCVAN VENTURES,TOC.CN,1426,Tocvan Ventures Corp,matched,95,exact_name
+454,TUDOR GOLD,TUD.V,804,Tudor Gold Corp,matched,100,exact_ticker
+456,TEUTON RESOURCES,TUO.V,468,Teuton Resources Corp,matched,100,exact_ticker
+457,TOWER RESOURCES,TWR.V,946,Tower Resources Ltd,matched,100,exact_ticker
+458,Torex Gold Resources Inc.,TXG.TO,474,Torex Gold Resources Inc,matched,100,exact_ticker
+459,HONEY BADGER SILVER,TUF.V,1054,Honey Badger Silver,matched,100,exact_ticker
+460,TALISKER RESOURCES,TSK.TO,1199,Talisker Resources Ltd,matched,100,exact_ticker
+461,American Pacific Mining Corp.,USGD.CN,1116,American Pacific Mining,matched,95,exact_name
+462,VIVA GOLD,VAU.V,1085,Viva Gold Corp,matched,100,exact_ticker
+463,PASOFINO GOLD,VEIN.V,875,Pasofino Gold Ltd,matched,100,exact_ticker
+464,VOLCANIC GOLD MINES INC.,VG.V,938,Volcanic Gold Mines Inc,matched,100,exact_ticker
+465,VICTORIA GOLD,VGCX.TO,487,Victoria Gold Corp,matched,100,exact_ticker
+466,VIOR INC.,VIO.V,784,Vior Inc,matched,100,exact_ticker
+467,SILVER VIPER MINERALS,VIPR.V,1079,Silver Viper Minerals Corp,matched,100,exact_ticker
+468,VELOCITY MINERALS,VLC.V,1002,Velocity Minerals Ltd,matched,100,exact_ticker
+469,VISCOUNT MINING,VML.V,650,Viscount Mining Corp,matched,100,exact_ticker
+470,VOX ROYALTY,VOXR.TO,1228,Vox Royalty Corp,matched,100,exact_ticker
+471,Americas Gold and Silver Corporation,USA.TO,419,Americas Gold & Silver Corp,matched,100,exact_ticker
+472,VVC EXPLORATION,VVC.V,,,unmatched,0,none
+473,VIZSLA SILVER CORP.,VZLA.TO,1173,Vizsla Silver Corp,matched,100,exact_ticker
+474,WESTERN ALASKA MINERALS,WAM.V,1422,Western Alaska Minerals Corp,matched,100,exact_ticker
+475,VIZSLA ROYALTIES,VROY.V,1389,Star Royalties Ltd,manual,80,fuzzy_name
+476,WESTERN EXPLORATION,WEX.V,1472,Western Exploration Inc,matched,100,exact_ticker
+477,WESTWARD GOLD,WG.CN,,,unmatched,0,none
+478,WESCAN GOLDFIELDS,WGF.V,,,unmatched,0,none
+479,WESTERN GOLD EXPLORATION,WGLD.V,201,Gold Reserve Inc,manual,75,fuzzy_name
+480,White Gold Corp.,WGO.V,869,White Gold Corp,matched,100,exact_ticker
+481,WESDOME GOLD MINES,WDO.TO,493,Wesdome Gold Mines Ltd,matched,100,exact_ticker
+482,WESTHAVEN GOLD,WHN.V,776,Westhaven Gold,matched,100,exact_ticker
+483,WEST HIGH YIELD RESOURCES,WHY.V,,,unmatched,0,none
+484,UNIGOLD,UGD.V,483,Unigold Inc,matched,100,exact_ticker
+485,WESTGOLD RESOURCES,WGX.TO,947,Westgold Resources Ltd,matched,100,exact_ticker
+486,WEST POINT GOLD,WPG.V,52,West Point Gold Corp,matched,100,exact_ticker
+487,Wheaton Precious Metals Corp.,WPM.TO,434,Wheaton Precious Metals Corp,matched,100,exact_ticker
+488,West Red Lake Gold Mines Ltd.,WRLG.V,621,West Red Lake Gold Mines Inc,matched,100,exact_ticker
+489,Western Copper and Gold Corporation,WRN.TO,495,Western Copper & Gold Corp,matched,100,exact_ticker
+490,WALKER RIVER RESOURCES,WRR.V,797,Walker River Resources Corp,matched,100,exact_ticker
+491,WEST VAULT MINING,WVM.V,494,West Vault Mining Inc,matched,100,exact_ticker
+492,XIMEN MINING,XIM.V,647,Ximen Mining Corp,matched,100,exact_ticker
+493,XTRA-GOLD RESOURCES,XTG.TO,504,Xtra-Gold Resources Corp,matched,100,exact_ticker
+494,TRANSITION METALS,XTM.V,609,Transition Metals Corp,matched,100,exact_ticker
+495,GOLD TERRA RESOURCE,YGT.V,635,Gold Terra Corp,matched,100,exact_ticker
+496,YORBEAU RESOURCES,YRB.TO,642,Yorbeau Resources,matched,100,exact_ticker
+497,ZACATECAS SILVER,ZAC.V,1338,Zacatecas Silver Corp,matched,100,exact_ticker
+498,WOLFDEN RESOURCES,WLF.V,1371,Wolfden Resources Corp,matched,100,exact_ticker
+499,Wallbridge Mining Company Ltd.,WM.TO,935,Wallbridge Mining Company Ltd,matched,100,exact_ticker
+500,TIER ONE SILVER,TSLV.V,1361,Tier One Silver Inc,matched,100,exact_ticker
+501,ZODIAC GOLD,ZAU.V,,,unmatched,0,none
+502,SIXTY NORTH GOLD MINING LTD,SXTY.CN,168,Silver North Resources,manual,70,fuzzy_name
+503,Great Atlantic Resources Corp,GR.V,1108,Great Atlantic Resources Corp,matched,100,exact_ticker
+504,Serabi Gold plc,SBI.TO,533,Serabi Gold,matched,100,exact_ticker
+505,55 North Mining Inc.,FFF.CN,1364,55 North Mining Inc,matched,95,exact_name
+506,Abacus Mining & Exploration Corp.,AME.V,932,Abacus Mining & Exploration Corp,matched,100,exact_ticker
+507,Aben Gold Corp.,ABM.V,585,Aben Minerals Ltd,matched,100,exact_ticker
+508,Almaden Minerals Ltd.,AMM.TO,19,Almaden Minerals Ltd,matched,100,exact_ticker
+509,Aloro Mining Corp.,AORO.V,1130,Aloro Mining Corp,matched,100,exact_ticker
+510,Altiplano Metals Inc.,APN.V,983,Altiplano Metals,matched,100,exact_ticker
+511,Amarc Resources Ltd.,AHR.V,23,Amarc Resources Ltd,matched,100,exact_ticker
+512,American Creek Resources Ltd.,AMK.V,803,American Creek Resources Ltd,matched,100,exact_ticker
+513,ArcWest Exploration Inc.,AWX.V,1010,Arcwest Exploration Inc,matched,100,exact_ticker
+514,Argentum Silver Corp.,ASL.V,975,Argentum Silver Corp,matched,100,exact_ticker
+515,Argo Gold Inc.,ARQ.CN,923,ARGO GOLD INC,matched,95,exact_name
+516,Ascendant Resources Inc.,ASND.TO,1030,Ascendant Resources,matched,100,exact_ticker
+517,ATEX Resources Inc.,ATX.V,1156,Amex Exploration Inc,manual,75,fuzzy_name
+518,Atico Mining Corp.,ATY.V,848,Atico Mining Corp,matched,100,exact_ticker
+519,Aurwest Resources Corp.,AWR.CN,1372,Aurwest Resources Corp,matched,95,exact_name
+520,Avidian Gold Corp.,AVG.V,1089,Avidian Gold Corp,matched,100,exact_ticker
+521,Avrupa Minerals Ltd.,AVU.V,63,Avrupa Minerals Ltd,matched,100,exact_ticker
+522,Azarga Metals Corp.,AZR.V,812,Azarga Metals Corp,matched,100,exact_ticker
+523,Azucar Minerals Ltd.,AMZ.V,1148,Azucar Minerals Ltd,matched,100,exact_ticker
+524,Badlands Resources Inc.,BLDS.V,313,Badlands Resources Inc,matched,100,exact_ticker
+525,Barksdale Resources Corp.,BRO.V,1387,Barksdale Resources Corp,matched,100,exact_ticker
+526,BeMetals Corp.,BMET.V,1386,BeMetals Corp,matched,100,exact_ticker
+527,Blende Silver Corp.,BAG.V,805,Blende Silver Corp,matched,100,exact_ticker
+528,Bold Ventures Inc.,BOL.V,948,Bold Ventures Inc,matched,100,exact_ticker
+529,Bond Resources Inc.,BJB.CN,1257,Bond Resources Inc,matched,95,exact_name
+530,Bravada Gold Corp.,BVA.V,82,Bravada Gold Corp,matched,100,exact_ticker
+531,BTU Metals Corp.,BTU.V,1280,BTU Metals,matched,100,exact_ticker
+532,Bunker Hill Mining Corp.,BNKR.V,967,Bunker Hill Mining Corp,matched,100,exact_ticker
+534,Callinex Mines Inc.,CNX.V,661,Callinex Mines Inc,matched,100,exact_ticker
+535,Cantex Mine Development Corp.,CD.V,1216,Cantex Mine Development Corp,matched,100,exact_ticker
+536,Capella Minerals Ltd.,CMIL.V,1110,Capella Minerals Ltd,matched,100,exact_ticker
+537,Carlin Gold Corp.,CGD.V,102,Carlin Gold Corp,matched,100,exact_ticker
+538,Chakana Copper Corp.,PERU.V,1038,Chakana Copper,matched,100,exact_ticker
+539,Champion Bear Resources Ltd.,CBA.V,1039,Champion Bear Resources,matched,100,exact_ticker
+540,Chibougamau Independent Mines Inc.,CBG.V,820,Chibougamau Independent Mines Inc,matched,100,exact_ticker
+541,Commander Resources Ltd.,CMD.NE,1128,Commander Resources Ltd,matched,95,exact_name
+542,Comstock Metals Ltd.,CSL-H.V,989,Comstock Metals Ltd,matched,100,exact_ticker
+543,Conquest Resources Limited,CQR.V,1254,Conquest Resources Ltd,matched,100,exact_ticker
+545,Decade Resources Ltd.,DEC.V,1106,Decade Resources Ltd,matched,100,exact_ticker
+546,Denarius Metals Corp.,DMET.NE,1336,Denarius Metals,matched,95,exact_name
+547,Dios Exploration Inc.,DOS.V,1246,Dios Exploration Inc,matched,100,exact_ticker
+548,District Metals Corp.,DMX.V,1275,District Metals Corp,matched,100,exact_ticker
+549,Dixie Gold Inc.,DG.V,1212,Dixie Gold Inc,matched,100,exact_ticker
+550,Doubleview Gold Corp.,DBG.V,851,Doubleview Gold Corp,matched,100,exact_ticker
+551,E2Gold Inc.,ETU.V,1319,E2Gold Inc,matched,100,exact_ticker
+552,Element79 Gold Corp.,ELEM.CN,1414,Element79 Gold Corp,matched,95,exact_name
+553,Emergent Metals Corp.,EMR.V,163,Emergent Metals Corp,matched,100,exact_ticker
+554,EnviroGold Global Ltd.,NVRO.CN,1437,EnviroGold Global Ltd,matched,95,exact_name
+555,ESGold Corp.,ESAU.CN,747,ESGold Corp,matched,95,exact_name
+556,Euromax Resources Ltd.,EOX.V,171,Euromax Resources Ltd,matched,100,exact_ticker
+557,Evergold Corp.,EVER.V,1182,Evergold Corp,matched,100,exact_ticker
+558,Fabled Silver Gold Corp.,FCO.H,1333,Fabled Silver Gold Corp,matched,100,exact_ticker
+559,Falcon Gold Corp.,FG.V,1229,Falcon Gold Corp,matched,100,exact_ticker
+560,Fancamp Exploration Ltd.,FNC.V,1403,Fancamp Exploration Ltd,matched,100,exact_ticker
+561,Finlay Minerals Ltd.,FYL.V,1391,Finlay Minerals Ltd,matched,100,exact_ticker
+562,Fireweed Metals Corp.,FWZ.V,984,Fireweed Metals,matched,100,exact_ticker
+563,First Tellurium Corp.,FTEL.CN,1097,First Tellurium Corp,matched,95,exact_name
+564,Fortune Minerals Limited,FT.TO,916,Fortune Minerals Ltd,matched,100,exact_ticker
+565,Gabriel Resources Ltd.,GBU.V,189,Gabriel Resources Ltd,matched,100,exact_ticker
+566,Garibaldi Resources Corp.,GGI.V,191,Garibaldi Resources Corp,matched,100,exact_ticker
+567,Generic Gold Corp.,GGC.CN,1283,Generic Gold Corp,matched,95,exact_name
+568,GGX Gold Corp.,GGX.V,992,GGX Gold Corp,matched,100,exact_ticker
+569,Goldcliff Resource Corporation,GCN.V,837,Goldcliff Resource Corp,matched,100,exact_ticker
+570,Golden Sky Minerals Corp.,AUEN.V,1112,Golden Sky Minerals Corp,matched,100,exact_ticker
+571,Goldflare Exploration Inc.,GOFL.V,482,Goldflare Exploration Inc,matched,100,exact_ticker
+572,Gold Finder Resources Ltd.,GLD.V,1168,GoldON Resources Ltd,matched,100,exact_ticker
+573,Gossan Resources Limited,GSS.V,1378,Gossan Resources Ltd,matched,100,exact_ticker
+574,Graycliff Exploration Ltd.,GRAY.CN,1366,Graycliff Exploration Ltd,matched,95,exact_name
+575,Grizzly Discoveries Inc.,GZD.V,922,Grizzly Discoveries Inc,matched,100,exact_ticker
+576,Group Eleven Resources Corp.,ZNG.V,,,unmatched,0,none
+577,Gungnir Resources Inc.,GUG.V,912,Gungnir Resources Inc,matched,100,exact_ticker
+578,Hannan Metals Ltd.,HAN.V,1215,Hannan Metals Ltd,matched,100,exact_ticker
+579,Hanstone Gold Corp.,HANS.V,1373,Hanstone Gold Corp,matched,100,exact_ticker
+580,Harfang Exploration Inc.,HAR.V,1162,Harfang Exploration Inc,matched,100,exact_ticker
+581,Headwater Gold Inc.,HWG.CN,1409,Headwater Gold Inc,matched,95,exact_name
+582,Iconic Minerals Ltd.,ICM.V,1055,Iconic Minerals,matched,100,exact_ticker
+583,iMetal Resources Inc.,IMR.V,1136,iMetal Resources,matched,100,exact_ticker
+584,Inca One Gold Corp.,INCA.H,654,Inca One Gold Corp,matched,95,exact_name
+585,Inflection Resources Ltd.,AUCU.CN,1277,Inflection Resources Ltd,matched,95,exact_name
+586,International Iconic Gold Exploration Corp.,ICON.V,292,International Iconic Gold,matched,100,exact_ticker
+587,International Prospect Ventures Ltd.,IZZ.V,1095,Intl. Prospect Ventures,matched,100,exact_ticker
+588,Ivanhoe Mines Ltd.,IVN.TO,868,Ivanhoe Mines Ltd,matched,100,exact_ticker
+589,Kesselrun Resources Ltd.,KES.V,1270,Kesselrun Resources Ltd,matched,100,exact_ticker
+590,Kingfisher Metals Corp.,KFR.V,1334,Kingfisher Metals Corp,matched,100,exact_ticker
+591,Kintavar Exploration Inc.,KTR.V,,,unmatched,0,none
+592,Kodiak Copper Corp.,KDK.V,,,unmatched,0,none
+593,Labrador Gold Corp.,LAB.V,1062,Labrador Gold Corp,matched,100,exact_ticker
+594,Lahontan Gold Corp.,LG.V,1430,Lahontan Gold Corp,matched,100,exact_ticker
+595,Lara Exploration Ltd.,LRA.V,273,Lara Exploration Ltd,matched,100,exact_ticker
+596,Latin Metals Inc.,LMS.V,911,Latin Metals Inc,matched,100,exact_ticker
+597,Leviathan Gold Ltd.,LVX.V,1327,Leviathan Gold Ltd,matched,100,exact_ticker
+598,M3 Metals Corp.,MT.V,900,M3 Metals Corp,matched,100,exact_ticker
+599,MacDonald Mines Exploration Ltd.,BMK.V,906,MacDonald Mines Exploration Ltd,matched,100,exact_ticker
+600,Masivo Silver Corp.,MASS.V,644,Masivo Silver,matched,100,exact_ticker
+601,Max Resource Corp.,MAX.V,1141,Max Resource Corp,matched,100,exact_ticker
+602,McLaren Resources Inc.,MCL.CN,931,Mclaren Resources,matched,95,exact_name
+603,Melkior Resources Inc.,MKR.V,301,Melkior Resources Inc,matched,100,exact_ticker
+604,Midland Exploration Inc.,MD.V,305,Midland Exploration Inc,matched,100,exact_ticker
+605,Mines D'Or Orbec Inc.,BLUE.V,1209,Mines D’Or Orbec Inc,matched,100,exact_ticker
+606,Minnova Corp.,MCI.V,56,Minnova Corp,matched,100,exact_ticker
+607,MTB Metals Corp.,MTB.V,321,MTB Metals,matched,100,exact_ticker
+608,Newlox Gold Ventures Corp.,LUX.CN,1461,Newlox Gold Ventures Corp,matched,100,exact_ticker
+609,Newfoundland Discovery Corp.,NEWD.CN,1245,Newfoundland Discovery Corp,matched,95,exact_name
+610,Newmont Corporation,NGT.TO,872,Newmont Corp,matched,100,exact_ticker
+611,Noble Mineral Exploration Inc.,NOB.V,1019,Noble Mineral Exploration Inc,matched,100,exact_ticker
+612,Northern Shield Resources Inc.,NRN.V,1153,Northern Shield Resources Inc,matched,100,exact_ticker
+613,Nubian Resources Ltd.,NBR.V,1250,Nubian Resources Ltd,matched,100,exact_ticker
+614,NuLegacy Gold Corporation,NUG.V,553,Nulegacy Gold Corp,matched,100,exact_ticker
+615,NV Gold Corporation,NVX.V,637,NV Gold Corp,matched,100,exact_ticker
+616,Ophir Metals Corp.,OPHR.V,1354,Ophir Metals Corp.,matched,100,exact_ticker
+617,OreCap Invest Corp.,OCI.V,802,OreCap Invest Corp,matched,100,exact_ticker
+618,Peloton Minerals Corporation,PMC.CN,884,Peloton Minerals Corp,matched,95,exact_name
+619,Perpetua Resources Corp.,PPTA.TO,304,Perpetua Resources Corp,matched,100,exact_ticker
+620,Peruvian Metals Corp.,PER.V,731,Peruvian Metals,matched,100,exact_ticker
+621,Phenom Resources Corp.,PHNM.V,1440,Phenom Resources Corp,matched,100,exact_ticker
+622,Providence Gold Mines Inc.,PHD.V,1186,Providence Gold Mines Inc,matched,100,exact_ticker
+623,PTX Metals Inc.,PTX.V,1488,PTX Metals Inc,matched,100,exact_ticker
+626,Rackla Metals Inc.,RAK.V,1492,Rackla Metals Inc,matched,100,exact_ticker
+627,Ranchero Gold Corp.,RNCH.V,1405,Ranchero Gold Corp,matched,100,exact_ticker
+628,Regulus Resources Inc.,REG.V,591,Regulus Resources Inc,matched,100,exact_ticker
+629,Renforth Resources Inc.,RFR.CN,1139,Renforth Resources Inc,matched,95,exact_name
+630,Ridgestone Mining Inc.,RMI.V,1261,Ridgestone Mining Inc,matched,100,exact_ticker
+631,Rise Gold Corp.,RISE.CN,924,Rise Gold Corp,matched,95,exact_name
+632,Rover Critical Minerals Corp.,ROVR.V,1253,Rover Metals Corp,matched,100,exact_ticker
+633,Rusoro Mining Ltd.,RML.V,405,Rusoro Mining Ltd,matched,100,exact_ticker
+634,Sable Resources Ltd.,SAE.V,1149,Sable Resources,matched,100,exact_ticker
+635,San Lorenzo Gold Corp.,SLG.V,,,unmatched,0,none
+636,Sanatana Resources Inc.,STA.V,663,Sanatana Resources Inc,matched,100,exact_ticker
+637,Seasif Exploration Inc.,SAF.V,1142,Seasif Exploration Inc,matched,100,exact_ticker
+638,Silver Bear Resources Plc,SBR.TO,425,Silver Bear Resources Plc,matched,100,exact_ticker
+639,Silver Bull Resources Inc.,SVB.TO,426,Silver Bull Resources Inc,matched,100,exact_ticker
+640,Silver Crown Royalties Inc.,SCRI.NE,,,unmatched,0,none
+641,Silver Grail Resources Ltd.,SVG.V,428,Silver Grail Resources Ltd,matched,100,exact_ticker
+642,Silver Predator Corp.,SPD.V,430,Silver Predator Corp,matched,100,exact_ticker
+643,Silver Sands Resources Corp.,SAND.CN,1267,Silver Sands Resources Corp,matched,95,exact_name
+644,Silver Spruce Resources Inc.,SSE.V,819,Silver Spruce Resources Inc,matched,100,exact_ticker
+645,Sky Gold Corp.,SKYG.V,907,Sky Gold Corp,matched,100,exact_ticker
+646,Slam Exploration Ltd.,SXL.V,438,Slam Exploration Ltd,matched,100,exact_ticker
+647,Southern Arc Minerals Inc.,SA.H,446,Southern Arc Minerals Inc,matched,100,exact_ticker
+648,Spearmint Resources Inc.,SPMT.CN,,,unmatched,0,none
+649,St. James Gold Corp.,LORD,1349,St. James Gold Corp,matched,100,exact_ticker
+650,Starr Peak Mining Ltd.,STE.V,1271,Starr Peak Mining,matched,100,exact_ticker
+651,Stelmine Canada Ltd.,STH.V,908,Stelmine Canada Ltd,matched,100,exact_ticker
+652,Stillwater Critical Minerals Corp.,PGE.V,501,Sibanye-Stillwater,manual,70,fuzzy_name
+653,Strategic Metals Ltd.,SMD.V,453,Strategic Metals Ltd,matched,100,exact_ticker
+654,Sulliden Mining Capital Inc.,SMC.TO,855,Sulliden Mining Capital Inc,matched,100,exact_ticker
+655,Sun Peak Metals Corp.,PEAK.V,1248,Sun Peak Metals Corp,matched,100,exact_ticker
+656,Tarachi Gold Corp.,TRG.CN,1291,Tarachi Gold Corp,matched,95,exact_name
+657,ThreeD Capital Inc.,IDK.CN,,,unmatched,0,none
+658,Thunderstruck Resources Ltd.,AWE.V,920,Thunderstruck Resources Ltd,matched,100,exact_ticker
+659,TRU Precious Metals Corp.,TRU.V,1376,TRU Precious Metals Corp,matched,100,exact_ticker
+661,Visible Gold Mines Inc.,VGD.V,489,Visible Gold Mines Inc,matched,100,exact_ticker
+662,Vista Gold Corp.,VGZ.TO,490,Vista Gold Corp,matched,100,exact_ticker
+663,VR Resources Ltd.,VRR.V,1012,VR Resources Ltd,matched,100,exact_ticker
+664,Vulcan Minerals Inc.,VUL.V,1404,Vulcan Minerals Inc,matched,100,exact_ticker
+665,Walker Lane Resources Ltd.,WLR.V,122,Walker Lane Resources Ltd,matched,100,exact_ticker
+666,Winshear Gold Corp.,WINS.V,691,Winshear Gold,matched,100,exact_ticker
+667,Xali Gold Corp.,XGC.V,100,Xali Gold Corp,matched,100,exact_ticker
+668,Xanadu Mines Ltd.,XAM.TO,1088,Xanadu Mines,matched,100,exact_ticker
+669,Yukon Metals Corp.,YMC.CN,,,unmatched,0,none
+670,Zephyr Minerals Ltd.,ZFR.V,782,Zephyr Minerals Ltd,matched,100,exact_ticker
+671,Zonte Metals Inc.,ZON.V,964,Zonte Metals Inc,matched,100,exact_ticker
+672,Bullion Gold Resources Corp,BGD.V,,,unmatched,0,none

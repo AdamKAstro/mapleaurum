@@ -1,7 +1,7 @@
-// src/App.tsx
+//src/App.tsx
+
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { GlassCustomizationPage } from './pages/glass-customization';
+import { Routes, Route, Navigate, Outlet } from 'react-router-dom';
 import { Helmet } from 'react-helmet';
 
 // --- Providers ---
@@ -18,6 +18,7 @@ import ErrorBoundary from './components/ErrorBoundary';
 
 // --- Page Components ---
 import { Hero } from './components/ui/hero';
+import HookUIPage from './features/hook-ui/pages/HookUIPage';
 import { LoginPage } from './pages/login';
 import { ForgotPasswordPage } from './pages/forgot-password';
 import { ResetPasswordPage } from './pages/reset-password';
@@ -26,9 +27,6 @@ import { CompaniesPage } from './pages/companies';
 import { SubscribePage } from './pages/subscribe';
 import { ScatterChartPage } from './pages/scatter-chart';
 import { FilterPage } from './pages/filter';
-
-//import ScoringPage from './pages/scoring';
-
 import AdvScoringPage from './pages/scoring-advanced';
 import { ScatterScoreProPage } from './pages/scatter-score-pro';
 import { HelpLandingPage } from './pages/help/index';
@@ -36,11 +34,13 @@ import { HelpMetricsPage } from './pages/help/metrics';
 import { HelpFiltersPage } from './pages/help/filters-guide';
 import { HelpScoringPage } from './pages/help/scoring-guide';
 import { HelpScatterPage } from './pages/help/scatter-guide';
-import { HelpScatterScorePage } from './pages/help/scatter-score-guide'; // New Import
+import { HelpScatterScorePage } from './pages/help/scatter-score-guide';
 import { HelpTiersPage } from './pages/help/tiers';
 import { HelpGeneralPage } from './pages/help/general';
 import { AdminSendEmailPage } from './pages/admin/send-email';
+import { GlassCustomizationPage } from './pages/glass-customization';
 
+// A simple 404 Not Found component
 function NotFoundPage() {
   return (
     <div className="flex items-center justify-center h-full p-10 text-white">
@@ -53,6 +53,33 @@ function NotFoundPage() {
         </a>
       </div>
     </div>
+  );
+}
+
+// ✅ NEW: This layout component wraps all pages that NEED the global filter context.
+// It contains the shared UI shell (Header, Sidebar) and the FilterProvider.
+function FilteredLayout() {
+  return (
+    <FilterProvider>
+      <div className="flex flex-col min-h-screen bg-navy-900">
+        <Header />
+        <div className="flex flex-1 overflow-hidden">
+          <Sidebar />
+          <main className="flex-1 overflow-y-auto relative isolate">
+            <div
+              className="absolute inset-0 bg-cover bg-center bg-fixed -z-20 opacity-[0.03]"
+              style={{ backgroundImage: `url('/Background2.jpg')` }}
+              aria-hidden="true"
+            />
+            <div className="absolute inset-0 bg-noise opacity-[0.07] -z-10" aria-hidden="true" />
+            <ErrorBoundary fallback={<div className="p-6 text-red-400">Error loading this page section.</div>}>
+              {/* The Outlet component renders the specific child route component (e.g., CompaniesPage) */}
+              <Outlet />
+            </ErrorBoundary>
+          </main>
+        </div>
+      </div>
+    </FilterProvider>
   );
 }
 
@@ -75,77 +102,67 @@ function App() {
     },
   };
 
-  const showDebugSelector = false;
-
   return (
-    <Router>
-      <ThemeProvider>
-        <AuthProvider>
-          <SubscriptionProvider>
-            <CurrencyProvider>
-              <FilterProvider>
-                <ErrorBoundary
-                  fallback={
-                    <div className="flex items-center justify-center h-screen text-red-500 bg-navy-900">
-                      Something went terribly wrong! Please reload the page.
-                    </div>
-                  }
-                >
-                  <Helmet>
-                    <title>MapleAurum | Canadian Mining Analytics</title>
-                    <meta name="description" content={jsonLd.description} />
-                    <link rel="preload" href="/assets/css/index.css" as="style" />
-                    <script type="application/ld+json">{JSON.stringify(jsonLd)}</script>
-                  </Helmet>
-                  <div className="flex flex-col min-h-screen bg-navy-900">
-                    <Header />
-                    <div className="flex flex-1 overflow-hidden">
-                      <Sidebar />
-                      <main className="flex-1 overflow-y-auto relative isolate">
-                        <div
-                          className="absolute inset-0 bg-cover bg-center bg-fixed -z-20 opacity-[0.03]"
-                          style={{ backgroundImage: `url('/Background2.jpg')` }}
-                          aria-hidden="true"
-                        />
-                        <div className="absolute inset-0 bg-noise opacity-[0.07] -z-10" aria-hidden="true" />
-                        <ErrorBoundary fallback={<div className="p-6 text-red-400">Error loading this page section.</div>}>
-                          <Routes>
-                            <Route path="/" element={<Hero />} />
-                            <Route path="/login" element={<LoginPage />} />
-                            <Route path="/auth" element={<Navigate to={{ pathname: '/login', search: window.location.search }} replace />} />
-                            <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-                            <Route path="/reset-password" element={<ResetPasswordPage />} />
-                            <Route path="/subscribe" element={<SubscribePage />} />
-                            <Route path="/onboarding" element={<OnboardingPage />} />
-                            <Route path="/companies" element={<CompaniesPage />} />
-							<Route path="/glass-customization" element={<GlassCustomizationPage />} />
-                            <Route path="/filter" element={<FilterPage />} />							
-							<Route path="/scoring-advanced" element={<AdvScoringPage />} />	
-                            <Route path="/scatter-chart" element={<ScatterChartPage />} />
-                            <Route path="/scatter-score-pro" element={<ScatterScoreProPage />} />
-                            <Route path="/help" element={<HelpLandingPage />} />
-                            <Route path="/help/metrics" element={<HelpMetricsPage />} />
-                            <Route path="/help/filters" element={<HelpFiltersPage />} />
-                            <Route path="/help/scoring" element={<HelpScoringPage />} />
-                            <Route path="/help/scatter-chart" element={<HelpScatterPage />} />
-                            <Route path="/help/scatter-score-pro" element={<HelpScatterScorePage />} /> {/* New Route */}
-                            <Route path="/help/tiers" element={<HelpTiersPage />} />
-                            <Route path="/help/general" element={<HelpGeneralPage />} />
-                            <Route path="/admin/send-email" element={<AdminSendEmailPage />} />
-                            <Route path="*" element={<NotFoundPage />} />
-                          </Routes>
-                        </ErrorBoundary>
-                      </main>
-                    </div>
-                    {showDebugSelector && <div>{/* DebugTierSelector placeholder */}</div>}
-                  </div>
-                </ErrorBoundary>
-              </FilterProvider>
-            </CurrencyProvider>
-          </SubscriptionProvider>
-        </AuthProvider>
-      </ThemeProvider>
-    </Router>
+    <ThemeProvider>
+      <AuthProvider>
+        <SubscriptionProvider>
+          <CurrencyProvider>
+            <ErrorBoundary
+              fallback={
+                <div className="flex items-center justify-center h-screen text-red-500 bg-navy-900">
+                  Something went terribly wrong! Please reload the page.
+                </div>
+              }
+            >
+              <Helmet>
+                <title>MapleAurum | Canadian Mining Analytics</title>
+                <meta name="description" content={jsonLd.description} />
+                <link rel="preload" href="/assets/css/index.css" as="style" />
+                <script type="application/ld+json">{JSON.stringify(jsonLd)}</script>
+              </Helmet>
+              
+              {/* ✅ UPDATED: The Routes component now defines which pages use the FilteredLayout */}
+              <Routes>
+                {/* --- Routes that use the FilteredLayout (with Header, Sidebar, and FilterContext) --- */}
+                <Route element={<FilteredLayout />}>
+                  <Route path="/" element={<Hero />} />
+                  <Route path="/companies" element={<CompaniesPage />} />
+                  <Route path="/glass-customization" element={<GlassCustomizationPage />} />
+                  <Route path="/filter" element={<FilterPage />} />
+                  <Route path="/scoring-advanced" element={<AdvScoringPage />} />
+                  <Route path="/scatter-chart" element={<ScatterChartPage />} />
+                  <Route path="/scatter-score-pro" element={<ScatterScoreProPage />} />
+				  <Route path="/subscribe" element={<SubscribePage />} />
+                </Route>
+
+                {/* --- Self-contained routes that DO NOT use the FilteredLayout --- */}
+                <Route path="/hook" element={<HookUIPage />} />
+                <Route path="/login" element={<LoginPage />} />
+                <Route path="/auth" element={<Navigate to={{ pathname: '/login', search: window.location.search }} replace />} />
+                <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+                <Route path="/reset-password" element={<ResetPasswordPage />} />
+                
+                <Route path="/onboarding" element={<OnboardingPage />} />
+                
+                {/* --- Help and Admin pages can also be independent --- */}
+                <Route path="/help" element={<HelpLandingPage />} />
+                <Route path="/help/metrics" element={<HelpMetricsPage />} />
+                <Route path="/help/filters" element={<HelpFiltersPage />} />
+                <Route path="/help/scoring" element={<HelpScoringPage />} />
+                <Route path="/help/scatter-chart" element={<HelpScatterPage />} />
+                <Route path="/help/scatter-score-pro" element={<HelpScatterScorePage />} />
+                <Route path="/help/tiers" element={<HelpTiersPage />} />
+                <Route path="/help/general" element={<HelpGeneralPage />} />
+                <Route path="/admin/send-email" element={<AdminSendEmailPage />} />
+
+                {/* --- Catch-all 404 Route --- */}
+                <Route path="*" element={<NotFoundPage />} />
+              </Routes>
+            </ErrorBoundary>
+          </CurrencyProvider>
+        </SubscriptionProvider>
+      </AuthProvider>
+    </ThemeProvider>
   );
 }
 

@@ -13,7 +13,7 @@ export function CurrencySelector() {
     <select
       value={currency}
       onChange={handleChange}
-      className="px-3 py-2 text-sm bg-navy-400/20 border border-navy-300/20 rounded-md text-surface-white focus:outline-none focus:ring-2 focus:ring-accent-teal"
+      className="currency-selector"
     >
       <option value="USD">USD</option>
       <option value="CAD">CAD</option>

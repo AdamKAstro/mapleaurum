@@ -1,4 +1,4 @@
-// src/components/unified-control-panel.tsx
+// unified-control-panel.tsx
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -11,23 +11,19 @@ import {
   Eye,
   EyeOff,
   Download,
-  Filter,
-  Users,
-  Sparkles
 } from 'lucide-react';
 import { cn } from '../lib/utils';
-import { Button } from './ui/button'; // Ensure this is your updated Button component
+import { Button } from './ui/button';
 import { StatusFilterButton } from './status-filter-button';
 import type { CompanyStatus } from '../lib/types';
 import debounce from 'lodash/debounce';
+import { STYLE_CONFIG } from './style-config';
 
+// Interfaces
 interface UnifiedControlPanelProps {
-  // Status Filters
   availableStatuses: readonly CompanyStatus[];
   selectedStatuses: readonly CompanyStatus[];
   onStatusChange: (status: CompanyStatus) => void;
-
-  // Selection State & Actions
   totalCount: number;
   selectedCount: number;
   showDeselected: boolean;
@@ -37,11 +33,7 @@ interface UnifiedControlPanelProps {
   onToggleShowDeselected: () => void;
   onExportSelected: () => void;
   onSelectCompany: (companyId: number) => void;
-
-  // Live Search Functionality
   onSearchCompanies: (query: string) => Promise<{ id: number; name: string; ticker: string }[]>;
-
-  // General Actions
   onClearAllFilters: () => void;
   hasActiveFilters: boolean;
 }
@@ -58,7 +50,7 @@ interface CompanySearchInputProps {
   placeholder: string;
 }
 
-// CompanySearchInput Component (remains the same)
+// CompanySearchInput Component
 const CompanySearchInput: React.FC<CompanySearchInputProps> = ({
   onSearchCompanies,
   onSelectCompany,
@@ -92,47 +84,55 @@ const CompanySearchInput: React.FC<CompanySearchInputProps> = ({
     }, 300)
   ).current;
 
-  const handleSearchChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    setSearchTerm(value);
-    setSelectedIndex(-1);
-    debouncedSearch(value);
-  }, [debouncedSearch]);
+  const handleSearchChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const value = e.target.value;
+      setSearchTerm(value);
+      setSelectedIndex(-1);
+      debouncedSearch(value);
+    },
+    [debouncedSearch]
+  );
 
-  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
-    if (!searchResults.length) return;
-    switch (e.key) {
-      case 'ArrowDown':
-        e.preventDefault();
-        setSelectedIndex(prev => prev < searchResults.length - 1 ? prev + 1 : 0);
-        break;
-      case 'ArrowUp':
-        e.preventDefault();
-        setSelectedIndex(prev => prev > 0 ? prev - 1 : searchResults.length - 1);
-        break;
-      case 'Enter':
-        e.preventDefault();
-        if (selectedIndex >= 0 && searchResults[selectedIndex]) {
-          onSelectCompany(searchResults[selectedIndex].id);
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent) => {
+      if (!searchResults.length) return;
+      switch (e.key) {
+        case 'ArrowDown':
+          e.preventDefault();
+          setSelectedIndex((prev) => (prev < searchResults.length - 1 ? prev + 1 : 0));
+          break;
+        case 'ArrowUp':
+          e.preventDefault();
+          setSelectedIndex((prev) => (prev > 0 ? prev - 1 : searchResults.length - 1));
+          break;
+        case 'Enter':
+          e.preventDefault();
+          if (selectedIndex >= 0 && searchResults[selectedIndex]) {
+            onSelectCompany(searchResults[selectedIndex].id);
+            setSearchTerm('');
+            setSearchResults([]);
+            setIsSearching(false);
+          }
+          break;
+        case 'Escape':
           setSearchTerm('');
           setSearchResults([]);
-          setIsSearching(false);
-        }
-        break;
-      case 'Escape':
-        setSearchTerm('');
-        setSearchResults([]);
-        setSelectedIndex(-1);
-        inputRef.current?.blur();
-        break;
-    }
-  }, [searchResults, selectedIndex, onSelectCompany]);
+          setSelectedIndex(-1);
+          inputRef.current?.blur();
+          break;
+      }
+    },
+    [searchResults, selectedIndex, onSelectCompany]
+  );
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (
-        resultsRef.current && !resultsRef.current.contains(e.target as Node) &&
-        inputRef.current && !inputRef.current.contains(e.target as Node)
+        resultsRef.current &&
+        !resultsRef.current.contains(e.target as Node) &&
+        inputRef.current &&
+        !inputRef.current.contains(e.target as Node)
       ) {
         setSearchResults([]);
         setSelectedIndex(-1);
@@ -142,13 +142,18 @@ const CompanySearchInput: React.FC<CompanySearchInputProps> = ({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  const styles = STYLE_CONFIG.companySearchInput;
+
   return (
     <div className="relative">
-      <div className={cn(
-        "relative transition-all duration-200",
-        isFocused && "ring-2 ring-emerald-400 ring-offset-2 ring-offset-navy-400 rounded-lg"
-      )}>
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-surface-white/60" />
+      <div className={cn('relative transition-all duration-200', isFocused && styles.container)}>
+        <Search
+          className={cn(
+            'absolute left-3 top-1/2 -translate-y-1/2',
+            styles.iconSize,
+            STYLE_CONFIG.variant === 'HighContrast' ? 'text-cyan-400' : 'text-gray-400'
+          )}
+        />
         <input
           ref={inputRef}
           type="text"
@@ -158,11 +163,11 @@ const CompanySearchInput: React.FC<CompanySearchInputProps> = ({
           onFocus={() => setIsFocused(true)}
           onBlur={() => setIsFocused(false)}
           placeholder={placeholder}
-          className="w-full pl-10 pr-10 py-2 bg-navy-600/50 border border-navy-300/20 rounded-lg text-sm text-surface-white placeholder-surface-white/60 focus:outline-none focus:border-emerald-400 transition-colors"
+          className={styles.input}
         />
         {isSearching && (
           <div className="absolute right-3 top-1/2 -translate-y-1/2">
-            <RefreshCcw className="h-4 w-4 text-emerald-400 animate-spin" />
+            <RefreshCcw className={cn(styles.iconSize, 'text-cyan-400 animate-spin')} />
           </div>
         )}
         {searchTerm && !isSearching && (
@@ -172,9 +177,14 @@ const CompanySearchInput: React.FC<CompanySearchInputProps> = ({
               setSearchResults([]);
               inputRef.current?.focus();
             }}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-surface-white/60 hover:text-surface-white transition-colors"
+            className={cn(
+              'absolute right-3 top-1/2 -translate-y-1/2 transition-colors',
+              STYLE_CONFIG.variant === 'HighContrast'
+                ? 'text-cyan-400 hover:text-cyan-200'
+                : 'text-gray-400 hover:text-gray-200'
+            )}
           >
-            <X className="h-4 w-4" />
+            <X className={styles.iconSize} />
           </button>
         )}
       </div>
@@ -185,10 +195,10 @@ const CompanySearchInput: React.FC<CompanySearchInputProps> = ({
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
-            className="absolute top-full left-0 right-0 mt-2 bg-navy-600/95 backdrop-blur-sm border border-navy-300/20 rounded-lg shadow-lg overflow-hidden z-50"
+            className={styles.resultsContainer}
           >
-            <div className="max-h-64 overflow-y-auto">
-              {searchResults.map((company) => (
+            <div className={styles.maxHeight + ' overflow-y-auto'}>
+              {searchResults.map((company, index) => (
                 <button
                   key={company.id}
                   onClick={() => {
@@ -198,16 +208,20 @@ const CompanySearchInput: React.FC<CompanySearchInputProps> = ({
                     setSearchResults([]);
                     setIsSearching(false);
                   }}
-                  className="w-full text-left px-3 py-2 hover:bg-navy-600/50 rounded transition-colors"
+                  className={cn(styles.resultItem, index === selectedIndex && 'bg-navy-600/50')}
                 >
                   <div className="flex items-center justify-between">
                     <div>
-                      <span className="text-surface-white font-medium">{company.name}</span>
+                      <span className={cn('text-gray-200 font-medium', styles.textSize)}>
+                        {company.name}
+                      </span>
                       {company.ticker && (
-                        <span className="text-surface-white/60 text-sm ml-2">({company.ticker})</span>
+                        <span className={cn('text-gray-400 ml-2', styles.textSize)}>
+                          ({company.ticker})
+                        </span>
                       )}
                     </div>
-                    <Plus className="h-4 w-4 text-emerald-400" />
+                    <Plus className={cn(styles.iconSize, 'text-cyan-400')} />
                   </div>
                 </button>
               ))}
@@ -240,72 +254,91 @@ const CompanySelectionBar: React.FC<{
   onExportSelected,
 }) => {
   const selectionPercentage = totalCount > 0 ? (selectedCount / totalCount) * 100 : 0;
+  const styles = STYLE_CONFIG.companySelectionBar;
 
   return (
     <div className="space-y-2">
-      <div className="text-xs text-surface-white/60">
-        <span className="font-medium text-emerald-400">{selectedCount.toLocaleString()}</span>
+      <div className={styles.text}>
+        <span className="font-medium text-cyan-400">{selectedCount.toLocaleString()}</span>
         <span> / {totalCount.toLocaleString()} selected </span>
         <span>({selectionPercentage.toFixed(1)}%)</span>
       </div>
-      <div className="flex flex-wrap gap-1.5"> {/* Smaller gap for smaller buttons */}
+      <div className={cn('flex flex-wrap', styles.gap)}>
         <Button
           onClick={onSelectAll}
           variant="outline"
-          size="icon-sm" // Use new icon-sm size
-          tooltipContent="Select All Companies" // Tooltip content
-          className="text-emerald-400 border-emerald-400/50 hover:bg-emerald-400/10"
+          size="icon-sm"
+          tooltipContent="Select All Companies"
+          className={cn(
+            'text-cyan-400 border-cyan-400/50 hover:bg-cyan-400/10',
+            styles.buttonSize
+          )}
         >
-          <CheckCircle2 className="h-4 w-4" /> {/* Icon size adjusted */}
+          <CheckCircle2 className={styles.iconSize} />
         </Button>
         <Button
           onClick={onDeselectAll}
           variant="outline"
-          size="icon-sm" // Use new icon-sm size
-          tooltipContent="Deselect All Companies" // Tooltip content
-          className="text-red-400 border-red-400/50 hover:bg-red-400/10"
+          size="icon-sm"
+          tooltipContent="Deselect All Companies"
+          className={cn('text-red-400 border-red-400/50 hover:bg-red-400/10', styles.buttonSize)}
         >
-          <XCircle className="h-4 w-4" /> {/* Icon size adjusted */}
+          <XCircle className={styles.iconSize} />
         </Button>
         <Button
           onClick={onInvertSelection}
           variant="outline"
-          size="icon-sm" // Use new icon-sm size
-          tooltipContent="Invert Selection" // Tooltip content
-          className="text-blue-400 border-blue-400/50 hover:bg-blue-400/10"
+          size="icon-sm"
+          tooltipContent="Invert Selection"
+          className={cn('text-blue-400 border-blue-400/50 hover:bg-blue-400/10', styles.buttonSize)}
         >
-          <RefreshCcw className="h-4 w-4" /> {/* Icon size adjusted */}
+          <RefreshCcw className={styles.iconSize} />
         </Button>
         <Button
           onClick={onToggleShowDeselected}
           variant="outline"
-          size="icon-sm" // Use new icon-sm size
-          tooltipContent={showDeselected ? "Hide Deselected Companies" : "Show Deselected Companies"} // Tooltip content
-          className="text-surface-white/80 border-navy-300/20 hover:bg-navy-600/50"
+          size="icon-sm"
+          tooltipContent={showDeselected ? 'Hide Deselected Companies' : 'Show Deselected Companies'}
+          className={cn(
+            'text-gray-200',
+            STYLE_CONFIG.variant === 'Opaque' || STYLE_CONFIG.variant === 'HighContrast'
+              ? 'border-navy-600/50 hover:bg-navy-700/50'
+              : 'border-navy-300/20 hover:bg-navy-600/50',
+            styles.buttonSize
+          )}
         >
-          {showDeselected ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />} {/* Icon size adjusted */}
+          {showDeselected ? (
+            <EyeOff className={styles.iconSize} />
+          ) : (
+            <Eye className={styles.iconSize} />
+          )}
         </Button>
         <Button
           onClick={onExportSelected}
           disabled={selectedCount === 0}
           variant="outline"
-          size="icon-sm" // Use new icon-sm size
-          tooltipContent="Export Selected Companies to CSV" // Tooltip content
-          className="text-emerald-400 border-emerald-400/50 hover:bg-emerald-400/10 disabled:opacity-50"
+          size="icon-sm"
+          tooltipContent="Export Selected Companies to CSV"
+          className={cn(
+            'text-cyan-400 border-cyan-400/50 hover:bg-cyan-400/10 disabled:opacity-50',
+            styles.buttonSize
+          )}
         >
-          <Download className="h-4 w-4" /> {/* Icon size adjusted */}
+          <Download className={styles.iconSize} />
         </Button>
       </div>
     </div>
   );
 };
 
-// Toast Notification Component (remains the same)
+// Toast Component
 const Toast = ({ message, type, onClose }: { message: string; type: 'success' | 'info'; onClose: () => void }) => {
   useEffect(() => {
     const timer = setTimeout(onClose, 3000);
     return () => clearTimeout(timer);
   }, [onClose]);
+
+  const styles = STYLE_CONFIG.toast;
 
   return (
     <motion.div
@@ -313,16 +346,23 @@ const Toast = ({ message, type, onClose }: { message: string; type: 'success' | 
       animate={{ opacity: 1, y: 0, scale: 1 }}
       exit={{ opacity: 0, y: -10, scale: 0.95 }}
       className={cn(
-        "fixed top-4 right-4 z-50 px-4 py-2.5 rounded-lg shadow-lg backdrop-blur-sm flex items-center gap-2",
-        type === 'success' ? "bg-emerald-500/90 text-white" : "bg-blue-500/90 text-white"
+        styles.container,
+        type === 'success' ? 'bg-emerald-500/90 text-gray-200' : 'bg-blue-500/90 text-gray-200',
+        STYLE_CONFIG.variant === 'Opaque' && type === 'success' && 'text-emerald-200',
+        STYLE_CONFIG.variant === 'Opaque' && type === 'info' && 'text-blue-400'
       )}
     >
-      {type === 'success' ? <CheckCircle2 className="h-4 w-4" /> : <Sparkles className="h-4 w-4" />}
-      <span className="text-sm font-medium">{message}</span>
+      {type === 'success' ? (
+        <CheckCircle2 className={styles.iconSize} />
+      ) : (
+        <Sparkles className={styles.iconSize} />
+      )}
+      <span className={styles.textSize}>{message}</span>
     </motion.div>
   );
 };
 
+// UnifiedControlPanel Component
 export function UnifiedControlPanel({
   availableStatuses,
   selectedStatuses,
@@ -342,7 +382,6 @@ export function UnifiedControlPanel({
 }: UnifiedControlPanelProps) {
   const [toastMessage, setToastMessage] = useState<{ message: string; type: 'success' | 'info' } | null>(null);
 
-  // Handle bulk actions with toast notifications
   const handleSelectAll = useCallback(() => {
     onSelectAll();
     setToastMessage({ message: 'All companies selected', type: 'success' });
@@ -358,8 +397,10 @@ export function UnifiedControlPanel({
     setToastMessage({ message: 'Selection inverted', type: 'success' });
   }, [onInvertSelection]);
 
+  const styles = STYLE_CONFIG.unifiedControlPanel;
+
   return (
-    <>
+    <div>
       <AnimatePresence>
         {toastMessage && (
           <Toast
@@ -369,17 +410,12 @@ export function UnifiedControlPanel({
           />
         )}
       </AnimatePresence>
-
-      <div className="bg-navy-400/20 backdrop-blur-sm rounded-xl shadow-lg border border-navy-300/20 p-4">
-        {/* Adjusted to flexbox for better alignment and control over spacing */}
-        <div className="flex flex-col lg:flex-row lg:justify-between lg:items-start gap-6">
-          {/* Dataset Filters Section */}
-          <div className="flex-1 space-y-4">
-            <h3 className="text-sm font-semibold text-surface-white/80 uppercase tracking-wider">
-              Dataset Filters
-            </h3>
+      <div className={styles.container}>
+        <div className={cn('flex flex-col lg:flex-row lg:justify-between lg:items-start', styles.gap)}>
+          <div className="flex-1 space-y-3">
+            <h3 className={styles.header}>Dataset Filters</h3>
             <div>
-              <p className="text-xs text-surface-white/60 mb-2">Filter by company status</p>
+              <p className={styles.filterText}>Filter by company status</p>
               <div className="flex flex-wrap gap-2">
                 {availableStatuses.map((status) => (
                   <StatusFilterButton
@@ -392,12 +428,8 @@ export function UnifiedControlPanel({
               </div>
             </div>
           </div>
-
-          {/* Company Search Section */}
-          <div className="flex-1 space-y-4">
-            <h3 className="text-sm font-semibold text-surface-white/80 uppercase tracking-wider">
-              Company Search
-            </h3>
+          <div className="flex-1 space-y-3">
+            <h3 className={styles.header}>Company Search</h3>
             <CompanySearchInput
               onSearchCompanies={onSearchCompanies}
               onSelectCompany={(companyId) => {
@@ -407,12 +439,8 @@ export function UnifiedControlPanel({
               placeholder="Search and add companies..."
             />
           </div>
-
-          {/* Selection Tools Section */}
-          <div className="flex-1 space-y-4">
-            <h3 className="text-sm font-semibold text-surface-white/80 uppercase tracking-wider">
-              Selection Tools
-            </h3>
+          <div className="flex-1 space-y-3">
+            <h3 className={styles.header}>Selection Tools</h3>
             <CompanySelectionBar
               totalCount={totalCount}
               selectedCount={selectedCount}
@@ -424,23 +452,21 @@ export function UnifiedControlPanel({
               onExportSelected={onExportSelected}
             />
           </div>
+          {hasActiveFilters && (
+            <div className="mt-3 pt-3 border-t border-cyan-400/50">
+              <Button
+                onClick={onClearAllFilters}
+                variant="ghost"
+                size="sm"
+                className={styles.clearButton}
+              >
+                <X className={cn(styles.clearIconSize, 'mr-1')} />
+                Clear All Filters
+              </Button>
+            </div>
+          )}
         </div>
-
-        {/* Clear Filters Button - spans full width */}
-        {hasActiveFilters && (
-          <div className="mt-4 pt-4 border-t border-navy-300/20">
-            <Button
-              onClick={onClearAllFilters}
-              variant="ghost"
-              size="sm"
-              className="text-amber-400 hover:text-amber-300 hover:bg-amber-400/10"
-            >
-              <X className="h-3 w-3 mr-1" />
-              Clear All Filters
-            </Button>
-          </div>
-        )}
       </div>
-    </>
+    </div>
   );
 }

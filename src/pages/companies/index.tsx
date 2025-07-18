@@ -1,17 +1,18 @@
 // src/pages/companies/index.tsx
-import React, { useCallback, useMemo, useState, useEffect } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { useFilters } from '../../contexts/filter-context';
 import { CompanyDataTable } from '../../components/company-data-table';
 import { CurrencySelector } from '../../components/currency-selector';
 import { Button } from '../../components/ui/button';
 import { PageContainer } from '../../components/ui/page-container';
 import { UnifiedControlPanel } from '../../components/unified-control-panel';
-import { RefreshCw, AlertCircle, Search, CheckSquare } from 'lucide-react';
+import { RefreshCw, AlertCircle, Search, CheckSquare, Sparkles } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { cn } from '../../lib/utils';
 import type { Company, CompanyStatus } from '../../lib/types';
 import { deepEqual, logDebug } from '../../lib/utils';
 
-const FILTERABLE_STATUSES: CompanyStatus[] = ['producer', 'developer', 'explorer', 'royalty', 'other'];
+const FILTERABLE_STATUSES: CompanyStatus[] = ['producer', 'developer', 'explorer', 'royalty'];
 
 function exportToCSV(companies: Array<{ company_id: number; company_name: string; status: string | null }>, filename: string) {
   const headers = ['Company ID', 'Company Name', 'Status'];
@@ -64,7 +65,6 @@ export function CompaniesPage() {
     isCompanySelected,
   } = useFilters();
 
-  // NEW: State to track additional selected companies not on current page
   const [additionalSelectedCompanies, setAdditionalSelectedCompanies] = useState<Company[]>([]);
   const [loadingAdditional, setLoadingAdditional] = useState(false);
 
@@ -81,61 +81,6 @@ export function CompaniesPage() {
     return !isDefaultStatus || !isDefaultMetricRanges || !isDefaultSearchTerm || hasActiveSelection;
   }, [selectedStatuses, filterSettings.metricRanges, filterSettings.searchTerm, effectiveTotalCount, totalCount]);
 
-  // NEW: Effect to fetch selected companies not in displayData
-  useEffect(() => {
-    let mounted = true;
-    
-    const fetchAdditionalSelectedCompanies = async () => {
-      // Only fetch when not showing deselected and we have selected companies
-      if (!showDeselected && activeCompanyIds.length > 0) {
-        // Find selected company IDs that aren't in the current displayData
-        const displayDataIds = new Set(displayData.map(c => c.company_id));
-        const missingSelectedIds = activeCompanyIds.filter(id => !displayDataIds.has(id));
-        
-        if (missingSelectedIds.length > 0) {
-          logDebug(`[CompaniesPage] Fetching ${missingSelectedIds.length} additional selected companies not in current page`);
-          setLoadingAdditional(true);
-          
-          try {
-            const additionalCompanies = await fetchCompaniesByIds(missingSelectedIds);
-            if (mounted) {
-              setAdditionalSelectedCompanies(additionalCompanies);
-              logDebug(`[CompaniesPage] Fetched ${additionalCompanies.length} additional companies`);
-            }
-          } catch (error) {
-            console.error('[CompaniesPage] Error fetching additional selected companies:', error);
-            if (mounted) {
-              setAdditionalSelectedCompanies([]);
-            }
-          } finally {
-            if (mounted) {
-              setLoadingAdditional(false);
-            }
-          }
-        } else {
-          // No missing companies to fetch
-          if (mounted) {
-            setAdditionalSelectedCompanies([]);
-            setLoadingAdditional(false);
-          }
-        }
-      } else {
-        // Clear additional companies when showing all or no selection
-        if (mounted) {
-          setAdditionalSelectedCompanies([]);
-          setLoadingAdditional(false);
-        }
-      }
-    };
-
-    fetchAdditionalSelectedCompanies();
-    
-    return () => {
-      mounted = false;
-    };
-  }, [activeCompanyIds, displayData, showDeselected, fetchCompaniesByIds]);
-
-  // UPDATED: companiesForTable now includes additional selected companies
   const companiesForTable = useMemo(() => {
     logDebug('[CompaniesPage] Recalculating companiesForTable', {
       displayDataLength: displayData.length,
@@ -147,44 +92,35 @@ export function CompaniesPage() {
     if (!displayData) return [];
 
     if (showDeselected) {
-      // When showing deselected, we show all companies from current page with ghost styling
       return displayData.map(company => ({
         ...company,
         _isGhosted: !isCompanySelected(company.company_id),
       }));
     }
 
-    // When not showing deselected, we need to show only selected companies
     if (activeCompanyIds.length === 0) {
-      // No companies selected
       return [];
     }
 
-    // Combine companies from current page and additional fetched companies
     const allCompanies = new Map<number, Company>();
     
-    // Add selected companies from current page
     displayData.forEach(company => {
       if (isCompanySelected(company.company_id)) {
         allCompanies.set(company.company_id, company);
       }
     });
     
-    // Add additional selected companies (this will override if duplicate, which is fine)
     additionalSelectedCompanies.forEach(company => {
       if (isCompanySelected(company.company_id)) {
         allCompanies.set(company.company_id, company);
       }
     });
     
-    // Convert back to array and sort
     const combined = Array.from(allCompanies.values());
     
-    // Apply current sort
     combined.sort((a, b) => {
       const { key, direction } = sortState;
       
-      // Handle company_name sort
       if (key === 'company_name') {
         const aVal = a.company_name || '';
         const bVal = b.company_name || '';
@@ -193,7 +129,6 @@ export function CompaniesPage() {
           : bVal.localeCompare(aVal);
       }
       
-      // Handle tsx_code sort
       if (key === 'tsx_code') {
         const aVal = a.tsx_code || '';
         const bVal = b.tsx_code || '';
@@ -202,7 +137,6 @@ export function CompaniesPage() {
           : bVal.localeCompare(aVal);
       }
       
-      // Handle status sort
       if (key === 'status') {
         const aVal = a.status || '';
         const bVal = b.status || '';
@@ -211,8 +145,6 @@ export function CompaniesPage() {
           : bVal.localeCompare(aVal);
       }
       
-      // For other sorts, maintain original order for now
-      // You can add more sort handlers as needed
       return 0;
     });
     
@@ -273,16 +205,42 @@ export function CompaniesPage() {
   }, [filteredCompanyIds, isCompanySelected, fetchCompaniesByIds]);
 
   const descriptionText = (
-    <div className="flex items-center gap-4 text-sm">
-      <span className="flex items-center gap-2 text-gray-300">
+    <div className={cn("page-stats flex items-center gap-3 text-sm font-medium leading-normal text-gray-200")}>
+      <motion.span 
+        className="stat-item flex items-center gap-1"
+        initial={{ opacity: 0, x: -20 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ delay: 0.1 }}
+      >
         <Search className="h-4 w-4 text-gray-400" />
-        {loadingFilters ? '...' : totalCount.toLocaleString()} matching
-      </span>
-      <span className="text-gray-600">•</span>
-      <span className="flex items-center gap-2 text-gray-300">
-        <CheckSquare className="h-4 w-4 text-accent-teal" />
-        {loadingFilters ? '...' : effectiveTotalCount.toLocaleString()} selected
-      </span>
+        <span className="stat-label">
+          {loadingFilters ? (
+            <span className="loading-dots inline-flex">
+              <span>.</span><span>.</span><span>.</span>
+            </span>
+          ) : (
+            totalCount.toLocaleString()
+          )} matching
+        </span>
+      </motion.span>
+      <span className="stat-divider text-gray-400">•</span>
+      <motion.span 
+        className="stat-item flex items-center gap-1 highlight"
+        initial={{ opacity: 0, x: -20 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ delay: 0.2 }}
+      >
+        <CheckSquare className="h-4 w-4 text-cyan-400" />
+        <span className="stat-label">
+          {loadingFilters ? (
+            <span className="loading-dots inline-flex">
+              <span>.</span><span>.</span><span>.</span>
+            </span>
+          ) : (
+            effectiveTotalCount.toLocaleString()
+          )} selected
+        </span>
+      </motion.span>
     </div>
   );
 
@@ -290,23 +248,33 @@ export function CompaniesPage() {
     <PageContainer
       title="Mining Companies Database"
       description={descriptionText}
-      actions={<CurrencySelector />}
-      className="relative isolate flex flex-col flex-grow"
-      contentClassName="flex flex-col flex-grow min-h-0"
-      style={{ fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}
+      actions={
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ delay: 0.3 }}
+        >
+          <CurrencySelector />
+        </motion.div>
+      }
+      className="companies-page-enhanced bg-navy-800/50 border-navy-600/50 rounded-xl"
+      contentClassName="page-content-enhanced"
     >
-      <div
-        className="absolute inset-0 bg-gradient-to-br from-navy-900/20 via-transparent to-accent-teal/5 -z-10"
-        aria-hidden="true"
-      />
-      <div
-        className="absolute inset-0 bg-cover bg-center bg-no-repeat bg-fixed -z-10 opacity-[0.03]"
-        style={{ backgroundImage: "url('/Background2.jpg')" }}
-        aria-hidden="true"
-      />
+      {/* Background Effects (adjusted to use consistent colors) */}
+      <div className="page-background-effects absolute inset-0 overflow-hidden" aria-hidden="true">
+        <div className="gradient-orb gradient-orb-1 bg-cyan-400/20 blur-3xl" />
+        <div className="gradient-orb gradient-orb-2 bg-navy-600/20 blur-3xl" />
+        <div className="gradient-orb gradient-orb-3 bg-amber-400/20 blur-3xl" />
+        <div className="noise-texture bg-navy-800/10 opacity-50" />
+        <div className="grid-pattern bg-[url('/grid-pattern.png')] opacity-20" />
+      </div>
 
-      <div className="space-y-4 flex flex-col flex-grow min-h-0">
-        <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
+      <div className="content-wrapper relative z-10">
+        <motion.div 
+          initial={{ opacity: 0, y: -20 }} 
+          animate={{ opacity: 1, y: 0 }} 
+          transition={{ duration: 0.5 }}
+        >
           <UnifiedControlPanel
             availableStatuses={FILTERABLE_STATUSES}
             selectedStatuses={selectedStatuses}
@@ -331,7 +299,10 @@ export function CompaniesPage() {
 
         <motion.div
           layout
-          className="bg-navy-700/30 backdrop-blur-sm rounded-xl shadow-xl border border-navy-600/50 flex flex-col flex-grow overflow-hidden min-h-[500px] relative"
+          className="table-wrapper-enhanced mt-6"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.2 }}
         >
           <AnimatePresence>
             {(loadingData || loadingAdditional) && (
@@ -339,30 +310,64 @@ export function CompaniesPage() {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                transition={{ duration: 0.2 }}
-                className="absolute inset-0 bg-navy-800/50 backdrop-blur-sm z-20 flex flex-col justify-center items-center"
+                transition={{ duration: 0.3 }}
+                className="loading-overlay absolute inset-0 bg-navy-800/50 backdrop-blur-sm flex items-center justify-center z-20"
               >
-                <RefreshCw className="h-8 w-8 text-accent-teal animate-spin" />
-                <p className="text-surface-white/60 text-sm mt-4">
-                  {loadingAdditional && !loadingData ? 'Loading selected companies...' : 'Loading...'}
-                </p>
+                <div className="loading-content flex flex-col items-center gap-2">
+                  <div className="loading-spinner relative">
+                    <RefreshCw className="spinner-icon h-6 w-6 text-cyan-400 animate-spin" />
+                    <div className="spinner-ring absolute inset-0 border-2 border-cyan-400/20 rounded-full" />
+                  </div>
+                  <p className="loading-text text-sm font-medium leading-normal text-gray-200">
+                    {loadingAdditional && !loadingData ? 'Loading selected companies...' : 'Loading data...'}
+                  </p>
+                </div>
               </motion.div>
             )}
           </AnimatePresence>
 
           {error ? (
-            <div className="flex flex-col justify-center items-center h-full text-red-400">
-              <AlertCircle className="h-12 w-12 mb-4" />
-              <p className="text-center mb-2">{error}</p>
-              <Button onClick={() => window.location.reload()} variant="outline" size="sm">Retry</Button>
-            </div>
+            <motion.div 
+              className="error-state flex flex-col items-center justify-center p-6 bg-navy-800/50 border border-navy-600/50 rounded-lg"
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+            >
+              <AlertCircle className="error-icon h-8 w-8 text-red-400 mb-2" />
+              <p className="error-message text-sm font-medium leading-normal text-gray-200">{error}</p>
+              <Button 
+                onClick={() => window.location.reload()} 
+                variant="outline" 
+                size="sm"
+                className="error-retry-button mt-4 text-gray-200 border-navy-600/50 hover:bg-navy-700/50 text-sm font-medium leading-normal"
+              >
+                Retry
+              </Button>
+            </motion.div>
           ) : !loadingData && !loadingFilters && companiesForTable.length === 0 ? (
-            <motion.div className="flex flex-col justify-center items-center h-full text-surface-white/60">
-              <Search className="h-16 w-16 mb-4 opacity-50" />
-              <p className="text-center mb-2">No companies match the current filters.</p>
-              {hasActiveFilters && (
-                <Button onClick={resetFilters} variant="outline" size="sm">Clear All Filters</Button>
-              )}
+            <motion.div 
+              className="empty-state-wrapper flex flex-col items-center justify-center p-6 bg-navy-800/50 border border-navy-600/50 rounded-lg"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.3 }}
+            >
+              <div className="empty-state-content flex flex-col items-center gap-3">
+                <div className="empty-icon-wrapper relative">
+                  <Search className="empty-search-icon h-6 w-6 text-gray-400" />
+                  <Sparkles className="empty-sparkle-icon h-4 w-4 text-amber-400 absolute top-0 right-0 transform translate-x-2 -translate-y-2" />
+                </div>
+                <p className="empty-title text-sm font-semibold leading-normal text-gray-200">No companies found</p>
+                <p className="empty-subtitle text-xs font-medium leading-tight text-gray-400">Try adjusting your filters or search criteria</p>
+                {hasActiveFilters && (
+                  <Button 
+                    onClick={resetFilters} 
+                    variant="outline" 
+                    size="sm"
+                    className="clear-filters-button text-gray-200 border-navy-600/50 hover:bg-navy-700/50 text-sm font-medium leading-normal"
+                  >
+                    Clear All Filters
+                  </Button>
+                )}
+              </div>
             </motion.div>
           ) : (
             <CompanyDataTable

@@ -33,6 +33,7 @@ export function CompanyFilters({ currentFilters, onFiltersChange }: CompanyFilte
             <option value="producer">Producer</option>
             <option value="developer">Developer</option>
             <option value="explorer">Explorer</option>
+			<option value="royalty">Royalty</option>
           </select>
         </div>
         {/* Add more filter controls here */}

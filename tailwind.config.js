@@ -6,7 +6,7 @@ module.exports = {
     './components/**/*.{js,ts,jsx,tsx}',
     './app/**/*.{js,ts,jsx,tsx}',
     './src/**/*.{js,ts,jsx,tsx}',
-    './index.html', // Kept your original index.html path
+    './index.html',
   ],
   theme: {
     container: {
@@ -23,56 +23,38 @@ module.exports = {
           50: '#E8EAEB',
           100: '#D1D6D7',
           200: '#A3ACAE',
-          300: '#758386',
-          400: '#47595D',
+          300: '#6b7280', // Added for navy-300
+          400: '#475569', // Added for navy-400 (matches rgba(71, 85, 105, 1))
           500: '#1C2526',
-          600: '#161E1F',
-          700: '#101617',
-          800: '#0B0F10',
-          900: '#050708',
+          600: '#475569',
+          700: '#334155',
+          800: '#1e293b',
+          900: '#0f172a',
         },
-        accent: {
-          DEFAULT: "hsl(var(--accent))",
-          foreground: "hsl(var(--accent-foreground))",
-          red: '#E63946',
-          yellow: '#F4A261',
-          pink: '#F4A6A9',
-          teal: '#457B9D',
-          brown: '#3C2F2F',
+        gray: {
+          200: '#e5e7eb',
+          400: '#9ca3af',
+        },
+        cyan: {
+          400: '#22d3ee',
+        },
+        emerald: {
+          200: '#6ee7b7',
+          400: '#34d399', // Added for emerald-400
+        },
+        amber: {
+          400: '#fbbf24', // For status-amber
+        },
+        blue: {
+          400: '#60a5fa', // For status-blue
+        },
+        red: {
+          400: '#f87171', // For error-icon
         },
         surface: {
-          white: '#F5F5F5',
-          light: '#FFFFFF',
-          dark: '#1C2526',
-        },
-        border: "hsl(var(--border))",
-        input: "hsl(var(--input))",
-        ring: "hsl(var(--ring))",
-        background: "hsl(var(--background))",
-        foreground: "hsl(var(--foreground))",
-        primary: {
-          DEFAULT: "hsl(var(--primary))",
-          foreground: "hsl(var(--primary-foreground))",
-        },
-        secondary: {
-          DEFAULT: "hsl(var(--secondary))",
-          foreground: "hsl(var(--secondary-foreground))",
-        },
-        destructive: {
-          DEFAULT: "hsl(var(--destructive))",
-          foreground: "hsl(var(--destructive-foreground))",
-        },
-        muted: {
-          DEFAULT: "hsl(var(--muted))",
-          foreground: "hsl(var(--muted-foreground))",
-        },
-        popover: {
-          DEFAULT: "hsl(var(--popover))",
-          foreground: "hsl(var(--popover-foreground))",
-        },
-        card: {
-          DEFAULT: "hsl(var(--card))",
-          foreground: "hsl(var(--card-foreground))",
+          white: '#e5e7eb', // Matches gray-200
+          light: '#ffffff',
+          dark: '#1c2526', // Matches navy-500
         },
       },
       borderRadius: {
@@ -84,11 +66,7 @@ module.exports = {
         sans: ['Inter', 'system-ui', 'sans-serif'],
       },
       backgroundImage: {
-        'gradient-primary': 'linear-gradient(135deg, #E63946, #F4A261)',
-        'gradient-secondary': 'linear-gradient(90deg, #F4A6A9, #457B9D)',
-        'gradient-dark': 'linear-gradient(135deg, #1C2526, #3C2F2F)',
-        'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
-        noise: "url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMDAiIGhlaWdodD0iMzAwIj48ZmlsdGVyIGlkPSJhIiB4PSIwIiB5PSIwIj48ZmVUdXJidWxlbmNlIGJhc2VGcmVxdWVuY3k9Ii43NSIgc3RpdGNoVGlsZXM9InN0aXRjaCIgdHlwZT0iZnJhY3RhbE5vaXNlIi8+PGZlQ29sb3JNYXRyaXggdHlwZT0ic2F0dXJhdGUiIHZhbHVlcz0iMCIvPjwvZmlsdGVyPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbHRlcj0idXJsKCNhKSIgb3BhY2l0eT0iLjA1Ii8+PC9zdmc+')"
+        noise: "url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMDAiIGhlaWdodD0iMzAwIj48ZmlsdGVyIGlkPSJhIiB4PSIwIiB5PSIwIj48ZmVUdXJidWxlbmNlIGJhc2VGcmVxdWVuY3k9Ii43NSIgc3RpdGNoVGlsZXM9InN0aXRjaCIgdHlwZT0iZnJhY3RhbE5vaXNlIi8+PGZlQ29sb3JNYXRyaXggdHlwZT0ic2F0dXJhdGUiIHZhbHVlcz0iMCIvPjwvZmlsdGVyPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbHRlcj0idXJsKCNhKSIgb3BhY2l0eT0iLjA1Ii8+PC9zdmc+')",
       },
       keyframes: {
         "accordion-down": {
@@ -99,15 +77,23 @@ module.exports = {
           from: { height: "var(--radix-accordion-content-height)" },
           to: { height: "0" },
         },
+        "ambient-glow": {
+          "0%, 100%": { transform: "translate(0, 0) scale(1)" },
+          "33%": { transform: "translate(10%, -10%) scale(1.1)" },
+          "66%": { transform: "translate(-10%, 10%) scale(0.9)" },
+        },
+        "slideDown": {
+          from: { opacity: "0", transform: "translateY(-10px)" },
+          to: { opacity: "1", transform: "translateY(0)" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
+        "ambient-glow": "ambient-glow 20s ease-in-out infinite",
+        "slideDown": "slideDown 0.3s ease-out",
       },
     },
   },
-  // The fix is to use the keyframes/animation config above and remove the plugin
-  plugins: [
-    // require("tailwindcss-animate") // This plugin is removed to prevent build errors
-  ],
-}
+  plugins: [],
+};

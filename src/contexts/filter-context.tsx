@@ -88,7 +88,7 @@ interface FilterContextType {
 
 const FilterContext = createContext<FilterContextType | undefined>(undefined);
 
-const FILTERABLE_STATUSES: CompanyStatus[] = ['producer', 'developer', 'explorer', 'royalty', 'other'];
+const FILTERABLE_STATUSES: CompanyStatus[] = ['producer', 'developer', 'explorer', 'royalty'];
 const DEFAULT_FILTER_SETTINGS: FilterSettings = {
   developmentStatus: FILTERABLE_STATUSES,
   metricRanges: {},
