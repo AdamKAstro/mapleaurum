@@ -1,6 +1,6 @@
 // src/features/hook-ui/components/PlayingCard.tsx
 import React, { useState, useRef, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom'; // <--- IMPORT THIS
+import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence, useMotionValue, useTransform } from 'framer-motion';
 import {
   Rocket, Shield, TrendingUp, Scale, Gem, Leaf, Search, DollarSign,
@@ -24,13 +24,16 @@ interface PlayingCardProps {
   company: EnhancedCompanyMatch;
   index?: number;
   showMatchDetails?: boolean;
+  isFavorite?: boolean;
+  onToggleFavorite?: (companyId: number) => void;
+  onViewDetails?: (companyId: number) => void;
 }
 
 interface MetricDefinition {
   key: string;
   label: string;
   getValue: (company: EnhancedCompanyMatch) => number | null;
-  format: (value: number) => string;  // Fixed the syntax error here
+  format: (value: number) => string;
   icon: JSX.Element;
   isGoodWhenHigh: boolean;
   benchmark?: { good: number; bad: number };
@@ -41,7 +44,7 @@ const metricDefinitions: MetricDefinition[] = [
   {
     key: 'ev_per_resource',
     label: 'EV/Resource',
-    getValue: (c) => c.vm_ev_per_resource_oz_all || null,
+    getValue: (c) => c.vm_ev480_per_resource_oz_all || null,
     format: (v) => `${v.toFixed(0)}/oz`,
     icon: <Scale className="w-3 h-3" />,
     isGoodWhenHigh: false,
@@ -315,15 +318,36 @@ const MatchDetails: React.FC<{ company: EnhancedCompanyMatch }> = ({ company }) 
   );
 };
 
-const PlayingCard: React.FC<PlayingCardProps> = ({ company, index = 0, showMatchDetails = false }) => {
+const PlayingCard: React.FC<PlayingCardProps> = ({
+  company,
+  index = 0,
+  showMatchDetails = false,
+  isFavorite: propIsFavorite,
+  onToggleFavorite,
+  onViewDetails
+}) => {
   const navigate = useNavigate();
   const timer = debugTime('PlayingCardRender');
+  
+  // State management
+  const [isFlipped, setIsFlipped] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
+  const [logoError, setLogoError] = useState(false);
+  const [localIsFavorite, setLocalIsFavorite] = useState(false);
+  
+  // Use prop if provided, otherwise use local state
+  const isFavorite = propIsFavorite !== undefined ? propIsFavorite : localIsFavorite;
+  
+  const cardRef = useRef<HTMLDivElement>(null);
+
   debugLog('rendering', `Rendering card for company: ${company?.name || 'unknown'}`, {
     index,
     companyId: company?.id,
     hasMatchScore: company?.matchScore !== undefined,
     hasMatchReasons: Array.isArray(company?.matchReasons),
     hasRankPosition: company?.rankPosition !== undefined,
+    isFavorite,
+    hasToggleFavorite: !!onToggleFavorite
   });
 
   // Early validation
@@ -350,14 +374,7 @@ const PlayingCard: React.FC<PlayingCardProps> = ({ company, index = 0, showMatch
   }
 
   try {
-    // State
-    const [isFlipped, setIsFlipped] = useState(false);
-    const [isFavorite, setIsFavorite] = useState(false);
-    const [isHovered, setIsHovered] = useState(false);
-    const [logoError, setLogoError] = useState(false);
-    const cardRef = useRef<HTMLDivElement>(null);
-
-    // Animation
+    // Animation values
     const x = useMotionValue(0);
     const y = useMotionValue(0);
     const rotateX = useTransform(y, [-100, 100], [10, -10]);
@@ -382,14 +399,6 @@ const PlayingCard: React.FC<PlayingCardProps> = ({ company, index = 0, showMatch
     const resources = safeNumber(company.resources);
     const jurisdiction = safeString(company.jurisdiction);
 
-    // Check for unused properties
-    if (company.matchedInterests || company.scoreForPrimaryInterest) {
-      debugLog('dataProcessing', `Unused properties detected`, {
-        matchedInterests: company.matchedInterests,
-        scoreForPrimaryInterest: company.scoreForPrimaryInterest,
-      });
-    }
-
     // Formatting
     const formattedSharePrice = sharePrice > 0 ? formatCurrency(sharePrice, { decimals: 2 }) : 'N/A';
     const formattedMarketCap = marketCap > 0 ? formatCurrency(marketCap, { compact: true }) : 'N/A';
@@ -408,8 +417,8 @@ const PlayingCard: React.FC<PlayingCardProps> = ({ company, index = 0, showMatch
     };
 
     const handleFlip = (e: React.MouseEvent) => {
-      if ((e.target as HTMLElement).closest('button')) {
-        debugLog('interactions', 'Click on button, skipping flip');
+      if ((e.target as HTMLElement).closest('button, a')) {
+        debugLog('interactions', 'Click on button or link, skipping flip');
         return;
       }
       debugLog('interactions', `Flipping card for ${companyName}`, { currentState: isFlipped ? 'Back' : 'Front' });
@@ -420,7 +429,13 @@ const PlayingCard: React.FC<PlayingCardProps> = ({ company, index = 0, showMatch
     const handleFavoriteToggle = (e: React.MouseEvent) => {
       e.stopPropagation();
       debugLog('interactions', `Toggling favorite for ${companyName}`, { currentState: isFavorite });
-      setIsFavorite(!isFavorite);
+      
+      if (onToggleFavorite) {
+        onToggleFavorite(company.id);
+      } else {
+        setLocalIsFavorite(!localIsFavorite);
+      }
+      
       debugToast(
         `${companyName} ${isFavorite ? 'removed from' : 'added to'} favorites`,
         { icon: <Heart size={16} fill={isFavorite ? 'none' : 'currentColor'} />, duration: 2000 }
@@ -429,11 +444,14 @@ const PlayingCard: React.FC<PlayingCardProps> = ({ company, index = 0, showMatch
 
     const handleViewDetails = (e: React.MouseEvent) => {
       e.stopPropagation();
-      const companyId = safeString(company.id, '0');
-      debugLog('interactions', `Navigating to main companies page from ${company.name}`);
-    // This now navigates the user to the main companies page
-      navigate('/companies');
-      toast('Navigating to the main company grid...');
+      debugLog('interactions', `View details clicked for ${companyName}`);
+      
+      if (onViewDetails) {
+        onViewDetails(company.id);
+      } else {
+        navigate(`/company/${company.id}`);
+        toast('Loading company details...');
+      }
     };
 
     // Mouse move effect
@@ -903,8 +921,8 @@ const PlayingCard: React.FC<PlayingCardProps> = ({ company, index = 0, showMatch
       </motion.div>
     );
   } catch (error) {
-    debugLog('rendering', `Error rendering card for ${company?.name || 'unknown'}`, { error, stack: error.stack });
-    debugToast(`Error rendering card for ${company?.name || 'unknown'}: ${error.message}`, { duration: 3000 });
+    debugLog('rendering', `Error rendering card for ${company?.name || 'unknown'}`, { error, stack: (error as Error).stack });
+    debugToast(`Error rendering card for ${company?.name || 'unknown'}: ${(error as Error).message}`, { duration: 3000 });
     timer.end();
     return (
       <div className="w-80 h-[42rem] bg-red-500/20 rounded-2xl flex items-center justify-center text-white">

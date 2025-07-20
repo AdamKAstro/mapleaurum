@@ -86,7 +86,7 @@ interface FilterContextType {
   loadingExchangeRates: boolean;
 }
 
-const FilterContext = createContext<FilterContextType | undefined>(undefined);
+export const FilterContext = createContext<FilterContextType | undefined>(undefined);
 
 const FILTERABLE_STATUSES: CompanyStatus[] = ['producer', 'developer', 'explorer', 'royalty'];
 const DEFAULT_FILTER_SETTINGS: FilterSettings = {

@@ -11,6 +11,7 @@ import {
   Eye,
   EyeOff,
   Download,
+  Sparkles,
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { Button } from './ui/button';
@@ -240,8 +241,8 @@ const CompanySelectionBar: React.FC<{
   showDeselected: boolean;
   onSelectAll: () => void;
   onDeselectAll: () => void;
-  onToggleShowDeselected: () => void;
   onInvertSelection: () => void;
+  onToggleShowDeselected: () => void;
   onExportSelected: () => void;
 }> = ({
   totalCount,
@@ -249,8 +250,8 @@ const CompanySelectionBar: React.FC<{
   showDeselected,
   onSelectAll,
   onDeselectAll,
-  onToggleShowDeselected,
   onInvertSelection,
+  onToggleShowDeselected,
   onExportSelected,
 }) => {
   const selectionPercentage = totalCount > 0 ? (selectedCount / totalCount) * 100 : 0;
@@ -260,7 +261,7 @@ const CompanySelectionBar: React.FC<{
     <div className="space-y-2">
       <div className={styles.text}>
         <span className="font-medium text-cyan-400">{selectedCount.toLocaleString()}</span>
-        <span> / {totalCount.toLocaleString()} selected </span>
+        <span> / {totalCount.toLocaleString()} favorited </span>
         <span>({selectionPercentage.toFixed(1)}%)</span>
       </div>
       <div className={cn('flex flex-wrap', styles.gap)}>
@@ -268,7 +269,7 @@ const CompanySelectionBar: React.FC<{
           onClick={onSelectAll}
           variant="outline"
           size="icon-sm"
-          tooltipContent="Select All Companies"
+          tooltipContent="Add All to Favorites"
           className={cn(
             'text-cyan-400 border-cyan-400/50 hover:bg-cyan-400/10',
             styles.buttonSize
@@ -280,7 +281,7 @@ const CompanySelectionBar: React.FC<{
           onClick={onDeselectAll}
           variant="outline"
           size="icon-sm"
-          tooltipContent="Deselect All Companies"
+          tooltipContent="Remove All from Favorites"
           className={cn('text-red-400 border-red-400/50 hover:bg-red-400/10', styles.buttonSize)}
         >
           <XCircle className={styles.iconSize} />
@@ -289,7 +290,7 @@ const CompanySelectionBar: React.FC<{
           onClick={onInvertSelection}
           variant="outline"
           size="icon-sm"
-          tooltipContent="Invert Selection"
+          tooltipContent="Invert Favorites"
           className={cn('text-blue-400 border-blue-400/50 hover:bg-blue-400/10', styles.buttonSize)}
         >
           <RefreshCcw className={styles.iconSize} />
@@ -318,7 +319,7 @@ const CompanySelectionBar: React.FC<{
           disabled={selectedCount === 0}
           variant="outline"
           size="icon-sm"
-          tooltipContent="Export Selected Companies to CSV"
+          tooltipContent="Export Favorites to CSV"
           className={cn(
             'text-cyan-400 border-cyan-400/50 hover:bg-cyan-400/10 disabled:opacity-50',
             styles.buttonSize
@@ -384,17 +385,17 @@ export function UnifiedControlPanel({
 
   const handleSelectAll = useCallback(() => {
     onSelectAll();
-    setToastMessage({ message: 'All companies selected', type: 'success' });
+    setToastMessage({ message: 'All companies added to favorites', type: 'success' });
   }, [onSelectAll]);
 
   const handleDeselectAll = useCallback(() => {
     onDeselectAll();
-    setToastMessage({ message: 'All companies deselected', type: 'info' });
+    setToastMessage({ message: 'All companies removed from favorites', type: 'info' });
   }, [onDeselectAll]);
 
   const handleInvertSelection = useCallback(() => {
     onInvertSelection();
-    setToastMessage({ message: 'Selection inverted', type: 'success' });
+    setToastMessage({ message: 'Favorites inverted', type: 'success' });
   }, [onInvertSelection]);
 
   const styles = STYLE_CONFIG.unifiedControlPanel;
@@ -440,7 +441,7 @@ export function UnifiedControlPanel({
             />
           </div>
           <div className="flex-1 space-y-3">
-            <h3 className={styles.header}>Selection Tools</h3>
+            <h3 className={styles.header}>Favorites</h3>
             <CompanySelectionBar
               totalCount={totalCount}
               selectedCount={selectedCount}

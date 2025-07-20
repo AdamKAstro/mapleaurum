@@ -7,13 +7,14 @@ import {
   flexRender,
 } from '@tanstack/react-table';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
-import { ArrowUpDown, ArrowUp, ArrowDown, Lock, ChevronLeft, ChevronRight, Building2, DollarSign, BarChart3, FileDown, FileUp, CheckSquare } from 'lucide-react';
+import { ArrowUpDown, ArrowUp, ArrowDown, Lock, ChevronLeft, ChevronRight, Building2, DollarSign, BarChart3, FileDown, FileUp, Heart } from 'lucide-react';
 import { TierBadge } from './ui/tier-badge';
 import { cn, getNestedValue, formatCurrency, formatPercent, formatNumber, formatMoz, formatKoz, toTitleCase } from '../lib/utils';
 import { StatusBadge } from './status-badge';
 import { MineralsList } from './mineral-badge';
 import { Button } from './ui/button';
 import { useCurrency } from '../contexts/currency-context';
+import { useFilters } from '../contexts/filter-context'; // Added import
 import { LazyLoadImage } from 'react-lazy-load-image-component';
 import 'react-lazy-load-image-component/src/effects/blur.css';
 import type { Company, SortState, ColumnTier, AppColumnDef, ColumnGroup, MetricFormat, Currency, MetricConfig, CompanyStatus } from '../lib/types';
@@ -94,37 +95,12 @@ const CompanyLogo = React.memo(({
   );
 });
 
-// Company cell with logo and name
-const CompanyCell = React.memo(({ 
-  company, 
-  isGhostRow 
-}: { 
-  company: Company & { _isGhosted?: boolean }; 
-  isGhostRow: boolean;
-}) => {
-  return (
-    <div className={cn("flex items-center gap-3 py-2", isGhostRow && "opacity-50")}>
-      <CompanyLogo company={company} size={32} />
-      <div className={cn("flex flex-col", isGhostRow && "line-through")}>
-        <span className="font-semibold text-sm leading-normal text-gray-200">
-          {toTitleCase(company.company_name)}
-        </span>
-        {company.tsx_code && (
-          <span className="text-xs font-medium leading-tight text-gray-400">
-            TSX: {company.tsx_code}
-          </span>
-        )}
-      </div>
-    </div>
-  );
-});
-
 // Enhanced tooltip content
 const CompanyTooltipContent = React.memo(({ company, currency }: { company: Company; currency: Currency }) => {
-  const marketCap = company.financials?.market_cap_value 
+  const marketCap = company.financials?.market_cap_value
     ? formatCurrency(company.financials.market_cap_value, { currency: currency ?? 'USD', decimals: 2 })
     : '-';
-  const sharePrice = company.share_price 
+  const sharePrice = company.share_price
     ? formatCurrency(company.share_price, { currency: currency ?? 'USD', decimals: 2 })
     : '-';
 
@@ -141,24 +117,24 @@ const CompanyTooltipContent = React.memo(({ company, currency }: { company: Comp
           </p>
         </div>
       </div>
-      
+
       {company.status && (
         <div className="my-3">
           <StatusBadge status={company.status as CompanyStatus} />
         </div>
       )}
-      
+
       <p className="company-tooltip-description text-sm leading-normal text-gray-200 mb-4">
         {company.description || 'No description available.'}
       </p>
-      
+
       {company.headquarters && (
         <p className="text-xs font-medium leading-tight text-gray-400 mt-2">
           <Building2 className="inline w-3 h-3 mr-1" />
           {company.headquarters}
         </p>
       )}
-      
+
       <div className="company-tooltip-stats grid grid-cols-2 gap-3 pt-3 border-t border-navy-600/50">
         <div className="stat-item flex items-center gap-2 bg-slate-800/50 p-2 rounded-lg">
           <DollarSign className="stat-icon w-5 h-5 text-gray-400 flex-shrink-0 mt-1" />
@@ -186,16 +162,39 @@ const MemoizedCell = React.memo(function MemoizedCell({
   value,
   currency,
   isGhostRow,
+  isFavorite,
 }: {
   company: Company & { _isGhosted?: boolean };
   appCol: AppColumnDef;
   value: any;
   currency: Currency;
   isGhostRow: boolean;
+  isFavorite?: boolean;
 }) {
+  const { isCompanySelected } = useFilters(); // Added useFilters hook
+
   const content = useMemo(() => {
     if (appCol.key === 'company_name') {
-      return <CompanyCell company={company} isGhostRow={isGhostRow} />;
+      return (
+        <div className={cn("flex items-center gap-3 py-2", isGhostRow && "opacity-50")}>
+          <CompanyLogo company={company} size={32} />
+          <div className={cn("flex flex-col flex-1", isGhostRow && "line-through")}>
+            <div className="flex items-center gap-2">
+              <span className="font-semibold text-sm leading-normal text-gray-200">
+                {toTitleCase(company.company_name)}
+              </span>
+              {isCompanySelected(company.company_id) && (
+                <Heart className="h-3 w-3 text-accent-teal fill-current" />
+              )}
+            </div>
+            {company.tsx_code && (
+              <span className="text-xs font-medium leading-tight text-gray-400">
+                TSX: {company.tsx_code}
+              </span>
+            )}
+          </div>
+        </div>
+      );
     }
     if (appCol.key === 'status') {
       return <StatusBadge status={value as CompanyStatus} />;
@@ -204,7 +203,7 @@ const MemoizedCell = React.memo(function MemoizedCell({
       return <MineralsList minerals={value as string[] || []} />;
     }
     return formatValueDisplay(value, appCol.format, currency);
-  }, [appCol.key, appCol.format, company, value, currency, isGhostRow]);
+  }, [appCol.key, appCol.format, company, value, currency, isGhostRow, isCompanySelected]);
 
   return (
     <div
@@ -225,7 +224,8 @@ const MemoizedCell = React.memo(function MemoizedCell({
     prevProps.appCol.key === nextProps.appCol.key &&
     prevProps.currency === nextProps.currency &&
     prevProps.isGhostRow === nextProps.isGhostRow &&
-    prevProps.value === nextProps.value
+    prevProps.value === nextProps.value &&
+    prevProps.isFavorite === nextProps.isFavorite
   );
 });
 
@@ -458,15 +458,15 @@ const Pagination = React.memo(function Pagination({
   );
 });
 
-// Selection info bar component
-const SelectionInfoBar = React.memo(({ 
-  selectedCount, 
+// Favorites info bar component
+const FavoritesInfoBar = React.memo(({
+  selectedCount,
   totalCount,
   onExport,
   onImport,
-  onClear 
-}: { 
-  selectedCount: number; 
+  onClear
+}: {
+  selectedCount: number;
   totalCount: number;
   onExport: () => void;
   onImport: () => void;
@@ -475,38 +475,38 @@ const SelectionInfoBar = React.memo(({
   if (selectedCount === 0) return null;
 
   return (
-    <div className="selection-info-bar p-4 bg-navy-800/50 border-navy-600/50">
-      <div className="selection-info-content flex items-center justify-between gap-4">
-        <div className="selection-count flex items-center gap-2 text-sm font-medium leading-normal text-gray-200">
-          <CheckSquare className="h-4 w-4 text-accent-teal" />
-          <span className="font-semibold">{selectedCount}</span> of {totalCount} companies selected
+    <div className="favorites-info-bar p-4 bg-navy-800/50 border-navy-600/50">
+      <div className="favorites-info-content flex items-center justify-between gap-4">
+        <div className="favorites-count flex items-center gap-2 text-sm font-medium leading-normal text-gray-200">
+          <Heart className="h-4 w-4 text-accent-teal fill-current" />
+          <span className="font-semibold">{selectedCount}</span> of {totalCount} companies favorited
         </div>
-        <div className="selection-actions flex items-center gap-2">
+        <div className="favorites-actions flex items-center gap-2">
           <Button
             onClick={onExport}
             variant="ghost"
             size="sm"
-            className="selection-action-button text-sm font-medium leading-normal text-gray-200 hover:bg-navy-700/50 border-navy-600/50"
+            className="favorites-action-button text-sm font-medium leading-normal text-gray-200 hover:bg-navy-700/50 border-navy-600/50"
           >
             <FileDown className="h-4 w-4 mr-1" />
-            Export Selection
+            Export Favorites
           </Button>
           <Button
             onClick={onImport}
             variant="ghost"
             size="sm"
-            className="selection-action-button text-sm font-medium leading-normal text-gray-200 hover:bg-navy-700/50 border-navy-600/50"
+            className="favorites-action-button text-sm font-medium leading-normal text-gray-200 hover:bg-navy-700/50 border-navy-600/50"
           >
             <FileUp className="h-4 w-4 mr-1" />
-            Import Selection
+            Import Favorites
           </Button>
           <Button
             onClick={onClear}
             variant="ghost"
             size="sm"
-            className="selection-action-button text-sm font-medium leading-normal text-red-400 hover:text-red-300 hover:bg-navy-700/50 border-navy-600/50"
+            className="favorites-action-button text-sm font-medium leading-normal text-red-400 hover:text-red-300 hover:bg-navy-700/50 border-navy-600/50"
           >
-            Clear Selection
+            Clear Favorites
           </Button>
         </div>
       </div>
@@ -545,7 +545,7 @@ export function CompanyDataTable({
 }: CompanyDataTableProps) {
   const { currency } = useCurrency();
   const tableContainerRef = useRef<HTMLDivElement>(null);
-  
+
   const selectedCount = companies.filter(c => isCompanySelected(c.company_id)).length;
 
   const isColumnAccessible = useCallback((columnDef: AppColumnDef): boolean => {
@@ -580,17 +580,17 @@ export function CompanyDataTable({
   }, [currentSort, isColumnAccessible]);
 
   const tableColumns = useMemo((): TanStackColumnDef<Company & { _isGhosted?: boolean }>[] => {
-    const selectionColumn: TanStackColumnDef<Company & { _isGhosted?: boolean }> = {
-      id: 'selection',
+    const favoritesColumn: TanStackColumnDef<Company & { _isGhosted?: boolean }> = {
+      id: 'favorites',
       size: 40,
       header: () => (
         <div className="px-2 text-center text-sm font-medium leading-normal text-gray-200">
           <Tooltip>
             <TooltipTrigger>
-              <CheckSquare className="h-4 w-4 mx-auto text-gray-400" />
+              <Heart className="h-4 w-4 mx-auto text-gray-400" />
             </TooltipTrigger>
             <TooltipContent className="z-50 bg-navy-800/50 border-navy-600/50 text-gray-200 rounded px-2 py-1 text-sm max-w-xs">
-              Select companies for bulk actions like export/import
+              Add/remove companies from favorites for bulk actions like export/import
             </TooltipContent>
           </Tooltip>
         </div>
@@ -605,7 +605,7 @@ export function CompanyDataTable({
               checked={isSelected}
               onChange={() => onCompanyToggle(company.company_id)}
               className="h-4 w-4 rounded border-navy-600/50 bg-navy-800/50 text-accent-teal focus:ring-1 focus:ring-accent-teal cursor-pointer"
-              aria-label={`Select ${company.company_name}`}
+              aria-label={`Favorite ${company.company_name}`}
             />
           </div>
         );
@@ -676,7 +676,8 @@ export function CompanyDataTable({
               const value = getValue();
               const company = row.original;
               const isGhostRow = company._isGhosted || false;
-              
+              const isFavorite = isCompanySelected(company.company_id);
+
               if (appCol.key === 'company_name') {
                 return (
                   <Tooltip>
@@ -688,6 +689,7 @@ export function CompanyDataTable({
                           value={value}
                           currency={currency}
                           isGhostRow={isGhostRow}
+                          isFavorite={isFavorite}
                         />
                       </div>
                     </TooltipTrigger>
@@ -697,7 +699,7 @@ export function CompanyDataTable({
                   </Tooltip>
                 );
               }
-              
+
               return (
                 <MemoizedCell
                   company={company}
@@ -705,6 +707,7 @@ export function CompanyDataTable({
                   value={value}
                   currency={currency}
                   isGhostRow={isGhostRow}
+                  isFavorite={isFavorite}
                 />
               );
             },
@@ -715,7 +718,7 @@ export function CompanyDataTable({
         }),
     }));
 
-    return [selectionColumn, ...groupedDataColumns];
+    return [favoritesColumn, ...groupedDataColumns];
   }, [isColumnAccessible, handleHeaderSortClick, getSortIcon, onCompanyToggle, currency, isCompanySelected]);
 
   const table = useReactTable({
@@ -726,7 +729,7 @@ export function CompanyDataTable({
     manualSorting: true,
   });
 
-  const handleExportSelection = () => {
+  const handleExportFavorites = () => {
     const selectedCompanies = companies
       .filter(c => isCompanySelected(c.company_id))
       .map(c => ({
@@ -741,12 +744,12 @@ export function CompanyDataTable({
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
-    link.download = 'selected_companies.csv';
+    link.download = 'favorite_companies.csv';
     link.click();
     URL.revokeObjectURL(link.href);
   };
 
-  const handleImportSelection = () => {
+  const handleImportFavorites = () => {
     const input = document.createElement('input');
     input.type = 'file';
     input.accept = '.csv';
@@ -772,7 +775,7 @@ export function CompanyDataTable({
     input.click();
   };
 
-  const handleClearSelection = () => {
+  const handleClearFavorites = () => {
     companies.forEach(c => {
       if (isCompanySelected(c.company_id)) {
         onCompanyToggle(c.company_id);
@@ -783,12 +786,12 @@ export function CompanyDataTable({
   return (
     <TooltipProvider delayDuration={300}>
       <div className="table-wrapper flex flex-col h-full rounded-xl shadow-xl border border-navy-600/50 overflow-hidden">
-        <SelectionInfoBar 
+        <FavoritesInfoBar
           selectedCount={selectedCount}
           totalCount={totalCount}
-          onExport={handleExportSelection}
-          onImport={handleImportSelection}
-          onClear={handleClearSelection}
+          onExport={handleExportFavorites}
+          onImport={handleImportFavorites}
+          onClear={handleClearFavorites}
         />
         <div ref={tableContainerRef} className="table-scroll-container relative w-full overflow-auto">
           <table className="data-table border-collapse min-w-max">

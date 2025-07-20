@@ -1,5 +1,4 @@
-//src/App.tsx
-
+// src/App.tsx
 import React from 'react';
 import { Routes, Route, Navigate, Outlet } from 'react-router-dom';
 import { Helmet } from 'react-helmet';
@@ -39,6 +38,7 @@ import { HelpTiersPage } from './pages/help/tiers';
 import { HelpGeneralPage } from './pages/help/general';
 import { AdminSendEmailPage } from './pages/admin/send-email';
 import { GlassCustomizationPage } from './pages/glass-customization';
+import CompanyDetailPage from './pages/company-detail'; // New import for company detail page
 
 // A simple 404 Not Found component
 function NotFoundPage() {
@@ -56,8 +56,7 @@ function NotFoundPage() {
   );
 }
 
-// ✅ NEW: This layout component wraps all pages that NEED the global filter context.
-// It contains the shared UI shell (Header, Sidebar) and the FilterProvider.
+// Layout component that wraps pages needing global filter context
 function FilteredLayout() {
   return (
     <FilterProvider>
@@ -73,7 +72,6 @@ function FilteredLayout() {
             />
             <div className="absolute inset-0 bg-noise opacity-[0.07] -z-10" aria-hidden="true" />
             <ErrorBoundary fallback={<div className="p-6 text-red-400">Error loading this page section.</div>}>
-              {/* The Outlet component renders the specific child route component (e.g., CompaniesPage) */}
               <Outlet />
             </ErrorBoundary>
           </main>
@@ -120,10 +118,9 @@ function App() {
                 <link rel="preload" href="/assets/css/index.css" as="style" />
                 <script type="application/ld+json">{JSON.stringify(jsonLd)}</script>
               </Helmet>
-              
-              {/* ✅ UPDATED: The Routes component now defines which pages use the FilteredLayout */}
+
               <Routes>
-                {/* --- Routes that use the FilteredLayout (with Header, Sidebar, and FilterContext) --- */}
+                {/* Routes that use the FilteredLayout (with Header, Sidebar, and FilterContext) */}
                 <Route element={<FilteredLayout />}>
                   <Route path="/" element={<Hero />} />
                   <Route path="/companies" element={<CompaniesPage />} />
@@ -132,19 +129,20 @@ function App() {
                   <Route path="/scoring-advanced" element={<AdvScoringPage />} />
                   <Route path="/scatter-chart" element={<ScatterChartPage />} />
                   <Route path="/scatter-score-pro" element={<ScatterScoreProPage />} />
-				  <Route path="/subscribe" element={<SubscribePage />} />
+                  <Route path="/subscribe" element={<SubscribePage />} />
+                  {/* New route for filtered Hook UI */}
+                  <Route path="/hook-filtered" element={<HookUIPage useGlobalFavorites />} />
+                  {/* New route for individual company view */}
+                  <Route path="/company/:id" element={<CompanyDetailPage />} />
                 </Route>
 
-                {/* --- Self-contained routes that DO NOT use the FilteredLayout --- */}
+                {/* Self-contained routes that DO NOT use the FilteredLayout */}
                 <Route path="/hook" element={<HookUIPage />} />
                 <Route path="/login" element={<LoginPage />} />
                 <Route path="/auth" element={<Navigate to={{ pathname: '/login', search: window.location.search }} replace />} />
                 <Route path="/forgot-password" element={<ForgotPasswordPage />} />
                 <Route path="/reset-password" element={<ResetPasswordPage />} />
-                
                 <Route path="/onboarding" element={<OnboardingPage />} />
-                
-                {/* --- Help and Admin pages can also be independent --- */}
                 <Route path="/help" element={<HelpLandingPage />} />
                 <Route path="/help/metrics" element={<HelpMetricsPage />} />
                 <Route path="/help/filters" element={<HelpFiltersPage />} />
@@ -155,7 +153,7 @@ function App() {
                 <Route path="/help/general" element={<HelpGeneralPage />} />
                 <Route path="/admin/send-email" element={<AdminSendEmailPage />} />
 
-                {/* --- Catch-all 404 Route --- */}
+                {/* Catch-all 404 Route */}
                 <Route path="*" element={<NotFoundPage />} />
               </Routes>
             </ErrorBoundary>

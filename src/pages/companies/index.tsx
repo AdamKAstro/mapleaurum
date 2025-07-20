@@ -196,7 +196,7 @@ export function CompaniesPage() {
         status: company.status,
       }));
       const timestamp = new Date().toISOString().split('T')[0];
-      const filename = `mining_companies_export_${timestamp}.csv`;
+      const filename = `favorite_companies_${timestamp}.csv`;
       exportToCSV(exportData, filename);
     } catch (err: any) {
       console.error(`[CompaniesPage] Error exporting companies:`, err);

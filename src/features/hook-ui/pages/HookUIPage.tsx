@@ -1,32 +1,29 @@
-// src/features/hook-ui/pages/HookUIPage.tsx - Robust version
+// src/features/hook-ui/pages/HookUIPage.tsx
 import React, { useState, useEffect, useCallback, useMemo, Suspense } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { LazyLoadComponent } from 'react-lazy-load-image-component';
 import { toast } from 'react-hot-toast';
-import confetti from 'canvas-confetti';
 import { getPaginatedCompanies } from '../../../lib/supabase';
 import { Settings, Sparkles, TrendingUp, Trophy, Zap, Target, ChevronRight, RefreshCw, Home, ArrowRight, AlertCircle } from 'lucide-react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Button } from '../../../components/ui/button';
 import { LoadingIndicator } from '../../../components/ui/loading-indicator';
-
-//import { cn, formatCurrency, formatPercent, arrayUtils } from '../../../lib/utils';
-
 import { arrayUtils, cn, formatCurrency, formatPercent } from '../lib/utils';
-
 import type { PlayingCardDisplayData, InterestProfile, RiskProfile, Achievement } from '../types/hook-ui-types';
 import { interestProfiles as allInterestProfiles } from '../lib/interest-profiles-config';
-import { getEnhancedMatchedCompanies, isEnhancedMatchingAvailable, transformCompanyToEnhancedMatch, type EnhancedCompanyMatch } from '../lib/enhanced-company-matcher';
+import { getEnhancedMatchedCompanies, isEnhancedMatchingAvailable, type EnhancedCompanyMatch } from '../lib/enhanced-company-matcher';
 import type { Company } from '../../../lib/types';
+import confetti from 'canvas-confetti';
+import PlayingCard from '../components/PlayingCard';
+import useOptionalFilters from '../../../hooks/useOptionalFilters';
 
 // Lazy-loaded components
 const EnhancedInterestSelector = React.lazy(() => import('../components/onboarding/EnhancedInterestSelector'));
 const EnhancedRiskProfileSelector = React.lazy(() => import('../components/onboarding/EnhancedRiskProfileSelector'));
 const EnhancedProfilePreview = React.lazy(() => import('../components/onboarding/EnhancedProfilePreview'));
-const PlayingCard = React.lazy(() => import('../components/PlayingCard'));
 
 // Debug configuration
-const DEBUG_ENABLED = true; // Enable to diagnose sorting issues
+const DEBUG_ENABLED = true;
 
 const debugLog = (message: string, data?: any) => {
   if (DEBUG_ENABLED) {
@@ -159,6 +156,60 @@ const EnhancedProgressIndicator: React.FC<{ currentStage: OnboardingStage; setCu
 
 // Main component
 const HookUIPage: React.FC = () => {
+  const navigate = useNavigate();
+  const filters = useOptionalFilters();
+
+  // Use global favorites if available, otherwise use local state
+  const [localFavorites, setLocalFavorites] = useState<Set<number>>(() => {
+    // Load from localStorage if no global context
+    if (!filters) {
+      const saved = localStorage.getItem('hookui_favorites');
+      if (saved) {
+        try {
+          return new Set(JSON.parse(saved));
+        } catch {
+          return new Set();
+        }
+      }
+    }
+    return new Set();
+  });
+
+  // Save local favorites to localStorage
+  useEffect(() => {
+    if (!filters) {
+      localStorage.setItem('hookui_favorites', JSON.stringify(Array.from(localFavorites)));
+    }
+  }, [localFavorites, filters]);
+
+  const toggleFavorite = (companyId: number) => {
+    if (filters) {
+      // Use global toggle
+      filters.toggleCompanySelection(companyId);
+      toast.success(filters.isCompanySelected(companyId) ? 'Removed from favorites' : 'Added to favorites');
+    } else {
+      // Use local toggle
+      setLocalFavorites(prev => {
+        const newSet = new Set(prev);
+        if (newSet.has(companyId)) {
+          newSet.delete(companyId);
+          toast.success('Removed from favorites');
+        } else {
+          newSet.add(companyId);
+          toast.success('Added to favorites');
+        }
+        return newSet;
+      });
+    }
+  };
+
+  const isFavorite = (companyId: number): boolean => {
+    if (filters) {
+      return filters.isCompanySelected(companyId);
+    }
+    return localFavorites.has(companyId);
+  };
+
   const [currentStage, setCurrentStage] = useState<OnboardingStage>('welcome');
   const [selectedInterestIds, setSelectedInterestIds] = useState<{ id: string; weight: number }[]>([]);
   const [riskProfile, setRiskProfile] = useState<RiskProfile | null>(null);
@@ -174,18 +225,9 @@ const HookUIPage: React.FC = () => {
     { id: 'diversified', title: 'Diversified', description: 'Selected 3+ interests', icon: <TrendingUp className="w-5 h-5" />, unlocked: false },
     { id: 'perfect_match', title: 'Perfect Match', description: 'Found a 90%+ match', icon: <Trophy className="w-5 h-5" />, unlocked: false },
   ]);
-  const navigate = useNavigate();
   const triggerConfetti = useConfetti();
 
-
-
-
-
-
-
-
-
-// Robust fetch and process companies function - NOW FETCHES ALL COMPANIES
+  // Robust fetch and process companies function
   const fetchAndProcessCompanies = useCallback(
     async () => {
       setIsLoading(true);
@@ -196,18 +238,15 @@ const HookUIPage: React.FC = () => {
       });
 
       try {
-        // 1. VALIDATE PREREQUISITES
         if (!selectedInterestIds.length || !riskProfile) {
           throw new Error('Please select interests and complete your profile before proceeding.');
         }
 
-        // 2. INITIAL FETCH to get the total count and the first page of data.
-        // We use a larger page size to reduce the number of total requests needed.
         const pageSize = 100;
         const { companies: firstPageCompanies, totalCount } = await getPaginatedCompanies(
           1,
           pageSize,
-          { key: 'company_id', direction: 'asc' }, // Neutral sort
+          { key: 'company_id', direction: 'asc' },
           {},
           'USD'
         );
@@ -219,21 +258,16 @@ const HookUIPage: React.FC = () => {
         debugLog(`Initial fetch complete. Total companies to fetch: ${totalCount}`);
         let allCompanies: Company[] = [...firstPageCompanies];
 
-        // 3. FETCH THE REMAINING PAGES IN PARALLEL
         const totalPages = Math.ceil(totalCount / pageSize);
         if (totalPages > 1) {
           const pagePromises: Promise<{ companies: Company[] }>[] = [];
-          // Create a fetch promise for each remaining page (from page 2 onwards).
           for (let page = 2; page <= totalPages; page++) {
             pagePromises.push(
               getPaginatedCompanies(page, pageSize, { key: 'company_id', direction: 'asc' }, {}, 'USD')
             );
           }
 
-          // Await all promises to resolve concurrently. This is much faster than one-by-one.
           const remainingPagesResults = await Promise.all(pagePromises);
-
-          // Combine the results from all pages into one large array.
           remainingPagesResults.forEach(result => {
             allCompanies.push(...result.companies);
           });
@@ -245,19 +279,15 @@ const HookUIPage: React.FC = () => {
             console.warn(`[HookUIPage] Mismatch: Expected ${totalCount} but fetched ${allCompanies.length}`);
         }
 
-        // 4. SHUFFLE THE ENTIRE DATASET
-        // Now we shuffle the complete list of ~700 companies.
         const shuffledCompanies = arrayUtils.shuffle(allCompanies);
         debugLog('Shuffled the COMPLETE company list.');
 
-        // 5. RUN MATCHING ALGORITHM ON THE ENTIRE DATASET
-        // The matching logic now works with all companies, ensuring the best matches are found.
         let matchedCompanies: EnhancedCompanyMatch[] = getEnhancedMatchedCompanies(
           shuffledCompanies,
           selectedInterestIds,
           riskProfile,
           allInterestProfiles,
-          20 // We still only take the top 20 results to show the user.
+          20
         );
         
         debugLog('Enhanced matching completed on the full dataset.', { resultCount: matchedCompanies.length });
@@ -266,7 +296,6 @@ const HookUIPage: React.FC = () => {
           throw new Error('No companies could be matched to your profile. Please try adjusting your preferences.');
         }
 
-        // 6. SORT THE FINAL RESULTS AND SET STATE
         matchedCompanies = matchedCompanies
           .sort((a, b) => (b.matchScore || 0) - (a.matchScore || 0))
           .map((company, index) => ({ ...company, rankPosition: index + 1 }));
@@ -277,7 +306,6 @@ const HookUIPage: React.FC = () => {
 
         setCompaniesToShow(matchedCompanies);
 
-        // Update metric ranges with safety checks
         setMetricRanges({
           marketCap: {
             min: Math.min(...matchedCompanies.map((c) => c.marketCap || 0)),
@@ -289,7 +317,6 @@ const HookUIPage: React.FC = () => {
           },
         });
 
-        // Success notification
         const topMatch = matchedCompanies[0];
         toast.success(
           `Found ${matchedCompanies.length} companies! Top match: ${topMatch.name} (${topMatch.matchScore}% match)`,
@@ -313,9 +340,6 @@ const HookUIPage: React.FC = () => {
     },
     [selectedInterestIds, riskProfile]
   );
-
-
-
 
   // Enhanced sorting and filtering functions
   const enhancedSortFunctions = {
@@ -536,6 +560,7 @@ const HookUIPage: React.FC = () => {
     setError(null);
     setCurrentStage('welcome');
     setAchievements((prev) => prev.map((a) => ({ ...a, unlocked: false })));
+    setLocalFavorites(new Set());
     toast.success('Onboarding reset. Start fresh!');
   }, []);
 
@@ -698,6 +723,7 @@ const HookUIPage: React.FC = () => {
               <Button
                 onClick={() => {
                   setCompaniesToShow([]);
+                  setLocalFavorites(new Set());
                   fetchAndProcessCompanies();
                   toast.success('Reset all filters and refreshed');
                 }}
@@ -817,6 +843,11 @@ const HookUIPage: React.FC = () => {
                       company={company}
                       index={index}
                       showMatchDetails={showMatchDetails}
+                      isFavorite={isFavorite(company.id)}
+                      onToggleFavorite={toggleFavorite}
+                      onViewDetails={(companyId) => {
+                        navigate(`/company/${companyId}`);
+                      }}
                     />
                   </Suspense>
                 </motion.div>
@@ -1092,7 +1123,7 @@ const HookUIPage: React.FC = () => {
     achievements,
     enhancedSortFunctions,
     enhancedFilterFunctions,
-    fetchAndProcessCompanies
+    fetchAndProcessCompanies,
   ]);
 
   return (
@@ -1117,7 +1148,7 @@ const HookUIPage: React.FC = () => {
           <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-purple-900/20 to-slate-900" />
           <motion.div
             className="absolute top-0 left-0 w-96 h-96 bg-cyan-500/10 rounded-full blur-3xl"
-            animate={{ x: [0, 100, 0], y: [0, 50, 0] }}
+            animate={{ xknight: [0, 100, 0], y: [0, 50, 0] }}
             transition={{ repeat: Infinity, duration: 20, ease: 'linear' }}
             aria-hidden="true"
           />
@@ -1167,7 +1198,6 @@ const HookUIPage: React.FC = () => {
         <div className="max-w-7xl mx-auto px-4 py-8">{renderContent}</div>
       </div>
 
-
       <motion.div
         initial={{ opacity: 0, y: 100 }}
         animate={{ opacity: 1, y: 0 }}
@@ -1176,17 +1206,15 @@ const HookUIPage: React.FC = () => {
       >
         <span className="text-slate-300 text-sm font-medium hidden sm:block">Ready to dive deeper?</span>
         
-        {/* Button 1: Links to the main companies page */}
         <Button
           variant="outline"
-          className="border-slate-600 text-slate-300 hover:bg-slate-700 hover:text-white"
+          className="border-slate-600 text-slate-300 hover:bg-slate-700"
           onClick={() => navigate('/companies')}
           aria-label="View all companies in a table"
         >
           View All Companies
         </Button>
 
-        {/* Button 2: Links to the subscribe page (Primary Action) */}
         <Button
           className="bg-gradient-to-r from-cyan-500 to-purple-600 hover:from-cyan-400 hover:to-purple-500 text-white"
           onClick={() => navigate('/subscribe')}
@@ -1196,7 +1224,6 @@ const HookUIPage: React.FC = () => {
           <ArrowRight className="h-4 w-4 ml-2" />
         </Button>
       </motion.div>
-	  
 
       <style jsx="true">{`
         @keyframes shimmer {
