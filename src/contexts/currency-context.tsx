@@ -1,3 +1,5 @@
+//src/contexts/currency-context.tsx
+
 import React, { createContext, useContext, useState } from 'react';
 import type { Currency } from '../lib/types';
 

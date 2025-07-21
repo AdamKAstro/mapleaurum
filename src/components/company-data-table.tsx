@@ -1,5 +1,7 @@
 // src/components/company-data-table.tsx
+
 import React, { useMemo, useCallback, useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   useReactTable,
   getCoreRowModel,
@@ -7,14 +9,14 @@ import {
   flexRender,
 } from '@tanstack/react-table';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
-import { ArrowUpDown, ArrowUp, ArrowDown, Lock, ChevronLeft, ChevronRight, Building2, DollarSign, BarChart3, FileDown, FileUp, Heart } from 'lucide-react';
+import { ArrowUpDown, ArrowUp, ArrowDown, Lock, ChevronLeft, ChevronRight, Building2, DollarSign, BarChart3, FileDown, FileUp, Heart, ExternalLink } from 'lucide-react';
 import { TierBadge } from './ui/tier-badge';
 import { cn, getNestedValue, formatCurrency, formatPercent, formatNumber, formatMoz, formatKoz, toTitleCase } from '../lib/utils';
 import { StatusBadge } from './status-badge';
 import { MineralsList } from './mineral-badge';
 import { Button } from './ui/button';
 import { useCurrency } from '../contexts/currency-context';
-import { useFilters } from '../contexts/filter-context'; // Added import
+import { useFilters } from '../contexts/filter-context';
 import { LazyLoadImage } from 'react-lazy-load-image-component';
 import 'react-lazy-load-image-component/src/effects/blur.css';
 import type { Company, SortState, ColumnTier, AppColumnDef, ColumnGroup, MetricFormat, Currency, MetricConfig, CompanyStatus } from '../lib/types';
@@ -60,16 +62,16 @@ const CompanyLogo = React.memo(({
   size?: number;
 }) => {
   const [hasError, setHasError] = useState(false);
-  
+
   const logoUrl = useMemo(() => {
     if (hasError) {
       return getDefaultLogo(company.company_name);
     }
-    
+
     if (company.logo && isValidUrl(company.logo)) {
       return company.logo;
     }
-    
+
     const supabaseUrl = `https://dvagrllvivewyxolrhsh.supabase.co/storage/v1/object/public/company-logos/logos/${company.company_id}.png`;
     return supabaseUrl;
   }, [company.logo, company.company_id, company.company_name, hasError]);
@@ -155,7 +157,7 @@ const CompanyTooltipContent = React.memo(({ company, currency }: { company: Comp
   );
 });
 
-// Memoized cell renderer
+// Memoized cell renderer for data columns
 const MemoizedCell = React.memo(function MemoizedCell({
   company,
   appCol,
@@ -171,7 +173,7 @@ const MemoizedCell = React.memo(function MemoizedCell({
   isGhostRow: boolean;
   isFavorite?: boolean;
 }) {
-  const { isCompanySelected } = useFilters(); // Added useFilters hook
+  const { isCompanySelected } = useFilters();
 
   const content = useMemo(() => {
     if (appCol.key === 'company_name') {
@@ -226,6 +228,63 @@ const MemoizedCell = React.memo(function MemoizedCell({
     prevProps.isGhostRow === nextProps.isGhostRow &&
     prevProps.value === nextProps.value &&
     prevProps.isFavorite === nextProps.isFavorite
+  );
+});
+
+// Memoized cell renderer for details column
+const MemoizedDetailsCell = React.memo(function MemoizedDetailsCell({
+  company,
+  isGhostRow,
+}: {
+  company: Company & { _isGhosted?: boolean };
+  isGhostRow: boolean;
+}) {
+  const navigate = useNavigate();
+
+  const handleClick = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (company.company_id != null) {
+      try {
+        navigate(`/company/${company.company_id}`);
+      } catch (error) {
+        console.error(`[CompanyDataTable] Navigation error for company ${company.company_name}:`, error);
+      }
+    }
+  }, [navigate, company.company_id, company.company_name]);
+
+  const isDisabled = isGhostRow || company.company_id == null;
+
+  return (
+    <div className="flex justify-center items-center h-full p-2">
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <button
+            onClick={isDisabled ? undefined : handleClick}
+            className={cn(
+              "p-1.2 rounded transition-all duration-200",
+              isDisabled ? "opacity-50 cursor-not-allowed" : "hover:bg-navy-700/50 hover:text-cyan-400 hover:scale-110",
+              "text-gray-400 focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:ring-opacity-50"
+            )}
+            disabled={isDisabled}
+            aria-label={`View details for ${company.company_name}`}
+            aria-disabled={isDisabled}
+            role="link"
+            tabIndex={isDisabled ? -1 : 0}
+          >
+            <ExternalLink className="h-4 w-4" />
+          </button>
+        </TooltipTrigger>
+        <TooltipContent side="top" align="center" sideOffset={4} className="z-50 bg-navy-800/50 border-navy-600/50 text-gray-200 rounded px-2 py-1 text-sm">
+          {isDisabled ? "Company ID unavailable" : "View Company Details"}
+        </TooltipContent>
+      </Tooltip>
+    </div>
+  );
+}, (prevProps, nextProps) => {
+  return (
+    prevProps.company.company_id === nextProps.company.company_id &&
+    prevProps.company.company_name === nextProps.company.company_name &&
+    prevProps.isGhostRow === nextProps.isGhostRow
   );
 });
 
@@ -613,6 +672,18 @@ export function CompanyDataTable({
       enableSorting: false,
     };
 
+    const detailsColumn: TanStackColumnDef<Company & { _isGhosted?: boolean }> = {
+      id: 'details',
+      size: 30,
+      header: () => <div className="text-center" />, // Headerless
+      cell: ({ row }) => {
+        const company = row.original;
+        const isGhostRow = company._isGhosted || false;
+        return <MemoizedDetailsCell company={company} isGhostRow={isGhostRow} />;
+      },
+      enableSorting: false,
+    };
+
     const groupedDataColumns = finalColumnGroups.map(group => ({
       id: group.title.replace(/\s+/g, '-').toLowerCase(),
       header: () => (
@@ -718,7 +789,7 @@ export function CompanyDataTable({
         }),
     }));
 
-    return [favoritesColumn, ...groupedDataColumns];
+    return [favoritesColumn, detailsColumn, ...groupedDataColumns];
   }, [isColumnAccessible, handleHeaderSortClick, getSortIcon, onCompanyToggle, currency, isCompanySelected]);
 
   const table = useReactTable({
