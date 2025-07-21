@@ -2,86 +2,116 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>https://mapleaurum.com/</loc>
-    <lastmod>2025-06-18</lastmod>
+    <lastmod>2025-07-21</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
   </url>
   <url>
     <loc>https://mapleaurum.com/companies</loc>
-    <lastmod>2025-06-18</lastmod>
+    <lastmod>2025-07-21</lastmod>
     <changefreq>weekly</changefreq>
-    <priority>0.9</priority>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://mapleaurum.com/filter</loc>
+    <lastmod>2025-07-21</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://mapleaurum.com/scoring-advanced</loc>
+    <lastmod>2025-07-21</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
   </url>
   <url>
     <loc>https://mapleaurum.com/scatter-chart</loc>
-    <lastmod>2025-05-02</lastmod>
+    <lastmod>2025-07-21</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://mapleaurum.com/scatter-score-pro</loc>
+    <lastmod>2025-07-21</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://mapleaurum.com/subscribe</loc>
-    <lastmod>2025-05-02</lastmod>
-    <changefreq>monthly</changefreq>
+    <lastmod>2025-07-21</lastmod>
+    <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://mapleaurum.com/filter</loc>
-    <lastmod>2025-05-02</lastmod>
+    <loc>https://mapleaurum.com/hook</loc>
+    <lastmod>2025-07-21</lastmod>
     <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
+    <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://mapleaurum.com/scatter-score-pro</loc>
-    <lastmod>2025-06-18</lastmod>
+    <loc>https://mapleaurum.com/hook-filtered</loc>
+    <lastmod>2025-07-21</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://mapleaurum.com/help</loc>
-    <lastmod>2025-05-02</lastmod>
+    <lastmod>2025-07-21</lastmod>
     <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
+    <priority>0.6</priority>
   </url>
   <url>
     <loc>https://mapleaurum.com/help/metrics</loc>
-    <lastmod>2025-05-02</lastmod>
+    <lastmod>2025-07-21</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
     <loc>https://mapleaurum.com/help/filters</loc>
-    <lastmod>2025-05-02</lastmod>
+    <lastmod>2025-07-21</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
     <loc>https://mapleaurum.com/help/scoring</loc>
-    <lastmod>2025-05-02</lastmod>
+    <lastmod>2025-07-21</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
     <loc>https://mapleaurum.com/help/scatter-chart</loc>
-    <lastmod>2025-05-02</lastmod>
+    <lastmod>2025-07-21</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
-   <loc>https://mapleaurum.com/help/scatter-score-pro</loc>
-   <lastmod>2025-05-22</lastmod>
-   <changefreq>monthly</changefreq>
-   <priority>0.6</priority>
-  </url> 
+    <loc>https://mapleaurum.com/help/scatter-score-pro</loc>
+    <lastmod>2025-07-21</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
   <url>
     <loc>https://mapleaurum.com/help/tiers</loc>
-    <lastmod>2025-05-02</lastmod>
+    <lastmod>2025-07-21</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
     <loc>https://mapleaurum.com/help/general</loc>
-    <lastmod>2025-05-02</lastmod>
+    <lastmod>2025-07-21</lastmod>
     <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://mapleaurum.com/company/610</loc>
+    <lastmod>2025-07-21</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://mapleaurum.com/company/10</loc>
+    <lastmod>2025-07-21</lastmod>
+    <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
 </urlset>
