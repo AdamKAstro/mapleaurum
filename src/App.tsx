@@ -143,6 +143,8 @@ function App() {
                     <Route path="/help/scatter-score-pro" element={<HelpScatterScorePage />} />
                     <Route path="/help/tiers" element={<HelpTiersPage />} />
                     <Route path="/help/general" element={<HelpGeneralPage />} />
+					<Route path="/admin/send-email" element={<AdminSendEmailPage />} />
+					<Route path="/admin/promo-tracking" element={<PromoTrackingPage />} />
                   </Route>
                   <Route path="/hook" element={<HookUIPage />} />
                   <Route path="/login" element={<LoginPage />} />
@@ -151,8 +153,7 @@ function App() {
                   <Route path="/reset-password" element={<ResetPasswordPage />} />
                   <Route path="/onboarding" element={<OnboardingPage />} />
                   <Route path="/confirm-email" element={<ConfirmEmailPage />} />
-                  <Route path="/admin/send-email" element={<AdminSendEmailPage />} />
-				  <Route path="/admin/promo-tracking" element={<PromoTrackingPage />} />
+
                   <Route path="*" element={<NotFoundPage />} />
                 </Routes>
 				
