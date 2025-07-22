@@ -17,6 +17,7 @@ export default defineConfig({
       'react-hot-toast',
       'react-lazy-load-image-component',
       'lodash',
+	  'react-helmet-async',
     ],
   },
   build: {
@@ -27,7 +28,7 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks: {
-          vendor: ['react', 'react-dom', 'react-router-dom'],
+          vendor: ['react', 'react-dom', 'react-router-dom', 'react-helmet-async'],
           lucide: ['lucide-react'],
           utilities: ['react-hot-toast', 'react-lazy-load-image-component', 'lodash'],
         },
@@ -57,7 +58,8 @@ export default defineConfig({
     },
     // Add Content Security Policy for development
     headers: {
-      'Content-Security-Policy': "default-src 'self'; img-src 'self' https://mapleaurum.com https://ui-avatars.com https://dvagrllvivewyxolrhsh.supabase.co data:; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; connect-src 'self' https://dvagrllvivewyxolrhsh.supabase.co; font-src 'self' data:; blob:; worker-src 'self' blob:;"
+      'Content-Security-Policy':
+        "default-src 'self'; img-src 'self' https://mapleaurum.com https://ui-avatars.com https://dvagrllvivewyxolrhsh.supabase.co data:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.stripe.com; connect-src 'self' https://dvagrllvivewyxolrhsh.supabase.co https://api.stripe.com; font-src 'self' data: https://fonts.gstatic.com; blob:; worker-src 'self' blob:;",
     },
   },
 });

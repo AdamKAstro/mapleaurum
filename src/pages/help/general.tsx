@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom'; // Import Link
 import { PageContainer } from '../../components/ui/page-container';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
 import { HelpCircle, Database, Clock, Mail, Calculator, KeyRound } from 'lucide-react'; // Added KeyRound
-import { Helmet } from 'react-helmet';
+import { Helmet } from 'react-helmet-async';
 
 const faqs = [
     {

@@ -1,6 +1,6 @@
 // src/pages/help/scatter-score-guide.tsx
 import React from 'react';
-import { Helmet } from 'react-helmet';
+import { Helmet } from 'react-helmet-async'; 
 import { PageContainer } from '../../components/ui/page-container';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
 import {
