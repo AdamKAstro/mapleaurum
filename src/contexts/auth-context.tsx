@@ -13,6 +13,7 @@ interface AuthContextType {
     error: AuthError | null; 
     requiresEmailConfirmation?: boolean;
     user?: User | null;
+    emailSendingFailed?: boolean;
   }>;
   signOut: () => Promise<{ error: AuthError | null }>;
   resendConfirmationEmail: (email: string) => Promise<{ error: Error | null }>;
@@ -140,6 +141,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     try {
       const { emailRedirectTo, ...signUpCredentials } = credentials;
       
+      // First, check if we can sign up with the given credentials
       const { data, error } = await supabase.auth.signUp({
         ...signUpCredentials,
         options: {
@@ -155,9 +157,24 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         console.error('[AuthContext] Sign up error:', error);
         setError(error);
         
-        // Handle specific error cases
-        if (error.message.includes('already registered')) {
+        // Handle specific error cases with better messaging
+        if (error.message.toLowerCase().includes('already registered') || 
+            error.message.toLowerCase().includes('user already registered')) {
           error.message = 'This email is already registered. Please sign in or reset your password.';
+        } else if (error.message.toLowerCase().includes('email') && 
+                   error.message.toLowerCase().includes('sending')) {
+          // This is the "Error sending confirmation email" case
+          error.message = 'We created your account but couldn\'t send the confirmation email. This might be a temporary issue. Please try again or contact support.';
+          
+          // Still return success but flag the email issue
+          return { 
+            error: null, 
+            requiresEmailConfirmation: true,
+            user: data?.user,
+            emailSendingFailed: true 
+          };
+        } else if (error.message.toLowerCase().includes('rate limit')) {
+          error.message = 'Too many signup attempts. Please wait a few minutes and try again.';
         }
         
         return { error, requiresEmailConfirmation: false, user: null };
@@ -175,11 +192,18 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       return { 
         error: null, 
         requiresEmailConfirmation,
-        user: data.user 
+        user: data.user,
+        emailSendingFailed: false 
       };
     } catch (err) {
       console.error('[AuthContext] Unexpected sign up error:', err);
       const authError = err as AuthError;
+      
+      // Check if this is a network or configuration error
+      if (err.message?.includes('Failed to fetch') || err.message?.includes('NetworkError')) {
+        authError.message = 'Network error. Please check your connection and try again.';
+      }
+      
       setError(authError);
       return { error: authError, requiresEmailConfirmation: false, user: null };
     } finally {

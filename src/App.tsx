@@ -38,12 +38,12 @@ import { HelpTiersPage } from './pages/help/tiers';
 import { HelpGeneralPage } from './pages/help/general';
 import { AdminSendEmailPage } from './pages/admin/send-email';
 import { GlassCustomizationPage } from './pages/glass-customization';
-import CompanyDetailPage from './pages/company-detail'; // New import for company detail page
+import CompanyDetailPage from './pages/company-detail';
 
 // A simple 404 Not Found component
 function NotFoundPage() {
   return (
-    <div className="flex items-center justify-center h-full p-10 text-white">
+    <div className="flex items-center justify-center h-screen p-10 bg-navy-900 text-white">
       <div className="text-center">
         <h1 className="text-4xl font-bold mb-4">404</h1>
         <p className="text-xl">Page Not Found</p>
@@ -108,7 +108,16 @@ function App() {
             <ErrorBoundary
               fallback={
                 <div className="flex items-center justify-center h-screen text-red-500 bg-navy-900">
-                  Something went terribly wrong! Please reload the page.
+                  <div className="text-center">
+                    <h1 className="text-2xl font-bold mb-4">Something went wrong</h1>
+                    <p className="mb-4">We're sorry for the inconvenience. Please try refreshing the page.</p>
+                    <button 
+                      onClick={() => window.location.reload()} 
+                      className="px-4 py-2 bg-cyan-600 hover:bg-cyan-700 rounded text-white"
+                    >
+                      Refresh Page
+                    </button>
+                  </div>
                 </div>
               }
             >
@@ -130,16 +139,15 @@ function App() {
                   <Route path="/scatter-chart" element={<ScatterChartPage />} />
                   <Route path="/scatter-score-pro" element={<ScatterScoreProPage />} />
                   <Route path="/subscribe" element={<SubscribePage />} />
-                  {/* New route for filtered Hook UI */}
                   <Route path="/hook-filtered" element={<HookUIPage useGlobalFavorites />} />
-                  {/* New route for individual company view */}
                   <Route path="/company/:id" element={<CompanyDetailPage />} />
                 </Route>
 
                 {/* Self-contained routes that DO NOT use the FilteredLayout */}
                 <Route path="/hook" element={<HookUIPage />} />
                 <Route path="/login" element={<LoginPage />} />
-                <Route path="/auth" element={<Navigate to={{ pathname: '/login', search: window.location.search }} replace />} />
+                {/* Remove the problematic /auth route and redirect to login */}
+                <Route path="/auth" element={<Navigate to="/login" replace />} />
                 <Route path="/forgot-password" element={<ForgotPasswordPage />} />
                 <Route path="/reset-password" element={<ResetPasswordPage />} />
                 <Route path="/onboarding" element={<OnboardingPage />} />

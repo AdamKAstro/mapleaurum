@@ -124,37 +124,50 @@ export function LoginPage() {
 
     try {
       if (isSignupMode) {
-        const { error, requiresEmailConfirmation, user } = await signUp({
+        const { error, requiresEmailConfirmation, user, emailSendingFailed } = await signUp({
           email: formData.email,
           password: formData.password,
           emailRedirectTo: `${window.location.origin}/login?message=confirm_email`
         });
 
-        if (error) {
+        if (error && !emailSendingFailed) {
           // Handle specific signup errors
           if (error.message.toLowerCase().includes('already registered')) {
             setLocalError('This email is already registered. Please sign in or reset your password.');
             setShowConfirmationOptions(false);
-          } else if (error.message.toLowerCase().includes('confirmation email')) {
-            setLocalError('Unable to send confirmation email. Please check your email address and try again.');
-            setEmailForConfirmation(formData.email);
-            setShowConfirmationOptions(true);
           } else {
             setLocalError(error.message);
           }
         } else if (requiresEmailConfirmation) {
-          setSuccessMessage(
-            `Account created! Please check your email (${formData.email}) to confirm your account. You may need to check your spam folder.`
-          );
-          setEmailForConfirmation(formData.email);
-          setShowConfirmationOptions(true);
-          setFormData({ email: '', password: '', confirmPassword: '' });
-          
-          // Optionally redirect after showing message
-          setTimeout(() => {
-            navigate(redirectPath);
-          }, 5000);
-        } else if (user) {
+          if (emailSendingFailed) {
+            // Account created but email failed to send
+            setSuccessMessage(
+              `Account created successfully! However, we couldn't send the confirmation email to ${formData.email}. ` +
+              `This is likely a temporary issue. You can try resending the confirmation email below.`
+            );
+            setEmailForConfirmation(formData.email);
+            setShowConfirmationOptions(true);
+            
+            // Clear the form
+            setFormData({ email: '', password: '', confirmPassword: '' });
+          } else {
+            // Normal flow - email sent successfully
+            setSuccessMessage(
+              `Account created! Please check your email (${formData.email}) to confirm your account. ` +
+              `You may need to check your spam folder.`
+            );
+            setEmailForConfirmation(formData.email);
+            setShowConfirmationOptions(true);
+            setFormData({ email: '', password: '', confirmPassword: '' });
+            
+            // Optionally redirect after showing message
+            setTimeout(() => {
+              if (redirectPath.includes('subscribe')) {
+                navigate(redirectPath);
+              }
+            }, 5000);
+          }
+        } else if (user && !requiresEmailConfirmation) {
           // Auto-confirmed, redirect immediately
           navigate(redirectPath, { replace: true });
         }
@@ -262,7 +275,7 @@ export function LoginPage() {
             <Info className="h-4 w-4 text-blue-400" />
             <AlertTitle className="text-blue-300">Email Confirmation Required</AlertTitle>
             <AlertDescription className="text-blue-200">
-              <div className="mt-2">
+              <div className="mt-2 space-y-3">
                 <Button
                   onClick={handleResendConfirmation}
                   disabled={isProcessing}
@@ -277,6 +290,22 @@ export function LoginPage() {
                   )}
                   Resend Confirmation Email
                 </Button>
+                
+                <div className="text-xs space-y-1">
+                  <p className="font-medium">Didn't receive the email? Try these steps:</p>
+                  <ul className="list-disc list-inside space-y-1 text-gray-300">
+                    <li>Check your spam/junk folder</li>
+                    <li>Make sure you entered the correct email address</li>
+                    <li>Wait a few minutes - emails can sometimes be delayed</li>
+                    <li>Try resending using the button above</li>
+                  </ul>
+                  <p className="mt-2">
+                    Still having issues? Contact us at{' '}
+                    <a href="mailto:support@mapleaurum.com" className="text-cyan-400 hover:underline">
+                      support@mapleaurum.com
+                    </a>
+                  </p>
+                </div>
               </div>
             </AlertDescription>
           </Alert>
