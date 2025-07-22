@@ -1,4 +1,4 @@
-// unified-control-panel.tsx
+// src/components/unified-control-panel.tsx
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -11,6 +11,7 @@ import {
   Eye,
   EyeOff,
   Download,
+  FileUp,
   Sparkles,
 } from 'lucide-react';
 import { cn } from '../lib/utils';
@@ -33,10 +34,14 @@ interface UnifiedControlPanelProps {
   onInvertSelection: () => void;
   onToggleShowDeselected: () => void;
   onExportSelected: () => void;
+  onImportFavorites?: () => void;
   onSelectCompany: (companyId: number) => void;
   onSearchCompanies: (query: string) => Promise<{ id: number; name: string; ticker: string }[]>;
   onClearAllFilters: () => void;
   hasActiveFilters: boolean;
+  onSearchTermChange?: (term: string) => void;
+  setMetricRange?: (db_column: string, min: number | null, max: number | null) => void;
+  isLoading?: boolean;
 }
 
 interface SearchResult {
@@ -244,6 +249,7 @@ const CompanySelectionBar: React.FC<{
   onInvertSelection: () => void;
   onToggleShowDeselected: () => void;
   onExportSelected: () => void;
+  onImportFavorites?: () => void;
 }> = ({
   totalCount,
   selectedCount,
@@ -253,6 +259,7 @@ const CompanySelectionBar: React.FC<{
   onInvertSelection,
   onToggleShowDeselected,
   onExportSelected,
+  onImportFavorites,
 }) => {
   const selectionPercentage = totalCount > 0 ? (selectedCount / totalCount) * 100 : 0;
   const styles = STYLE_CONFIG.companySelectionBar;
@@ -314,6 +321,22 @@ const CompanySelectionBar: React.FC<{
             <Eye className={styles.iconSize} />
           )}
         </Button>
+			
+        {onImportFavorites && (
+          <Button
+            onClick={onImportFavorites}
+            variant="outline"
+            size="icon-sm"
+            tooltipContent="Import Favorites from CSV"
+            className={cn(
+              'text-cyan-400 border-cyan-400/50 hover:bg-cyan-400/10',
+              styles.buttonSize
+            )}
+          >
+            <FileUp className={styles.iconSize} />
+        </Button>
+        )}
+			
         <Button
           onClick={onExportSelected}
           disabled={selectedCount === 0}
@@ -380,6 +403,10 @@ export function UnifiedControlPanel({
   onSearchCompanies,
   onClearAllFilters,
   hasActiveFilters,
+  onImportFavorites,
+  onSearchTermChange,
+  setMetricRange,
+  isLoading,
 }: UnifiedControlPanelProps) {
   const [toastMessage, setToastMessage] = useState<{ message: string; type: 'success' | 'info' } | null>(null);
 
@@ -451,6 +478,7 @@ export function UnifiedControlPanel({
               onToggleShowDeselected={onToggleShowDeselected}
               onInvertSelection={handleInvertSelection}
               onExportSelected={onExportSelected}
+              onImportFavorites={onImportFavorites}
             />
           </div>
           {hasActiveFilters && (

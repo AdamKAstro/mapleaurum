@@ -1,5 +1,4 @@
 // src/components/company-data-table.tsx
-
 import React, { useMemo, useCallback, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -9,7 +8,7 @@ import {
   flexRender,
 } from '@tanstack/react-table';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
-import { ArrowUpDown, ArrowUp, ArrowDown, Lock, ChevronLeft, ChevronRight, Building2, DollarSign, BarChart3, FileDown, FileUp, Heart, ExternalLink } from 'lucide-react';
+import { ArrowUpDown, ArrowUp, ArrowDown, Lock, ChevronLeft, ChevronRight, Building2, DollarSign, BarChart3, Heart, ExternalLink } from 'lucide-react';
 import { TierBadge } from './ui/tier-badge';
 import { cn, getNestedValue, formatCurrency, formatPercent, formatNumber, formatMoz, formatKoz, toTitleCase } from '../lib/utils';
 import { StatusBadge } from './status-badge';
@@ -517,62 +516,6 @@ const Pagination = React.memo(function Pagination({
   );
 });
 
-// Favorites info bar component
-const FavoritesInfoBar = React.memo(({
-  selectedCount,
-  totalCount,
-  onExport,
-  onImport,
-  onClear
-}: {
-  selectedCount: number;
-  totalCount: number;
-  onExport: () => void;
-  onImport: () => void;
-  onClear: () => void;
-}) => {
-  if (selectedCount === 0) return null;
-
-  return (
-    <div className="favorites-info-bar p-4 bg-navy-800/50 border-navy-600/50">
-      <div className="favorites-info-content flex items-center justify-between gap-4">
-        <div className="favorites-count flex items-center gap-2 text-sm font-medium leading-normal text-gray-200">
-          <Heart className="h-4 w-4 text-accent-teal fill-current" />
-          <span className="font-semibold">{selectedCount}</span> of {totalCount} companies favorited
-        </div>
-        <div className="favorites-actions flex items-center gap-2">
-          <Button
-            onClick={onExport}
-            variant="ghost"
-            size="sm"
-            className="favorites-action-button text-sm font-medium leading-normal text-gray-200 hover:bg-navy-700/50 border-navy-600/50"
-          >
-            <FileDown className="h-4 w-4 mr-1" />
-            Export Favorites
-          </Button>
-          <Button
-            onClick={onImport}
-            variant="ghost"
-            size="sm"
-            className="favorites-action-button text-sm font-medium leading-normal text-gray-200 hover:bg-navy-700/50 border-navy-600/50"
-          >
-            <FileUp className="h-4 w-4 mr-1" />
-            Import Favorites
-          </Button>
-          <Button
-            onClick={onClear}
-            variant="ghost"
-            size="sm"
-            className="favorites-action-button text-sm font-medium leading-normal text-red-400 hover:text-red-300 hover:bg-navy-700/50 border-navy-600/50"
-          >
-            Clear Favorites
-          </Button>
-        </div>
-      </div>
-    </div>
-  );
-});
-
 interface CompanyDataTableProps {
   companies: (Company & { _isGhosted?: boolean })[];
   onSort: (dbSortKey: string, direction: 'asc' | 'desc') => void;
@@ -675,7 +618,7 @@ export function CompanyDataTable({
     const detailsColumn: TanStackColumnDef<Company & { _isGhosted?: boolean }> = {
       id: 'details',
       size: 30,
-      header: () => <div className="text-center" />, // Headerless
+      header: () => <div className="text-center" />,
       cell: ({ row }) => {
         const company = row.original;
         const isGhostRow = company._isGhosted || false;
@@ -800,70 +743,9 @@ export function CompanyDataTable({
     manualSorting: true,
   });
 
-  const handleExportFavorites = () => {
-    const selectedCompanies = companies
-      .filter(c => isCompanySelected(c.company_id))
-      .map(c => ({
-        company_id: c.company_id,
-        company_name: c.company_name,
-        tsx_code: c.tsx_code,
-      }));
-    const csvContent = [
-      ['Company ID', 'Company Name', 'TSX Code'].join(','),
-      ...selectedCompanies.map(c => [c.company_id, `"${c.company_name}"`, c.tsx_code].join(',')),
-    ].join('\n');
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
-    link.href = URL.createObjectURL(blob);
-    link.download = 'favorite_companies.csv';
-    link.click();
-    URL.revokeObjectURL(link.href);
-  };
-
-  const handleImportFavorites = () => {
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.accept = '.csv';
-    input.onchange = (e: Event) => {
-      const file = (e.target as HTMLInputElement).files?.[0];
-      if (!file) return;
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        const text = event.target?.result as string;
-        const rows = text.split('\n').slice(1); // Skip header
-        const companyIds = rows
-          .map(row => row.split(',')[0])
-          .filter(id => id && !isNaN(Number(id)))
-          .map(id => Number(id));
-        companyIds.forEach(id => {
-          if (!isCompanySelected(id)) {
-            onCompanyToggle(id);
-          }
-        });
-      };
-      reader.readAsText(file);
-    };
-    input.click();
-  };
-
-  const handleClearFavorites = () => {
-    companies.forEach(c => {
-      if (isCompanySelected(c.company_id)) {
-        onCompanyToggle(c.company_id);
-      }
-    });
-  };
-
   return (
     <TooltipProvider delayDuration={300}>
       <div className="table-wrapper flex flex-col h-full rounded-xl shadow-xl border border-navy-600/50 overflow-hidden">
-        <FavoritesInfoBar
-          selectedCount={selectedCount}
-          totalCount={totalCount}
-          onExport={handleExportFavorites}
-          onImport={handleImportFavorites}
-          onClear={handleClearFavorites}
-        />
         <div ref={tableContainerRef} className="table-scroll-container relative w-full overflow-auto">
           <table className="data-table border-collapse min-w-max">
             <thead className="table-header sticky top-0 z-10 bg-navy-800/50">
