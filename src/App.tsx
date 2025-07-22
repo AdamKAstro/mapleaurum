@@ -34,6 +34,7 @@ import { HelpGeneralPage } from './pages/help/general';
 import { AdminSendEmailPage } from './pages/admin/send-email';
 import { GlassCustomizationPage } from './pages/glass-customization';
 import CompanyDetailPage from './pages/company-detail';
+import { PromoTrackingPage } from './pages/admin/promo-tracking';
 
 function NotFoundPage() {
   return (
@@ -151,6 +152,7 @@ function App() {
                   <Route path="/onboarding" element={<OnboardingPage />} />
                   <Route path="/confirm-email" element={<ConfirmEmailPage />} />
                   <Route path="/admin/send-email" element={<AdminSendEmailPage />} />
+				  <Route path="/admin/promo-tracking" element={<PromoTrackingPage />} />
                   <Route path="*" element={<NotFoundPage />} />
                 </Routes>
 				
