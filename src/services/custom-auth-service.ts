@@ -7,6 +7,7 @@ interface SignUpResult {
   error: Error | null;
   requiresEmailConfirmation: boolean;
   confirmationToken?: string;
+  emailSendingFailed?: boolean; // Added to match AuthContextType
 }
 
 interface EmailConfirmationData {

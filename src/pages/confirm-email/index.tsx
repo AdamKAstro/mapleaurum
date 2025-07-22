@@ -6,7 +6,7 @@ import { Typography } from '../../components/ui/typography';
 import { Button } from '../../components/ui/button';
 import { Alert, AlertDescription } from '../../components/ui/alert';
 import { Loader2, CheckCircle, XCircle, Mail } from 'lucide-react';
-import { CustomAuthService } from '../../services/custom-auth-service';
+import { CustomAuthService } from '../../services/custom-auth-service.ts';
 
 type ConfirmationStatus = 'loading' | 'success' | 'error' | 'invalid';
 

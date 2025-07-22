@@ -2,7 +2,7 @@
 import React, { createContext, useState, useEffect, useContext, ReactNode, useCallback } from 'react';
 import { Session, User, AuthError, SignInWithPasswordCredentials, SignUpWithPasswordCredentials } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabaseClient';
-import { CustomAuthService } from '../services/custom-auth-service';
+import { CustomAuthService } from '../services/custom-auth-service.ts'; // Added .ts extension
 
 interface AuthContextType {
   session: Session | null;
@@ -135,7 +135,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     try {
       const { emailRedirectTo, ...signUpCredentials } = credentials;
 
-      // Use custom auth service first (from versions 1 and 3)
+      // Try custom auth service first
       const customResult = await CustomAuthService.signUpWithEmail(
         signUpCredentials.email,
         signUpCredentials.password
@@ -163,7 +163,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         };
       }
 
-      // Fallback to Supabase direct signup (from version 2)
+      // Fallback to Supabase direct signup
       const { data, error } = await supabase.auth.signUp({
         ...signUpCredentials,
         options: {
