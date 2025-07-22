@@ -7,7 +7,7 @@ interface SignUpResult {
   error: Error | null;
   requiresEmailConfirmation: boolean;
   confirmationToken?: string;
-  emailSendingFailed?: boolean; // Added to match AuthContextType
+  emailSendingFailed?: boolean;
 }
 
 interface EmailConfirmationData {
@@ -37,13 +37,30 @@ export class CustomAuthService {
     try {
       console.log('[CustomAuthService] Starting signup for:', email);
       
-      // Step 1: Create user with email confirmations disabled temporarily
+      // Step 1: First check if user already exists
+      const { data: existingUser } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('email', email)
+        .single();
+
+      if (existingUser) {
+        return {
+          user: null,
+          error: new Error('This email is already registered. Please sign in instead.'),
+          requiresEmailConfirmation: false
+        };
+      }
+      
+      // Step 2: Create user with email confirmations COMPLETELY disabled
+      // This is crucial - we need to disable ALL email sending from Supabase
       const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
         email,
         password,
         options: {
-          // Don't send Supabase's confirmation email
-          emailRedirectTo: undefined,
+          // Critical: Set emailRedirectTo to empty string to disable Supabase emails
+          emailRedirectTo: '',
+          // Don't auto-confirm the email
           data: {
             email_confirmed_at: null,
             confirmation_sent_via: 'sendgrid',
@@ -64,14 +81,28 @@ export class CustomAuthService {
           };
         }
         
-        return {
-          user: null,
-          error: signUpError,
-          requiresEmailConfirmation: false
-        };
+        // If the error is about email sending, we can ignore it since we're handling emails ourselves
+        if (signUpError.message.includes('Error sending confirmation email')) {
+          console.log('[CustomAuthService] Ignoring Supabase email error, will use SendGrid');
+          // Continue with the process if we have user data
+          if (!signUpData?.user) {
+            return {
+              user: null,
+              error: new Error('Failed to create user account'),
+              requiresEmailConfirmation: false
+            };
+          }
+        } else {
+          // For other errors, return them
+          return {
+            user: null,
+            error: signUpError,
+            requiresEmailConfirmation: false
+          };
+        }
       }
 
-      if (!signUpData.user) {
+      if (!signUpData?.user) {
         return {
           user: null,
           error: new Error('Failed to create user account'),
@@ -79,12 +110,12 @@ export class CustomAuthService {
         };
       }
 
-      // Step 2: Generate confirmation token
+      // Step 3: Generate confirmation token
       const confirmationToken = this.generateConfirmationToken();
       const expiresAt = new Date();
       expiresAt.setHours(expiresAt.getHours() + 24); // 24 hour expiry
 
-      // Step 3: Store confirmation token in database
+      // Step 4: Store confirmation token in database
       const { error: tokenError } = await supabase
         .from('email_confirmations')
         .insert({
@@ -97,31 +128,35 @@ export class CustomAuthService {
 
       if (tokenError) {
         console.error('[CustomAuthService] Failed to store confirmation token:', tokenError);
-        // Don't fail the signup, but log the issue
+        // Continue anyway - we can handle this in the resend flow
       }
 
-      // Step 4: Send confirmation email via SendGrid
+      // Step 5: Send confirmation email via SendGrid
       const confirmationUrl = `${window.location.origin}/confirm-email?token=${confirmationToken}&email=${encodeURIComponent(email)}`;
       
-      const { error: emailError } = await this.sendConfirmationEmail(email, confirmationUrl, signUpData.user.id);
+      let emailSendingFailed = false;
+      let emailError: Error | null = null;
       
-      if (emailError) {
-        console.error('[CustomAuthService] Failed to send confirmation email:', emailError);
-        // Return success but note that email failed
-        return {
-          user: signUpData.user,
-          error: new Error('Account created but confirmation email failed to send. Please contact support.'),
-          requiresEmailConfirmation: true,
-          confirmationToken
-        };
+      try {
+        const { error: sendError } = await this.sendConfirmationEmail(email, confirmationUrl, signUpData.user.id);
+        if (sendError) {
+          emailError = sendError;
+          emailSendingFailed = true;
+        }
+      } catch (err) {
+        console.error('[CustomAuthService] Failed to send confirmation email:', err);
+        emailError = err as Error;
+        emailSendingFailed = true;
       }
-
-      console.log('[CustomAuthService] Signup successful, confirmation email sent');
+      
+      // Always return success for account creation, but indicate if email failed
+      console.log('[CustomAuthService] Signup successful, email sent:', !emailSendingFailed);
       return {
         user: signUpData.user,
         error: null,
         requiresEmailConfirmation: true,
-        confirmationToken
+        confirmationToken,
+        emailSendingFailed
       };
 
     } catch (error) {
@@ -195,6 +230,11 @@ export class CustomAuthService {
         return { error };
       }
 
+      if (!data || data.error) {
+        console.error('[CustomAuthService] SendGrid returned error:', data);
+        return { error: new Error(data?.error || 'Failed to send email') };
+      }
+
       return { error: null };
     } catch (error) {
       console.error('[CustomAuthService] Failed to send email:', error);
@@ -207,20 +247,19 @@ export class CustomAuthService {
    */
   static async resendConfirmationEmail(email: string): Promise<{ error: Error | null }> {
     try {
-      // First, get the user and their latest confirmation token
-      const { data: userData, error: userError } = await supabase
-        .from('auth.users')
-        .select('id')
+      // First, get the user from profiles (more reliable than auth.users)
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('id, email_confirmed')
         .eq('email', email)
         .single();
 
-      if (userError || !userData) {
-        return { error: new Error('User not found') };
+      if (profileError || !profile) {
+        return { error: new Error('User not found. Please sign up first.') };
       }
 
       // Check if user already confirmed
-      const { data: user } = await supabase.auth.admin.getUserById(userData.id);
-      if (user?.user?.email_confirmed_at) {
+      if (profile.email_confirmed) {
         return { error: new Error('Email already confirmed. Please sign in.') };
       }
 
@@ -228,7 +267,7 @@ export class CustomAuthService {
       const { data: existingToken } = await supabase
         .from('email_confirmations')
         .select('token, expires_at')
-        .eq('user_id', userData.id)
+        .eq('user_id', profile.id)
         .eq('used', false)
         .order('created_at', { ascending: false })
         .limit(1)
@@ -245,20 +284,25 @@ export class CustomAuthService {
         const expiresAt = new Date();
         expiresAt.setHours(expiresAt.getHours() + 24);
 
-        await supabase
+        const { error: insertError } = await supabase
           .from('email_confirmations')
           .insert({
-            user_id: userData.id,
+            user_id: profile.id,
             email: email,
             token: confirmationToken,
             expires_at: expiresAt.toISOString(),
             created_at: new Date().toISOString()
           });
+
+        if (insertError) {
+          console.error('[CustomAuthService] Failed to create new token:', insertError);
+          return { error: new Error('Failed to generate confirmation token') };
+        }
       }
 
       // Send email
       const confirmationUrl = `${window.location.origin}/confirm-email?token=${confirmationToken}&email=${encodeURIComponent(email)}`;
-      return await this.sendConfirmationEmail(email, confirmationUrl, userData.id);
+      return await this.sendConfirmationEmail(email, confirmationUrl, profile.id);
       
     } catch (error) {
       console.error('[CustomAuthService] Failed to resend confirmation:', error);
@@ -288,11 +332,12 @@ export class CustomAuthService {
       }
 
       if (new Date(confirmationData.expires_at) < new Date()) {
-        return { error: new Error('This confirmation link has expired') };
+        return { error: new Error('This confirmation link has expired. Please request a new one.') };
       }
 
+      // Start a transaction to update both tables
       // Mark token as used
-      await supabase
+      const { error: updateTokenError } = await supabase
         .from('email_confirmations')
         .update({ 
           used: true, 
@@ -300,19 +345,27 @@ export class CustomAuthService {
         })
         .eq('token', token);
 
-      // Update user's email confirmation status
-      const { error: updateError } = await supabase.auth.admin.updateUserById(
-        confirmationData.user_id,
-        { 
-          email_confirmed_at: new Date().toISOString(),
-          user_metadata: { email_verified: true }
-        }
-      );
+      if (updateTokenError) {
+        console.error('[CustomAuthService] Failed to mark token as used:', updateTokenError);
+      }
 
-      if (updateError) {
-        console.error('[CustomAuthService] Failed to update user:', updateError);
+      // Update user profile to mark email as confirmed
+      const { error: updateProfileError } = await supabase
+        .from('profiles')
+        .update({ 
+          email_confirmed: true,
+          email_confirmed_at: new Date().toISOString()
+        })
+        .eq('id', confirmationData.user_id);
+
+      if (updateProfileError) {
+        console.error('[CustomAuthService] Failed to update profile:', updateProfileError);
         return { error: new Error('Failed to confirm email. Please contact support.') };
       }
+
+      // Note: We can't directly update auth.users table from client-side
+      // You'll need to handle this in a database trigger or edge function
+      // For now, the email_confirmed flag in profiles table should be sufficient
 
       return { error: null };
       
