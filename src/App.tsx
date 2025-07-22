@@ -119,6 +119,8 @@ function App() {
                   <title>MapleAurum | Canadian Mining Analytics</title>
                   <meta name="description" content={jsonLd.description} />
                   <script type="application/ld+json">{JSON.stringify(jsonLd)}</script>
+				  
+				  
                 </Helmet>
                 <Routes>
                   <Route element={<FilteredLayout />}>
@@ -132,6 +134,14 @@ function App() {
                     <Route path="/subscribe" element={<SubscribePage />} />
                     <Route path="/hook-filtered" element={<HookUIPage useGlobalFavorites />} />
                     <Route path="/company/:id" element={<CompanyDetailPage />} />
+                    <Route path="/help" element={<HelpLandingPage />} /> {/* Moved to FilteredLayout */}
+                    <Route path="/help/metrics" element={<HelpMetricsPage />} />
+                    <Route path="/help/filters" element={<HelpFiltersPage />} />
+                    <Route path="/help/scoring" element={<HelpScoringPage />} />
+                    <Route path="/help/scatter-chart" element={<HelpScatterPage />} />
+                    <Route path="/help/scatter-score-pro" element={<HelpScatterScorePage />} />
+                    <Route path="/help/tiers" element={<HelpTiersPage />} />
+                    <Route path="/help/general" element={<HelpGeneralPage />} />
                   </Route>
                   <Route path="/hook" element={<HookUIPage />} />
                   <Route path="/login" element={<LoginPage />} />
@@ -140,17 +150,13 @@ function App() {
                   <Route path="/reset-password" element={<ResetPasswordPage />} />
                   <Route path="/onboarding" element={<OnboardingPage />} />
                   <Route path="/confirm-email" element={<ConfirmEmailPage />} />
-                  <Route path="/help" element={<HelpLandingPage />} />
-                  <Route path="/help/metrics" element={<HelpMetricsPage />} />
-                  <Route path="/help/filters" element={<HelpFiltersPage />} />
-                  <Route path="/help/scoring" element={<HelpScoringPage />} />
-                  <Route path="/help/scatter-chart" element={<HelpScatterPage />} />
-                  <Route path="/help/scatter-score-pro" element={<HelpScatterScorePage />} />
-                  <Route path="/help/tiers" element={<HelpTiersPage />} />
-                  <Route path="/help/general" element={<HelpGeneralPage />} />
                   <Route path="/admin/send-email" element={<AdminSendEmailPage />} />
                   <Route path="*" element={<NotFoundPage />} />
                 </Routes>
+				
+				
+				
+				
               </ErrorBoundary>
             </CurrencyProvider>
           </SubscriptionProvider>
