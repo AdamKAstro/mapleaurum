@@ -1,4 +1,5 @@
 // src/pages/onboarding/index.tsx
+
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { PageContainer } from '../../components/ui/page-container';
@@ -7,6 +8,7 @@ import { Button } from '../../components/ui/button';
 import { useAuth } from '../../contexts/auth-context';
 import { useSubscription } from '../../contexts/subscription-context';
 import { supabase } from '../../lib/supabaseClient';
+import { PromoTrackingService } from '../../services/promo-tracking-service';
 import { 
   Loader2, 
   CheckCircle, 
@@ -59,6 +61,9 @@ export function OnboardingPage() {
         userId: user?.id 
       });
 
+      const originalPromoCode = sessionStorage.getItem('pending_promo_code');
+      const originalPromoType = sessionStorage.getItem('pending_promo_type');
+
       // Wait for auth to stabilize
       if (isAuthLoading) {
         setState({
@@ -78,6 +83,22 @@ export function OnboardingPage() {
         try {
           await refreshSubscriptionStatus();
           
+          // Track successful activation if we have promo info
+          if (originalPromoCode && originalPromoType && stripeSessionId) {
+            await PromoTrackingService.trackActivation(
+              originalPromoCode,
+              originalPromoType as 'stripe_coupon' | 'app_trial',
+              user.id,
+              user.email!,
+              stripeSessionId,
+              0
+            );
+            
+            // Clear the stored promo info
+            sessionStorage.removeItem('pending_promo_code');
+            sessionStorage.removeItem('pending_promo_type');
+          }
+          
           setState({
             status: 'success',
             message: planName 
@@ -92,7 +113,7 @@ export function OnboardingPage() {
           console.error('[OnboardingPage] Error refreshing subscription:', error);
           setState({
             status: 'error',
-            message: 'We couldn\'t confirm your subscription immediately. Please check your account or contact support.'
+            message: 'We couldn\'t confirm your subscription immediately. Please check your account or contact support. support@mapleaurum.com'
           });
         }
         return;

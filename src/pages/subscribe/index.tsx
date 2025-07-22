@@ -12,6 +12,7 @@ import { useAuth } from '../../contexts/auth-context';
 import { useSubscription } from '../../contexts/subscription-context';
 import { cn } from '../../lib/utils';
 import { supabase } from '../../lib/supabaseClient';
+import { PromoTrackingService } from '../../services/promo-tracking-service';
 import { 
   products, 
   getPriceId, 
@@ -26,7 +27,7 @@ import {
   type AppTrialPromoCodeKey,
   type ProductKey,
   type SubscriptionTier 
-} from '../../stripe-config'; // Ensure path is correct
+} from '../../stripe-config';
 
 // Free plan configuration
 const FREE_PLAN = {
@@ -43,19 +44,17 @@ const FREE_PLAN = {
 };
 
 interface PlanCardProps {
-  productKey?: Exclude<ProductKey, 'free'>; // Product key for Pro or Premium
-  isFree?: boolean; // True if this is the Free plan card
+  productKey?: Exclude<ProductKey, 'free'>;
+  isFree?: boolean;
   isYearly: boolean;
   currentTier: SubscriptionTier;
   onSubscribeStripe: (productKey: Exclude<ProductKey, 'free'>, isYearly: boolean, stripeCouponId?: string) => void;
   onActivateAppTrial: (promoCode: AppTrialPromoCodeKey) => Promise<void>;
-  isProcessing: boolean; // Global processing state
+  isProcessing: boolean;
   isLoggedIn: boolean;
-  
-  // Props passed down from SubscribePage based on URL params
-  activeStripeCouponIdForThisPlan?: string | null; // Stripe coupon ID if URL targets this plan
-  activeAppPromoCodeForThisPlan?: AppTrialPromoCodeKey | null; // App promo code if URL targets this plan
-  planFromUrl?: string | null; // Add this missing prop
+  activeStripeCouponIdForThisPlan?: string | null;
+  activeAppPromoCodeForThisPlan?: AppTrialPromoCodeKey | null;
+  planFromUrl?: string | null;
 }
 
 function PlanCard({ 
@@ -69,6 +68,7 @@ function PlanCard({
   isLoggedIn,
   activeStripeCouponIdForThisPlan,
   activeAppPromoCodeForThisPlan,
+  planFromUrl,
 }: PlanCardProps) {
   const navigate = useNavigate();
   
@@ -107,7 +107,7 @@ function PlanCard({
     );
   }
 
-  if (!productKey) return null; // Should only be called for Pro or Premium
+  if (!productKey) return null;
   
   const product = getProduct(productKey);
   const price = getPrice(productKey, isYearly ? 'yearly' : 'monthly');
@@ -162,8 +162,6 @@ function PlanCard({
     buttonText = `Sign Up for ${product.name}`;
     buttonAction = () => navigate(`/login?action=signup&plan=${productKey}&yearly=${isYearly}`);
   }
-  // Default for logged-in user, no special offers, upgradable:
-  // buttonText, buttonAction, buttonVariant already set.
 
   const Icon = productKey === 'pro' ? Star : Crown;
 
@@ -204,7 +202,7 @@ function PlanCard({
         <div className="flex items-center gap-3 mb-4">
           <Icon className={cn('h-7 w-7', productKey === 'premium' ? 'text-accent-yellow' : 'text-accent-teal')} />
           <h3 className={cn('text-lg font-semibold', 
-            (cardHighlightType !== 'none') ? 'text-cyan-300' : 'text-white' // Simplified highlighting
+            (cardHighlightType !== 'none') ? 'text-cyan-300' : 'text-white'
           )}>
             {product.name}
           </h3>
@@ -242,7 +240,6 @@ function PlanCard({
           </div>
         )}
         
-        {/* Display message for Stripe coupon if applicable */}
         {displayMessage && cardHighlightType === 'stripe_trial' && (
           <div className="mt-2 text-sm text-emerald-300 font-medium bg-emerald-900/30 p-2 rounded">
             {displayMessage}
@@ -288,7 +285,7 @@ function PlanCard({
 function AdminCouponPanel() {
   const { user } = useAuth();
   const [generatedStripeLinks, setGeneratedStripeLinks] = useState<{pro: string, premium: string}>({pro: '', premium: ''});
-  const [generatedAppTrialLinks, setGeneratedAppTrialLinks] = useState<Record<AppTrialPromoCodeKey, string>>({} as Record<AppTrialPromoCodeKey, string>); // Corrected type
+  const [generatedAppTrialLinks, setGeneratedAppTrialLinks] = useState<Record<AppTrialPromoCodeKey, string>>({} as Record<AppTrialPromoCodeKey, string>);
   const [copyStatus, setCopyStatus] = useState<string>('');
   
   const adminEmails = ['adamkiil@outlook.com', 'adamkiil79@gmail.com', 'adamkiil@yahoo.co.uk'];
@@ -296,20 +293,31 @@ function AdminCouponPanel() {
   
   if (!isAdmin) return null;
 
-  const generateStripeLinks = () => {
+  const generateStripeLinks = async () => {
     const proLink = generateStripeCouponLink('pro', 'trial');
     const premiumLink = generateStripeCouponLink('premium', 'trial');
     setGeneratedStripeLinks({ pro: proLink, premium: premiumLink });
+    
+    if (user?.email) {
+      await PromoTrackingService.trackLinkGeneration('trial_pro', 'stripe_coupon', user.email);
+      await PromoTrackingService.trackLinkGeneration('trial_premium', 'stripe_coupon', user.email);
+    }
   };
 
-  const generateAppLinks = () => {
-    const links = {} as Record<AppTrialPromoCodeKey, string>; // Corrected type
+  const generateAppLinks = async () => {
+    const links = {} as Record<AppTrialPromoCodeKey, string>;
     (Object.keys(APP_TRIAL_PROMO_CODES) as AppTrialPromoCodeKey[]).forEach(codeKey => {
       if (isValidAppTrialPromoCode(codeKey)) { 
           links[codeKey] = generateAppTrialLink(codeKey);
       }
     });
     setGeneratedAppTrialLinks(links);
+    
+    if (user?.email) {
+      for (const codeKey of Object.keys(links)) {
+        await PromoTrackingService.trackLinkGeneration(codeKey, 'app_trial', user.email);
+      }
+    }
   };
 
   const copyToClipboard = (text: string, type: string) => {
@@ -335,7 +343,7 @@ function AdminCouponPanel() {
             </Button>
             {generatedStripeLinks.pro && (
             <div className="mt-3 space-y-3">
-                {(['pro', 'premium'] as const).map(planKey => ( // Use 'as const' for literal types
+                {(['pro', 'premium'] as const).map(planKey => (
                     <div key={planKey} className="p-3 bg-gray-700/50 rounded border border-gray-600/30">
                         <div className="flex items-center justify-between mb-2">
                         <span className="font-medium text-teal-300">{products[planKey].name} Stripe Trial:</span>
@@ -408,7 +416,34 @@ export function SubscribePage() {
     }
   }, [session, isAuthLoading, refreshSubscriptionStatus]);
 
+  useEffect(() => {
+    const trackPageView = async () => {
+      const urlParams = new URLSearchParams(location.search);
+      const promoCode = urlParams.get('promo_code');
+      const coupon = urlParams.get('coupon');
+      
+      if (promoCode && isValidAppTrialPromoCode(promoCode as AppTrialPromoCodeKey)) {
+        await PromoTrackingService.trackView(promoCode, 'app_trial');
+      }
+      
+      if (coupon) {
+        await PromoTrackingService.trackView(coupon, 'stripe_coupon');
+      }
+    };
+    
+    trackPageView();
+  }, [location.search]);
+
   const handleStripeSubscribe = useCallback(async (productKey: Exclude<ProductKey, 'free'>, yearly: boolean, stripeCouponIdForCheckout?: string) => {
+    if (stripeCouponIdForCheckout) {
+      await PromoTrackingService.trackClick(
+        stripeCouponIdForCheckout, 
+        'stripe_coupon',
+        user?.id,
+        user?.email
+      );
+    }
+    
     if (!user || !session?.access_token) {
       const loginParams = new URLSearchParams();
       loginParams.set('action', 'login');
@@ -449,13 +484,31 @@ export function SubscribePage() {
         }
     } catch (error: any) {
         console.error('Stripe Subscription error:', error);
+        
+        if (stripeCouponIdForCheckout) {
+          await PromoTrackingService.trackFailure(
+            stripeCouponIdForCheckout,
+            'stripe_coupon',
+            error.message || 'Unknown error',
+            user?.id,
+            user?.email
+          );
+        }
+        
         alert(`Stripe Checkout Error: ${error.message || 'Please try again.'}`);
     } finally {
         setIsProcessing(false);
     }
-  }, [user, session, navigate]); 
-  
+  }, [user, session, navigate]);
+
   const handleActivateAppTrial = useCallback(async (promoCodeToActivate: AppTrialPromoCodeKey) => {
+    await PromoTrackingService.trackClick(
+      promoCodeToActivate,
+      'app_trial',
+      user?.id,
+      user?.email
+    );
+    
     if (!user || !session?.access_token) {
       const trialDetails = APP_TRIAL_PROMO_CODES[promoCodeToActivate];
       navigate(`/login?action=login&promo_code=${promoCodeToActivate}&plan=${trialDetails.tier}`);
@@ -467,16 +520,31 @@ export function SubscribePage() {
         body: { promo_code: promoCodeToActivate }
       });
 
-      if (error) throw error; 
+      if (error) throw error;
 
-      if (data && data.message) { // Check if data and data.message exist
+      if (data && data.message) {
+        await PromoTrackingService.trackActivation(
+          promoCodeToActivate,
+          'app_trial',
+          user.id,
+          user.email!,
+          data.subscription_id
+        );
+        
         alert(data.message);
         await refreshSubscriptionStatus(); 
         navigate('/companies'); 
       } else {
-        // Handle case where data might be null or message is missing but no error thrown
         console.warn('App trial activation returned no specific message, but no error. Data:', data);
-        alert('Trial processed. Please check your account.'); // Generic success
+        
+        await PromoTrackingService.trackActivation(
+          promoCodeToActivate,
+          'app_trial',
+          user.id,
+          user.email!
+        );
+        
+        alert('Trial processed. Please check your account.');
         await refreshSubscriptionStatus();
         navigate('/companies');
       }
@@ -484,6 +552,15 @@ export function SubscribePage() {
       console.error('App trial activation error:', err);
       const functionError = err.context?.body?.error || err.context?.body?.details || err.message;
       const displayMessage = typeof functionError === 'string' ? functionError : 'An unexpected error occurred while activating the trial.';
+      
+      await PromoTrackingService.trackFailure(
+        promoCodeToActivate,
+        'app_trial',
+        displayMessage,
+        user?.id,
+        user?.email
+      );
+      
       alert(`Trial Activation Error: ${displayMessage}`);
     } finally {
       setIsProcessing(false);
@@ -561,6 +638,7 @@ export function SubscribePage() {
             onActivateAppTrial={handleActivateAppTrial}
             isProcessing={isProcessing}
             isLoggedIn={isLoggedIn}
+            planFromUrl={planFromUrlParam}
           />
           
           {(Object.keys(products) as Array<Exclude<ProductKey, 'free'>>).map((pKey) => {
