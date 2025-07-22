@@ -1,19 +1,26 @@
-//src/contexts/auth-context.tsx
+// src/contexts/auth-context.tsx
 import React, { createContext, useState, useEffect, useContext, ReactNode, useCallback } from 'react';
 import { Session, User, AuthError, SignInWithPasswordCredentials, SignUpWithPasswordCredentials } from '@supabase/supabase-js';
-import { supabase } from '../lib/supabaseClient'; // Your initialized Supabase client
+import { supabase } from '../lib/supabaseClient';
 
 interface AuthContextType {
   session: Session | null;
   user: User | null;
-  isLoading: boolean; // Indicates if session is being loaded initially
+  isLoading: boolean;
   error: AuthError | null;
   signIn: (credentials: SignInWithPasswordCredentials) => Promise<{ error: AuthError | null }>;
-  // signUp: (credentials: SignUpWithPasswordCredentials) => Promise<{ error: AuthError | null }>; // Optional: Add if needed
+  signUp: (credentials: SignUpWithPasswordCredentials & { emailRedirectTo?: string }) => Promise<{ 
+    error: AuthError | null; 
+    requiresEmailConfirmation?: boolean;
+    user?: User | null;
+  }>;
   signOut: () => Promise<{ error: AuthError | null }>;
+  resendConfirmationEmail: (email: string) => Promise<{ error: Error | null }>;
+  resetPassword: (email: string) => Promise<{ error: AuthError | null }>;
+  updatePassword: (newPassword: string) => Promise<{ error: AuthError | null }>;
+  clearError: () => void;
 }
 
-// Create the context with a default undefined value
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 interface AuthProviderProps {
@@ -23,89 +30,275 @@ interface AuthProviderProps {
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState(true); // Start loading until first check is done
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<AuthError | null>(null);
 
-  // Effect to check initial session and listen for changes
+  // Initialize auth state
   useEffect(() => {
-    setIsLoading(true);
-    setError(null);
+    let mounted = true;
+    
+    const initializeAuth = async () => {
+      try {
+        setIsLoading(true);
+        setError(null);
 
-    // Check current session syncronously if possible (useful on initial load)
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      setIsLoading(false);
-      console.log('[AuthContext] Initial session:', session);
-    }).catch(err => {
-        console.error("[AuthContext] Error getting initial session:", err);
-        setIsLoading(false);
-    });
+        // Get initial session
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        
+        if (mounted) {
+          if (sessionError) {
+            console.error("[AuthContext] Session initialization error:", sessionError);
+            setError(sessionError);
+          } else {
+            setSession(session);
+            setUser(session?.user ?? null);
+            console.log('[AuthContext] Initial session loaded:', session?.user?.id);
+          }
+        }
+      } catch (err) {
+        console.error("[AuthContext] Unexpected error during initialization:", err);
+        if (mounted) {
+          setError(err as AuthError);
+        }
+      } finally {
+        if (mounted) {
+          setIsLoading(false);
+        }
+      }
+    };
 
+    initializeAuth();
 
-    // Listen for auth state changes (login, logout, token refresh)
-    const { data: authListener } = supabase.auth.onAuthStateChange(
-      (_event, session) => {
-        console.log(`[AuthContext] Auth state changed: ${_event}`, session);
-        setSession(session);
-        setUser(session?.user ?? null);
-        setIsLoading(false); // Ensure loading is false after state change
-        setError(null); // Clear errors on successful auth change
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        console.log(`[AuthContext] Auth state changed: ${event}`, session?.user?.id);
+        
+        if (mounted) {
+          setSession(session);
+          setUser(session?.user ?? null);
+          
+          // Clear errors on successful auth events
+          if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+            setError(null);
+          }
+          
+          // Handle specific events
+          if (event === 'USER_UPDATED') {
+            console.log('[AuthContext] User data updated');
+          } else if (event === 'PASSWORD_RECOVERY') {
+            console.log('[AuthContext] Password recovery initiated');
+          }
+          
+          setIsLoading(false);
+        }
       }
     );
 
-    // Cleanup function
     return () => {
-      authListener?.subscription.unsubscribe();
+      mounted = false;
+      subscription.unsubscribe();
     };
   }, []);
 
-  // Sign in function
+  // Enhanced sign in with better error handling
   const signIn = useCallback(async (credentials: SignInWithPasswordCredentials) => {
     setIsLoading(true);
     setError(null);
-    const { error } = await supabase.auth.signInWithPassword(credentials);
-    if (error) {
+    
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword(credentials);
+      
+      if (error) {
         console.error('[AuthContext] Sign in error:', error);
         setError(error);
-    } else {
-        // Session state will be updated by onAuthStateChange listener
+        
+        // Provide more specific error messages
+        if (error.message.includes('Email not confirmed')) {
+          error.message = 'Please confirm your email before signing in. Check your inbox for the confirmation link.';
+        }
+      } else {
+        console.log('[AuthContext] Sign in successful:', data.user?.id);
+      }
+      
+      return { error };
+    } catch (err) {
+      console.error('[AuthContext] Unexpected sign in error:', err);
+      const authError = err as AuthError;
+      setError(authError);
+      return { error: authError };
+    } finally {
+      setIsLoading(false);
     }
-    setIsLoading(false);
-    return { error };
   }, []);
 
-  /* Optional Sign Up Function
-  const signUp = useCallback(async (credentials: SignUpWithPasswordCredentials) => {
+  // Enhanced sign up with email confirmation handling
+  const signUp = useCallback(async (credentials: SignUpWithPasswordCredentials & { emailRedirectTo?: string }) => {
     setIsLoading(true);
     setError(null);
-    const { error } = await supabase.auth.signUp(credentials);
-     if (error) {
+    
+    try {
+      const { emailRedirectTo, ...signUpCredentials } = credentials;
+      
+      const { data, error } = await supabase.auth.signUp({
+        ...signUpCredentials,
+        options: {
+          emailRedirectTo: emailRedirectTo || `${window.location.origin}/login?message=confirm_email`,
+          data: {
+            email: signUpCredentials.email,
+            signup_timestamp: new Date().toISOString(),
+          }
+        }
+      });
+      
+      if (error) {
         console.error('[AuthContext] Sign up error:', error);
         setError(error);
-    } else {
-        // User might need email confirmation depending on your Supabase settings
-        console.log('[AuthContext] Sign up successful, check email if confirmation required.');
+        
+        // Handle specific error cases
+        if (error.message.includes('already registered')) {
+          error.message = 'This email is already registered. Please sign in or reset your password.';
+        }
+        
+        return { error, requiresEmailConfirmation: false, user: null };
+      }
+      
+      // Check if email confirmation is required
+      const requiresEmailConfirmation = data.user && !data.user.confirmed_at && !data.session;
+      
+      if (requiresEmailConfirmation) {
+        console.log('[AuthContext] Email confirmation required for:', data.user?.email);
+      } else if (data.session) {
+        console.log('[AuthContext] User auto-confirmed and signed in:', data.user?.id);
+      }
+      
+      return { 
+        error: null, 
+        requiresEmailConfirmation,
+        user: data.user 
+      };
+    } catch (err) {
+      console.error('[AuthContext] Unexpected sign up error:', err);
+      const authError = err as AuthError;
+      setError(authError);
+      return { error: authError, requiresEmailConfirmation: false, user: null };
+    } finally {
+      setIsLoading(false);
     }
-    setIsLoading(false);
-    return { error };
   }, []);
-  */
 
-  // Sign out function
+  // Resend confirmation email
+  const resendConfirmationEmail = useCallback(async (email: string) => {
+    setIsLoading(true);
+    setError(null);
+    
+    try {
+      const { error } = await supabase.auth.resend({
+        type: 'signup',
+        email,
+        options: {
+          emailRedirectTo: `${window.location.origin}/login?message=confirm_email`
+        }
+      });
+      
+      if (error) {
+        console.error('[AuthContext] Resend confirmation error:', error);
+        return { error };
+      }
+      
+      console.log('[AuthContext] Confirmation email resent to:', email);
+      return { error: null };
+    } catch (err) {
+      console.error('[AuthContext] Unexpected resend error:', err);
+      return { error: err as Error };
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  // Reset password
+  const resetPassword = useCallback(async (email: string) => {
+    setIsLoading(true);
+    setError(null);
+    
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
+      
+      if (error) {
+        console.error('[AuthContext] Password reset error:', error);
+        setError(error);
+      }
+      
+      return { error };
+    } catch (err) {
+      console.error('[AuthContext] Unexpected password reset error:', err);
+      const authError = err as AuthError;
+      setError(authError);
+      return { error: authError };
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  // Update password (for already authenticated users)
+  const updatePassword = useCallback(async (newPassword: string) => {
+    setIsLoading(true);
+    setError(null);
+    
+    try {
+      const { error } = await supabase.auth.updateUser({
+        password: newPassword
+      });
+      
+      if (error) {
+        console.error('[AuthContext] Password update error:', error);
+        setError(error);
+      }
+      
+      return { error };
+    } catch (err) {
+      console.error('[AuthContext] Unexpected password update error:', err);
+      const authError = err as AuthError;
+      setError(authError);
+      return { error: authError };
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  // Sign out
   const signOut = useCallback(async () => {
     setIsLoading(true);
     setError(null);
-    const { error } = await supabase.auth.signOut();
-     if (error) {
+    
+    try {
+      const { error } = await supabase.auth.signOut();
+      
+      if (error) {
         console.error('[AuthContext] Sign out error:', error);
         setError(error);
-    } else {
-         // Session state will be updated by onAuthStateChange listener
+      } else {
+        // Clear any cached data
+        setSession(null);
+        setUser(null);
+      }
+      
+      return { error };
+    } catch (err) {
+      console.error('[AuthContext] Unexpected sign out error:', err);
+      const authError = err as AuthError;
+      setError(authError);
+      return { error: authError };
+    } finally {
+      setIsLoading(false);
     }
-    // Don't set loading false immediately, wait for onAuthStateChange
-    // setIsLoading(false); // Let the listener handle setting loading false
-    return { error };
+  }, []);
+
+  // Clear error
+  const clearError = useCallback(() => {
+    setError(null);
   }, []);
 
   const value: AuthContextType = {
@@ -114,14 +307,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     isLoading,
     error,
     signIn,
-    // signUp, // Optional
+    signUp,
     signOut,
+    resendConfirmationEmail,
+    resetPassword,
+    updatePassword,
+    clearError,
   };
 
-  // Render children only after initial load attempt, or show a loader
-  // return <AuthContext.Provider value={value}>{!isLoading ? children : <div>Loading Auth...</div>}</AuthContext.Provider>;
-  // OR just provide value immediately and let consumers handle loading state:
-   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
 
 // Custom hook to use the AuthContext
