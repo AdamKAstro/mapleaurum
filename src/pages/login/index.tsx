@@ -50,6 +50,9 @@ export function LoginPage() {
     if (message === 'confirm_email') {
       setSuccessMessage('Email confirmed! Please log in to continue.');
       setIsSignupMode(false);
+    } else if (message === 'email_confirmed') {
+      setSuccessMessage('Your email has been confirmed! You can now sign in to your account.');
+      setIsSignupMode(false);
     } else if (message === 'password_reset_success') {
       setSuccessMessage('Password reset successful. Please log in with your new password.');
       setIsSignupMode(false);
@@ -62,6 +65,12 @@ export function LoginPage() {
       if (promoCode && isValidAppTrialPromoCode(promoCode)) contextMessage += ' with special trial access';
       if (coupon) contextMessage += ' with promotional pricing';
       setSuccessMessage(contextMessage + '!');
+    }
+
+    // Handle resend confirmation request
+    if (action === 'resend_confirmation' && email) {
+      setEmailForConfirmation(decodeURIComponent(email));
+      setShowConfirmationOptions(true);
     }
   }, [location.search]);
 
