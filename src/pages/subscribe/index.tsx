@@ -55,6 +55,7 @@ interface PlanCardProps {
   // Props passed down from SubscribePage based on URL params
   activeStripeCouponIdForThisPlan?: string | null; // Stripe coupon ID if URL targets this plan
   activeAppPromoCodeForThisPlan?: AppTrialPromoCodeKey | null; // App promo code if URL targets this plan
+  planFromUrl?: string | null; // Add this missing prop
 }
 
 function PlanCard({ 
