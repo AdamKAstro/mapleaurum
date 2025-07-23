@@ -1,7 +1,7 @@
 // src/components/ui/hero.tsx
-import React, { useState, useRef, useMemo, memo } from 'react';
-import { ArrowRight, Crown, TrendingUp, Shield, Sparkles, ChevronDown, Check, Zap, Target, Gem, Rocket } from 'lucide-react';
-import { motion, useScroll, useTransform, AnimatePresence } from 'framer-motion';
+import React, { useState, useRef, useMemo, memo, useEffect } from 'react';
+import { ArrowRight, Crown, TrendingUp, Shield, Sparkles, ChevronDown, Check, Zap, Target, Gem, Rocket, Play, Pause, Volume2, VolumeX } from 'lucide-react';
+import { motion, useScroll, useTransform, AnimatePresence, useInView } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { LazyLoadImage } from 'react-lazy-load-image-component';
 import 'react-lazy-load-image-component/src/effects/blur.css';
@@ -122,8 +122,15 @@ const demoCompanies = [
 export const Hero: React.FC<HeroProps> = ({ className }) => {
   const [selectedTemplate, setSelectedTemplate] = useState(templates[0]);
   const [hoveredBubble, setHoveredBubble] = useState<number | null>(null);
+  const [isVideoPlaying, setIsVideoPlaying] = useState(true);
+  const [isMuted, setIsMuted] = useState(true);
+  const [hasVideoLoaded, setHasVideoLoaded] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const videoContainerRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
+
+  const isVideoInView = useInView(videoContainerRef, { once: false, margin: "-100px" });
 
   const { scrollYProgress } = useScroll({
     target: containerRef,
@@ -134,6 +141,38 @@ export const Hero: React.FC<HeroProps> = ({ className }) => {
   const heroY = useTransform(scrollYProgress, [0, 1], [0, -150]);
   const bubblesY = useTransform(scrollYProgress, [0, 1], [0, -100]);
   const fadeOut = useTransform(scrollYProgress, [0, 0.3], [1, 0.8]);
+
+  // Video controls
+  useEffect(() => {
+    if (videoRef.current) {
+      if (isVideoInView && isVideoPlaying) {
+        videoRef.current.play().catch(() => {
+          // Handle autoplay failure
+          setIsVideoPlaying(false);
+        });
+      } else {
+        videoRef.current.pause();
+      }
+    }
+  }, [isVideoInView, isVideoPlaying]);
+
+  const togglePlayPause = () => {
+    if (videoRef.current) {
+      if (isVideoPlaying) {
+        videoRef.current.pause();
+      } else {
+        videoRef.current.play();
+      }
+      setIsVideoPlaying(!isVideoPlaying);
+    }
+  };
+
+  const toggleMute = () => {
+    if (videoRef.current) {
+      videoRef.current.muted = !isMuted;
+      setIsMuted(!isMuted);
+    }
+  };
 
   // Memoize template buttons to prevent re-renders
   const templateButtons = useMemo(() => (
@@ -158,7 +197,7 @@ export const Hero: React.FC<HeroProps> = ({ className }) => {
 
   return (
     <main ref={containerRef} className={cn('relative w-full font-sans', className)} aria-label="Maple Aurum Homepage">
-      {/* Section 1: Hero Banner */}
+      {/* Section 1: Hero Banner with Video */}
       <section className="relative min-h-screen flex flex-col overflow-hidden bg-gradient-to-b from-navy-900 via-navy-800 to-navy-900">
         {/* Dynamic background with glassmorphism */}
         <div className="absolute inset-0 backdrop-blur-[2px]">
@@ -168,26 +207,26 @@ export const Hero: React.FC<HeroProps> = ({ className }) => {
             style={{ y: bubblesY }}
             aria-hidden="true"
           >
-            {[...Array(30)].map((_, i) => (
+            {[...Array(20)].map((_, i) => (
               <motion.div
                 key={i}
                 className="absolute rounded-full"
                 style={{
-                  width: `${30 + Math.random() * 60}px`,
-                  height: `${30 + Math.random() * 60}px`,
+                  width: `${20 + Math.random() * 40}px`,
+                  height: `${20 + Math.random() * 40}px`,
                   left: `${Math.random() * 100}%`,
                   top: `${Math.random() * 100}%`,
                   background: i % 3 === 0
-                    ? 'radial-gradient(circle, rgba(251, 191, 36, 0.3) 0%, transparent 70%)'
+                    ? 'radial-gradient(circle, rgba(251, 191, 36, 0.2) 0%, transparent 70%)'
                     : i % 3 === 1
-                    ? 'radial-gradient(circle, rgba(34, 197, 94, 0.2) 0%, transparent 70%)'
-                    : 'radial-gradient(circle, rgba(59, 130, 246, 0.2) 0%, transparent 70%)',
+                    ? 'radial-gradient(circle, rgba(34, 197, 94, 0.15) 0%, transparent 70%)'
+                    : 'radial-gradient(circle, rgba(59, 130, 246, 0.15) 0%, transparent 70%)',
                   filter: 'blur(1px)',
                 }}
                 animate={{
                   y: [0, -30, 0],
                   scale: [1, 1.1, 1],
-                  opacity: [0.3, 0.6, 0.3],
+                  opacity: [0.2, 0.4, 0.2],
                 }}
                 transition={{
                   duration: 5 + Math.random() * 5,
@@ -204,7 +243,7 @@ export const Hero: React.FC<HeroProps> = ({ className }) => {
         {/* Navigation Header */}
         <header className="relative z-40 mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
           <nav className="flex items-center justify-between" aria-label="Main navigation">
-            <a
+            
               href="/"
               className="flex items-center gap-3 group focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:ring-offset-2 focus:ring-offset-navy-900"
               aria-label="Maple Aurum Home"
@@ -228,21 +267,21 @@ export const Hero: React.FC<HeroProps> = ({ className }) => {
             </a>
 
             <div className="hidden md:flex items-center gap-8">
-              <a
+              
                 href="/companies"
                 className="text-sm font-medium text-white/80 hover:text-yellow-400 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:ring-offset-2 focus:ring-offset-navy-900"
                 aria-label="View Companies"
               >
                 Companies
               </a>
-              <a
+              
                 href="/scatter-score-pro"
                 className="text-sm font-medium text-white/80 hover:text-yellow-400 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:ring-offset-2 focus:ring-offset-navy-900"
                 aria-label="Explore ScatterScore"
               >
                 ScatterScore™
               </a>
-              <a
+              
                 href="/scoring"
                 className="text-sm font-medium text-white/80 hover:text-yellow-400 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:ring-offset-2 focus:ring-offset-navy-900"
                 aria-label="View Rankings"
@@ -262,18 +301,19 @@ export const Hero: React.FC<HeroProps> = ({ className }) => {
           </nav>
         </header>
 
-        {/* Hero Content */}
+        {/* Hero Content with Video */}
         <motion.main
-          className="relative flex-1 flex items-center justify-center px-4 sm:px-6 lg:px-8"
+          className="relative flex-1 flex flex-col items-center justify-start px-4 sm:px-6 lg:px-8 pt-12"
           style={{ y: heroY, opacity: fadeOut }}
           aria-label="Hero Section"
         >
           <div className="mx-auto max-w-7xl w-full text-center">
+            {/* Main Headline - Moved Higher */}
             <motion.h1
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8 }}
-              className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-white mb-6 tracking-tight leading-tight"
+              className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-white mb-4 tracking-tight leading-tight"
             >
               Uncover Winning Mining Stocks
               <span className="block mt-2 bg-gradient-to-r from-yellow-400 via-amber-400 to-yellow-500 bg-clip-text text-transparent animate-gradient">
@@ -285,16 +325,123 @@ export const Hero: React.FC<HeroProps> = ({ className }) => {
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.2 }}
-              className="text-lg sm:text-xl md:text-2xl text-gray-300 max-w-3xl mx-auto mb-10 font-light"
+              className="text-lg sm:text-xl md:text-2xl text-gray-300 max-w-3xl mx-auto mb-8 font-light"
             >
               Analyze Canadian precious metals companies like a pro—find value, growth, and stability effortlessly.
             </motion.p>
 
+            {/* Video Container with Glassmorphism */}
+            <motion.div
+              ref={videoContainerRef}
+              initial={{ opacity: 0, scale: 0.9, y: 50 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              transition={{ duration: 1, delay: 0.3 }}
+              className="relative max-w-4xl mx-auto mb-10"
+            >
+              {/* Glassmorphism Container */}
+              <div className="relative rounded-3xl overflow-hidden backdrop-blur-xl bg-white/5 border border-white/10 shadow-2xl">
+                {/* Animated Glow Effect */}
+                <div className="absolute -inset-1 bg-gradient-to-r from-yellow-500/20 via-amber-500/20 to-yellow-500/20 rounded-3xl blur-2xl animate-pulse" />
+                
+                {/* Inner Container */}
+                <div className="relative p-4 sm:p-6">
+                  {/* Video Element */}
+                  <div className="relative rounded-2xl overflow-hidden bg-black/50">
+                    <video
+                      ref={videoRef}
+                      className="w-full h-auto rounded-2xl"
+                      autoPlay
+                      loop
+                      muted={isMuted}
+                      playsInline
+                      onLoadedData={() => setHasVideoLoaded(true)}
+                      poster="/GeminiMALBig3.webp"
+                      aria-label="Maple Aurum Logo Reveal"
+                    >
+                      <source src="/Cosmic_Genesis_Logo_Reveal_Video.mp4" type="video/mp4" />
+                      Your browser does not support the video tag.
+                    </video>
+
+                    {/* Video Overlay Gradient */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent pointer-events-none" />
+
+                    {/* Video Controls */}
+                    <AnimatePresence>
+                      {hasVideoLoaded && (
+                        <motion.div
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          exit={{ opacity: 0 }}
+                          className="absolute bottom-4 left-4 right-4 flex items-center justify-between"
+                        >
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={togglePlayPause}
+                              className="p-2 rounded-full bg-black/50 backdrop-blur-sm text-white hover:bg-black/70 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-yellow-400"
+                              aria-label={isVideoPlaying ? 'Pause video' : 'Play video'}
+                            >
+                              {isVideoPlaying ? (
+                                <Pause className="h-4 w-4" />
+                              ) : (
+                                <Play className="h-4 w-4" />
+                              )}
+                            </button>
+                            <button
+                              onClick={toggleMute}
+                              className="p-2 rounded-full bg-black/50 backdrop-blur-sm text-white hover:bg-black/70 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-yellow-400"
+                              aria-label={isMuted ? 'Unmute video' : 'Mute video'}
+                            >
+                              {isMuted ? (
+                                <VolumeX className="h-4 w-4" />
+                              ) : (
+                                <Volume2 className="h-4 w-4" />
+                              )}
+                            </button>
+                          </div>
+                          <div className="text-xs text-white/70 bg-black/50 backdrop-blur-sm px-3 py-1 rounded-full">
+                            Experience Maple Aurum
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
+
+                  {/* Decorative Elements */}
+                  <div className="absolute -top-20 -left-20 w-40 h-40 bg-yellow-500/20 rounded-full blur-3xl" />
+                  <div className="absolute -bottom-20 -right-20 w-40 h-40 bg-amber-500/20 rounded-full blur-3xl" />
+                </div>
+              </div>
+
+              {/* Floating Particles Around Video */}
+              {[...Array(6)].map((_, i) => (
+                <motion.div
+                  key={i}
+                  className="absolute w-2 h-2 bg-gradient-to-r from-yellow-400 to-amber-400 rounded-full"
+                  style={{
+                    top: `${20 + i * 15}%`,
+                    left: i % 2 === 0 ? '-5%' : '105%',
+                  }}
+                  animate={{
+                    x: i % 2 === 0 ? [0, 20, 0] : [0, -20, 0],
+                    y: [0, -10, 0],
+                    opacity: [0.3, 1, 0.3],
+                  }}
+                  transition={{
+                    duration: 3,
+                    repeat: Infinity,
+                    delay: i * 0.5,
+                    ease: 'easeInOut',
+                  }}
+                />
+              ))}
+            </motion.div>
+
+            {/* CTA Buttons */}
             <motion.div
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.4 }}
-              className="flex flex-col sm:flex-row items-center justify-center gap-6"
+              transition={{ duration: 0.8, delay: 0.6 }}
+              className="flex flex-col sm:flex-row items-center justify-center gap-6 mb-8"
             >
               <Button
                 size="lg"
@@ -317,19 +464,19 @@ export const Hero: React.FC<HeroProps> = ({ className }) => {
               </Button>
             </motion.div>
 
-            <p className="text-sm text-yellow-400/80 animate-pulse mt-6">
+            <p className="text-sm text-yellow-400/80 animate-pulse mb-8">
               Limited free usage—start now!
             </p>
 
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              transition={{ duration: 1, delay: 0.6 }}
-              className="mt-12 flex flex-col sm:flex-row items-center justify-center gap-8 text-sm text-gray-400"
+              transition={{ duration: 1, delay: 0.8 }}
+              className="flex flex-col sm:flex-row items-center justify-center gap-8 text-sm text-gray-400"
             >
               <div className="flex items-center gap-2">
                 <Check className="h-4 w-4 text-green-400" />
-                <span>500+ Companies Tracked</span>
+                <span>650+ Companies Tracked</span>
               </div>
               <div className="flex items-center gap-2">
                 <Check className="h-4 w-4 text-green-400" />
@@ -367,7 +514,7 @@ export const Hero: React.FC<HeroProps> = ({ className }) => {
               Choose Your Path to Success
             </h2>
             <p className="text-lg sm:text-xl text-gray-300 max-w-3xl mx-auto">
-              Whether you want a personalized experience or prefer to explore proven strategies, we’ve got you covered.
+              Whether you want a personalized experience or prefer to explore proven strategies, we've got you covered.
             </p>
           </motion.div>
 
@@ -973,4 +1120,4 @@ export const Hero: React.FC<HeroProps> = ({ className }) => {
       </motion.div>
     </main>
   );
-};
+};				  
