@@ -243,7 +243,7 @@ export const Hero: React.FC<HeroProps> = ({ className }) => {
         {/* Navigation Header */}
         <header className="relative z-40 mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
           <nav className="flex items-center justify-between" aria-label="Main navigation">
-            
+            <a
               href="/"
               className="flex items-center gap-3 group focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:ring-offset-2 focus:ring-offset-navy-900"
               aria-label="Maple Aurum Home"
@@ -267,21 +267,21 @@ export const Hero: React.FC<HeroProps> = ({ className }) => {
             </a>
 
             <div className="hidden md:flex items-center gap-8">
-              
+              <a
                 href="/companies"
                 className="text-sm font-medium text-white/80 hover:text-yellow-400 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:ring-offset-2 focus:ring-offset-navy-900"
                 aria-label="View Companies"
               >
                 Companies
               </a>
-              
+              <a
                 href="/scatter-score-pro"
                 className="text-sm font-medium text-white/80 hover:text-yellow-400 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:ring-offset-2 focus:ring-offset-navy-900"
                 aria-label="Explore ScatterScore"
               >
                 ScatterScore™
               </a>
-              
+              <a
                 href="/scoring"
                 className="text-sm font-medium text-white/80 hover:text-yellow-400 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:ring-offset-2 focus:ring-offset-navy-900"
                 aria-label="View Rankings"
