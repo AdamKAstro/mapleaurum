@@ -135,7 +135,14 @@ function PlanCard({
     cardHighlightType = 'app_trial';
     if (!isLoggedIn) {
         buttonText = `Sign Up for ${appTrialDetails.description}`;
-        buttonAction = () => navigate(`/login?action=signup&plan=${productKey}&yearly=${isYearly}&promo_code=${activeAppPromoCodeForThisPlan}`);
+        buttonAction = () => {
+          // Store promo details in session storage to retrieve after login
+          sessionStorage.setItem('pending_promo_code', activeAppPromoCodeForThisPlan!);
+          sessionStorage.setItem('pending_promo_plan', productKey!);
+          sessionStorage.setItem('pending_promo_yearly', String(isYearly));
+          
+          navigate(`/login?action=signup&plan=${productKey}&yearly=${isYearly}&promo_code=${activeAppPromoCodeForThisPlan}`);
+        };
     }
   } else if (stripeCouponDetailsText && canUpgradeGenerally) {
     buttonText = `Get ${product.name} with ${stripeCouponDetailsText}`;
@@ -402,6 +409,7 @@ export function SubscribePage() {
   const { currentUserSubscriptionTier, isLoading: isSubscriptionLoading, refreshSubscriptionStatus } = useSubscription();
   const [isYearly, setIsYearly] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [hasAttemptedAutoActivation, setHasAttemptedAutoActivation] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -533,6 +541,12 @@ export function SubscribePage() {
         
         alert(data.message);
         await refreshSubscriptionStatus(); 
+        
+        // Clear sessionStorage after successful activation
+        sessionStorage.removeItem('pending_promo_code');
+        sessionStorage.removeItem('pending_promo_plan');
+        sessionStorage.removeItem('pending_promo_yearly');
+        
         navigate('/companies'); 
       } else {
         console.warn('App trial activation returned no specific message, but no error. Data:', data);
@@ -546,6 +560,12 @@ export function SubscribePage() {
         
         alert('Trial processed. Please check your account.');
         await refreshSubscriptionStatus();
+        
+        // Clear sessionStorage after successful activation
+        sessionStorage.removeItem('pending_promo_code');
+        sessionStorage.removeItem('pending_promo_plan');
+        sessionStorage.removeItem('pending_promo_yearly');
+        
         navigate('/companies');
       }
     } catch (err: any) {
@@ -566,6 +586,34 @@ export function SubscribePage() {
       setIsProcessing(false);
     }
   }, [user, session, navigate, refreshSubscriptionStatus]);
+
+  // Auto-activation effect for users returning from login with pending promo code
+  useEffect(() => {
+    const checkAndActivatePendingPromo = async () => {
+      // Only run once per session
+      if (hasAttemptedAutoActivation) return;
+      
+      // Check if user is logged in and not processing
+      if (!user || isProcessing || isAuthLoading || isSubscriptionLoading) return;
+      
+      // Check for pending promo code in sessionStorage
+      const pendingPromoCode = sessionStorage.getItem('pending_promo_code') as AppTrialPromoCodeKey | null;
+      const pendingPromoPlan = sessionStorage.getItem('pending_promo_plan');
+      const pendingPromoYearly = sessionStorage.getItem('pending_promo_yearly');
+      
+      if (pendingPromoCode && isValidAppTrialPromoCode(pendingPromoCode)) {
+        console.log(`[SubscribePage] Auto-activating pending trial for promo code: ${pendingPromoCode}`);
+        
+        // Mark that we've attempted activation
+        setHasAttemptedAutoActivation(true);
+        
+        // Activate the trial
+        await handleActivateAppTrial(pendingPromoCode);
+      }
+    };
+    
+    checkAndActivatePendingPromo();
+  }, [user, isProcessing, isAuthLoading, isSubscriptionLoading, hasAttemptedAutoActivation, handleActivateAppTrial]);
 
   const isLoading = isAuthLoading || isSubscriptionLoading;
   const currentTier = currentUserSubscriptionTier || 'free';

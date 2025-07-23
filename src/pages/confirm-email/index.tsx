@@ -40,6 +40,9 @@ export function ConfirmEmailPage() {
         } else {
           setStatus('success');
           console.log('[ConfirmEmailPage] Email confirmed successfully');
+		  
+          // Set a flag to trigger promo activation after login
+          sessionStorage.setItem('user_just_confirmed', 'true');		  	  
           
           // Redirect to login after 3 seconds
           setTimeout(() => {

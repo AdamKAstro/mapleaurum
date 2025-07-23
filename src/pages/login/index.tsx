@@ -198,8 +198,46 @@ export function LoginPage() {
             setLocalError(error.message);
           }
         } else {
-          // Successful login
-          navigate(redirectPath, { replace: true });
+          // Successful login - check for pending promo activation
+          const pendingPromoCode = sessionStorage.getItem('pending_promo_code');
+          const pendingPromoPlan = sessionStorage.getItem('pending_promo_plan');
+          const pendingPromoYearly = sessionStorage.getItem('pending_promo_yearly');
+          const userJustConfirmed = sessionStorage.getItem('user_just_confirmed');
+          
+          // Log for debugging
+          console.log('[LoginPage] Checking for pending promo activation:', {
+            pendingPromoCode,
+            pendingPromoPlan,
+            pendingPromoYearly,
+            userJustConfirmed
+          });
+          
+          if (pendingPromoCode && pendingPromoPlan && userJustConfirmed === 'true') {
+            // Clear session items to prevent re-triggering
+            sessionStorage.removeItem('pending_promo_code');
+            sessionStorage.removeItem('pending_promo_plan');
+            sessionStorage.removeItem('pending_promo_yearly');
+            sessionStorage.removeItem('user_just_confirmed');
+            
+            // Build activation URL with all necessary parameters
+            const activationParams = new URLSearchParams({
+              promo_code: pendingPromoCode,
+              plan: pendingPromoPlan,
+              activate_now: 'true'
+            });
+            
+            if (pendingPromoYearly === 'true') {
+              activationParams.set('yearly', 'true');
+            }
+            
+            console.log('[LoginPage] Redirecting to activate promo:', `/subscribe?${activationParams.toString()}`);
+            
+            // Redirect to the subscribe page with activation parameters
+            navigate(`/subscribe?${activationParams.toString()}`, { replace: true });
+          } else {
+            // Normal redirect flow - either no pending promo or not just confirmed
+            navigate(redirectPath, { replace: true });
+          }
         }
       }
     } catch (err: any) {
