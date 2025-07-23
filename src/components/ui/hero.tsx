@@ -339,7 +339,7 @@ export const Hero: React.FC<HeroProps> = ({ className }) => {
               className="relative max-w-4xl mx-auto mb-10"
             >
               {/* Glassmorphism Container */}
-              <div className="relative rounded-3xl overflow-hidden backdrop-blur-xl bg-white/5 border border-white/10 shadow-2xl">
+              <div className="relative rounded-3xl overflow-hidden backdrop-blur-sm bg-white/5 border border-white/10 shadow-2xl">
                 {/* Animated Glow Effect */}
                 <div className="absolute -inset-1 bg-gradient-to-r from-yellow-500/20 via-amber-500/20 to-yellow-500/20 rounded-3xl blur-2xl animate-pulse" />
                 
@@ -358,7 +358,7 @@ export const Hero: React.FC<HeroProps> = ({ className }) => {
                       poster="/GeminiMALBig3.webp"
                       aria-label="Maple Aurum Logo Reveal"
                     >
-                      <source src="/Cosmic_Genesis_Logo_Reveal_Video.mp4" type="video/mp4" />
+                      <source src="/Cosmic_Genesis_Logo_Reveal_Video_2.mp4" type="video/mp4" />
                       Your browser does not support the video tag.
                     </video>
 
@@ -413,7 +413,7 @@ export const Hero: React.FC<HeroProps> = ({ className }) => {
               </div>
 
               {/* Floating Particles Around Video */}
-              {[...Array(6)].map((_, i) => (
+              {[...Array(4)].map((_, i) => (
                 <motion.div
                   key={i}
                   className="absolute w-2 h-2 bg-gradient-to-r from-yellow-400 to-amber-400 rounded-full"
