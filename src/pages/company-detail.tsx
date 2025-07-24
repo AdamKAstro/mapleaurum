@@ -9,22 +9,23 @@ import { Button } from '../components/ui/button';
 import { PageContainer } from '../components/ui/page-container';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../components/ui/tooltip';
-import { 
+import {
   ArrowLeft, Heart, Building2, DollarSign, BarChart3, Lock, TrendingUp, Coins, Mountain, Factory, Shield,
   AlertCircle, Loader2, Sparkles, Activity, Target, Zap, Globe, Timer, Pickaxe, Crown, Search, HardHat,
   ExternalLink, Info, ArrowUpRight, ArrowDownRight, Minus, Wallet, CreditCard, Scale, BarChart2, MapPin,
   BookOpen, Hammer, ChartBar, Share2, FileText, Hash, Layers, Gem, Rocket, PieChart, ChevronRight, CheckCircle,
   Star, GaugeCircle, Briefcase
 } from 'lucide-react';
-import { formatCurrency, formatNumber, formatPercent, cn } from '../lib/utils';
+import { supabase } from '../lib/supabase'; // ✅ ADDED: Supabase client import
+import { formatCurrency, formatNumber, formatPercent, cn, isValidUrl } from '../lib/utils'; // ✅ ADDED: isValidUrl
 import { TierBadge } from '../components/ui/tier-badge';
 import type { Company, ColumnTier } from '../lib/types';
 import { metrics as allMetrics, metricCategories, getAccessibleMetrics } from '../lib/metric-types';
 import { LazyLoadImage } from 'react-lazy-load-image-component';
 import 'react-lazy-load-image-component/src/effects/blur.css';
-import { convertAmount, fetchLatestExchangeRates } from '../lib/currencyUtils'; // Import from currencyUtils
+import { convertAmount, fetchLatestExchangeRates } from '../lib/currencyUtils';
 
-// MetricCard component
+// MetricCard component (no changes needed here)
 interface MetricCardProps {
   label: string;
   value: any;
@@ -43,13 +44,13 @@ interface MetricCardProps {
   currency?: string;
 }
 
-const MetricCard: React.FC<MetricCardProps> = ({ 
+const MetricCard: React.FC<MetricCardProps> = ({
   label, value, format = 'text', tier = 'free', userTier, icon, description, benchmark,
   isGoodWhenHigh = true, trend, sparklineData, category, delay = 0, fullWidth, currency = 'USD'
 }) => {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true });
-  const { currency: selectedCurrency } = useCurrency(); // Only use currency from context
+  const { currency: selectedCurrency } = useCurrency();
   const tierLevels: Record<ColumnTier, number> = { free: 0, pro: 1, premium: 2 };
   const hasAccess = tierLevels[userTier] >= tierLevels[tier];
   const [isHovered, setIsHovered] = useState(false);
@@ -119,7 +120,7 @@ const MetricCard: React.FC<MetricCardProps> = ({
     >
       <div className={cn(
         "relative p-3 rounded-lg border transition-all duration-200",
-        hasAccess ? "bg-gradient-to-br from-slate-800/50 to-slate-900/50 border-slate-700/50 hover:border-cyan-500/50" 
+        hasAccess ? "bg-gradient-to-br from-slate-800/50 to-slate-900/50 border-slate-700/50 hover:border-cyan-500/50"
         : "bg-slate-900/30 border-slate-800/30"
       )}>
         <motion.div
@@ -162,7 +163,7 @@ const MetricCard: React.FC<MetricCardProps> = ({
                   {formatValue(value)}
                 </motion.p>
                 {trend !== undefined && (
-                  <motion.div className={cn("flex items-center gap-1 text-xs", trend > 0 ? "text-green-400" : trend < 0 ? "text-red-400" : "text-gray-400")} 
+                  <motion.div className={cn("flex items-center gap-1 text-xs", trend > 0 ? "text-green-400" : trend < 0 ? "text-red-400" : "text-gray-400")}
                     initial={{ opacity: 0, x: -5 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: delay + 0.2 }}>
                     {trend > 0 ? <ArrowUpRight className="w-3 h-3" /> : trend < 0 ? <ArrowDownRight className="w-3 h-3" /> : <Minus className="w-3 h-3" />}
                     <span>{Math.abs(trend)}%</span>
@@ -176,7 +177,7 @@ const MetricCard: React.FC<MetricCardProps> = ({
                     <span className={cn("font-medium", scoreColor)}>{performanceScore.toFixed(0)}%</span>
                   </div>
                   <div className="h-1.5 bg-slate-700/50 rounded-full overflow-hidden">
-                    <motion.div className={cn("h-full rounded-full", performanceScore >= 70 ? "bg-green-400" : performanceScore >= 40 ? "bg-yellow-400" : "bg-red-400")} 
+                    <motion.div className={cn("h-full rounded-full", performanceScore >= 70 ? "bg-green-400" : performanceScore >= 40 ? "bg-yellow-400" : "bg-red-400")}
                       initial={{ width: 0 }} animate={{ width: `${performanceScore}%` }} transition={{ duration: 0.8, delay: delay + 0.3, ease: "easeOut" }} />
                   </div>
                 </div>
@@ -184,8 +185,8 @@ const MetricCard: React.FC<MetricCardProps> = ({
               {sparklineData && sparklineData.length > 0 && (
                 <motion.div className="h-8" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: delay + 0.4 }}>
                   <svg className="w-full h-full" viewBox="0 0 100 32">
-                    <motion.path d={`M ${sparklineData.map((v, i) => `${(i / (sparklineData.length - 1)) * 100},${32 - (v / Math.max(...sparklineData)) * 28}`).join(' L ')}`} 
-                      fill="none" stroke="url(#gradient)" strokeWidth="1.5" initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} 
+                    <motion.path d={`M ${sparklineData.map((v, i) => `${(i / (sparklineData.length - 1)) * 100},${32 - (v / Math.max(...sparklineData)) * 28}`).join(' L ')}`}
+                      fill="none" stroke="url(#gradient)" strokeWidth="1.5" initial={{ pathLength: 0 }} animate={{ pathLength: 1 }}
                       transition={{ duration: 1, delay: delay + 0.5 }} />
                     <defs>
                       <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="0%">
@@ -208,9 +209,9 @@ const MetricCard: React.FC<MetricCardProps> = ({
           {isHovered && hasAccess && (
             <>
               {[...Array(2)].map((_, i) => (
-                <motion.div key={i} className="absolute w-1 h-1 bg-cyan-400 rounded-full pointer-events-none" 
-                  initial={{ x: Math.random() * 50 - 25, y: Math.random() * 50 - 25, scale: 0 }} 
-                  animate={{ y: -50, scale: [0, 0.8, 0], opacity: [0, 0.6, 0] }} 
+                <motion.div key={i} className="absolute w-1 h-1 bg-cyan-400 rounded-full pointer-events-none"
+                  initial={{ x: Math.random() * 50 - 25, y: Math.random() * 50 - 25, scale: 0 }}
+                  animate={{ y: -50, scale: [0, 0.8, 0], opacity: [0, 0.6, 0] }}
                   exit={{ opacity: 0 }} transition={{ duration: 1.5, delay: i * 0.1, repeat: Infinity }} />
               ))}
             </>
@@ -221,7 +222,7 @@ const MetricCard: React.FC<MetricCardProps> = ({
   );
 };
 
-// Status configuration
+// Status configuration (no changes needed here)
 const statusConfig: Record<string, { icon: JSX.Element; label: string; color: string; bgGradient: string; description: string }> = {
   producer: { icon: <Factory className="w-4 h-4" />, label: 'Producer', color: 'text-green-400', bgGradient: 'from-green-500/20 to-emerald-500/20', description: 'Actively producing and selling minerals' },
   developer: { icon: <Building2 className="w-4 h-4" />, label: 'Developer', color: 'text-blue-400', bgGradient: 'from-blue-500/20 to-cyan-500/20', description: 'Developing mines for future production' },
@@ -231,53 +232,90 @@ const statusConfig: Record<string, { icon: JSX.Element; label: string; color: st
 };
 
 
-// HeroSection component
+// ✅ HeroSection component - THIS IS WHERE THE FIX IS APPLIED
 const HeroSection: React.FC<{ company: Company; isFavorite: boolean; onToggleFavorite: () => void }> = ({ company, isFavorite, onToggleFavorite }) => {
   const [logoError, setLogoError] = useState(false);
+  const [websiteUrl, setWebsiteUrl] = useState<string | null>(null); // State for the fetched URL
   const status = statusConfig[company.status?.toLowerCase() || 'other'] || statusConfig.other;
   const fallbackLogo = '/placeholder-logo.png';
 
+  // Fetch the website URL when the component mounts or company changes
+  useEffect(() => {
+    if (!company.company_id) return;
+
+    const fetchUrl = async () => {
+      try {
+        const { data, error } = await supabase.rpc('get_company_website_url', {
+          p_company_id: company.company_id,
+        });
+
+        if (error) {
+          console.error('Error fetching company website:', error.message);
+          return;
+        }
+
+        if (data && isValidUrl(data)) {
+          setWebsiteUrl(data);
+        }
+      } catch (e) {
+        console.error('Exception fetching company website:', e);
+      }
+    };
+
+    fetchUrl();
+  }, [company.company_id]);
+
   return (
-    <motion.div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-6 mb-6" 
+    <motion.div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-6 mb-6"
       initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
-      <motion.div className="absolute inset-0 opacity-20" 
-        animate={{ background: ['radial-gradient(circle at 0% 0%, rgba(6, 182, 212, 0.3), transparent 50%)', 'radial-gradient(circle at 100% 100%, rgba(139, 92, 246, 0.3), transparent 50%)'] }} 
+      <motion.div className="absolute inset-0 opacity-20"
+        animate={{ background: ['radial-gradient(circle at 0% 0%, rgba(6, 182, 212, 0.3), transparent 50%)', 'radial-gradient(circle at 100% 100%, rgba(139, 92, 246, 0.3), transparent 50%)'] }}
         transition={{ duration: 15, repeat: Infinity }} />
       <div className="relative z-10 flex items-center justify-between">
         <div className="flex items-center gap-4">
           <motion.div className="relative" whileHover={{ scale: 1.05 }} transition={{ type: "spring", stiffness: 300 }}>
-            <motion.div className="absolute inset-0 bg-gradient-to-r from-cyan-500 to-purple-500 rounded-xl blur-lg opacity-50" 
+            <motion.div className="absolute inset-0 bg-gradient-to-r from-cyan-500 to-purple-500 rounded-xl blur-lg opacity-50"
               animate={{ scale: [1, 1.1, 1] }} transition={{ duration: 2, repeat: Infinity }} />
-            <LazyLoadImage 
-              src={logoError ? fallbackLogo : (company.logo || `https://dvagrllvivewyxolrhsh.supabase.co/storage/v1/object/public/company-logos/logos/${company.company_id}.png`)} 
-              alt={`${company.company_name} logo`} 
-              className="relative w-16 h-16 rounded-xl border-2 border-cyan-400/50 object-contain bg-slate-800/80 p-1.5" 
-              effect="blur" 
-              width={64} 
-              height={64} 
+            <LazyLoadImage
+              src={logoError ? fallbackLogo : (company.logo || `https://dvagrllvivewyxolrhsh.supabase.co/storage/v1/object/public/company-logos/logos/${company.company_id}.png`)}
+              alt={`${company.company_name} logo`}
+              className="relative w-16 h-16 rounded-xl border-2 border-cyan-400/50 object-contain bg-slate-800/80 p-1.5"
+              effect="blur"
+              width={64}
+              height={64}
               onError={() => {
                 console.warn(`[CompanyLogo] Failed to load: https://dvagrllvivewyxolrhsh.supabase.co/storage/v1/object/public/company-logos/logos/${company.company_id}.png`);
                 setLogoError(true);
-              }} 
+              }}
             />
           </motion.div>
           <div>
             <motion.h1 className="text-3xl font-bold text-white mb-1" initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.2 }}>
               {company.company_name}
             </motion.h1>
+            
+            {/* --- Start of the fix --- */}
             <div className="flex items-center gap-3 mb-2">
               {company.tsx_code && (
-                <motion.a href={`https://www.tsx.com/listings/issuer-directory/company/${company.tsx_code}`} target="_blank" rel="noopener noreferrer" 
-                  className="text-sm font-medium text-cyan-400 hover:text-cyan-300 flex items-center gap-1" whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                  TSX: {company.tsx_code} <ExternalLink size={14} />
+                <span className="text-sm font-medium text-slate-400 bg-slate-800 px-2 py-0.5 rounded-md">
+                  TSX: {company.tsx_code}
+                </span>
+              )}
+              {websiteUrl && (
+                <motion.a href={websiteUrl} target="_blank" rel="noopener noreferrer"
+                  className="text-sm font-medium text-cyan-400 hover:text-cyan-300 flex items-center gap-1"
+                  whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                  Website <ExternalLink size={14} />
                 </motion.a>
               )}
-              <motion.div className={cn('inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium', status.color, 'bg-gradient-to-r', status.bgGradient)} 
+              <motion.div className={cn('inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium', status.color, 'bg-gradient-to-r', status.bgGradient)}
                 whileHover={{ scale: 1.05 }}>
                 {status.icon}
                 {status.label}
               </motion.div>
             </div>
+            {/* --- End of the fix --- */}
+            
             {company.headquarters && (
               <motion.div className="flex items-center gap-1.5 text-gray-400 text-xs" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }}>
                 <MapPin className="w-3 h-3" />
@@ -287,7 +325,7 @@ const HeroSection: React.FC<{ company: Company; isFavorite: boolean; onToggleFav
           </div>
         </div>
         <div className="flex flex-col gap-2">
-          <motion.button onClick={onToggleFavorite} className={cn("p-3 rounded-lg transition-all", isFavorite ? "bg-gradient-to-r from-red-500 to-pink-600 text-white" : "bg-slate-800/50 text-gray-400 hover:text-white hover:bg-slate-700/50")} 
+          <motion.button onClick={onToggleFavorite} className={cn("p-3 rounded-lg transition-all", isFavorite ? "bg-gradient-to-r from-red-500 to-pink-600 text-white" : "bg-slate-800/50 text-gray-400 hover:text-white hover:bg-slate-700/50")}
             whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
             <Heart className={cn("w-5 h-5", isFavorite && "fill-current")} />
           </motion.button>
@@ -305,8 +343,8 @@ const HeroSection: React.FC<{ company: Company; isFavorite: boolean; onToggleFav
       </div>
       <AnimatePresence>
         {[...Array(3)].map((_, i) => (
-          <motion.div key={i} className="absolute w-1.5 h-1.5 bg-cyan-400/30 rounded-full" 
-            initial={{ x: Math.random() * 80 - 40, y: 80, scale: 0 }} animate={{ y: -80, scale: [0, 0.8, 0], opacity: [0, 0.6, 0] }} 
+          <motion.div key={i} className="absolute w-1.5 h-1.5 bg-cyan-400/30 rounded-full"
+            initial={{ x: Math.random() * 80 - 40, y: 80, scale: 0 }} animate={{ y: -80, scale: [0, 0.8, 0], opacity: [0, 0.6, 0] }}
             transition={{ duration: 2 + Math.random() * 1, delay: i * 0.3, repeat: Infinity }} />
         ))}
       </AnimatePresence>
@@ -314,15 +352,7 @@ const HeroSection: React.FC<{ company: Company; isFavorite: boolean; onToggleFav
   );
 };
 
-
-
-
-
-
-
-
-
-// KeyMetricsOverview component
+// KeyMetricsOverview component (no changes needed here)
 const KeyMetricsOverview: React.FC<{ company: Company }> = ({ company }) => {
   const { currency: selectedCurrency } = useCurrency();
   const [rates, setRates] = useState<any>({});
@@ -350,7 +380,7 @@ const KeyMetricsOverview: React.FC<{ company: Company }> = ({ company }) => {
             <CardContent className="p-4">
               <div className="flex items-center justify-between mb-2">
                 <motion.div className="p-2 rounded-md bg-slate-700/50" whileHover={{ scale: 1.1, rotate: 5 }}>{metric.icon}</motion.div>
-                <motion.div className={cn("flex items-center gap-1 text-xs font-medium px-1.5 py-0.5 rounded-full", metric.trend > 0 ? "bg-green-500/20 text-green-400" : "bg-red-500/20 text-red-400")} 
+                <motion.div className={cn("flex items-center gap-1 text-xs font-medium px-1.5 py-0.5 rounded-full", metric.trend > 0 ? "bg-green-500/20 text-green-400" : "bg-red-500/20 text-red-400")}
                   initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ delay: 0.2 + index * 0.08 }}>
                   {metric.trend > 0 ? <ArrowUpRight className="w-2.5 h-2.5" /> : <ArrowDownRight className="w-2.5 h-2.5" />}
                   {Math.abs(metric.trend)}%
@@ -358,20 +388,20 @@ const KeyMetricsOverview: React.FC<{ company: Company }> = ({ company }) => {
               </div>
               <h3 className="text-xs text-gray-400 mb-1">{metric.label}</h3>
               <p className="text-lg font-bold text-white mb-2">
-                {metric.format === 'currency' 
-                  ? (metric.value != null 
+                {metric.format === 'currency'
+                  ? (metric.value != null
                       ? formatCurrency(
                           convertAmount(metric.value, metric.currency, selectedCurrency, rates) || metric.value,
                           { compact: true, currency: selectedCurrency }
-                        ) 
+                        )
                       : 'N/A')
                   : metric.value || 'N/A'}
               </p>
               {metric.sparkline && (
                 <motion.div className="h-8 w-full" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.4 + index * 0.08 }}>
                   <svg className="w-full h-full" viewBox="0 0 100 32">
-                    <motion.path d={`M ${metric.sparkline.map((v, i) => `${(i / (metric.sparkline.length - 1)) * 100},${32 - (v / Math.max(...metric.sparkline)) * 28}`).join(' L ')}`} 
-                      fill="none" stroke={metric.trend > 0 ? "#10b981" : "#ef4444"} strokeWidth="1.5" strokeLinecap="round" 
+                    <motion.path d={`M ${metric.sparkline.map((v, i) => `${(i / (metric.sparkline.length - 1)) * 100},${32 - (v / Math.max(...metric.sparkline)) * 28}`).join(' L ')}`}
+                      fill="none" stroke={metric.trend > 0 ? "#10b981" : "#ef4444"} strokeWidth="1.5" strokeLinecap="round"
                       initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ duration: 0.8, delay: 0.5 + index * 0.08 }} />
                   </svg>
                 </motion.div>
@@ -384,18 +414,7 @@ const KeyMetricsOverview: React.FC<{ company: Company }> = ({ company }) => {
   );
 };
 
-
-
-
-
-
-
-
-
-
-
-
-// RelatedCompanies component
+// RelatedCompanies component (no changes needed here)
 const RelatedCompanies: React.FC<{ relatedCompanyIds: number[] }> = ({ relatedCompanyIds }) => {
   const { fetchCompaniesByIds } = useFilters();
   const [relatedCompanies, setRelatedCompanies] = useState<Company[]>([]);
@@ -429,13 +448,13 @@ const RelatedCompanies: React.FC<{ relatedCompanyIds: number[] }> = ({ relatedCo
                 <Card className="bg-slate-800/50 border-slate-700/50 hover:border-cyan-500/50 transition-all duration-200">
                   <CardContent className="p-3">
                     <div className="flex items-center gap-2 mb-2">
-                      <LazyLoadImage 
-                        src={company.logo || `https://dvagrllvivewyxolrhsh.supabase.co/storage/v1/object/public/company-logos/logos/${company.company_id}.png`} 
-                        alt={`${company.company_name} logo`} 
-                        className="w-8 h-8 rounded-md border border-slate-700 object-contain" 
-                        effect="blur" 
-                        width={32} 
-                        height={32} 
+                      <LazyLoadImage
+                        src={company.logo || `https://dvagrllvivewyxolrhsh.supabase.co/storage/v1/object/public/company-logos/logos/${company.company_id}.png`}
+                        alt={`${company.company_name} logo`}
+                        className="w-8 h-8 rounded-md border border-slate-700 object-contain"
+                        effect="blur"
+                        width={32}
+                        height={32}
                         onError={(e) => {
                           console.warn(`[CompanyLogo] Failed to load: https://dvagrllvivewyxolrhsh.supabase.co/storage/v1/object/public/company-logos/logos/${company.company_id}.png`);
                           e.currentTarget.src = '/placeholder-logo.png';
@@ -460,7 +479,7 @@ const RelatedCompanies: React.FC<{ relatedCompanyIds: number[] }> = ({ relatedCo
   );
 };
 
-// Main component
+// Main component (no changes needed here)
 const CompanyDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -503,7 +522,7 @@ const CompanyDetailPage: React.FC = () => {
         <div className="flex items-center justify-center h-[80vh]">
           <motion.div animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: "linear" }} className="relative">
             <Loader2 className="h-12 w-12 text-cyan-400" />
-            <motion.div className="absolute inset-0 h-12 w-12 rounded-full border-3 border-cyan-400/20 border-t-cyan-400" 
+            <motion.div className="absolute inset-0 h-12 w-12 rounded-full border-3 border-cyan-400/20 border-t-cyan-400"
               animate={{ rotate: -360 }} transition={{ duration: 1.5, repeat: Infinity, ease: "linear" }} />
           </motion.div>
         </div>
@@ -532,8 +551,7 @@ const CompanyDetailPage: React.FC = () => {
   }
 
   const isFavorite = isCompanySelected(company.company_id);
-
-  // Enhanced metric categories with fixed Calculator icon
+  
   const metricCategories = [
     {
       id: 'overview',
@@ -665,22 +683,22 @@ const CompanyDetailPage: React.FC = () => {
               <CardContent className="pt-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
                   {category.metrics.map((metric, index) => (
-                    <MetricCard 
-                      key={metric.key} 
-                      label={metric.label} 
-                      value={metric.value} 
-                      format={metric.format} 
-                      tier={metric.tier} 
-                      userTier={userTier} 
-                      icon={metric.icon} 
-                      description={metric.description} 
-                      benchmark={metric.benchmark} 
-                      isGoodWhenHigh={metric.isGoodWhenHigh} 
-                      trend={metric.trend} 
-                      sparklineData={metric.sparklineData} 
-                      category={category.title} 
-                      delay={categoryIndex * 0.08 + index * 0.04} 
-                      fullWidth={metric.fullWidth} 
+                    <MetricCard
+                      key={metric.key}
+                      label={metric.label}
+                      value={metric.value}
+                      format={metric.format}
+                      tier={metric.tier as ColumnTier}
+                      userTier={userTier}
+                      icon={metric.icon}
+                      description={metric.description}
+                      benchmark={metric.benchmark}
+                      isGoodWhenHigh={metric.isGoodWhenHigh}
+                      trend={metric.trend}
+                      sparklineData={metric.sparklineData}
+                      category={category.title}
+                      delay={categoryIndex * 0.08 + index * 0.04}
+                      fullWidth={metric.fullWidth}
                       currency={metric.currency || 'USD'}
                     />
                   ))}
@@ -696,8 +714,8 @@ const CompanyDetailPage: React.FC = () => {
       {userTier === 'free' && (
         <motion.div className="mt-8" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}>
           <Card className="relative overflow-hidden bg-gradient-to-br from-cyan-500/10 via-purple-500/10 to-pink-500/10 border-cyan-500/20">
-            <motion.div className="absolute inset-0 opacity-20" 
-              animate={{ background: ['radial-gradient(circle at 0% 50%, rgba(6, 182, 212, 0.3), transparent 50%)', 'radial-gradient(circle at 100% 50%, rgba(139, 92, 246, 0.3), transparent 50%)'] }} 
+            <motion.div className="absolute inset-0 opacity-20"
+              animate={{ background: ['radial-gradient(circle at 0% 50%, rgba(6, 182, 212, 0.3), transparent 50%)', 'radial-gradient(circle at 100% 50%, rgba(139, 92, 246, 0.3), transparent 50%)'] }}
               transition={{ duration: 8, repeat: Infinity }} />
             <CardContent className="relative z-10 p-6">
               <div className="flex items-center justify-between">
@@ -731,7 +749,7 @@ const CompanyDetailPage: React.FC = () => {
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
-              <motion.button className="p-3 rounded-full bg-slate-800 text-white shadow-lg hover:bg-slate-700" whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} 
+              <motion.button className="p-3 rounded-full bg-slate-800 text-white shadow-lg hover:bg-slate-700" whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}
                 onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
                 <ArrowUpRight className="w-4 h-4" />
               </motion.button>

@@ -1,5 +1,5 @@
 // src/features/hook-ui/components/PlayingCard.tsx
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, MouseEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence, useMotionValue, useTransform } from 'framer-motion';
 import {
@@ -17,6 +17,7 @@ import { LazyLoadImage } from 'react-lazy-load-image-component';
 import 'react-lazy-load-image-component/src/effects/blur.css';
 import { debugLog, debugToast, debugTime, DEBUG_ENABLED } from '../config/debug-config';
 import { safeString, safeNumber, safeArray, isValidUrl, getDefaultLogo, formatCurrency, formatNumber, cn } from '../lib/utils';
+import { supabase } from '../../../lib/supabase';
 import type { EnhancedCompanyMatch, CompanyStatus } from '../types/hook-ui-types';
 import '../styles/hook-ui.css';
 
@@ -334,6 +335,7 @@ const PlayingCard: React.FC<PlayingCardProps> = ({
   const [isHovered, setIsHovered] = useState(false);
   const [logoError, setLogoError] = useState(false);
   const [localIsFavorite, setLocalIsFavorite] = useState(false);
+  const [companyWebsiteUrl, setCompanyWebsiteUrl] = useState<string | null>(null);
   
   // Use prop if provided, otherwise use local state
   const isFavorite = propIsFavorite !== undefined ? propIsFavorite : localIsFavorite;
@@ -347,8 +349,61 @@ const PlayingCard: React.FC<PlayingCardProps> = ({
     hasMatchReasons: Array.isArray(company?.matchReasons),
     hasRankPosition: company?.rankPosition !== undefined,
     isFavorite,
-    hasToggleFavorite: !!onToggleFavorite
+    hasToggleFavorite: !!onToggleFavorite,
+    tsxCode: company?.tsxCode,
+    websiteUrl: companyWebsiteUrl
   });
+
+  // Fetch company website URL
+  useEffect(() => {
+    const fetchCompanyWebsite = async () => {
+      // Reset state on new company
+      setCompanyWebsiteUrl(null);
+      if (!company?.id) return;
+      
+      try {
+        debugLog('fetch', `Fetching website URL for company ID: ${company.id}`);
+        // Ensure company.id is a number for the RPC call
+        const companyIdAsNumber = parseInt(String(company.id), 10);
+        if (isNaN(companyIdAsNumber)) {
+            debugLog('fetch', `Invalid company ID for RPC call: ${company.id}`);
+            return;
+        }
+
+        const { data, error } = await supabase
+          .rpc('get_company_website_url', { p_company_id: companyIdAsNumber });
+        
+        if (error) {
+          debugLog('fetch', `Error fetching website URL: ${error.message}`);
+          // Do not toast for every card, it can be noisy. Log is enough.
+          // debugToast(`Failed to fetch website for ${company.name}`, { icon: '⚠️', duration: 3000 });
+          return;
+        }
+        
+        if (data && isValidUrl(data)) {
+          debugLog('fetch', `Website URL fetched: ${data}`);
+          setCompanyWebsiteUrl(data);
+        } else {
+          debugLog('fetch', `No valid website URL found for company ID: ${company.id}`);
+        }
+      } catch (error) {
+        debugLog('fetch', `Exception fetching website URL: ${error}`);
+        // debugToast(`Exception fetching website for ${company.name}`, { icon: '⚠️', duration: 3000 });
+      }
+    };
+
+    fetchCompanyWebsite();
+  }, [company?.id, company?.name]);
+
+
+  // Log to confirm no TSX link is being rendered
+  useEffect(() => {
+    debugLog('rendering', `Checking for TSX link in company: ${company?.name}`, {
+      tsxCode: company?.tsxCode,
+      hasTsxLink: false, // Explicitly confirming no TSX link is rendered
+      websiteUrl: companyWebsiteUrl
+    });
+  }, [company?.tsxCode, companyWebsiteUrl, company?.name]);
 
   // Early validation
   if (!company || !company.id || !company.name) {
@@ -382,7 +437,6 @@ const PlayingCard: React.FC<PlayingCardProps> = ({
 
     // Data processing
     const companyName = safeString(company.name, 'Unknown Company');
-    const tsxCode = safeString(company.tsxCode);
     const logoUrl = company.logo || `https://dvagrllvivewyxolrhsh.supabase.co/storage/v1/object/public/company-logos/logos/${safeString(company.id)}.png`;
     const fallbackLogo = getDefaultLogo(companyName);
     const sharePrice = safeNumber(company.sharePrice);
@@ -398,6 +452,7 @@ const PlayingCard: React.FC<PlayingCardProps> = ({
     const reserves = safeNumber(company.reserves);
     const resources = safeNumber(company.resources);
     const jurisdiction = safeString(company.jurisdiction);
+    const tsxCode = safeString(company.tsxCode, 'N/A');
 
     // Formatting
     const formattedSharePrice = sharePrice > 0 ? formatCurrency(sharePrice, { decimals: 2 }) : 'N/A';
@@ -431,7 +486,7 @@ const PlayingCard: React.FC<PlayingCardProps> = ({
       debugLog('interactions', `Toggling favorite for ${companyName}`, { currentState: isFavorite });
       
       if (onToggleFavorite) {
-        onToggleFavorite(company.id);
+        onToggleFavorite(parseInt(String(company.id), 10));
       } else {
         setLocalIsFavorite(!localIsFavorite);
       }
@@ -447,7 +502,7 @@ const PlayingCard: React.FC<PlayingCardProps> = ({
       debugLog('interactions', `View details clicked for ${companyName}`);
       
       if (onViewDetails) {
-        onViewDetails(company.id);
+        onViewDetails(parseInt(String(company.id), 10));
       } else {
         navigate(`/company/${company.id}`);
         toast('Loading company details...');
@@ -456,7 +511,7 @@ const PlayingCard: React.FC<PlayingCardProps> = ({
 
     // Mouse move effect
     useEffect(() => {
-      const handleMouseMove = (e: MouseEvent) => {
+      const handleMouseMove = (e: globalThis.MouseEvent) => {
         if (!cardRef.current || !isHovered) return;
         const rect = cardRef.current.getBoundingClientRect();
         const centerX = rect.left + rect.width / 2;
@@ -488,7 +543,12 @@ const PlayingCard: React.FC<PlayingCardProps> = ({
     return (
       <motion.div
         ref={cardRef}
-        className="relative w-80 h-[42rem] cursor-pointer mx-auto"
+		
+		
+		
+        //className="relative w-80 h-[42rem] h-auto cursor-pointer mx-auto"   // <--- EDIT THIS LINE
+		className="relative w-full max-w-sm lg:max-w-md min-h-[50rem] h-auto cursor-pointer mx-auto"
+		
         style={{ perspective: '1000px', rotateX, rotateY, z: 100 }}
         initial={{ opacity: 0, y: 50 }}
         animate={{ opacity: 1, y: 0 }}
@@ -521,6 +581,10 @@ const PlayingCard: React.FC<PlayingCardProps> = ({
             Logo: {company.logo ? 'Custom' : 'Supabase'} {logoError ? '(Error)' : ''}
             <br />
             Match: {company.matchScore || 0}% (#{company.rankPosition || '?'})
+            <br />
+            Website: {companyWebsiteUrl ? 'Found' : 'Not Found'}
+            <br />
+            TSX Code: {tsxCode}
           </div>
         )}
 
@@ -580,23 +644,30 @@ const PlayingCard: React.FC<PlayingCardProps> = ({
                           />
                         )}
                       </div>
-                      <div>
+                      <div className="flex flex-col">
                         <h3 className="text-xl font-bold text-white truncate max-w-[180px]" title={companyName}>
                           {companyName}
                         </h3>
-                        {tsxCode && tsxCode !== 'N/A' && (
+                        {/* ✅ FIXED: Display ticker as text, not a link */}
+                        {tsxCode !== 'N/A' && (
+                          <span className="text-sm font-medium text-slate-400">
+                            {tsxCode}
+                          </span>
+                        )}
+                        {/* ✅ FIXED: Render the website link when fetched */}
+                        {companyWebsiteUrl && isValidUrl(companyWebsiteUrl) && (
                           <a
-                            href={`https://www.tsx.com/listings/issuer-directory/company/${tsxCode}`}
+                            href={companyWebsiteUrl}
                             target="_blank"
                             rel="noopener noreferrer"
                             onClick={(e) => {
-                              debugLog('interactions', `TSX link clicked for ${tsxCode}`);
+                              debugLog('interactions', `Website link clicked for ${companyName}: ${companyWebsiteUrl}`);
                               e.stopPropagation();
                             }}
-                            className="text-sm font-medium text-cyan-400 hover:text-cyan-300 transition-colors flex items-center gap-1"
-                            aria-label={`Visit ${companyName} on TSX`}
+                            className="text-sm font-medium text-cyan-400 hover:text-cyan-300 transition-colors flex items-center gap-1 mt-1"
+                            aria-label={`Visit ${companyName} website`}
                           >
-                            TSX: {tsxCode} <ExternalLink size={12} />
+                            Website <ExternalLink size={12} />
                           </a>
                         )}
                       </div>
@@ -629,30 +700,30 @@ const PlayingCard: React.FC<PlayingCardProps> = ({
                   <div className="mb-3">
                     <MetalComposition gold={percentGold} silver={percentSilver} />
                   </div>
-                  <div className="grid grid-cols-2 gap-2 mb-3">
+                  <div className="grid grid-cols-2 gap-2 mb-2">
                     <motion.div
-                      className="bg-slate-800/50 backdrop-blur-sm rounded-lg p-2.5 border border-slate-700/50"
+                      className="bg-slate-800/50 backdrop-blur-sm rounded-lg p-2.0 border border-slate-700/50"
                       whileHover={{ scale: 1.05, borderColor: 'rgba(6, 182, 212, 0.5)' }}
                     >
                       <span className="block text-xs text-slate-400 mb-0.5">Share Price</span>
                       <span className="text-sm font-bold text-white">{formattedSharePrice}</span>
                     </motion.div>
                     <motion.div
-                      className="bg-slate-800/50 backdrop-blur-sm rounded-lg p-2.5 border border-slate-700/50"
+                      className="bg-slate-800/50 backdrop-blur-sm rounded-lg p-2.0 border border-slate-700/50"
                       whileHover={{ scale: 1.05, borderColor: 'rgba(139, 92, 246, 0.5)' }}
                     >
                       <span className="block text-xs text-slate-400 mb-0.5">Market Cap</span>
                       <span className="text-sm font-bold text-white">{formattedMarketCap}</span>
                     </motion.div>
                     <motion.div
-                      className="bg-slate-800/50 backdrop-blur-sm rounded-lg p-2.5 border border-slate-700/50"
+                      className="bg-slate-800/50 backdrop-blur-sm rounded-lg p-2.0 border border-slate-700/50"
                       whileHover={{ scale: 1.05, borderColor: 'rgba(236, 72, 153, 0.5)' }}
                     >
                       <span className="block text-xs text-slate-400 mb-0.5">Enterprise Value</span>
                       <span className="text-sm font-bold text-white">{formattedEV}</span>
                     </motion.div>
                     <motion.div
-                      className="bg-slate-800/50 backdrop-blur-sm rounded-lg p-2.5 border border-slate-700/50"
+                      className="bg-slate-800/50 backdrop-blur-sm rounded-lg p-2.0 border border-slate-700/50"
                       whileHover={{ scale: 1.05, borderColor: 'rgba(34, 197, 94, 0.5)' }}
                     >
                       <span className="block text-xs text-slate-400 mb-0.5">Cash Position</span>
@@ -821,7 +892,7 @@ const PlayingCard: React.FC<PlayingCardProps> = ({
                   </div>
                   <div className="mb-4 flex-1">
                     <h4 className="text-sm font-semibold text-cyan-400 mb-2">About</h4>
-                    <p className="text-sm text-slate-300 leading-relaxed line-clamp-4">
+                    <p className="text-sm text-slate-300 leading-relaxed line-clamp-9">
                       {description}
                     </p>
                   </div>

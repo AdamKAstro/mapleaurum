@@ -1,4 +1,5 @@
-//src/lib/supabase.ts
+// src/lib/supabase.ts
+export { supabase } from './supabaseClient'; // Re-export supabase client
 import { supabase } from './supabaseClient';
 import { convertRpcRowsToCompanies } from './converters';
 import type { Company, Currency, FilterState, SortState, RpcResponseRow, PaginatedRowData } from './types';

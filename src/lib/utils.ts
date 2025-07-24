@@ -1,4 +1,3 @@
-// src/lib/utils.ts
 import { type ClassValue, clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 
@@ -27,17 +26,14 @@ export function isValidNumber(value: any): value is number {
 }
 
 // Optimized cache with WeakMap for object references and Map for paths
-// This prevents memory leaks and improves performance
 const nestedValueCache = new WeakMap<object, Map<string, { value: any; timestamp: number }>>();
-const CACHE_TTL = 5000; // 5 seconds cache TTL to prevent stale data
+const CACHE_TTL = 5000; // 5 seconds cache TTL
 
-// Track repeated calls to prevent log spam
 const callTracker = new Map<string, number>();
-const CALL_THRESHOLD = 10; // Log warning after this many repeated calls
+const CALL_THRESHOLD = 10;
 
 // Enhanced nested value accessor with optimized caching
 export function getNestedValue(obj: any, key: string, defaultValue: any = null): any {
-  // Input validation
   if (!obj || !key || typeof key !== 'string') {
     const trackKey = `invalid:${key}`;
     const callCount = (callTracker.get(trackKey) || 0) + 1;
@@ -54,7 +50,6 @@ export function getNestedValue(obj: any, key: string, defaultValue: any = null):
   }
 
   try {
-    // Check cache using WeakMap (object) -> Map (path -> value)
     let pathCache = nestedValueCache.get(obj);
     if (!pathCache) {
       pathCache = new Map();
@@ -68,7 +63,6 @@ export function getNestedValue(obj: any, key: string, defaultValue: any = null):
       return cached.value;
     }
 
-    // Track repeated cache misses
     const missKey = `miss:${key}`;
     const missCount = (callTracker.get(missKey) || 0) + 1;
     callTracker.set(missKey, missCount);
@@ -80,7 +74,7 @@ export function getNestedValue(obj: any, key: string, defaultValue: any = null):
       const segment = path[i];
       
       if (current === null || current === undefined) {
-        if (DEBUG && missCount <= 3) { // Only log first 3 misses
+        if (DEBUG && missCount <= 3) {
           logDebug(`getNestedValue: Null/undefined at segment ${segment} (${missCount}x)`, {
             fullPath: key,
             currentPath: path.slice(0, i).join('.'),
@@ -91,11 +85,11 @@ export function getNestedValue(obj: any, key: string, defaultValue: any = null):
       }
 
       if (!Object.prototype.hasOwnProperty.call(current, segment)) {
-        if (DEBUG && missCount <= 3) { // Only log first 3 misses
+        if (DEBUG && missCount <= 3) {
           logDebug(`getNestedValue: Property ${segment} not found (${missCount}x)`, {
             fullPath: key,
             currentPath: path.slice(0, i).join('.'),
-            availableKeys: Object.keys(current).slice(0, 10), // Limit keys shown
+            availableKeys: Object.keys(current).slice(0, 10),
           });
         }
         pathCache.set(key, { value: defaultValue, timestamp: now });
@@ -108,7 +102,6 @@ export function getNestedValue(obj: any, key: string, defaultValue: any = null):
     const result = current === null || current === undefined ? defaultValue : current;
     pathCache.set(key, { value: result, timestamp: now });
     
-    // Clear call tracker periodically to prevent memory buildup
     if (callTracker.size > 1000) {
       callTracker.clear();
     }
@@ -120,11 +113,10 @@ export function getNestedValue(obj: any, key: string, defaultValue: any = null):
   }
 }
 
-// Clear caches periodically to prevent memory issues
 if (typeof window !== 'undefined') {
   setInterval(() => {
     callTracker.clear();
-  }, 60000); // Clear call tracker every minute
+  }, 60000);
 }
 
 export function toTitleCase(str: string | null | undefined): string {
@@ -347,29 +339,37 @@ export function formatKoz(value: number | null | undefined, options: KozFormatOp
   return formatNumber(value, { decimals, suffix, locale });
 }
 
-export const validators = {
-  isValidEmail: (email: string): boolean => {
-    if (!email || typeof email !== 'string') return false;
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailRegex.test(email.trim());
-  },
-  isValidUrl: (url: string): boolean => {
-    if (!url || typeof url !== 'string') return false;
-    try {
-      new URL(url);
-      return true;
-    } catch {
-      return false;
-    }
-  },
-  isValidDate: (date: any): date is Date => {
-    if (date instanceof Date) return !isNaN(date.getTime());
-    if (typeof date === 'string' || typeof date === 'number') {
-      const parsed = new Date(date);
-      return !isNaN(parsed.getTime());
-    }
+// Validator functions exported as top-level for compatibility with company-detail.tsx
+export function isValidEmail(email: string): boolean {
+  if (!email || typeof email !== 'string') return false;
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email.trim());
+}
+
+export function isValidUrl(url: string): boolean {
+  if (!url || typeof url !== 'string') return false;
+  try {
+    new URL(url);
+    return true;
+  } catch {
     return false;
-  },
+  }
+}
+
+export function isValidDate(date: any): date is Date {
+  if (date instanceof Date) return !isNaN(date.getTime());
+  if (typeof date === 'string' || typeof date === 'number') {
+    const parsed = new Date(date);
+    return !isNaN(parsed.getTime());
+  }
+  return false;
+}
+
+// Reintroduced validators object for backward compatibility
+export const validators = {
+  isValidEmail,
+  isValidUrl,
+  isValidDate,
 };
 
 export const arrayUtils = {
@@ -451,7 +451,6 @@ export function deepEqual(a: any, b: any): boolean {
   return true;
 }
 
-// FIXED: Added the missing debounce utility function
 export function debounce<T extends (...args: any[]) => any>(
   func: T,
   wait: number,
