@@ -60,7 +60,7 @@ export class CustomAuthService {
   static async signUpWithEmail(email: string, password: string): Promise<SignUpResult> {
     try {
       console.log('[CustomAuthService] Starting signup for:', email);
-      
+
       // Step 1: First check if user already exists
       const { data: existingUser } = await supabase
         .from('profiles')
@@ -75,7 +75,7 @@ export class CustomAuthService {
           requiresEmailConfirmation: false
         };
       }
-      
+
       // Step 2: Create user with email confirmations COMPLETELY disabled
       // This is crucial - we need to disable ALL email sending from Supabase
       const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
@@ -95,7 +95,7 @@ export class CustomAuthService {
 
       if (signUpError) {
         console.error('[CustomAuthService] Signup error:', signUpError);
-        
+
         // Handle specific errors
         if (signUpError.message.includes('already registered')) {
           return {
@@ -104,7 +104,7 @@ export class CustomAuthService {
             requiresEmailConfirmation: false
           };
         }
-        
+
         // If the error is about email sending, we can ignore it since we're handling emails ourselves
         if (signUpError.message.includes('Error sending confirmation email')) {
           console.log('[CustomAuthService] Ignoring Supabase email error, will use SendGrid');
@@ -157,10 +157,10 @@ export class CustomAuthService {
 
       // Step 5: Send confirmation email via SendGrid
       const confirmationUrl = `${window.location.origin}/confirm-email?token=${confirmationToken}&email=${encodeURIComponent(email)}`;
-      
+
       let emailSendingFailed = false;
       let emailError: Error | null = null;
-      
+
       try {
         const { error: sendError } = await this.sendConfirmationEmail(email, confirmationUrl, signUpData.user.id);
         if (sendError) {
@@ -172,7 +172,7 @@ export class CustomAuthService {
         emailError = err as Error;
         emailSendingFailed = true;
       }
-      
+
       // Always return success for account creation, but indicate if email failed
       console.log('[CustomAuthService] Signup successful, email sent:', !emailSendingFailed);
       return {
@@ -182,7 +182,6 @@ export class CustomAuthService {
         confirmationToken,
         emailSendingFailed
       };
-
     } catch (error) {
       console.error('[CustomAuthService] Unexpected error during signup:', error);
       return {
@@ -298,7 +297,7 @@ export class CustomAuthService {
         .single();
 
       let confirmationToken: string;
-      
+
       if (existingToken && new Date(existingToken.expires_at) > new Date()) {
         // Use existing valid token
         confirmationToken = existingToken.token;
@@ -327,7 +326,6 @@ export class CustomAuthService {
       // Send email
       const confirmationUrl = `${window.location.origin}/confirm-email?token=${confirmationToken}&email=${encodeURIComponent(email)}`;
       return await this.sendConfirmationEmail(email, confirmationUrl, profile.id);
-      
     } catch (error) {
       console.error('[CustomAuthService] Failed to resend confirmation:', error);
       return { error: error as Error };
@@ -363,9 +361,9 @@ export class CustomAuthService {
       // Mark token as used
       const { error: updateTokenError } = await supabase
         .from('email_confirmations')
-        .update({ 
-          used: true, 
-          used_at: new Date().toISOString() 
+        .update({
+          used: true,
+          used_at: new Date().toISOString()
         })
         .eq('token', token);
 
@@ -376,7 +374,7 @@ export class CustomAuthService {
       // Update user profile to mark email as confirmed
       const { error: updateProfileError } = await supabase
         .from('profiles')
-        .update({ 
+        .update({
           email_confirmed: true,
           email_confirmed_at: new Date().toISOString()
         })
@@ -392,7 +390,6 @@ export class CustomAuthService {
       // For now, the email_confirmed flag in profiles table should be sufficient
 
       return { error: null };
-      
     } catch (error) {
       console.error('[CustomAuthService] Failed to confirm email:', error);
       return { error: error as Error };
@@ -400,30 +397,84 @@ export class CustomAuthService {
   }
 
   /**
-   * Request password reset - sends email via SendGrid
+   * Request password reset - sends email via SendGrid (DEBUG VERSION)
    */
   static async requestPasswordReset(email: string): Promise<PasswordResetResult> {
     try {
+      console.log('[CustomAuthService] ========== PASSWORD RESET DEBUG START ==========');
       console.log('[CustomAuthService] Starting password reset for:', email);
-      
-      // Step 1: Check if user exists
+      console.log('[CustomAuthService] Timestamp:', new Date().toISOString());
+
+      // Step 1: Check if user exists in profiles table
+      console.log('[CustomAuthService] Step 1: Checking profiles table...');
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
-        .select('id, email_confirmed')
+        .select('id, email, email_confirmed, created_at, updated_at')
         .eq('email', email)
         .single();
 
+      console.log('[CustomAuthService] Profiles query result:', {
+        found: !!profile,
+        data: profile,
+        error: profileError?.message || 'none'
+      });
+
+      // Additional check: Try to find user in auth schema (requires service role or RLS policy)
+      console.log('[CustomAuthService] Step 1b: Attempting to check auth.users via RPC or profiles join...');
+
+      // Try alternative query approach
+      const { data: allProfiles, error: allProfilesError } = await supabase
+        .from('profiles')
+        .select('email')
+        .limit(10);
+
+      console.log('[CustomAuthService] Sample profiles in database:', {
+        count: allProfiles?.length || 0,
+        emails: allProfiles?.map(p => p.email.substring(0, 3) + '***') || [],
+        error: allProfilesError?.message
+      });
+
       if (profileError || !profile) {
+        console.log('[CustomAuthService] User not found in profiles table');
+        console.log('[CustomAuthService] Profile error details:', {
+          code: profileError?.code,
+          message: profileError?.message,
+          details: profileError?.details,
+          hint: profileError?.hint
+        });
+
+        // Check if it's a case sensitivity issue
+        console.log('[CustomAuthService] Checking for case sensitivity issues...');
+        const { data: caseCheck } = await supabase
+          .from('profiles')
+          .select('email')
+          .ilike('email', email)
+          .limit(5);
+
+        console.log('[CustomAuthService] Case-insensitive search results:', {
+          found: caseCheck?.length || 0,
+          emails: caseCheck?.map(p => p.email) || []
+        });
+
         // Don't reveal if user exists for security
-        console.log('[CustomAuthService] User not found, but returning success for security');
+        console.log('[CustomAuthService] Returning success for security (user not found)');
         return {
           success: true,
           error: null
         };
       }
 
+      console.log('[CustomAuthService] User found in profiles:', {
+        id: profile.id,
+        email: profile.email,
+        email_confirmed: profile.email_confirmed,
+        created_at: profile.created_at
+      });
+
       // Step 2: Check if email is confirmed
+      console.log('[CustomAuthService] Step 2: Checking email confirmation status...');
       if (!profile.email_confirmed) {
+        console.log('[CustomAuthService] Email not confirmed, blocking password reset');
         return {
           success: false,
           error: new Error('Please confirm your email address before resetting your password.')
@@ -431,19 +482,49 @@ export class CustomAuthService {
       }
 
       // Step 3: Generate reset token
+      console.log('[CustomAuthService] Step 3: Generating reset token...');
       const resetToken = this.generateResetToken();
       const expiresAt = new Date();
       expiresAt.setHours(expiresAt.getHours() + 1); // 1 hour expiry for password resets
 
+      console.log('[CustomAuthService] Token generated:', {
+        tokenLength: resetToken.length,
+        tokenPreview: resetToken.substring(0, 8) + '...',
+        expiresAt: expiresAt.toISOString()
+      });
+
       // Step 4: Store reset token in database
-      // First, invalidate any existing unused tokens for this user
-      await supabase
+      console.log('[CustomAuthService] Step 4: Storing reset token...');
+
+      // First, check if password_resets table exists and has data
+      const { data: existingResets, error: checkError } = await supabase
+        .from('password_resets')
+        .select('id, created_at')
+        .limit(1);
+
+      console.log('[CustomAuthService] Password resets table check:', {
+        accessible: !checkError,
+        error: checkError?.message,
+        hasData: !!existingResets?.length
+      });
+
+      // Invalidate any existing unused tokens for this user
+      console.log('[CustomAuthService] Invalidating existing tokens...');
+      const { data: invalidated, error: invalidateError } = await supabase
         .from('password_resets')
         .update({ used: true })
         .eq('user_id', profile.id)
-        .eq('used', false);
+        .eq('used', false)
+        .select();
 
-      const { error: tokenError } = await supabase
+      console.log('[CustomAuthService] Invalidated tokens:', {
+        count: invalidated?.length || 0,
+        error: invalidateError?.message
+      });
+
+      // Insert new token
+      console.log('[CustomAuthService] Inserting new reset token...');
+      const { data: insertedToken, error: tokenError } = await supabase
         .from('password_resets')
         .insert({
           user_id: profile.id,
@@ -452,10 +533,23 @@ export class CustomAuthService {
           expires_at: expiresAt.toISOString(),
           created_at: new Date().toISOString(),
           used: false
-        });
+        })
+        .select()
+        .single();
+
+      console.log('[CustomAuthService] Token insertion result:', {
+        success: !tokenError,
+        data: insertedToken ? { id: insertedToken.id, user_id: insertedToken.user_id } : null,
+        error: tokenError ? {
+          message: tokenError.message,
+          code: tokenError.code,
+          details: tokenError.details,
+          hint: tokenError.hint
+        } : null
+      });
 
       if (tokenError) {
-        console.error('[CustomAuthService] Failed to store reset token:', tokenError);
+        console.error('[CustomAuthService] Failed to store reset token');
         return {
           success: false,
           error: new Error('Failed to generate reset token. Please try again.')
@@ -463,31 +557,55 @@ export class CustomAuthService {
       }
 
       // Step 5: Send reset email via SendGrid
+      console.log('[CustomAuthService] Step 5: Preparing to send email...');
       const resetUrl = `${window.location.origin}/reset-password?token=${resetToken}&email=${encodeURIComponent(email)}`;
-      
+      console.log('[CustomAuthService] Reset URL:', resetUrl);
+
       let emailSendingFailed = false;
-      
+
       try {
+        console.log('[CustomAuthService] Calling sendPasswordResetEmail...');
         const { error: sendError } = await this.sendPasswordResetEmail(email, resetUrl, profile.id);
+
         if (sendError) {
           emailSendingFailed = true;
-          console.error('[CustomAuthService] Failed to send reset email:', sendError);
+          console.error('[CustomAuthService] SendGrid error:', {
+            message: sendError.message,
+            stack: sendError.stack
+          });
+        } else {
+          console.log('[CustomAuthService] Email sent successfully!');
         }
-      } catch (err) {
-        console.error('[CustomAuthService] Failed to send reset email:', err);
+      } catch (err: any) {
+        console.error('[CustomAuthService] Exception while sending email:', {
+          message: err.message,
+          stack: err.stack,
+          type: err.constructor.name
+        });
         emailSendingFailed = true;
       }
-      
-      console.log('[CustomAuthService] Password reset requested, email sent:', !emailSendingFailed);
+
+      console.log('[CustomAuthService] Password reset process completed:', {
+        success: true,
+        emailSent: !emailSendingFailed,
+        tokenStored: true
+      });
+
+      console.log('[CustomAuthService] ========== PASSWORD RESET DEBUG END ==========');
+
       return {
         success: true,
         error: null,
         emailSendingFailed,
         resetToken
       };
+    } catch (error: any) {
+      console.error('[CustomAuthService] ========== UNEXPECTED ERROR ==========');
+      console.error('[CustomAuthService] Error type:', error.constructor.name);
+      console.error('[CustomAuthService] Error message:', error.message);
+      console.error('[CustomAuthService] Error stack:', error.stack);
+      console.error('[CustomAuthService] Full error object:', error);
 
-    } catch (error) {
-      console.error('[CustomAuthService] Unexpected error during password reset:', error);
       return {
         success: false,
         error: error as Error
@@ -581,7 +699,7 @@ export class CustomAuthService {
   static async resetPassword(token: string, email: string, newPassword: string): Promise<{ error: Error | null }> {
     try {
       console.log('[CustomAuthService] Attempting password reset with token');
-      
+
       // Step 1: Verify token
       const { data: resetData, error: tokenError } = await supabase
         .from('password_resets')
@@ -621,9 +739,9 @@ export class CustomAuthService {
       // Step 3: Mark token as used
       const { error: markUsedError } = await supabase
         .from('password_resets')
-        .update({ 
-          used: true, 
-          used_at: new Date().toISOString() 
+        .update({
+          used: true,
+          used_at: new Date().toISOString()
         })
         .eq('token', token);
 
@@ -636,7 +754,6 @@ export class CustomAuthService {
       await supabase.auth.signOut();
 
       return { error: null };
-      
     } catch (error) {
       console.error('[CustomAuthService] Failed to reset password:', error);
       return { error: error as Error };
