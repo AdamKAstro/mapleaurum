@@ -1,4 +1,5 @@
 // src/components/company-data-table.tsx
+
 import React, { useMemo, useCallback, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -518,7 +519,7 @@ const Pagination = React.memo(function Pagination({
 
 interface CompanyDataTableProps {
   companies: (Company & { _isGhosted?: boolean })[];
-  onSort: (dbSortKey: string, direction: 'asc' | 'desc') => void;
+  onSort: (dbSortKey: string, direction: 'asc' | 'desc', nestedPath: string) => void; // UPDATED: Added nestedPath parameter
   currentSort: SortState;
   currentTier: ColumnTier;
   page: number;
@@ -561,12 +562,13 @@ export function CompanyDataTable({
   const handleHeaderSortClick = useCallback((column: AppColumnDef) => {
     if (!column.sortable || !isColumnAccessible(column) || !column.key) return;
     const sortKey = column.sortKey || column.key;
+    const nestedPath = column.key; // UPDATED: Extract the nested path for client-side sorting
     if (!sortKey) {
       console.warn(`[CompanyDataTable] Attempted to sort column "${column.label}" but it has no sortKey or key defined.`);
       return;
     }
     const nextDirection = (currentSort.key === sortKey && currentSort.direction === 'asc') ? 'desc' : 'asc';
-    onSort(sortKey, nextDirection);
+    onSort(sortKey, nextDirection, nestedPath); // UPDATED: Pass nestedPath to onSort
   }, [currentSort, onSort, isColumnAccessible]);
 
   const getSortIcon = useCallback((column: AppColumnDef) => {
@@ -822,3 +824,4 @@ export function CompanyDataTable({
     </TooltipProvider>
   );
 }
+     

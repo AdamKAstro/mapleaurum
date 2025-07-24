@@ -6,7 +6,7 @@ import { CurrencySelector } from '../../components/currency-selector';
 import { Button } from '../../components/ui/button';
 import { PageContainer } from '../../components/ui/page-container';
 import { UnifiedControlPanel } from '../../components/unified-control-panel';
-import { ImportFavoritesModal } from '../../components/import-favorites-modal'; // Added import
+import { ImportFavoritesModal } from '../../components/import-favorites-modal';
 import { RefreshCw, AlertCircle, Search, CheckSquare, Sparkles } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '../../lib/utils';
@@ -15,6 +15,13 @@ import { deepEqual, logDebug } from '../../lib/utils';
 
 const FILTERABLE_STATUSES: CompanyStatus[] = ['producer', 'developer', 'explorer', 'royalty'];
 const MAX_ADDITIONAL_COMPANIES = 25;
+
+// Enhanced SortState type to include nestedPath
+interface EnhancedSortState {
+  key: string;
+  direction: 'asc' | 'desc';
+  nestedPath?: string;
+}
 
 function exportToCSV(companies: Array<{ company_id: number; company_name: string; status: string | null }>, filename: string) {
  const headers = ['Company ID', 'Company Name', 'Status'];
@@ -32,6 +39,155 @@ function exportToCSV(companies: Array<{ company_id: number; company_name: string
  document.body.appendChild(link);
  link.click();
  document.body.removeChild(link);
+}
+
+// ROBUST SORTING UTILITIES
+
+/**
+ * Safely get a nested value from an object using a dot-separated path
+ * Handles array access with bracket notation (e.g., "items[0].name")
+ */
+function getNestedValue(obj: any, path: string): any {
+  if (!path) return obj;
+  
+  try {
+    // Replace array bracket notation with dot notation for easier parsing
+    const normalizedPath = path.replace(/\[(\d+)\]/g, '.$1');
+    const keys = normalizedPath.split('.');
+    
+    let result = obj;
+    for (const key of keys) {
+      if (result === null || result === undefined) {
+        return undefined;
+      }
+      result = result[key];
+    }
+    return result;
+  } catch (error) {
+    console.error(`[getNestedValue] Error accessing path "${path}":`, error);
+    return undefined;
+  }
+}
+
+/**
+ * Type guard to check if a value is a valid Date object
+ */
+function isValidDate(value: any): value is Date {
+  return value instanceof Date && !isNaN(value.getTime());
+}
+
+/**
+ * Smart comparison function that handles different data types appropriately
+ */
+function compareValues(a: any, b: any, direction: 'asc' | 'desc'): number {
+  // Handle null/undefined values - always sort them to the end
+  if (a === null || a === undefined) {
+    if (b === null || b === undefined) return 0;
+    return 1; // null/undefined always goes after valid values
+  }
+  if (b === null || b === undefined) {
+    return -1; // valid value always goes before null/undefined
+  }
+
+  // Handle arrays (like minerals_of_interest)
+  if (Array.isArray(a) && Array.isArray(b)) {
+    // Compare by array length first, then by first element if lengths are equal
+    const lengthDiff = a.length - b.length;
+    if (lengthDiff !== 0) {
+      return direction === 'asc' ? lengthDiff : -lengthDiff;
+    }
+    // If same length, compare first elements
+    if (a.length > 0 && b.length > 0) {
+      return compareValues(a[0], b[0], direction);
+    }
+    return 0;
+  }
+
+  // Handle boolean values
+  if (typeof a === 'boolean' && typeof b === 'boolean') {
+    const result = a === b ? 0 : a ? 1 : -1;
+    return direction === 'asc' ? result : -result;
+  }
+
+  // Handle dates
+  if (isValidDate(a) && isValidDate(b)) {
+    const result = a.getTime() - b.getTime();
+    return direction === 'asc' ? result : -result;
+  }
+
+  // Handle numbers
+  if (typeof a === 'number' && typeof b === 'number') {
+    // Handle special number cases
+    if (isNaN(a) && isNaN(b)) return 0;
+    if (isNaN(a)) return 1; // NaN goes to end
+    if (isNaN(b)) return -1;
+    
+    const result = a - b;
+    return direction === 'asc' ? result : -result;
+  }
+
+  // Handle strings (case-insensitive)
+  const aStr = String(a).toLowerCase().trim();
+  const bStr = String(b).toLowerCase().trim();
+  
+  // Natural sort for strings containing numbers
+  const aHasNumber = /\d/.test(aStr);
+  const bHasNumber = /\d/.test(bStr);
+  
+  if (aHasNumber || bHasNumber) {
+    // Use localeCompare with numeric option for natural sorting
+    const result = aStr.localeCompare(bStr, undefined, { numeric: true, sensitivity: 'base' });
+    return direction === 'asc' ? result : -result;
+  }
+  
+  // Regular string comparison
+  const result = aStr.localeCompare(bStr, undefined, { sensitivity: 'base' });
+  return direction === 'asc' ? result : -result;
+}
+
+/**
+ * Universal sort function that can handle any data type and nested paths
+ * This is the main sorting function that will be used in companiesForTable
+ */
+function universalSort<T extends Record<string, any>>(
+  items: T[],
+  sortConfig: EnhancedSortState | null
+): T[] {
+  if (!sortConfig || !sortConfig.nestedPath) {
+    return items;
+  }
+
+  const { nestedPath, direction } = sortConfig;
+  
+  // Create a copy to avoid mutating the original array
+  const sorted = [...items];
+  
+  sorted.sort((a, b) => {
+    try {
+      const aValue = getNestedValue(a, nestedPath);
+      const bValue = getNestedValue(b, nestedPath);
+      return compareValues(aValue, bValue, direction);
+    } catch (error) {
+      console.error('[universalSort] Error during comparison:', error);
+      return 0; // Maintain original order on error
+    }
+  });
+  
+  return sorted;
+}
+
+/**
+ * Performance-optimized batch sort for large datasets
+ * Uses Intl.Collator for better string comparison performance
+ */
+const collator = new Intl.Collator(undefined, { 
+  numeric: true, 
+  sensitivity: 'base' 
+});
+
+function optimizedStringCompare(a: string, b: string, direction: 'asc' | 'desc'): number {
+  const result = collator.compare(a, b);
+  return direction === 'asc' ? result : -result;
 }
 
 export function CompaniesPage() {
@@ -70,11 +226,18 @@ export function CompaniesPage() {
  const [additionalSelectedCompanies, setAdditionalSelectedCompanies] = useState<Company[]>([]);
  const [loadingAdditional, setLoadingAdditional] = useState(false);
  const [additionalCompanyError, setAdditionalCompanyError] = useState<string | null>(null);
- const [showImportModal, setShowImportModal] = useState(false); // Added state for modal
+ const [showImportModal, setShowImportModal] = useState(false);
+ 
+ // Enhanced sort state that includes nestedPath for client-side sorting
+ const [enhancedSortState, setEnhancedSortState] = useState<EnhancedSortState | null>(null);
  
  // Track the previous active company IDs to detect changes
  const prevActiveCompanyIdsRef = useRef<number[]>([]);
  const fetchInProgressRef = useRef<boolean>(false);
+ 
+ // Track previous page and sort to detect view changes
+ const prevPageRef = useRef<number>(currentPage);
+ const prevSortKeyRef = useRef<string | null>(sortState?.key || null);
 
  const selectedStatuses = useMemo(
    () => filterSettings.developmentStatus || FILTERABLE_STATUSES,
@@ -122,35 +285,83 @@ export function CompaniesPage() {
    };
  }, [activeCompanyIds, filteredCompanyIds, deselectAll, toggleCompanySelection]);
 
+ // CRITICAL FIX: Clear additionalSelectedCompanies when page or sort changes
+ useEffect(() => {
+   const pageChanged = prevPageRef.current !== currentPage;
+   const sortChanged = prevSortKeyRef.current !== sortState?.key;
+   
+   if (pageChanged || sortChanged) {
+     logDebug('[CompaniesPage] View changed - clearing additional companies', {
+       pageChanged,
+       sortChanged,
+       prevPage: prevPageRef.current,
+       currentPage,
+       prevSort: prevSortKeyRef.current,
+       currentSort: sortState?.key
+     });
+     
+     // Clear the additional companies state
+     setAdditionalSelectedCompanies([]);
+     setAdditionalCompanyError(null);
+     
+     // Update refs for next comparison
+     prevPageRef.current = currentPage;
+     prevSortKeyRef.current = sortState?.key || null;
+   }
+ }, [currentPage, sortState?.key]);
+
  // Effect to fetch additional selected companies that aren't in the current display
  useEffect(() => {
    const fetchAdditionalCompanies = async () => {
+     // Skip if already fetching
      if (fetchInProgressRef.current) {
        logDebug('[CompaniesPage] Skipping fetch - already in progress');
        return;
      }
 
+     // Skip if activeCompanyIds haven't changed
      if (deepEqual(prevActiveCompanyIdsRef.current, activeCompanyIds)) {
        logDebug('[CompaniesPage] Skipping fetch - activeCompanyIds unchanged');
        return;
      }
 
+     // Update the ref with current activeCompanyIds
      prevActiveCompanyIdsRef.current = [...activeCompanyIds];
 
-     const displayedIds = new Set(displayData.map(c => c.company_id));
-     const currentAdditionalIds = new Set(additionalSelectedCompanies.map(c => c.company_id));
-     const allAvailableIds = new Set([...displayedIds, ...currentAdditionalIds]);
-
-     const missingIds = activeCompanyIds.filter(id => !allAvailableIds.has(id));
-     
-     const cleanedAdditional = additionalSelectedCompanies.filter(company => 
-       activeCompanyIds.includes(company.company_id) && !displayedIds.has(company.company_id)
-     );
-
-     if (!deepEqual(cleanedAdditional, additionalSelectedCompanies)) {
-       setAdditionalSelectedCompanies(cleanedAdditional);
+     // If no companies are selected, clear additional companies
+     if (activeCompanyIds.length === 0) {
+       if (additionalSelectedCompanies.length > 0) {
+         logDebug('[CompaniesPage] No active companies - clearing additional companies');
+         setAdditionalSelectedCompanies([]);
+         setAdditionalCompanyError(null);
+       }
+       return;
      }
 
+     // Calculate which companies need to be fetched
+     const displayedIds = new Set(displayData.map(c => c.company_id));
+     const currentAdditionalIds = new Set(additionalSelectedCompanies.map(c => c.company_id));
+     
+     // Find selected company IDs that are neither in displayData nor in additionalSelectedCompanies
+     const missingIds = activeCompanyIds.filter(id => 
+       !displayedIds.has(id) && !currentAdditionalIds.has(id)
+     );
+     
+     // Also check if any companies in additionalSelectedCompanies are no longer selected
+     const additionalToKeep = additionalSelectedCompanies.filter(company => 
+       activeCompanyIds.includes(company.company_id) && !displayedIds.has(company.company_id)
+     );
+     
+     // If the filtered list is different from current, update it
+     if (additionalToKeep.length !== additionalSelectedCompanies.length) {
+       logDebug('[CompaniesPage] Cleaning up deselected companies from additional list', {
+         before: additionalSelectedCompanies.length,
+         after: additionalToKeep.length
+       });
+       setAdditionalSelectedCompanies(additionalToKeep);
+     }
+
+     // If there are missing IDs, fetch them
      if (missingIds.length > 0) {
        const idsToFetch = missingIds.slice(0, MAX_ADDITIONAL_COMPANIES);
        
@@ -167,31 +378,39 @@ export function CompaniesPage() {
        try {
          const fetchedCompanies = await fetchCompaniesByIds(idsToFetch);
          
+         // Create a map of all additional companies (existing + newly fetched)
          const mergedMap = new Map<number, Company>();
          
-         cleanedAdditional.forEach(company => {
+         // Add existing additional companies that are still selected
+         additionalToKeep.forEach(company => {
            mergedMap.set(company.company_id, company);
          });
          
+         // Add newly fetched companies
          fetchedCompanies.forEach(company => {
-           mergedMap.set(company.company_id, company);
+           if (activeCompanyIds.includes(company.company_id) && !displayedIds.has(company.company_id)) {
+             mergedMap.set(company.company_id, company);
+           }
          });
          
-         const finalAdditionalCompanies = Array.from(mergedMap.values());
+         // Convert back to array and limit to MAX_ADDITIONAL_COMPANIES
+         const finalAdditionalCompanies = Array.from(mergedMap.values()).slice(0, MAX_ADDITIONAL_COMPANIES);
          
-         const limitedAdditionalCompanies = finalAdditionalCompanies.slice(0, MAX_ADDITIONAL_COMPANIES);
+         setAdditionalSelectedCompanies(finalAdditionalCompanies);
          
-         setAdditionalSelectedCompanies(limitedAdditionalCompanies);
-         
-         if (missingIds.length > MAX_ADDITIONAL_COMPANIES) {
+         // Set error if we hit the limit
+         const totalMissing = activeCompanyIds.filter(id => !displayedIds.has(id)).length;
+         if (totalMissing > MAX_ADDITIONAL_COMPANIES) {
            setAdditionalCompanyError(
-             `Showing first ${MAX_ADDITIONAL_COMPANIES} of ${missingIds.length} selected companies not on current page. Use filters or search to find specific companies.`
+             `Showing first ${MAX_ADDITIONAL_COMPANIES} of ${totalMissing} selected companies not on current page. Use filters or search to find specific companies.`
            );
+         } else {
+           setAdditionalCompanyError(null);
          }
          
          logDebug('[CompaniesPage] Additional companies fetched successfully:', {
            fetchedCount: fetchedCompanies.length,
-           totalAdditionalCount: limitedAdditionalCompanies.length
+           totalAdditionalCount: finalAdditionalCompanies.length
          });
        } catch (error) {
          console.error('[CompaniesPage] Error fetching additional companies:', error);
@@ -202,9 +421,11 @@ export function CompaniesPage() {
        }
      } else {
        logDebug('[CompaniesPage] No missing companies to fetch');
+       setLoadingAdditional(false);
      }
    };
 
+   // Only run if data is loaded
    if (!loadingData && !loadingFilters) {
      fetchAdditionalCompanies();
    }
@@ -215,10 +436,13 @@ export function CompaniesPage() {
      displayDataLength: displayData.length,
      additionalLength: additionalSelectedCompanies.length,
      showDeselected,
-     activeCompanyIdsLength: activeCompanyIds.length
+     activeCompanyIdsLength: activeCompanyIds.length,
+     sortState: enhancedSortState
    });
    
    if (!displayData) return [];
+
+   let combinedCompanies: (Company & { _isGhosted?: boolean })[] = [];
 
    if (showDeselected) {
      const allPageCompanies = displayData.map(company => ({
@@ -234,61 +458,34 @@ export function CompaniesPage() {
          _isGhosted: false,
        }));
      
-     return [...allPageCompanies, ...additionalNotOnPage];
+     combinedCompanies = [...allPageCompanies, ...additionalNotOnPage];
+   } else {
+     if (activeCompanyIds.length === 0) {
+       return [];
+     }
+
+     const allCompanies = new Map<number, Company>();
+     
+     displayData.forEach(company => {
+       if (isCompanySelected(company.company_id)) {
+         allCompanies.set(company.company_id, company);
+       }
+     });
+     
+     additionalSelectedCompanies.forEach(company => {
+       if (isCompanySelected(company.company_id)) {
+         allCompanies.set(company.company_id, company);
+       }
+     });
+     
+     combinedCompanies = Array.from(allCompanies.values());
    }
 
-   if (activeCompanyIds.length === 0) {
-     return [];
-   }
-
-   const allCompanies = new Map<number, Company>();
+   // Apply universal sorting with the enhanced sort state
+   const sortedCompanies = universalSort(combinedCompanies, enhancedSortState);
    
-   displayData.forEach(company => {
-     if (isCompanySelected(company.company_id)) {
-       allCompanies.set(company.company_id, company);
-     }
-   });
-   
-   additionalSelectedCompanies.forEach(company => {
-     if (isCompanySelected(company.company_id)) {
-       allCompanies.set(company.company_id, company);
-     }
-   });
-   
-   const combined = Array.from(allCompanies.values());
-   
-   combined.sort((a, b) => {
-     const { key, direction } = sortState;
-     
-     if (key === 'company_name') {
-       const aVal = a.company_name || '';
-       const bVal = b.company_name || '';
-       return direction === 'asc' 
-         ? aVal.localeCompare(bVal)
-         : bVal.localeCompare(aVal);
-     }
-     
-     if (key === 'tsx_code') {
-       const aVal = a.tsx_code || '';
-       const bVal = b.tsx_code || '';
-       return direction === 'asc' 
-         ? aVal.localeCompare(bVal)
-         : bVal.localeCompare(aVal);
-     }
-     
-     if (key === 'status') {
-       const aVal = a.status || '';
-       const bVal = b.status || '';
-       return direction === 'asc' 
-         ? aVal.localeCompare(bVal)
-         : bVal.localeCompare(aVal);
-     }
-     
-     return 0;
-   });
-   
-   return combined;
- }, [displayData, showDeselected, isCompanySelected, activeCompanyIds, additionalSelectedCompanies, sortState]);
+   return sortedCompanies;
+ }, [displayData, showDeselected, isCompanySelected, activeCompanyIds, additionalSelectedCompanies, enhancedSortState]);
 
  const handlePageChange = useCallback((newPage: number) => {
    logDebug(`[CompaniesPage] Calling setPage(${newPage})`);
@@ -301,9 +498,15 @@ export function CompaniesPage() {
    setPageSize(newPageSize);
  }, [setPageSize]);
 
- const handleSort = useCallback((dbSortKey: string, direction: 'asc' | 'desc') => {
-   logDebug(`[CompaniesPage] Calling setSort({ key: "${dbSortKey}", direction: "${direction}" })`);
+ // Enhanced handleSort that tracks both DB key and nested path
+ const handleSort = useCallback((dbSortKey: string, direction: 'asc' | 'desc', nestedPath: string) => {
+   logDebug(`[CompaniesPage] Calling setSort({ key: "${dbSortKey}", direction: "${direction}", nestedPath: "${nestedPath}" })`);
+   
+   // Update the filter context with the DB sort key for server-side sorting
    setSort({ key: dbSortKey, direction });
+   
+   // Update local enhanced sort state for client-side sorting
+   setEnhancedSortState({ key: dbSortKey, direction, nestedPath });
  }, [setSort]);
 
  const handleStatusChange = useCallback((status: CompanyStatus) => {
@@ -317,6 +520,9 @@ export function CompaniesPage() {
  const handleClearAllFilters = useCallback(() => {
    logDebug('[CompaniesPage] Clearing all filters via resetFilters()');
    resetFilters();
+   setEnhancedSortState(null); // Also clear enhanced sort state
+   setAdditionalSelectedCompanies([]); // Clear additional companies when resetting
+   setAdditionalCompanyError(null);
  }, [resetFilters]);
 
  const handleExportSelected = useCallback(async () => {
@@ -432,7 +638,7 @@ export function CompaniesPage() {
            onSearchTermChange={setSearchTerm}
            setMetricRange={setMetricRange}
            isLoading={loadingFilters}
-           onImportFavorites={() => setShowImportModal(true)} // Added prop
+           onImportFavorites={() => setShowImportModal(true)}
          />
        </motion.div>
 
@@ -546,7 +752,7 @@ export function CompaniesPage() {
          )}
        </motion.div>
 
-       <ImportFavoritesModal // Added modal
+       <ImportFavoritesModal
          isOpen={showImportModal}
          onClose={() => setShowImportModal(false)}
          onImport={handleImportFavorites}
