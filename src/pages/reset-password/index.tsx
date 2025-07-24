@@ -1,7 +1,7 @@
 // src/pages/reset-password/index.tsx
 import React, { useState, FormEvent, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
-import { supabase } from '../../lib/supabaseClient';
+import { useNavigate, Link, useLocation } from 'react-router-dom';
+import { CustomAuthService } from '../../services/custom-auth-service';
 import { useAuth } from '../../contexts/auth-context';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
@@ -17,35 +17,50 @@ export function ResetPasswordPage() {
     const [message, setMessage] = useState<string | null>(null);
     const { session, isLoading: isAuthLoading, user } = useAuth();
     const navigate = useNavigate();
+    const location = useLocation();
     
-    // Track if we're in recovery mode based on URL
-    const isRecoveryMode = window.location.hash.includes('type=recovery');
-    const [hasProcessedToken, setHasProcessedToken] = useState(false);
+    // Extract token and email from URL
+    const urlParams = new URLSearchParams(location.search);
+    const resetToken = urlParams.get('token');
+    const resetEmail = urlParams.get('email');
+    
+    const [isValidatingToken, setIsValidatingToken] = useState(true);
+    const [tokenValid, setTokenValid] = useState(false);
 
     useEffect(() => {
         console.log('[ResetPasswordPage] Component mounted');
-        console.log('[ResetPasswordPage] URL Hash:', window.location.hash);
-        console.log('[ResetPasswordPage] Is Recovery Mode:', isRecoveryMode);
-        console.log('[ResetPasswordPage] Auth Loading:', isAuthLoading);
-        console.log('[ResetPasswordPage] Session:', session);
-        console.log('[ResetPasswordPage] User:', user);
-    }, [isRecoveryMode, isAuthLoading, session, user]);
+        console.log('[ResetPasswordPage] Reset token:', resetToken ? `${resetToken.substring(0, 10)}...` : 'null');
+        console.log('[ResetPasswordPage] Reset email:', resetEmail);
+        
+        // Validate that we have required parameters
+        if (!resetToken || !resetEmail) {
+            console.error('[ResetPasswordPage] Missing token or email in URL');
+            setError('Invalid reset link. Please request a new password reset.');
+            setIsValidatingToken(false);
+            return;
+        }
+        
+        setTokenValid(true);
+        setIsValidatingToken(false);
+    }, [resetToken, resetEmail]);
 
-    // Only redirect if we're NOT in recovery mode and auth has loaded
+    // Don't redirect users with valid reset tokens
     useEffect(() => {
-        if (!isAuthLoading && !isRecoveryMode && !hasProcessedToken) {
-            // Only redirect if there's a normal user session
+        if (!isAuthLoading && !isValidatingToken && !tokenValid && !resetToken) {
+            // Only redirect if there's no reset token at all
             if (session && user?.id) {
-                console.warn("[ResetPasswordPage] Normal user session detected without recovery token. Redirecting to /companies.");
+                console.log("[ResetPasswordPage] User logged in without reset token, redirecting");
                 navigate('/companies');
             }
         }
-    }, [session, navigate, isAuthLoading, user, isRecoveryMode, hasProcessedToken]);
+    }, [session, navigate, isAuthLoading, user, isValidatingToken, tokenValid, resetToken]);
 
     const handlePasswordUpdate = async (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         setError(null);
         setMessage(null);
+
+        console.log('[ResetPasswordPage] Starting password update');
 
         // Validation
         if (password !== confirmPassword) {
@@ -57,43 +72,30 @@ export function ResetPasswordPage() {
             return;
         }
 
+        if (!resetToken || !resetEmail) {
+            setError('Missing reset information. Please request a new password reset.');
+            return;
+        }
+
         setLoading(true);
-        setHasProcessedToken(true);
 
         try {
-            console.log('[ResetPasswordPage] Attempting password update...');
-            
-            // When there's a recovery token in the URL, Supabase should handle it automatically
-            const { data, error: updateError } = await supabase.auth.updateUser({ 
-                password: password 
-            });
+            const { error: resetError } = await CustomAuthService.resetPassword(
+                resetToken,
+                decodeURIComponent(resetEmail),
+                password
+            );
 
-            if (updateError) {
-                console.error("[ResetPasswordPage] Password Update Error:", updateError);
-                
-                // Handle specific error cases
-                if (updateError.message.includes('expired') || updateError.message.includes('invalid')) {
-                    setError('This password reset link has expired or already been used. Please request a new one.');
-                } else if (updateError.message.includes('not authenticated')) {
-                    setError('Authentication session is missing. The reset link may be invalid. Please request a new password reset link.');
-                } else {
-                    setError(updateError.message || 'Failed to update password. Please try again or request a new reset link.');
-                }
+            if (resetError) {
+                console.error("[ResetPasswordPage] Password reset error:", resetError);
+                setError(resetError.message);
             } else {
-                console.log("[ResetPasswordPage] Password update successful!", data);
+                console.log("[ResetPasswordPage] Password reset successful!");
                 setMessage('Password successfully updated! Redirecting to login...');
                 setPassword('');
                 setConfirmPassword('');
                 
-                // Clear any existing session and redirect
-                try {
-                    await supabase.auth.signOut();
-                    console.log("[ResetPasswordPage] Signed out successfully");
-                } catch (signOutError) {
-                    console.error("Error signing out:", signOutError);
-                }
-
-                // Redirect to auth page with success message
+                // Redirect to login with success message
                 setTimeout(() => {
                     navigate('/auth?message=password_reset_success');
                 }, 2000);
@@ -106,8 +108,8 @@ export function ResetPasswordPage() {
         }
     };
 
-    // Show loading state only if we're in recovery mode and auth is still loading
-    if (isRecoveryMode && isAuthLoading && !message && !error) {
+    // Show loading state while validating
+    if (isValidatingToken) {
         return (
             <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-b from-navy-900 via-navy-800 to-navy-900 p-4 text-white">
                 <Loader2 className="h-12 w-12 animate-spin text-cyan-300" />
@@ -128,9 +130,9 @@ export function ResetPasswordPage() {
                     Reset Your Password
                 </CardTitle>
                 <CardDescription className="mt-2 text-gray-300 text-base sm:text-lg">
-                    {isRecoveryMode 
+                    {tokenValid 
                         ? 'Enter your new password below to complete the reset process.'
-                        : 'This page requires a valid password reset link. Please check your email or request a new reset link.'}
+                        : 'This page requires a valid password reset link.'}
                 </CardDescription>
             </div>
 
@@ -152,7 +154,7 @@ export function ResetPasswordPage() {
                             </Alert>
                         )}
 
-                        {!message && isRecoveryMode && (
+                        {!message && tokenValid && (
                             <>
                                 <div className="space-y-1">
                                     <label htmlFor="password-reset" className="text-sm font-medium text-gray-300">
@@ -197,7 +199,7 @@ export function ResetPasswordPage() {
                                 <Button
                                     type="submit"
                                     className="w-full bg-gradient-to-r from-cyan-600 to-teal-600 hover:from-cyan-700 hover:to-teal-700 text-white py-2.5 flex items-center justify-center"
-                                    disabled={loading || !isRecoveryMode}
+                                    disabled={loading || !tokenValid}
                                 >
                                     {loading && <Loader2 className="mr-2 h-5 w-5 animate-spin" />}
                                     {loading ? 'Updating Password...' : 'Update Password'}
@@ -205,14 +207,14 @@ export function ResetPasswordPage() {
                             </>
                         )}
 
-                        {!isRecoveryMode && !message && (
+                        {!tokenValid && !message && (
                             <div className="text-center py-4">
                                 <p className="text-gray-300 mb-4">
                                     You need a valid password reset link to use this page.
                                 </p>
                                 <Button
                                     type="button"
-                                    onClick={() => navigate('/auth')}
+                                    onClick={() => navigate('/forgot-password')}
                                     className="w-full bg-gradient-to-r from-cyan-600 to-teal-600 hover:from-cyan-700 hover:to-teal-700 text-white"
                                 >
                                     Request Password Reset
@@ -229,7 +231,6 @@ export function ResetPasswordPage() {
                 </CardFooter>
             </Card>
 
-            {/* Help text */}
             <div className="mt-6 text-center text-sm text-gray-400 max-w-md">
                 <p>
                     Having trouble? Contact support at{' '}

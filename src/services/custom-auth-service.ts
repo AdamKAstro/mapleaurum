@@ -17,14 +17,38 @@ interface EmailConfirmationData {
   expiresAt: string;
 }
 
+interface PasswordResetResult {
+  success: boolean;
+  error: Error | null;
+  emailSendingFailed?: boolean;
+  resetToken?: string;
+}
+
+interface PasswordResetData {
+  email: string;
+  userId: string;
+  token: string;
+  expiresAt: string;
+  used: boolean;
+}
+
 /**
- * Custom auth service that uses SendGrid for email confirmations
+ * Custom auth service that uses SendGrid for email confirmations and password resets
  */
 export class CustomAuthService {
   /**
    * Generate a secure confirmation token
    */
   private static generateConfirmationToken(): string {
+    const array = new Uint8Array(32);
+    crypto.getRandomValues(array);
+    return Array.from(array, byte => byte.toString(16).padStart(2, '0')).join('');
+  }
+
+  /**
+   * Generate a secure password reset token
+   */
+  private static generateResetToken(): string {
     const array = new Uint8Array(32);
     crypto.getRandomValues(array);
     return Array.from(array, byte => byte.toString(16).padStart(2, '0')).join('');
@@ -371,6 +395,250 @@ export class CustomAuthService {
       
     } catch (error) {
       console.error('[CustomAuthService] Failed to confirm email:', error);
+      return { error: error as Error };
+    }
+  }
+
+  /**
+   * Request password reset - sends email via SendGrid
+   */
+  static async requestPasswordReset(email: string): Promise<PasswordResetResult> {
+    try {
+      console.log('[CustomAuthService] Starting password reset for:', email);
+      
+      // Step 1: Check if user exists
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('id, email_confirmed')
+        .eq('email', email)
+        .single();
+
+      if (profileError || !profile) {
+        // Don't reveal if user exists for security
+        console.log('[CustomAuthService] User not found, but returning success for security');
+        return {
+          success: true,
+          error: null
+        };
+      }
+
+      // Step 2: Check if email is confirmed
+      if (!profile.email_confirmed) {
+        return {
+          success: false,
+          error: new Error('Please confirm your email address before resetting your password.')
+        };
+      }
+
+      // Step 3: Generate reset token
+      const resetToken = this.generateResetToken();
+      const expiresAt = new Date();
+      expiresAt.setHours(expiresAt.getHours() + 1); // 1 hour expiry for password resets
+
+      // Step 4: Store reset token in database
+      // First, invalidate any existing unused tokens for this user
+      await supabase
+        .from('password_resets')
+        .update({ used: true })
+        .eq('user_id', profile.id)
+        .eq('used', false);
+
+      const { error: tokenError } = await supabase
+        .from('password_resets')
+        .insert({
+          user_id: profile.id,
+          email: email,
+          token: resetToken,
+          expires_at: expiresAt.toISOString(),
+          created_at: new Date().toISOString(),
+          used: false
+        });
+
+      if (tokenError) {
+        console.error('[CustomAuthService] Failed to store reset token:', tokenError);
+        return {
+          success: false,
+          error: new Error('Failed to generate reset token. Please try again.')
+        };
+      }
+
+      // Step 5: Send reset email via SendGrid
+      const resetUrl = `${window.location.origin}/reset-password?token=${resetToken}&email=${encodeURIComponent(email)}`;
+      
+      let emailSendingFailed = false;
+      
+      try {
+        const { error: sendError } = await this.sendPasswordResetEmail(email, resetUrl, profile.id);
+        if (sendError) {
+          emailSendingFailed = true;
+          console.error('[CustomAuthService] Failed to send reset email:', sendError);
+        }
+      } catch (err) {
+        console.error('[CustomAuthService] Failed to send reset email:', err);
+        emailSendingFailed = true;
+      }
+      
+      console.log('[CustomAuthService] Password reset requested, email sent:', !emailSendingFailed);
+      return {
+        success: true,
+        error: null,
+        emailSendingFailed,
+        resetToken
+      };
+
+    } catch (error) {
+      console.error('[CustomAuthService] Unexpected error during password reset:', error);
+      return {
+        success: false,
+        error: error as Error
+      };
+    }
+  }
+
+  /**
+   * Send password reset email using SendGrid edge function
+   */
+  static async sendPasswordResetEmail(email: string, resetUrl: string, userId: string): Promise<{ error: Error | null }> {
+    try {
+      const emailContent = `
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+    .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+    .header { background-color: #0e4166; color: white; padding: 20px; text-align: center; }
+    .content { background-color: #f4f4f4; padding: 20px; }
+    .button { display: inline-block; padding: 12px 30px; margin: 20px 0; background-color: #17a2b8; color: white; text-decoration: none; border-radius: 5px; }
+    .warning { background-color: #fff3cd; border: 1px solid #ffeeba; color: #856404; padding: 10px; margin: 15px 0; border-radius: 4px; }
+    .footer { text-align: center; padding: 20px; font-size: 12px; color: #666; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>Password Reset Request</h1>
+    </div>
+    <div class="content">
+      <h2>Reset Your MapleAurum Password</h2>
+      <p>We received a request to reset your password. Click the button below to create a new password:</p>
+      <center>
+        <a href="${resetUrl}" class="button">Reset Password</a>
+      </center>
+      <p>Or copy and paste this link into your browser:</p>
+      <p style="word-break: break-all; background: #fff; padding: 10px; border: 1px solid #ddd;">
+        ${resetUrl}
+      </p>
+      <div class="warning">
+        <strong>⚠️ Important:</strong>
+        <ul>
+          <li>This link will expire in 1 hour</li>
+          <li>For security, this link can only be used once</li>
+          <li>If you didn't request this reset, please ignore this email</li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer">
+      <p>© ${new Date().getFullYear()} MapleAurum. All rights reserved.</p>
+      <p>Need help? Contact us at support@mapleaurum.com</p>
+    </div>
+  </div>
+</body>
+</html>
+      `;
+
+      // Call your edge function to send email
+      const { data, error } = await supabase.functions.invoke('send-confirmation-email', {
+        body: {
+          to: email,
+          subject: 'Reset your MapleAurum password',
+          html: emailContent,
+          userId: userId,
+          type: 'password_reset'
+        }
+      });
+
+      if (error) {
+        console.error('[CustomAuthService] SendGrid error:', error);
+        return { error };
+      }
+
+      if (!data || data.error) {
+        console.error('[CustomAuthService] SendGrid returned error:', data);
+        return { error: new Error(data?.error || 'Failed to send email') };
+      }
+
+      return { error: null };
+    } catch (error) {
+      console.error('[CustomAuthService] Failed to send email:', error);
+      return { error: error as Error };
+    }
+  }
+
+  /**
+   * Reset password with token
+   */
+  static async resetPassword(token: string, email: string, newPassword: string): Promise<{ error: Error | null }> {
+    try {
+      console.log('[CustomAuthService] Attempting password reset with token');
+      
+      // Step 1: Verify token
+      const { data: resetData, error: tokenError } = await supabase
+        .from('password_resets')
+        .select('user_id, expires_at, used')
+        .eq('token', token)
+        .eq('email', email)
+        .single();
+
+      if (tokenError || !resetData) {
+        console.error('[CustomAuthService] Invalid token:', tokenError);
+        return { error: new Error('Invalid or expired reset link') };
+      }
+
+      if (resetData.used) {
+        return { error: new Error('This reset link has already been used. Please request a new one.') };
+      }
+
+      if (new Date(resetData.expires_at) < new Date()) {
+        return { error: new Error('This reset link has expired. Please request a new one.') };
+      }
+
+      // Step 2: Update password
+      // Note: This requires calling an edge function with service role access
+      const { data: updateData, error: updateError } = await supabase.functions.invoke('admin-reset-password', {
+        body: {
+          userId: resetData.user_id,
+          newPassword: newPassword,
+          resetToken: token // For verification in the edge function
+        }
+      });
+
+      if (updateError || updateData?.error) {
+        console.error('[CustomAuthService] Failed to update password:', updateError || updateData?.error);
+        return { error: new Error('Failed to update password. Please try again.') };
+      }
+
+      // Step 3: Mark token as used
+      const { error: markUsedError } = await supabase
+        .from('password_resets')
+        .update({ 
+          used: true, 
+          used_at: new Date().toISOString() 
+        })
+        .eq('token', token);
+
+      if (markUsedError) {
+        console.error('[CustomAuthService] Failed to mark token as used:', markUsedError);
+        // Don't fail the whole operation for this
+      }
+
+      // Step 4: Sign out any existing sessions
+      await supabase.auth.signOut();
+
+      return { error: null };
+      
+    } catch (error) {
+      console.error('[CustomAuthService] Failed to reset password:', error);
       return { error: error as Error };
     }
   }
