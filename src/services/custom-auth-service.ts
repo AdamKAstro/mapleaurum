@@ -407,69 +407,69 @@ export class CustomAuthService {
 
       // Step 1: Check if user exists in profiles table
       console.log('[CustomAuthService] Step 1: Checking profiles table...');
-      const { data: profile, error: profileError } = await supabase
-        .from('profiles')
-        .select('id, email, email_confirmed, created_at, updated_at')
-        .eq('email', email)
-        .single();
 
-      console.log('[CustomAuthService] Profiles query result:', {
+      // Try multiple approaches
+      let profile = null;
+      let profileError = null;
+
+      // Approach 1: Try RPC function if it exists
+      try {
+        const { data: rpcData, error: rpcError } = await supabase
+          .rpc('debug_profile_access', { user_email: email });
+
+        if (rpcData && rpcData.profile_found) {
+          profile = rpcData.profile_data;
+          console.log('[CustomAuthService] Found profile via RPC:', profile);
+        }
+      } catch (e) {
+        console.log('[CustomAuthService] RPC function not available, trying direct query');
+      }
+
+      // Approach 2: Direct query with better error handling
+      if (!profile) {
+        const { data: profiles, error: queryError } = await supabase
+          .from('profiles')
+          .select('id, email, email_confirmed, created_at, updated_at')
+          .eq('email', email)
+          .limit(1);
+
+        if (profiles && profiles.length > 0) {
+          profile = profiles[0];
+          console.log('[CustomAuthService] Found profile via direct query:', profile);
+        } else {
+          profileError = queryError;
+          console.log('[CustomAuthService] Direct query failed:', queryError);
+        }
+      }
+
+      // Approach 3: Try case-insensitive if exact match fails
+      if (!profile) {
+        const { data: profiles, error: ilikeError } = await supabase
+          .from('profiles')
+          .select('id, email, email_confirmed, created_at, updated_at')
+          .ilike('email', email)
+          .limit(1);
+
+        if (profiles && profiles.length > 0) {
+          profile = profiles[0];
+          console.log('[CustomAuthService] Found profile via case-insensitive search:', profile);
+        }
+      }
+
+      console.log('[CustomAuthService] Final profile result:', {
         found: !!profile,
         data: profile,
         error: profileError?.message || 'none'
       });
 
-      // Additional check: Try to find user in auth schema (requires service role or RLS policy)
-      console.log('[CustomAuthService] Step 1b: Attempting to check auth.users via RPC or profiles join...');
-
-      // Try alternative query approach
-      const { data: allProfiles, error: allProfilesError } = await supabase
-        .from('profiles')
-        .select('email')
-        .limit(10);
-
-      console.log('[CustomAuthService] Sample profiles in database:', {
-        count: allProfiles?.length || 0,
-        emails: allProfiles?.map(p => p.email.substring(0, 3) + '***') || [],
-        error: allProfilesError?.message
-      });
-
-      if (profileError || !profile) {
-        console.log('[CustomAuthService] User not found in profiles table');
-        console.log('[CustomAuthService] Profile error details:', {
-          code: profileError?.code,
-          message: profileError?.message,
-          details: profileError?.details,
-          hint: profileError?.hint
-        });
-
-        // Check if it's a case sensitivity issue
-        console.log('[CustomAuthService] Checking for case sensitivity issues...');
-        const { data: caseCheck } = await supabase
-          .from('profiles')
-          .select('email')
-          .ilike('email', email)
-          .limit(5);
-
-        console.log('[CustomAuthService] Case-insensitive search results:', {
-          found: caseCheck?.length || 0,
-          emails: caseCheck?.map(p => p.email) || []
-        });
-
+      if (!profile) {
         // Don't reveal if user exists for security
-        console.log('[CustomAuthService] Returning success for security (user not found)');
+        console.log('[CustomAuthService] User not found, returning success for security');
         return {
           success: true,
           error: null
         };
       }
-
-      console.log('[CustomAuthService] User found in profiles:', {
-        id: profile.id,
-        email: profile.email,
-        email_confirmed: profile.email_confirmed,
-        created_at: profile.created_at
-      });
 
       // Step 2: Check if email is confirmed
       console.log('[CustomAuthService] Step 2: Checking email confirmation status...');
