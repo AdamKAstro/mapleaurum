@@ -16,7 +16,7 @@ import { ForgotPasswordPage } from './pages/forgot-password';
 import { ResetPasswordPage } from './pages/reset-password';
 import { OnboardingPage } from './pages/onboarding';
 
-//import { ConfirmEmailPage } from './pages/confirm-email';
+
 import { CompaniesPage } from './pages/companies';
 import { SubscribePage } from './pages/subscribe';
 import { ScatterChartPage } from './pages/scatter-chart';
@@ -154,7 +154,6 @@ function App() {
                   <Route path="/forgot-password" element={<ForgotPasswordPage />} />
                   <Route path="/reset-password" element={<ResetPasswordPage />} />
                   <Route path="/onboarding" element={<OnboardingPage />} />
-                  //<Route path="/confirm-email" element={<ConfirmEmailPage />} />
 
           _** **_         <Route path="*" element={<NotFoundPage />} />
                 </Routes>
