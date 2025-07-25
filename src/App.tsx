@@ -15,6 +15,7 @@ import { LoginPage } from './pages/login';
 import { ForgotPasswordPage } from './pages/forgot-password';
 import { ResetPasswordPage } from './pages/reset-password';
 import { OnboardingPage } from './pages/onboarding';
+
 //import { ConfirmEmailPage } from './pages/confirm-email';
 import { CompaniesPage } from './pages/companies';
 import { SubscribePage } from './pages/subscribe';
