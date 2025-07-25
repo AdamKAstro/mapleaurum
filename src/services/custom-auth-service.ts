@@ -165,7 +165,9 @@ export class CustomAuthService {
       };
     }
     
-    return { isValid: true, clean ineffect
+    return { isValid: true, cleanEmail };
+  }
+
 
 /**
    * Validates password strength
