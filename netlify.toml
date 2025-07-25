@@ -14,6 +14,8 @@
   status = 200
 
 [[headers]]
-  for = "/assets/*.css"
+  # Apply this policy to ALL pages, not just CSS files
+  for = "/*" 
   [headers.values]
-    Content-Security-Policy = "default-src 'self'; img-src 'self' https://mapleaurum.com https://ui-avatars.com https://dvagrllvivewyxolrhsh.supabase.co data:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.stripe.com; connect-src 'self' https://dvagrllvivewyxolrhsh.supabase.co https://api.stripe.com; font-src 'self' data: https://fonts.gstatic.com; blob:; worker-src 'self' blob:;"
+    # This is your existing policy, now correctly applied
+    Content-Security-Policy = "default-src 'self'; img-src 'self' https://mapleaurum.com https://ui-avatars.com https://dvagrllvivewyxolrhsh.supabase.co data:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.stripe.com; connect-src 'self' https://dvagrllvivewyxolrhsh.supabase.co https://api.stripe.com; font-src 'self' data: https://fonts.gstatic.com; worker-src 'self' blob:;"
