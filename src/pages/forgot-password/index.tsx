@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 import { CustomAuthService } from '../../services/custom-auth-service';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../components/ui/card';
+import { Card, CardContent, CardDescription, CardTitle, CardFooter } from '../../components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '../../components/ui/alert';
 import { AlertCircle, CheckCircle, Mail, ArrowLeft, Loader2, Info } from 'lucide-react';
 
@@ -138,13 +138,12 @@ export function ForgotPasswordPage() {
                     </form>
                 </CardContent>
                 
-                <div className="px-6 pb-6">
-                    <div className="border-t border-navy-600/50 pt-6">
-                        <Link 
-                            to="/auth" 
-                            className="flex items-center justify-center font-medium text-cyan-400 hover:text-cyan-300 hover:underline text-sm transition-colors duration-200"
-                        >
-                            <ArrowLeft className="mr-1 h-4 w-4" /> Back to Login
+                <CardFooter className="px-6 pb-6">
+                    <Link 
+                        to="/auth" 
+                        className="flex items-center justify-center font-medium text-cyan-400 hover:text-cyan-300 hover:underline text-sm transition-colors duration-200"
+                    >
+                        <ArrowLeft className="mr-1 h-4 w-4" /> Back to Login
                     </Link>
                 </CardFooter>
             </Card>
