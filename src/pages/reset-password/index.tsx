@@ -1,20 +1,14 @@
 // src/pages/reset-password/index.tsx
 import React, { useState, FormEvent, useEffect, useCallback } from 'react';
 import { useNavigate, Link, useSearchParams } from 'react-router-dom';
-import { createClient } from '@supabase/supabase-js'; // Import Supabase client
+import { supabase } from '../../lib/supabaseClient'; // Use the same Supabase client as CustomAuthService
 import { CustomAuthService } from '../../services/custom-auth-service';
 import { useAuth } from '../../contexts/auth-context';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '../../components/ui/card';
+import { Card, CardContent, CardDescription, CardFooter, CardTitle } from '../../components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '../../components/ui/alert';
 import { AlertCircle, CheckCircle, KeyRound, ArrowLeft, Loader2, Eye, EyeOff, Shield, Info, XCircle } from 'lucide-react';
-
-// Initialize Supabase client (adjust with your actual Supabase URL and key)
-const supabase = createClient(
-  import.meta.env.VITE_SUPABASE_URL || 'YOUR_SUPABASE_URL',
-  import.meta.env.VITE_SUPABASE_ANON_KEY || 'YOUR_SUPABASE_ANON_KEY'
-);
 
 interface PasswordStrengthUI {
   score: number;
@@ -39,7 +33,7 @@ export function ResetPasswordPage() {
     percentage: 0,
   });
 
-  const { session, isLoading: isAuthLoading } = useAuth();
+  const { session, isLoading disputed: isAuthLoading } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
@@ -47,6 +41,16 @@ export function ResetPasswordPage() {
   const [hasValidSession, setHasValidSession] = useState(false);
   const [isCheckingSession, setIsCheckingSession] = useState(true);
   const [sessionError, setSessionError] = useState<string | null>(null);
+
+  // Debug initial URL details
+  useEffect(() => {
+    console.log('[ResetPasswordPage] Initial URL debug:', {
+      href: window.location.href,
+      hash: window.location.hash,
+      search: window.location.search,
+      pathname: window.location.pathname,
+    });
+  }, []); // Run only once on mount
 
   // Handle recovery token from URL hash
   useEffect(() => {
@@ -97,17 +101,25 @@ export function ResetPasswordPage() {
           console.error('[ResetPasswordPage] Error handling recovery token:', error);
           setSessionError('An error occurred validating your reset link.');
         }
+      } else {
+        // No recovery tokens; rely on auth context session
+        if (session) {
+          console.log('[ResetPasswordPage] Using session from auth context');
+          setHasValidSession(true);
+        } else {
+          setSessionError('No valid reset link found. Please request a new one.');
+        }
       }
-      setIsCheckingSession(false); // Ensure session checking is marked complete
+      setIsCheckingSession(false);
     };
 
     handleRecoveryToken();
-  }, []); // Run only once on mount
+  }, [session]); // Depend on session to react to auth context updates
 
   // Check for error parameters in URL (from Supabase redirect)
   useEffect(() => {
     const errorDescription = searchParams.get('error_description');
-    if (errorDescription) {
+    if (errorDescription && !sessionError) {
       console.error('[ResetPasswordPage] Supabase redirect error:', errorDescription);
       if (errorDescription.toLowerCase().includes('expired')) {
         setSessionError('Your password reset link has expired. Please request a new one.');
@@ -118,40 +130,7 @@ export function ResetPasswordPage() {
       }
       setIsCheckingSession(false);
     }
-  }, [searchParams]);
-
-  // Validate session
-  useEffect(() => {
-    const checkSession = async () => {
-      if (sessionError) return; // Skip if we already have an error from URL
-
-      console.log('[ResetPasswordPage] Checking for recovery session...');
-
-      if (!isAuthLoading) {
-        try {
-          const sessionResponse = await CustomAuthService.getCurrentSession();
-
-          if (sessionResponse.success && sessionResponse.data) {
-            console.log('[ResetPasswordPage] Valid session found:', {
-              userId: sessionResponse.metadata?.userId,
-              isRecovery: sessionResponse.metadata?.isRecoverySession,
-            });
-            setHasValidSession(true);
-          } else {
-            console.log('[ResetPasswordPage] No valid session found');
-            setSessionError('Your reset link is invalid or has expired. Please request a new one.');
-          }
-        } catch (error) {
-          console.error('[ResetPasswordPage] Error checking session:', error);
-          setSessionError('Unable to verify your reset link. Please try again.');
-        } finally {
-          setIsCheckingSession(false);
-        }
-      }
-    };
-
-    checkSession();
-  }, [session, isAuthLoading, sessionError]);
+  }, [searchParams, sessionError]);
 
   // Real-time password validation
   const validatePasswordRealtime = useCallback((pwd: string) => {
