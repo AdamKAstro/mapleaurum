@@ -477,7 +477,8 @@ export class CustomAuthService {
         userEmail: session?.user?.email
       });
 
-      const redirectTo = `${window.location.origin}/reset-password`;
+      const redirectTo: "https://mapleaurum.com/reset-password";
+	  console.log('[DEBUG] Password reset redirect URL:', redirectTo); // Add this line
       const { data, error } = await supabase.auth.resetPasswordForEmail(
         emailValidation.cleanEmail, 
         { redirectTo }
