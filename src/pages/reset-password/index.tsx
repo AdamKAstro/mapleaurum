@@ -33,7 +33,7 @@ export function ResetPasswordPage() {
     percentage: 0,
   });
 
-  const { session, isLoading disputed: isAuthLoading } = useAuth();
+  const { session, isLoading: isAuthLoading } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
