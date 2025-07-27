@@ -1,18 +1,20 @@
 //src/pages/help/index.tsx
+
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { PageContainer } from '../../components/ui/page-container';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
-import { ArrowRight, HelpCircle, ScatterChart as Scatter } from 'lucide-react'; // Added Scatter
+import { ArrowRight, HelpCircle, ScatterChart as Scatter, Book as BookIcon } from 'lucide-react'; // Added BookIcon
 
 const helpTopics = [
   { path: '/help/metrics', title: 'Metric Explanations', description: 'Understand every data point used in the analysis and scoring.', icon: HelpCircle },
   { path: '/help/filters', title: 'Using Filters', description: 'Learn how to effectively select and filter company data.', icon: HelpCircle },
   { path: '/help/scoring', title: 'Using Scoring', description: 'Discover how to rank companies based on custom metric weights.', icon: HelpCircle },
   { path: '/help/scatter-chart', title: 'Using Scatter Chart', description: 'Visualize relationships between different company metrics.', icon: HelpCircle },
-  { path: '/help/scatter-score-pro', title: 'Using ScatterScore Pro', description: 'Master advanced multi-dimensional company scoring.', icon: Scatter }, // New Topic
+  { path: '/help/scatter-score-pro', title: 'Using ScatterScore Pro', description: 'Master advanced multi-dimensional company scoring.', icon: Scatter },
   { path: '/help/tiers', title: 'Subscription Tiers', description: 'Compare plan features and access levels.', icon: HelpCircle },
   { path: '/help/general', title: 'General & FAQ', description: 'Find answers to common questions about data and usage.', icon: HelpCircle },
+  { path: '/how-to-choose-a-precious-metals-mining-company-to-invest-in', title: 'Investment Guide', description: 'Learn how to choose the right precious metals mining company to invest in.', icon: BookIcon }, // New item
 ];
 
 export function HelpLandingPage() {

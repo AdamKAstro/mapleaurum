@@ -1,4 +1,5 @@
 // src/components/ui/sidebar.tsx
+
 import React, { useState } from 'react';
 import { NavLink } from 'react-router-dom';
 import {
@@ -17,6 +18,7 @@ import {
   ScatterChart as Scatter,
   Award,
   TrendingUp,
+  Book as BookIcon, // New icon for the guide
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { cn } from '../../lib/utils';
@@ -28,8 +30,8 @@ export function Sidebar() {
     { path: '/', label: 'Home', icon: Home },
     { path: '/companies', label: 'Companies', icon: Table2 },
     { path: '/filter', label: 'Filters', icon: Filter },
-    { path: '/scatter-chart', label: 'Scatter Chart', icon: Scatter },	
-    { path: '/scoring', label: 'Scoring', icon: Calculator },	
+    { path: '/scatter-chart', label: 'Scatter Chart', icon: Scatter },
+    { path: '/scoring', label: 'Scoring', icon: Calculator },
     { path: '/scatter-score-pro', label: 'ScatterScore', icon: TrendingUp },
     { path: '/subscribe', label: 'Subscribe', icon: Crown },
   ];
@@ -43,6 +45,7 @@ export function Sidebar() {
     { path: '/help/scatter-score-pro', label: 'ScatterScore Guide', icon: Scatter },
     { path: '/help/tiers', label: 'Subscription Tiers', icon: Award },
     { path: '/help/general', label: 'General & FAQ', icon: BookOpen },
+    { path: '/how-to-choose-a-precious-metals-mining-company-to-invest-in', label: 'Investment Guide', icon: BookIcon }, // New item
   ];
 
   return (
