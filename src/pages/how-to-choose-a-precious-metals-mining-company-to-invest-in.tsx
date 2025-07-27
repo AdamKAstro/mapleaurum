@@ -1,6 +1,6 @@
 //src/pages/how-to-choose-a-precious-metals-mining-company-to-invest-in.tsx
 
-import React from 'react';
+import { useState, React } from 'react'; // Add this import
 import { Helmet } from 'react-helmet-async';
 import { PageContainer } from '../components/ui/page-container';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -141,7 +141,7 @@ export function HowToChooseMiningCompanyPage() {
                 Start Analyzing with ScatterScore™ <ArrowRight className="ml-2" />
               </Button>
               <Button
-                onClick={() => navigate('/gold-silver-mining-stocks')}
+                onClick={() => navigate('../../companies')}
                 variant="outline"
                 className="border-gray-600 text-gray-300 hover:bg-gray-800 text-lg px-8 py-3"
               >
@@ -798,31 +798,37 @@ export function HowToChooseMiningCompanyPage() {
     	</section>
 
     	{/* Call to Action */}
-    	<section className="text-center py-16">
-    	  <h2 className="text-3xl font-bold text-gray-100 mb-6">
-    	  	Ready to Invest in Precious Metals Mining?
-    	  </h2>
-    	  <p className="text-xl text-gray-300 max-w-3xl mx-auto mb-8">
-    	  	Use ScatterScore™ to analyze mining stocks with precision. Our proprietary metrics and expert insights help you make informed decisions.
-    	  </p>
-    	  <div className="flex flex-col sm:flex-row gap-4 justify-center">
-    	  	<Button
-    	  	  onClick={() => navigate('/subscribe')}
-    	  	  className="bg-yellow-600 hover:bg-yellow-700 text-white text-lg px-8 py-3"
-    	  	>
-    	  	  Start Your Free Trial <ArrowRight className="ml-2" />
-    	  	</Button>
-    	  	<Button
-    	  	  onClick={() => navigate('/contact')}
-    	  	  variant="outline"
-    	  	  className="border-gray-600 text-gray-300 hover:bg-gray-800 text-lg px-8 py-3"
-    	  	>
-    	  	  Contact Us for More Information
-    	  	</Button>
-    	  </div>
-    	</section>
+		<section className="text-center py-16">
+		  <h2 className="text-3xl font-bold text-gray-100 mb-6">
+			Ready to Invest in Precious Metals Mining?
+		  </h2>
+		  <p className="text-xl text-gray-300 max-w-3xl mx-auto mb-8">
+			Use ScatterScore™ to analyze mining stocks with precision. Our proprietary metrics and expert insights help you make informed decisions.
+		  </p>
+		  <div className="flex flex-col sm:flex-row gap-4 justify-center">
+			<Button
+			  onClick={() => navigate('/subscribe')}
+			  className="bg-yellow-600 hover:bg-yellow-700 text-white text-lg px-8 py-3"
+			>
+			  Start Your Free Trial <ArrowRight className="ml-2" />
+			</Button>
+			<Button
+			  variant="outline"
+			  className="border-gray-600 text-gray-300 hover:bg-gray-800 text-lg px-8 py-3 relative group"
+			  onClick={() => {
+				navigator.clipboard.writeText('support@mapleaurum.com');
+				setTimeout(() => alert('Copied'), 100); // Simple feedback, can be replaced with custom UI
+			  }}
+			>
+			  <span className="group-hover:hidden">Contact Us for More Information</span>
+			  <span className="hidden group-hover:inline">Copy Contact Email</span>
+			</Button>
+		  </div>
+		</section>
       </div> {/* This div closes the "relative z-0 space-y-12" container */}
     </div> {/* This div closes the "relative isolate" container */}
   </PageContainer>
 );
 }
+
+
