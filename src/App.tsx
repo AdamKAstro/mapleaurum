@@ -18,7 +18,7 @@ import { ResetPasswordPage } from './pages/reset-password';
 import { OnboardingPage } from './pages/onboarding';
 import { CompaniesPage } from './pages/companies';
 import { SubscribePage } from './pages/subscribe';
-import { ScatterChartPage } from './pages/scatter-chart';
+import {ScatterChartPage } from './pages/scatter-chart';
 import { FilterPage } from './pages/filter';
 import AdvScoringPage from './pages/scoring-advanced';
 import { ScatterScoreProPage } from './pages/scatter-score-pro';
