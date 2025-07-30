@@ -21,7 +21,7 @@ export const FCF_SCORING_CONFIGS: FCFScoringConfigs = {
     },
     producer: {
         'financials.free_cash_flow': 30,
-        'company-overview.share_price': 15,
+        'share_price': 15,
         'financials.enterprise_value_value': 15,
         'costs.aisc_last_year': 20,
         'production.reserve_life_years': 10,
@@ -170,7 +170,7 @@ export const FCF_METRIC_RATIONALES: Record<CompanyStatus, CompanyTypeRationale> 
                 greenFlags: ["FCF margin over 30%", "Growing FCF", "FCF exceeding capex + dividends"]
             },
             {
-                metricKey: 'company-overview.share_price',
+                metricKey: 'share_price',
                 weight: 15,
                 reasoning: "Share price enables FCF/Price yield calculation. Lower prices relative to FCF indicate better value.",
                 whatToLookFor: "FCF yield over 10% (FCF/Market Cap), undervaluation vs peers",

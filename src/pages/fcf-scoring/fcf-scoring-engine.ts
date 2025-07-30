@@ -10,6 +10,7 @@ interface CalculationContext {
     companyTypeGroups: Record<CompanyStatus, Company[]>;
     marketCapGroups: Record<string, Company[]>;
     metricStats: Map<string, MetricStatistics>;
+	normalizeByShares: Record<CompanyStatus, boolean>;
 }
 
 interface MetricStatistics {
@@ -22,26 +23,57 @@ interface MetricStatistics {
     max: number;
 }
 
+/**
+ * Calculates all statistical benchmarks for a given array of numbers.
+ */
+function calculateStatsForValues(values: number[]): MetricStatistics {
+    const sortedValues = [...values].sort((a, b) => a - b);
+    return {
+        values: sortedValues,
+        mean: calculateMean(sortedValues),
+        median: calculateMedian(sortedValues),
+        stdDev: calculateStdDev(sortedValues),
+        percentiles: calculatePercentiles(sortedValues),
+        min: sortedValues[0],
+        max: sortedValues[sortedValues.length - 1]
+    };
+}
+
+
 export function calculateFCFScores(
     companies: Company[],
     weightConfigs: FCFScoringConfigs,
-    normalizeByShares: Record<CompanyStatus, boolean>,
+    normalizeByShares: Record<CompanyStatus, boolean>, // This is passed in
     accessibleMetrics: readonly MetricConfig[]
 ): FCFScoringResult[] {
     if (!companies || companies.length === 0) return [];
 
     // Create calculation context
-    const context = createCalculationContext(companies);
+    const context = createCalculationContext(companies, normalizeByShares); 
     
-    // Calculate statistics for all metrics
+    // Calculate statistics for all metrics, both globally and for peer groups
     calculateMetricStatistics(context, weightConfigs, normalizeByShares);
     
     // Score each company
-    const results = companies.map(company => 
+    let results = companies.map(company => 
         scoreCompany(company, weightConfigs, normalizeByShares, context, accessibleMetrics)
     );
+
+    // Add a category adjustment bonus/penalty to balance the final scores
+    const categoryAdjustment: Record<CompanyStatus, number> = {
+        explorer: 15,   // Boost explorer scores by 15 points
+        developer: 10,  // Boost developer scores by 10 points
+        producer: 0,    // No adjustment
+        royalty: -5,    // Slight penalty to balance
+        other: 5
+    };
+
+    results.forEach(result => {
+        const adjustment = categoryAdjustment[result.companyType] || 0;
+        result.finalScore = Math.max(0, Math.min(100, result.finalScore + adjustment));
+    });
     
-    // Sort by final score
+    // Sort by final score after adjustments
     results.sort((a, b) => b.finalScore - a.finalScore);
     
     // Add peer group rankings
@@ -50,7 +82,10 @@ export function calculateFCFScores(
     return results;
 }
 
-function createCalculationContext(companies: Company[]): CalculationContext {
+function createCalculationContext(
+    companies: Company[],
+    normalizeByShares: Record<CompanyStatus, boolean> 
+): CalculationContext {
     const companyTypeGroups: Record<CompanyStatus, Company[]> = {
         producer: [],
         developer: [],
@@ -83,7 +118,8 @@ function createCalculationContext(companies: Company[]): CalculationContext {
         companies,
         companyTypeGroups,
         marketCapGroups,
-        metricStats: new Map()
+        metricStats: new Map(), // Added comma here
+        normalizeByShares
     };
 }
 
@@ -97,42 +133,46 @@ function calculateMetricStatistics(
     Object.values(weightConfigs).forEach(config => {
         Object.keys(config).forEach(metric => allMetrics.add(metric));
     });
+
+    // Helper to get potentially normalized value
+    const getNormalizedValue = (company: Company, metricKey: string) => {
+        let value = getMetricValue(company, metricKey);
+        if (shouldNormalizeByShares(metricKey, company.status, normalizeByShares)) {
+            const shares = company.capital_structure?.fully_diluted_shares;
+            if (shares && shares > 0 && value !== null) {
+                value /= shares;
+            }
+        }
+        return value;
+    };
     
-    // Calculate stats for each metric
+    // Calculate stats for each metric, both globally and per-type
     allMetrics.forEach(metricKey => {
-        const values: number[] = [];
+        // 1. Calculate Global Stats
+        const globalValues = context.companies
+            .map(c => getNormalizedValue(c, metricKey))
+            .filter((v): v is number => v !== null && isFinite(v));
         
-        context.companies.forEach(company => {
-            let value = getMetricValue(company, metricKey);
-            
-            // Apply share normalization if needed
-            if (shouldNormalizeByShares(metricKey, company.status, normalizeByShares)) {
-                const shares = company.capital_structure?.fully_diluted_shares;
-                if (shares && shares > 0 && value !== null) {
-                    value = value / shares;
+        if (globalValues.length > 0) {
+            context.metricStats.set(metricKey, calculateStatsForValues(globalValues));
+        }
+
+        // 2. Calculate Per-Company-Type Stats
+        Object.entries(context.companyTypeGroups).forEach(([type, companiesInType]) => {
+            if (companiesInType.length > 0) {
+                const typeValues = companiesInType
+                    .map(c => getNormalizedValue(c, metricKey))
+                    .filter((v): v is number => v !== null && isFinite(v));
+
+                if (typeValues.length > 0) {
+                    const typeStatsKey = `${type}_${metricKey}`;
+                    context.metricStats.set(typeStatsKey, calculateStatsForValues(typeValues));
                 }
             }
-            
-            if (value !== null && !isNaN(value) && isFinite(value)) {
-                values.push(value);
-            }
         });
-        
-        if (values.length > 0) {
-            values.sort((a, b) => a - b);
-            const stats: MetricStatistics = {
-                values,
-                mean: calculateMean(values),
-                median: calculateMedian(values),
-                stdDev: calculateStdDev(values),
-                percentiles: calculatePercentiles(values),
-                min: values[0],
-                max: values[values.length - 1]
-            };
-            context.metricStats.set(metricKey, stats);
-        }
     });
 }
+
 
 function scoreCompany(
     company: Company,
@@ -160,26 +200,28 @@ function scoreCompany(
         let rawValue = getMetricValue(company, metricKey);
         const wasImputed = rawValue === null;
         
-        // Apply share normalization
+        // Apply share normalization to get the value used for scoring
+        let scoringValue = rawValue;
         if (shouldNormalizeByShares(metricKey, companyType, normalizeByShares)) {
             const shares = company.capital_structure?.fully_diluted_shares;
-            if (shares && shares > 0 && rawValue !== null) {
-                rawValue = rawValue / shares;
+            if (shares && shares > 0 && scoringValue !== null) {
+                scoringValue = scoringValue / shares;
             }
         }
         
-        // Handle missing values with conservative imputation
-        if (rawValue === null) {
-            const stats = context.metricStats.get(metricKey);
+        // Handle missing values with conservative imputation (using peer-group stats)
+        if (scoringValue === null) {
+            const peerStatsKey = `${companyType}_${metricKey}`;
+            const stats = context.metricStats.get(peerStatsKey) || context.metricStats.get(metricKey);
+
             if (stats && stats.values.length > 0) {
-                // Conservative imputation: use 25th percentile for positive metrics, 75th for negative
                 if (metricConfig.higherIsBetter) {
-                    rawValue = stats.percentiles[2]; // 25th percentile
+                    scoringValue = stats.percentiles[2]; // 25th percentile
                 } else {
-                    rawValue = stats.percentiles[6]; // 75th percentile
+                    scoringValue = stats.percentiles[6]; // 75th percentile
                 }
             } else {
-                rawValue = 0; // Fallback
+                scoringValue = 0; // Fallback
             }
         } else {
             dataPoints++;
@@ -187,55 +229,50 @@ function scoreCompany(
         
         // Calculate normalized value (0-100 scale)
         const normalizedValue = normalizeMetricValue(
-            rawValue,
+            scoringValue,
             metricKey,
             metricConfig.higherIsBetter,
+            companyType, // Pass company type for peer-relative scoring
             context
         );
         
-        // Calculate weighted score
         const weightedScore = (normalizedValue * weight) / 100;
         totalWeight += weight;
         weightedSum += weightedScore;
         
-        // Track FCF component separately
         if (metricKey === 'financials.free_cash_flow') {
             fcfComponent = normalizedValue;
         }
         
-        // Get peer group comparison
         const peerComparison = getPeerGroupComparison(
             company,
             metricKey,
-            rawValue,
+            scoringValue,
             context
         );
         
         breakdown[metricKey] = {
             metricKey,
             metricLabel: metricConfig.label,
-            rawValue,
+            rawValue: scoringValue, // Store the potentially normalized value
             normalizedValue,
             weight,
             weightedScore,
             contribution: weightedScore,
-            percentileRank: getPercentileRank(rawValue, context.metricStats.get(metricKey)),
+            percentileRank: getPercentileRank(scoringValue, context.metricStats.get(`${companyType}_${metricKey}`)),
             peerGroupComparison: peerComparison,
             wasImputed,
             imputationMethod: wasImputed ? 'conservative_percentile' : undefined
         };
     });
     
-    // Calculate final score
     const finalScore = totalWeight > 0 ? (weightedSum / totalWeight) * 100 : 0;
     
-    // Calculate confidence based on data completeness
     const dataCompleteness = Object.keys(weights).length > 0 
         ? dataPoints / Object.keys(weights).length 
         : 0;
-    const confidenceScore = Math.min(dataCompleteness + 0.2, 1); // Bonus for having data
+    const confidenceScore = Math.min(dataCompleteness + 0.2, 1);
     
-    // Generate insights
     const insights = generateInsights(company, breakdown, companyType);
     
     return {
@@ -248,10 +285,10 @@ function scoreCompany(
         breakdown,
         insights,
         peerGroupRank: {
-            withinType: 0, // Will be set later
+            withinType: 0,
             totalInType: context.companyTypeGroups[companyType].length,
-            withinMarketCap: 0, // Will be set later
-            totalInMarketCap: 0 // Will be set later
+            withinMarketCap: 0,
+            totalInMarketCap: 0
         }
     };
 }
@@ -268,7 +305,6 @@ function shouldNormalizeByShares(
     companyType: CompanyStatus,
     normalizeByShares: Record<CompanyStatus, boolean>
 ): boolean {
-    // Only normalize absolute financial metrics
     const normalizableMetrics = [
         'financials.free_cash_flow',
         'financials.cash_value',
@@ -285,19 +321,45 @@ function normalizeMetricValue(
     value: number,
     metricKey: string,
     higherIsBetter: boolean,
+    companyType: CompanyStatus,
     context: CalculationContext
 ): number {
-    const stats = context.metricStats.get(metricKey);
+    // Prioritize peer-group stats, fallback to global if peer group is too small
+    const peerStatsKey = `${companyType}_${metricKey}`;
+    let stats = context.metricStats.get(peerStatsKey);
+    if (!stats || stats.values.length < 5) {
+        stats = context.metricStats.get(metricKey);
+    }
     if (!stats || stats.values.length === 0) return 50; // Default to middle
-    
-    // Get percentile rank (0-1)
+
+    // SPECIAL LOGIC: Score FCF for non-producers based on burn rate efficiency
+    if (metricKey === 'financials.free_cash_flow' && (companyType === 'explorer' || companyType === 'developer')) {
+        if (value < 0) {
+            // For negative FCF, less negative values are better.
+            const mostNegativeBurn = stats.min;  // e.g., -50M
+            const leastNegativeBurn = stats.max; // e.g., -5M
+            
+            // Handle cases where the whole peer group has positive FCF
+            if (mostNegativeBurn >= 0) return 0;
+            // Handle the case where the least negative burn is actually positive
+            const effectiveMax = leastNegativeBurn > 0 ? 0 : leastNegativeBurn;
+
+            if (mostNegativeBurn === effectiveMax) return 100; // Avoid division by zero
+            
+            // The closer the value is to the max (less negative), the higher the score
+            const burnEfficiency = (value - mostNegativeBurn) / (effectiveMax - mostNegativeBurn);
+            return Math.max(0, Math.min(100, burnEfficiency * 100));
+        } else if (value >= 0) {
+            // If an explorer/developer has positive FCF, that's a perfect score for this metric.
+            return 100;
+        }
+    }
+
+    // --- Standard Normalization Logic ---
     const percentile = getPercentileRank(value, stats);
-    
-    // Invert if lower is better
     const adjustedPercentile = higherIsBetter ? percentile : (1 - percentile);
     
-    // Apply sigmoid transformation for better score distribution
-    const k = 10; // Steepness factor
+    const k = 10; // Steepness factor for sigmoid curve
     const midpoint = 0.5;
     const sigmoid = 1 / (1 + Math.exp(-k * (adjustedPercentile - midpoint)));
     
@@ -307,14 +369,13 @@ function normalizeMetricValue(
 function getPercentileRank(value: number, stats: MetricStatistics | undefined): number {
     if (!stats || stats.values.length === 0) return 0.5;
     
-    // Binary search for position
     let left = 0;
     let right = stats.values.length - 1;
     
     while (left <= right) {
         const mid = Math.floor((left + right) / 2);
         if (stats.values[mid] === value) {
-            return mid / (stats.values.length - 1);
+            return (stats.values.length - 1) > 0 ? mid / (stats.values.length - 1) : 0.5;
         } else if (stats.values[mid] < value) {
             left = mid + 1;
         } else {
@@ -322,14 +383,17 @@ function getPercentileRank(value: number, stats: MetricStatistics | undefined): 
         }
     }
     
-    // Interpolate between positions
     if (right < 0) return 0;
     if (left >= stats.values.length) return 1;
     
     const lowerValue = stats.values[right];
     const upperValue = stats.values[left];
-    const fraction = (value - lowerValue) / (upperValue - lowerValue);
     
+    if (upperValue === lowerValue) {
+        return (stats.values.length - 1) > 0 ? left / (stats.values.length - 1) : 0.5;
+    }
+    
+    const fraction = (value - lowerValue) / (upperValue - lowerValue);
     return (right + fraction) / (stats.values.length - 1);
 }
 
@@ -344,7 +408,13 @@ function getPeerGroupComparison(
     
     peers.forEach(peer => {
         if (peer.company_id !== company.company_id) {
-            const peerValue = getMetricValue(peer, metricKey);
+            let peerValue = getMetricValue(peer, metricKey);
+            if (shouldNormalizeByShares(metricKey, peer.status, context.normalizeByShares)) {
+                 const shares = peer.capital_structure?.fully_diluted_shares;
+                 if (shares && shares > 0 && peerValue !== null) {
+                     peerValue /= shares;
+                 }
+            }
             if (peerValue !== null) {
                 peerValues.push(peerValue);
             }
@@ -355,16 +425,11 @@ function getPeerGroupComparison(
         return { median: value, percentile: 0.5, totalInGroup: 1 };
     }
     
-    peerValues.sort((a, b) => a - b);
-    const median = calculateMedian(peerValues);
-    const percentile = getPercentileRank(value, {
-        values: peerValues,
-        mean: 0, median: 0, stdDev: 0, percentiles: [], min: 0, max: 0
-    });
+    const peerStats = calculateStatsForValues(peerValues);
     
     return {
-        median,
-        percentile,
+        median: peerStats.median,
+        percentile: getPercentileRank(value, peerStats),
         totalInGroup: peerValues.length + 1
     };
 }
@@ -376,63 +441,59 @@ function generateInsights(
 ): FCFInsight[] {
     const insights: FCFInsight[] = [];
     
-    // Check FCF performance
     const fcfBreakdown = breakdown['financials.free_cash_flow'];
     if (fcfBreakdown) {
-        if (fcfBreakdown.normalizedValue > 75) {
+        if (fcfBreakdown.normalizedValue > 80) {
             insights.push({
                 type: 'strength',
-                title: 'Strong Free Cash Flow Generation',
-                description: 'Company ranks in the top quartile for FCF generation among peers.',
+                title: 'Excellent Free Cash Flow',
+                description: `Ranks highly for FCF generation or efficiency within its peer group (${companyType}).`,
                 impactLevel: 'high',
                 relatedMetrics: ['financials.free_cash_flow']
             });
-        } else if (fcfBreakdown.normalizedValue < 25) {
+        } else if (fcfBreakdown.normalizedValue < 20) {
             insights.push({
                 type: 'weakness',
                 title: 'Weak Free Cash Flow',
-                description: 'FCF generation is in the bottom quartile, indicating potential financial stress.',
+                description: `FCF generation or efficiency is in the bottom quintile of its peer group (${companyType}).`,
                 impactLevel: 'high',
                 relatedMetrics: ['financials.free_cash_flow']
             });
         }
     }
     
-    // Check cost efficiency for producers
     if (companyType === 'producer') {
         const aiscBreakdown = breakdown['costs.aisc_last_year'];
-        if (aiscBreakdown && aiscBreakdown.normalizedValue > 70) {
+        if (aiscBreakdown && aiscBreakdown.normalizedValue > 75) {
             insights.push({
                 type: 'strength',
                 title: 'Low-Cost Producer',
-                description: 'AISC in the top 30% provides strong margins and downside protection.',
+                description: 'AISC in the top quartile provides strong margins and downside protection.',
                 impactLevel: 'high',
                 relatedMetrics: ['costs.aisc_last_year']
             });
         }
     }
     
-    // Check dilution risk for explorers
     if (companyType === 'explorer') {
         const sharesBreakdown = breakdown['capital_structure.fully_diluted_shares'];
-        if (sharesBreakdown && sharesBreakdown.normalizedValue > 70) {
+        if (sharesBreakdown && sharesBreakdown.normalizedValue > 75) {
             insights.push({
                 type: 'strength',
                 title: 'Tight Share Structure',
-                description: 'Low share count reduces dilution risk and preserves upside potential.',
+                description: 'Low share count relative to peers reduces dilution risk and preserves upside.',
                 impactLevel: 'medium',
                 relatedMetrics: ['capital_structure.fully_diluted_shares']
             });
         }
     }
     
-    // Data quality insight
     const dataCompleteness = Object.values(breakdown).filter(b => !b.wasImputed).length / Object.values(breakdown).length;
     if (dataCompleteness < 0.7) {
         insights.push({
             type: 'risk',
             title: 'Limited Data Availability',
-            description: 'Over 30% of metrics required imputation, which may affect score reliability.',
+            description: 'A significant number of metrics required imputation, which may affect score reliability.',
             impactLevel: 'medium',
             relatedMetrics: Object.keys(breakdown).filter(k => breakdown[k].wasImputed)
         });
@@ -442,7 +503,6 @@ function generateInsights(
 }
 
 function addPeerGroupRankings(results: FCFScoringResult[], context: CalculationContext): void {
-    // Rank within company type
     const typeGroups = new Map<CompanyStatus, FCFScoringResult[]>();
     results.forEach(result => {
         const type = result.companyType;
@@ -450,14 +510,13 @@ function addPeerGroupRankings(results: FCFScoringResult[], context: CalculationC
         typeGroups.get(type)!.push(result);
     });
     
-    typeGroups.forEach((group, type) => {
+    typeGroups.forEach((group) => {
         group.sort((a, b) => b.finalScore - a.finalScore);
         group.forEach((result, index) => {
             result.peerGroupRank.withinType = index + 1;
         });
     });
     
-    // Rank within market cap groups
     const marketCapGroups = new Map<string, FCFScoringResult[]>();
     results.forEach(result => {
         const marketCap = result.company.financials?.market_cap || 0;
@@ -480,7 +539,7 @@ function addPeerGroupRankings(results: FCFScoringResult[], context: CalculationC
     });
 }
 
-// Utility functions
+// --- Utility functions ---
 function calculateMean(values: number[]): number {
     if (values.length === 0) return 0;
     return values.reduce((sum, val) => sum + val, 0) / values.length;
@@ -488,15 +547,15 @@ function calculateMean(values: number[]): number {
 
 function calculateMedian(values: number[]): number {
     if (values.length === 0) return 0;
-    const sorted = [...values].sort((a, b) => a - b);
-    const mid = Math.floor(sorted.length / 2);
-    return sorted.length % 2 === 0
-        ? (sorted[mid - 1] + sorted[mid]) / 2
-        : sorted[mid];
+    const mid = Math.floor(values.length / 2);
+    // Assumes values are pre-sorted
+    return values.length % 2 === 0
+        ? (values[mid - 1] + values[mid]) / 2
+        : values[mid];
 }
 
 function calculateStdDev(values: number[]): number {
-    if (values.length === 0) return 0;
+    if (values.length < 2) return 0;
     const mean = calculateMean(values);
     const squaredDiffs = values.map(val => Math.pow(val - mean, 2));
     const variance = calculateMean(squaredDiffs);
@@ -505,19 +564,19 @@ function calculateStdDev(values: number[]): number {
 
 function calculatePercentiles(values: number[]): number[] {
     const percentiles: number[] = [];
-    const sorted = [...values].sort((a, b) => a - b);
+    // Assumes values are pre-sorted
     
-    for (let p = 0; p <= 100; p += 12.5) {
-        const index = (p / 100) * (sorted.length - 1);
+    for (let p = 0; p <= 100; p += 12.5) { // 0, 12.5, 25, 37.5, 50, ...
+        const index = (p / 100) * (values.length - 1);
         const lower = Math.floor(index);
         const upper = Math.ceil(index);
-        const weight = index % 1;
         
-        percentiles.push(
-            lower === upper
-                ? sorted[lower]
-                : sorted[lower] * (1 - weight) + sorted[upper] * weight
-        );
+        if (lower === upper) {
+            percentiles.push(values[lower]);
+        } else {
+            const weight = index % 1;
+            percentiles.push(values[lower] * (1 - weight) + values[upper] * weight);
+        }
     }
     
     return percentiles;
