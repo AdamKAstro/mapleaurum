@@ -83,4 +83,14 @@ supabase/.temp/
 *.lock
 
 !supabase/company_mappings.csv 
-!supabase/companiesIDsTickers.json
+!supabase/companiesIDsTickers.json.env
+AllMetrics_MINI_PRD*.txt
+AllMetrics_Overarching_PRD.txt
+BACKUP/
+companies_detailed_view_backup120625.json
+get_companies_paginated_backup120625.json
+screenshots/
+SupabaseSnippetCompanyDetailsRetrievalStatusSharePrice150525.csv
+node_modules/
+dist/
+*.zip

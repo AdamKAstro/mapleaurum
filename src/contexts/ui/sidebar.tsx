@@ -1,4 +1,4 @@
-// src/components/ui/sidebar.tsx
+// src/contexts/ui/sidebar.tsx
 
 import React, { useState } from 'react';
 import { NavLink } from 'react-router-dom';
@@ -14,6 +14,7 @@ import {
   HelpCircle,
   BookOpen,
   Target,
+  DollarSign,
   Gauge,
   ScatterChart as Scatter,
   Award,
@@ -31,7 +32,9 @@ export function Sidebar() {
     { path: '/companies', label: 'Companies', icon: Table2 },
     { path: '/filter', label: 'Filters', icon: Filter },
     { path: '/scatter-chart', label: 'Scatter Chart', icon: Scatter },
-    { path: '/scoring', label: 'Scoring', icon: Calculator },
+    //{ path: '/scoring', label: 'Scoring', icon: Calculator },
+	{ path: '/scoring-advanced', label: 'Advanced Scoring', icon: Calculator },
+	{ path: '/fcf-scoring', label: 'FCF Scoring', icon: Calculator },
     { path: '/scatter-score-pro', label: 'ScatterScore', icon: TrendingUp },
     { path: '/subscribe', label: 'Subscribe', icon: Crown },
   ];

@@ -14,6 +14,7 @@ import {
   BookOpen,
   Target,
   Gauge,
+  DollarSign,
   ScatterChart as Scatter,
   Award,
   TrendingUp,
@@ -30,7 +31,8 @@ export function Sidebar() {
     { path: '/filter', label: 'Filters', icon: Filter },
     { path: '/scatter-chart', label: 'Scatter Chart', icon: Scatter },	
 //    { path: '/scoring', label: 'Scoring', icon: Calculator },
-    { path: '/scoring-advanced', label: 'Scoring', icon: Calculator },	
+    { path: '/scoring-advanced', label: 'Scoring', icon: Calculator },
+    { path: '/fcf-scoring', label: 'FCF Scoring', icon: DollarSign },	
     { path: '/scatter-score-pro', label: 'ScatterScore', icon: TrendingUp },
     { path: '/subscribe', label: 'Subscribe', icon: Crown },
   ];

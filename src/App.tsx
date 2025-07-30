@@ -21,6 +21,7 @@ import { SubscribePage } from './pages/subscribe';
 import {ScatterChartPage } from './pages/scatter-chart';
 import { FilterPage } from './pages/filter';
 import AdvScoringPage from './pages/scoring-advanced';
+import FCFScoringPage from './pages/fcf-scoring/index';
 import { ScatterScoreProPage } from './pages/scatter-score-pro';
 import { HelpLandingPage } from './pages/help/index';
 import { HelpMetricsPage } from './pages/help/metrics';
@@ -129,6 +130,7 @@ function App() {
                     <Route path="/glass-customization" element={<GlassCustomizationPage />} />
                     <Route path="/filter" element={<FilterPage />} />
                     <Route path="/scoring-advanced" element={<AdvScoringPage />} />
+					<Route path="/fcf-scoring" element={<FCFScoringPage />} />
                     <Route path="/scatter-chart" element={<ScatterChartPage />} />
                     <Route path="/scatter-score-pro" element={<ScatterScoreProPage />} />
                     <Route path="/subscribe" element={<SubscribePage />} />
