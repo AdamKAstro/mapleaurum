@@ -34,7 +34,7 @@ export function Sidebar() {
     { path: '/scatter-chart', label: 'Scatter Chart', icon: Scatter },
     //{ path: '/scoring', label: 'Scoring', icon: Calculator },
 	{ path: '/scoring-advanced', label: 'Advanced Scoring', icon: Calculator },
-	{ path: '/fcf-scoring', label: 'FCF Scoring', icon: Calculator },
+	{ path: '/fcf-scoring', label: 'FCF Scoring', icon: DollarSign },
     { path: '/scatter-score-pro', label: 'ScatterScore', icon: TrendingUp },
     { path: '/subscribe', label: 'Subscribe', icon: Crown },
   ];
@@ -46,6 +46,7 @@ export function Sidebar() {
     { path: '/help/scoring', label: 'Scoring Guide', icon: Target },
     { path: '/help/scatter-chart', label: 'Scatter Guide', icon: Scatter },
     { path: '/help/scatter-score-pro', label: 'ScatterScore Guide', icon: Scatter },
+	{ path: '/help/fcf-scoring', label: 'FCF Scoring Guide', icon: DollarSign },
     { path: '/help/tiers', label: 'Subscription Tiers', icon: Award },
     { path: '/help/general', label: 'General & FAQ', icon: BookOpen },
     { path: '/how-to-choose-a-precious-metals-mining-company-to-invest-in', label: 'Investment Guide', icon: BookIcon }, // New item

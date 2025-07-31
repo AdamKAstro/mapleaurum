@@ -1,7 +1,7 @@
 //src/App.tsx
 import React from 'react';
 import { Routes, Route, Navigate, Outlet } from 'react-router-dom';
-import { Helmet, HelmetProvider } from 'react-helmet-async'; // Updated import
+import { Helmet, HelmetProvider } from 'react-helmet-async';
 import { AuthProvider } from './contexts/auth-context';
 import { SubscriptionProvider } from './contexts/subscription-context';
 import { CurrencyProvider } from './contexts/currency-context';
@@ -27,6 +27,7 @@ import { HelpLandingPage } from './pages/help/index';
 import { HelpMetricsPage } from './pages/help/metrics';
 import { HelpFiltersPage } from './pages/help/filters-guide';
 import { HelpScoringPage } from './pages/help/scoring-guide';
+import { HelpFCFScoringPage } from './pages/help/fcf-scoring-guide';
 import { HelpScatterPage } from './pages/help/scatter-guide';
 import { HelpScatterScorePage } from './pages/help/scatter-score-guide';
 import { HelpTiersPage } from './pages/help/tiers';
@@ -36,7 +37,7 @@ import { GlassCustomizationPage } from './pages/glass-customization';
 import CompanyDetailPage from './pages/company-detail';
 import { PromoTrackingPage } from './pages/admin/promo-tracking';
 import { ProfilePage } from './pages/account/profile';
-import { HowToChooseMiningCompanyPage } from './pages/how-to-choose-a-precious-metals-mining-company-to-invest-in'; // 1. IMPORT THE NEW PAGE
+import { HowToChooseMiningCompanyPage } from './pages/how-to-choose-a-precious-metals-mining-company-to-invest-in';
 
 function NotFoundPage() {
   return (
@@ -136,18 +137,19 @@ function App() {
                     <Route path="/subscribe" element={<SubscribePage />} />
                     <Route path="/hook-filtered" element={<HookUIPage useGlobalFavorites />} />
                     <Route path="/company/:id" element={<CompanyDetailPage />} />
-                    <Route path="/help" element={<HelpLandingPage />} /> {/* Moved to FilteredLayout */}
+                    <Route path="/help" element={<HelpLandingPage />} />
                     <Route path="/help/metrics" element={<HelpMetricsPage />} />
                     <Route path="/help/filters" element={<HelpFiltersPage />} />
                     <Route path="/help/scoring" element={<HelpScoringPage />} />
+                    <Route path="/help/fcf-scoring" element={<HelpFCFScoringPage />} />
                     <Route path="/help/scatter-chart" element={<HelpScatterPage />} />
                     <Route path="/help/scatter-score-pro" element={<HelpScatterScorePage />} />
                     <Route path="/help/tiers" element={<HelpTiersPage />} />
                     <Route path="/help/general" element={<HelpGeneralPage />} />
                     <Route path="/admin/send-email" element={<AdminSendEmailPage />} />
                     <Route path="/admin/promo-tracking" element={<PromoTrackingPage />} />
-                    <Route path="/account/profile" element={<ProfilePage />} /> {/* 2. ADD THE NEW ROUTE */}
-                    <Route path="/how-to-choose-a-precious-metals-mining-company-to-invest-in" element={<HowToChooseMiningCompanyPage />} /> {/* 3. ADD THE NEW ROUTE */}
+                    <Route path="/account/profile" element={<ProfilePage />} />
+                    <Route path="/how-to-choose-a-precious-metals-mining-company-to-invest-in" element={<HowToChooseMiningCompanyPage />} />
                   </Route>
                   <Route path="/hook" element={<HookUIPage />} />
                   <Route path="/login" element={<LoginPage />} />

@@ -1,25 +1,25 @@
 //src/pages/help/index.tsx
-
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { PageContainer } from '../../components/ui/page-container';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
-import { ArrowRight, HelpCircle, ScatterChart as Scatter, Book as BookIcon } from 'lucide-react'; // Added BookIcon
+import { ArrowRight, HelpCircle, ScatterChart as Scatter, Book as BookIcon, DollarSign } from 'lucide-react';
 
 const helpTopics = [
   { path: '/help/metrics', title: 'Metric Explanations', description: 'Understand every data point used in the analysis and scoring.', icon: HelpCircle },
   { path: '/help/filters', title: 'Using Filters', description: 'Learn how to effectively select and filter company data.', icon: HelpCircle },
   { path: '/help/scoring', title: 'Using Scoring', description: 'Discover how to rank companies based on custom metric weights.', icon: HelpCircle },
+  { path: '/help/fcf-scoring', title: 'FCF-Focused Scoring', description: 'Master Free Cash Flow-centric analysis with company-type optimized formulas.', icon: DollarSign },
   { path: '/help/scatter-chart', title: 'Using Scatter Chart', description: 'Visualize relationships between different company metrics.', icon: HelpCircle },
   { path: '/help/scatter-score-pro', title: 'Using ScatterScore Pro', description: 'Master advanced multi-dimensional company scoring.', icon: Scatter },
   { path: '/help/tiers', title: 'Subscription Tiers', description: 'Compare plan features and access levels.', icon: HelpCircle },
   { path: '/help/general', title: 'General & FAQ', description: 'Find answers to common questions about data and usage.', icon: HelpCircle },
-  { path: '/how-to-choose-a-precious-metals-mining-company-to-invest-in', title: 'Investment Guide', description: 'Learn how to choose the right precious metals mining company to invest in.', icon: BookIcon }, // New item
+  { path: '/how-to-choose-a-precious-metals-mining-company-to-invest-in', title: 'Investment Guide', description: 'Learn how to choose the right precious metals mining company to invest in.', icon: BookIcon },
 ];
 
 export function HelpLandingPage() {
-  const backgroundImageUrl = '/Background2.jpg'; // Path to your background image in /public
-
+  const backgroundImageUrl = '/Background2.jpg';
+  
   return (
     <PageContainer
       title="Help Center"

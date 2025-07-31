@@ -1,7 +1,29 @@
 // src/components/ui/page-container.tsx
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Home, Table2, LineChart, Filter, Calculator, Crown, FilterX, HelpCircle } from 'lucide-react';
+
+import {
+  Home,
+  Table2,
+  LineChart,
+  Filter,
+  Crown,
+  ChevronLeft,
+  ChevronRight,
+  Calculator,
+  HelpCircle,
+  BookOpen,
+  Target,
+  DollarSign,
+  Gauge,
+  FilterX,
+  ScatterChart as Scatter,
+  Award,
+  TrendingUp,
+  Book as BookIcon,
+} from 'lucide-react';
+
+
 import { Button } from './button';
 import { cn } from '../../lib/utils';
 import { useFilters } from '../../contexts/filter-context';
@@ -18,9 +40,12 @@ interface PageContainerProps {
 
 const navItems = [
   { path: '/companies', label: 'Companies', icon: Table2 },
-  { path: '/scatter-chart', label: 'Analysis', icon: LineChart },
+  //{ path: '/scatter-chart', label: 'Analysis', icon: LineChart },
   { path: '/filter', label: 'Filters', icon: Filter },
-  { path: '/scoring', label: 'Scoring', icon: Calculator },
+  { path: '/scatter-chart', label: 'Scatter Chart', icon: Scatter },
+  { path: '/scoring-advanced', label: 'Scoring', icon: Calculator },
+  { path: '/fcf-scoring', label: 'FCF Scoring', icon: DollarSign },
+  { path: '/scatter-score-pro', label: 'ScatterScore', icon: TrendingUp }, 
   { path: '/subscribe', label: 'Subscribe', icon: Crown },
   { path: '/help', label: 'Help', icon: HelpCircle },
 ];
