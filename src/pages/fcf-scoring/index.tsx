@@ -30,6 +30,7 @@ export function FCFScoringPage() {
     const [isCalculating, setIsCalculating] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [showEducationalSidebar, setShowEducationalSidebar] = useState(false);
+    const [lastFetchedIds, setLastFetchedIds] = useState<string>(''); // Track what we last fetched
     
     // FCF-specific scoring state
     const [activeCompanyType, setActiveCompanyType] = useState<CompanyStatus>('producer');
@@ -42,45 +43,80 @@ export function FCFScoringPage() {
         other: true
     });
 
-    // Fetch company data
+    // Fetch company data - FIXED LOGIC
     useEffect(() => {
         const fetchDataForScoring = async () => {
-            if (overallFilterContextLoading || isDataLoading) return;
+            console.log('[FCF Page] useEffect triggered', {
+                overallFilterContextLoading,
+                isDataLoading,
+                activeCompanyIds: activeCompanyIds?.length || 0,
+                effectiveTotalCount
+            });
 
-            const idsToFetch = activeCompanyIds ? Array.from(new Set(activeCompanyIds)) : [];
-            
-            const currentFetchedIds = new Set(allCompanyDetails.map(c => c.company_id));
-            const needsRefetch = idsToFetch.length !== allCompanyDetails.length ||
-                                 idsToFetch.some(id => !currentFetchedIds.has(id));
-
-            if (idsToFetch.length === 0) {
-                if (allCompanyDetails.length > 0) {
-                    setAllCompanyDetails([]);
-                    setIsDataLoading(false);
-                }
+            // Don't fetch if context is still loading
+            if (overallFilterContextLoading) {
+                console.log('[FCF Page] Skipping fetch - context still loading');
                 return;
             }
 
-            if (!needsRefetch) return;
+            // Don't fetch if already fetching
+            if (isDataLoading) {
+                console.log('[FCF Page] Skipping fetch - already fetching');
+                return;
+            }
 
+            const idsToFetch = activeCompanyIds ? Array.from(new Set(activeCompanyIds)) : [];
+            const currentIdString = idsToFetch.sort().join(',');
+            
+            console.log('[FCF Page] IDs to fetch:', idsToFetch.length, 'Last fetched:', lastFetchedIds);
+
+            // If no companies to fetch, clear the data
+            if (idsToFetch.length === 0) {
+                console.log('[FCF Page] No companies to fetch, clearing data');
+                setAllCompanyDetails([]);
+                setLastFetchedIds('');
+                setError(null);
+                return;
+            }
+
+            // Check if we need to refetch (different IDs)
+            if (currentIdString === lastFetchedIds && allCompanyDetails.length > 0) {
+                console.log('[FCF Page] Data already fetched for these IDs, skipping');
+                return;
+            }
+
+            console.log('[FCF Page] Starting fetch for', idsToFetch.length, 'companies');
             setIsDataLoading(true);
-            setAllCompanyDetails([]);
             setError(null);
 
             try {
                 const data = await fetchCompaniesByIds(idsToFetch);
-                setAllCompanyDetails(Array.isArray(data) ? data : []);
+                const companies = Array.isArray(data) ? data : [];
+                
+                console.log('[FCF Page] Fetched', companies.length, 'companies successfully');
+                setAllCompanyDetails(companies);
+                setLastFetchedIds(currentIdString);
+                
+                // Clear previous scoring results when new data is loaded
+                setScoringResults([]);
+                
             } catch (e: any) {
-                console.error("Failed to fetch company details:", e);
+                console.error("[FCF Page] Failed to fetch company details:", e);
                 setError(e.message || "Failed to load company details for scoring.");
                 setAllCompanyDetails([]);
+                setLastFetchedIds('');
             } finally {
                 setIsDataLoading(false);
             }
         };
 
         fetchDataForScoring();
-    }, [activeCompanyIds, overallFilterContextLoading, fetchCompaniesByIds, allCompanyDetails, isDataLoading]);
+    }, [
+        activeCompanyIds, 
+        overallFilterContextLoading, 
+        fetchCompaniesByIds, 
+        // Removed allCompanyDetails and isDataLoading from deps to prevent loops
+    ]);
 
     const effectiveTier = currentUserTier || 'free';
     const accessibleMetrics = useMemo(() => getAccessibleMetrics(effectiveTier), [effectiveTier]);
@@ -103,27 +139,31 @@ export function FCFScoringPage() {
     }, []);
 
     const handleCalculateScores = useCallback(async () => {
+        console.log('[FCF Page] Starting score calculation');
         setIsCalculating(true);
         setError(null);
         
         try {
+            // Small delay to ensure UI updates
             await new Promise(resolve => setTimeout(resolve, 50));
+            
             if (!allCompanyDetails || allCompanyDetails.length === 0) {
-                throw new Error("No company data available to score. Please select companies on the Companies page.");
+                throw new Error("No company data available to score. Please ensure companies are selected and data is loaded.");
             }
             
-            console.log(`[FCFScoringPage] Starting FCF score calculation for ${allCompanyDetails.length} companies.`);
+            console.log(`[FCF Page] Starting FCF score calculation for ${allCompanyDetails.length} companies.`);
             const results = calculateFCFScores(
                 allCompanyDetails, 
                 metricWeights, 
                 normalizeByShares,
                 accessibleMetrics
             );
+            
             setScoringResults(results);
-            console.log(`[FCFScoringPage] Calculation complete. Generated ${results.length} results.`);
+            console.log(`[FCF Page] Calculation complete. Generated ${results.length} results.`);
 
         } catch (e: any) {
-            console.error("FCF scoring calculation failed:", e);
+            console.error("[FCF Page] FCF scoring calculation failed:", e);
             setError(e.message || "An unexpected error occurred during calculation.");
             setScoringResults([]);
         } finally {
@@ -132,6 +172,16 @@ export function FCFScoringPage() {
     }, [allCompanyDetails, metricWeights, normalizeByShares, accessibleMetrics]);
 
     const isLoading = isDataLoading || isCalculating;
+    
+    // Debug logging for render state
+    console.log('[FCF Page] Render state:', {
+        isDataLoading,
+        isCalculating,
+        companiesLoaded: allCompanyDetails.length,
+        effectiveTotalCount,
+        overallFilterContextLoading,
+        activeCompanyIdsCount: activeCompanyIds?.length || 0
+    });
 
     return (
         <PageContainer 
@@ -159,7 +209,7 @@ export function FCFScoringPage() {
                         onNormalizeBySharesChange={handleNormalizeBySharesChange}
                         onCalculate={handleCalculateScores}
                         isCalculating={isLoading}
-                        companyCount={effectiveTotalCount || 0}
+                        companyCount={allCompanyDetails.length} // Use actual loaded count
                         accessibleMetrics={accessibleMetrics}
                     />
                 </div>
@@ -192,11 +242,28 @@ export function FCFScoringPage() {
                             <div className="text-center py-24 text-muted-foreground">
                                 <p className="text-lg mb-2">Configure settings and click "Calculate FCF Scores" to begin.</p>
                                 <p className="text-sm">The scoring system will analyze companies using FCF-optimized formulas.</p>
-                                {(effectiveTotalCount === 0 && !isDataLoading) && (
-                                    <p className="mt-4 text-amber-500">
-                                        Note: No companies match your current filters or selection.
-                                    </p>
-                                )}
+                                
+                                {/* Enhanced debugging information */}
+                                <div className="mt-6 space-y-2 text-xs">
+                                    {overallFilterContextLoading && (
+                                        <p className="text-amber-500">Loading filter context...</p>
+                                    )}
+                                    {!overallFilterContextLoading && allCompanyDetails.length === 0 && activeCompanyIds && activeCompanyIds.length > 0 && (
+                                        <p className="text-amber-500">
+                                            Loading {activeCompanyIds.length} selected companies...
+                                        </p>
+                                    )}
+                                    {!overallFilterContextLoading && (!activeCompanyIds || activeCompanyIds.length === 0) && (
+                                        <p className="text-amber-500">
+                                            Note: No companies match your current filters or selection.
+                                        </p>
+                                    )}
+                                    {allCompanyDetails.length > 0 && (
+                                        <p className="text-green-500">
+                                            {allCompanyDetails.length} companies loaded and ready for scoring.
+                                        </p>
+                                    )}
+                                </div>
                             </div>
                         )}
                     </div>
