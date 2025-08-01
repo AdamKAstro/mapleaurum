@@ -1,0 +1,181 @@
+Executive Summary
+
+MapleAurum is a sophisticated, professional-grade financial analytics platform designed specifically for investors in the Canadian precious metals mining sector. It moves far beyond simple data aggregation by offering a suite of powerful, interactive tools that enable deep, multi-dimensional analysis.
+
+The platform's core strength lies in its ability to transform raw financial and operational data into actionable insights through unique, customizable scoring engines and visualization tools. The primary goal is to empower retail and sophisticated investors to identify undervalued companies, assess risk, and uncover growth opportunities with a level of precision that rivals institutional-grade software. The business operates on a freemium subscription model, providing basic access while reserving its most powerful features for paying members.
+
+1. Website & Product Analysis
+
+Your platform is not just a data provider; it's an advanced analytical toolkit. Here’s a breakdown of its core functionalities:
+
+    Core Offering: A comprehensive database of publicly traded Canadian precious metals companies, complete with extensive financial, operational, valuation, and resource metrics.
+
+    Advanced Filtering Engine (/filter): A powerful tool that allows users to screen the entire database on dozens of specific criteria, enabling them to create highly targeted watchlists.
+
+    Unique Selling Proposition (USP): The key differentiator for MapleAurum is its suite of proprietary, customizable analysis engines:
+
+        Advanced Scoring Engine (/scoring-advanced): This engine programmatically evaluates companies by dynamically weighting metrics and comparing them against relevant peer groups (Producers, Developers, Explorers, Royalty companies). It provides a "Confidence Score" to ensure data transparency.
+
+        FCF-Focused Scoring Engine (/fcf-scoring): This specialized tool evaluates companies based on their Free Cash Flow—the ultimate indicator of financial health. Crucially, it uses distinct scoring formulas and metric weights for each company type, recognizing that an explorer's cash flow reality is fundamentally different from a producer's.
+
+        ScatterScore Pro (/scatter-score-pro): A revolutionary visualization tool. Instead of plotting simple metrics, it allows users to create weighted composite scores for the X and Y axes. This enables complex comparisons like "Valuation Efficiency vs. Asset Quality," condensing dozens of data points into an intuitive visual chart. It includes professionally designed templates like "Value Hunter" and "Growth Catalyst Seeker" to guide analysis.
+
+    User Engagement & Onboarding (/hook-ui): The platform uses a "Hook UI" with a personalized onboarding flow. New users select their interests, define a risk profile, and are presented with curated company "Playing Cards," making the initial experience engaging and less intimidating.
+
+    In-Depth Educational Content: The site features an extensive help section (/help/*) that not only provides FAQs but also includes detailed guides on how to use each scoring engine and rigorous definitions for every single metric in the database. This commitment to education builds user trust and empowers them to use the tools effectively.
+
+2. Target Audience & Market Positioning
+
+Understanding your audience is the cornerstone of effective marketing.
+
+    Target Audience Profile:
+
+        Primary: Sophisticated retail investors, high-net-worth individuals, and family office analysts who actively manage their own portfolios and specialize in the resource sector.
+
+        Secondary: Financial advisors, junior analysts at boutique firms, and geology professionals with an interest in the financial side of mining.
+
+        Demographics: Likely 35-65+, predominantly male, with a higher-than-average income and a strong appetite for investment risk. Location is likely concentrated in Canada, but also includes global investors interested in the TSX/TSX-V markets.
+
+    Audience Interests: Precious metals (gold, silver), resource stock investing, financial analysis, technical analysis, and macroeconomic trends affecting commodities.
+
+    Audience Pain Points:
+
+        Difficulty comparing mining companies at different lifecycle stages (e.g., valuing an explorer vs. a producer).
+
+        Information overload from company filings and news releases.
+
+        Lack of accessible tools to perform sophisticated, multi-factor analysis without paying for expensive institutional terminals like Bloomberg.
+
+        Data from free sources is often unreliable, incomplete, or not normalized for easy comparison.
+
+    Competitor Analysis:
+
+        Direct Competitor (GoldStockData): This competitor focuses on lists, newsletters, and an analyst's personal picks. MapleAurum's advantage is its dynamic, interactive, and user-driven analytical power. You provide the tools for users to become their own analyst, which is a more empowering and scalable model.
+
+        Indirect Competitors (Kitco, Mining.com): These are primarily news and data portals. They provide the "what" (news, prices), while MapleAurum provides the "so what" and "what if" (analysis, scoring, custom scenarios).
+
+    Unique Selling Proposition (USP) Summary:
+
+        "MapleAurum is the only platform that allows precious metals investors to move beyond static data and build their own institutional-grade analysis. Our dynamic scoring engines adapt to a company's true lifecycle stage—from explorer to producer—while our exclusive ScatterScore tool visualizes complex value propositions in a single chart, giving you an analytical edge that was previously unavailable to the public."
+
+3. Strategic Marketing & Growth Plan
+
+This plan leverages your platform's strengths to attract, engage, and convert your target audience.
+
+Phase 1: Foundation & SEO (Months 0-3)
+
+    Primary Goal: Build brand awareness and establish a strong organic search footprint.
+
+    SEO & Content Strategy:
+
+        Keyword Targeting: Your existing pages are well-optimized with titles, descriptions, and keywords. Expand this by targeting long-tail keywords. Create content around: ****Need far more of these:
+
+            "How to value a junior gold explorer"
+
+            "Best Canadian royalty companies by FCF"
+
+            "Comparing EV/EBITDA for senior gold producers"
+
+        Blog Integration: This is critical. Add a blog section to your site. Use it to:
+
+            Publish weekly case studies using your tools (e.g., "Finding Undervalued Developers with ScatterScore Pro").
+
+            Write deep-dive articles explaining complex metrics (leverage your /help/metrics content).
+
+            Create market commentary that links back to your platform's data.
+
+        Backlink Strategy:
+
+            Reach out to finance and mining bloggers. Offer them a free premium account in exchange for an honest review and a backlink.
+
+            Submit your site to financial directories and resource-focused forums.
+
+    Social Media Presence:
+
+        Twitter (@mapleaurum): Post daily charts, insights, and "Chart of the Day" content generated from ScatterScore Pro and the FCF scoring tools. Run polls to engage the active #fintwit community.
+
+        LinkedIn: Share more in-depth analyses and articles targeting professionals. Position the company as a thought leader in mining analytics.
+
+Phase 2: Lead Generation & Conversion (Months 3-6)
+
+    Primary Goal: Drive qualified leads and convert them into subscribers.
+
+    Conversion Funnel Optimization:
+
+        User Journey: The path is /hero -> explore tools -> hit a feature/data paywall -> /subscribe.
+
+        CTA Optimization: Ensure clear Calls-to-Action on all key pages. For example, on the /companies page, have a banner: "Want to unlock all 50+ metrics? Go Pro." On the scoring pages, have a CTA: "Customize this scoring model with a Premium account."
+
+    Email Marketing:
+
+        Implement an email capture on the blog and homepage (e.g., "Get our weekly analysis of the top-scoring mining stocks").
+
+        Create an automated email sequence for new sign-ups that showcases a different tool each day for a week, educating them on the platform's power.
+
+    Content Strategy:
+
+        Webinars/Events: Host a monthly "Market Pulse" webinar where you use the platform live to analyze current market trends or specific companies requested by the audience. This demonstrates the product's value in real-time.
+
+        Whitepapers: Convert your detailed help guides (like the FCF Scoring Guide) into downloadable PDFs, which can be used as lead magnets to capture email addresses.
+
+Phase 3: Scaling & Authority (Months 6-12)
+
+    Primary Goal: Establish MapleAurum as the go-to authority in Canadian precious metals analytics.
+
+    Advertising:
+
+        Google Ads: Start with a modest budget. Target users searching for your competitors ("GoldStockData alternative") and very specific long-tail keywords ("tsx-v gold explorer financial data").
+
+        LinkedIn Ads: Target users with job titles like "Analyst" or interests like "Mining" and "Investing." Promote your webinars and whitepapers.
+
+    PR & Influencer Partnerships:
+
+        Identify key voices in the mining investment space on YouTube and Twitter. Provide them with data and charts for their content.
+
+        Send press releases to finance and mining publications (e.g., Kitco News, Northern Miner) when you release a major new feature or a significant market analysis report.
+
+    Customer Success:
+
+        Testimonials: Actively solicit testimonials from satisfied users. Feature them prominently on the /hero and /subscribe pages to build social proof.
+
+        Affiliate Marketing: Create an affiliate program for bloggers and influencers to earn a commission on subscriptions they refer, turning your biggest fans into a sales force.
+
+4. Detailed Q&A Checklist
+
+Here are direct answers to your list of questions, based on the provided files.
+
+    Primary Goal of Marketing: Start with Brand Awareness (Phase 1), then shift focus to Subscription Conversions (Phase 2 & 3).
+
+    Unique Selling Proposition (USP): Dynamically-weighted, peer-group-based scoring engines (Advanced & FCF) and multi-dimensional composite score visualization (ScatterScore Pro).
+
+    Competitor Analysis: Main competitor is GoldStockData. Indirect competitors are news portals like Kitco and Mining.com.
+
+    SEO Performance: Solid technical SEO foundation is in place with react-helmet-async for metadata and structured data on all key pages. Focus now needs to be on content creation (blog) and backlink acquisition.
+
+    Content Strategy: Beyond help pages, the strategy must include a blog with case studies, market analysis, and educational deep dives. Also, webinars and downloadable whitepapers.
+
+    Subscription Model Details: A freemium model where advanced metrics and customization of scoring engines are reserved for premium tiers.
+
+    Conversion Funnel: Hero Page -> Tool Exploration -> Paywall -> Subscribe Page.
+
+    Key Pages for Promotion: The scoring pages (/fcf-scoring, /scatter-score-pro) are your strongest assets and should be the focus of promotional content.
+
+    Company Database Size & Data Sources: The database covers Canadian publicly traded companies on exchanges like TSX/TSX-V with precious metals exposure. Data is sourced from SEDAR/EDGAR filings, stock exchange feeds, and financial data platforms. Financials are updated quarterly; stock prices have a 15-20 minute delay.
+
+    User Engagement Features: The "Hook UI" with its PlayingCard component provides a gamified, personalized onboarding experience.
+
+    Brand Voice and Tone: Professional, data-driven, analytical, and educational. It empowers users rather than giving simple recommendations.
+
+    Visual Branding: Consistent use of a dark, professional theme (navy-900) with cyan as the primary accent color.
+
+    Target Keywords: "canadian gold stocks," "tsx mining companies," "free cash flow analysis mining," "undervalued gold explorers," "compare mining company financials."
+
+    Local SEO Needs: The focus is on the Canadian market, but the appeal is global for anyone investing in Canadian-listed companies. SEO should be tailored to both.
+
+    Customer Support Channels: Email is confirmed (support@mapleaurum.com).
+
+    Mobile App Plans: This would be a logical future step, especially for portfolio tracking and alerts, but the web platform should be the focus for now.
+
+    Sitemap Completeness: All key public pages appear to be routed in App.tsx, which is a good sign for sitemap generation. Ensure that dynamic pages (e.g., /company/[id]) are included.
+
+    CTA Optimization: Calls-to-action should be integrated contextually, prompting users to upgrade when they encounter a premium feature or wish to customize an analysis.
