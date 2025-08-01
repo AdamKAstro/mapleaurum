@@ -286,7 +286,7 @@ export const Hero: React.FC<HeroProps> = ({ className }) => {
             >
               <div className="relative">
                 <LazyLoadImage
-                  src="/GeminiMALBig3.webp"
+                  src="/GeminiMALBig3.jpg"
                   alt="Maple Aurum Logo"
                   className="h-12 w-12 rounded-xl object-cover ring-2 ring-yellow-500/20 group-hover:ring-yellow-400/50 transition-all duration-300"
                   effect="blur"
