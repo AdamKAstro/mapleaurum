@@ -1,8 +1,8 @@
 // src/contexts/ui/sidebar.tsx
 
-import React, { useState } from 'react';
-import { NavLink } from 'react-router-dom';
-import {
+//import React, { useState } from 'react';
+//import { NavLink } from 'react-router-dom';
+//import {
   Home,
   Table2,
   LineChart,
@@ -19,12 +19,14 @@ import {
   ScatterChart as Scatter,
   Award,
   TrendingUp,
-  Book as BookIcon, // New icon for the guide
+  Book as BookIcon,
 } from 'lucide-react';
+
+
 import { motion } from 'framer-motion';
 import { cn } from '../../lib/utils';
 
-export function Sidebar() {
+//export function Sidebar() {
   const [isCollapsed, setIsCollapsed] = useState(false);
 
   const mainNavItems = [
@@ -49,7 +51,7 @@ export function Sidebar() {
 	{ path: '/help/fcf-scoring', label: 'FCF Scoring Guide', icon: DollarSign },
     { path: '/help/tiers', label: 'Subscription Tiers', icon: Award },
     { path: '/help/general', label: 'General & FAQ', icon: BookOpen },
-    { path: '/how-to-choose-a-precious-metals-mining-company-to-invest-in', label: 'Investment Guide', icon: BookIcon }, // New item
+    { path: '/blog', label: 'Blog - Investment Guide', icon: Book }, // New item
   ];
 
   return (

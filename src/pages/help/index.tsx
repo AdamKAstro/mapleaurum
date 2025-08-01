@@ -14,7 +14,7 @@ const helpTopics = [
   { path: '/help/scatter-score-pro', title: 'Using ScatterScore Pro', description: 'Master advanced multi-dimensional company scoring.', icon: Scatter },
   { path: '/help/tiers', title: 'Subscription Tiers', description: 'Compare plan features and access levels.', icon: HelpCircle },
   { path: '/help/general', title: 'General & FAQ', description: 'Find answers to common questions about data and usage.', icon: HelpCircle },
-  { path: '/how-to-choose-a-precious-metals-mining-company-to-invest-in', title: 'Investment Guide', description: 'Learn how to choose the right precious metals mining company to invest in.', icon: BookIcon },
+  { path: '/blog', title: 'Investment Guides Blog', description: 'Explore our blog for in-depth investment guides and market analysis.', icon: BookIcon },
 ];
 
 export function HelpLandingPage() {

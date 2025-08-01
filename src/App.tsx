@@ -37,7 +37,9 @@ import { GlassCustomizationPage } from './pages/glass-customization';
 import CompanyDetailPage from './pages/company-detail';
 import { PromoTrackingPage } from './pages/admin/promo-tracking';
 import { ProfilePage } from './pages/account/profile';
-import { HowToChooseMiningCompanyPage } from './pages/how-to-choose-a-precious-metals-mining-company-to-invest-in';
+import { HowToChooseMiningCompanyBlogPage } from './pages/blog/how-to-choose-a-precious-metals-mining-company-to-invest-in';
+import { BlogLandingPage } from './pages/blog/index';
+
 
 function NotFoundPage() {
   return (
@@ -757,8 +759,12 @@ function App() {
                     <Route path="/admin/send-email" element={<AdminSendEmailPage />} />
                     <Route path="/admin/promo-tracking" element={<PromoTrackingPage />} />
                     <Route path="/account/profile" element={<ProfilePage />} />
+					<Route
+					  path="/blog"
+					  element={<BlogLandingPage />}
+					/>					
                     <Route
-                      path="/how-to-choose-a-precious-metals-mining-company-to-invest-in"
+                      path="/blog/how-to-choose-a-precious-metals-mining-company-to-invest-in"
                       element={
                         <>
                           <Helmet>
@@ -781,14 +787,14 @@ function App() {
                                   {
                                     '@type': 'ListItem',
                                     position: 2,
-                                    name: 'Investment Guide',
+                                    name: 'Blog - Investment Guide',
                                     item: 'https://mapleaurum.com/how-to-choose-a-precious-metals-mining-company-to-invest-in',
                                   },
                                 ],
                               })}
                             </script>
                           </Helmet>
-                          <HowToChooseMiningCompanyPage />
+                          <HowToChooseMiningCompanyBlogPage />
                         </>
                       }
                     />

@@ -12,6 +12,7 @@ import {
   Calculator,
   HelpCircle,
   BookOpen,
+  Book as BookIcon,
   Target,
   Gauge,
   DollarSign,
@@ -47,6 +48,7 @@ export function Sidebar() {
 	{ path: '/help/fcf-scoring', label: 'FCF Scoring Guide', icon: DollarSign },
     { path: '/help/tiers', label: 'Subscription Tiers', icon: Award },
     { path: '/help/general', label: 'General & FAQ', icon: BookOpen },
+    { path: '/blog', label: 'Blog / Guide', icon: BookIcon },
   ];
 
   return (
