@@ -1,7 +1,7 @@
-// src/components/ui/hero.tsx  GROK
+// src/components/ui/hero.tsx
 
 import React, { useState, useRef, useMemo, memo, useEffect } from 'react';
-import { ArrowRight, Crown, TrendingUp, Shield, Sparkles, ChevronDown, Check, Zap, Target, Gem, Rocket, Play, Pause, Volume2, VolumeX } from 'lucide-react';
+import { ArrowRight, Crown, TrendingUp, Shield, Sparkles, ChevronDown, Check, Zap, Target, Gem, Rocket, Play, Pause, Volume2, VolumeX, BarChart2, PieChart, LineChart } from 'lucide-react';
 import { motion, useScroll, useTransform, AnimatePresence, useInView } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { LazyLoadImage } from 'react-lazy-load-image-component';
@@ -19,11 +19,20 @@ interface Template {
   metrics: string[];
 }
 
+// New interface for Scoring Engine cards
+interface ScoringEngine {
+  id: string;
+  name: string;
+  description: string;
+  icon: React.ElementType;
+  color: string;
+}
+
 interface HeroProps {
   className?: string;
 }
 
-// Button component with enhanced accessibility and micro-interactions
+// Button component (unchanged)
 const Button = memo(({ children, className = '', size = 'default', variant = 'default', ...props }: {
   children: React.ReactNode;
   className?: string;
@@ -57,7 +66,7 @@ const Button = memo(({ children, className = '', size = 'default', variant = 'de
 // Utility for className combination
 const cn = (...classes: (string | boolean | undefined)[]): string => classes.filter(Boolean).join(' ');
 
-// Template data with emotional hooks
+// Template data (unchanged)
 const templates: Template[] = [
   {
     id: 'value-hunter',
@@ -111,7 +120,32 @@ const templates: Template[] = [
   },
 ];
 
-// Demo company data
+// New Scoring Engine data
+const scoringEngines: ScoringEngine[] = [
+  {
+    id: 'scoring-advanced',
+    name: 'Advanced Scoring Engine',
+    description: 'Dynamically weights metrics to deliver a Confidence Score, comparing companies against peers.',
+    icon: BarChart2,
+    color: 'from-cyan-500 to-blue-600',
+  },
+  {
+    id: 'fcf-scoring',
+    name: 'FCF-Focused Scoring',
+    description: 'Evaluates financial health through Free Cash Flow with tailored formulas for each company type.',
+    icon: PieChart,
+    color: 'from-green-500 to-emerald-600',
+  },
+  {
+    id: 'scatter-score-pro',
+    name: 'ScatterScore Pro',
+    description: 'Visualize complex comparisons with weighted composite scores, featuring templates like Value Hunter.',
+    icon: LineChart,
+    color: 'from-yellow-500 to-amber-600',
+  },
+];
+
+// Demo company data (unchanged)
 const demoCompanies = [
   { id: 1, name: 'Company A', x: 20, y: 70, size: 40, value: 'Low EV/oz, High Cash' },
   { id: 2, name: 'Company B', x: 60, y: 40, size: 60, value: 'Balanced metrics' },
@@ -176,7 +210,7 @@ export const Hero: React.FC<HeroProps> = ({ className }) => {
     }
   };
 
-  // Memoize template buttons to prevent re-renders
+  // Memoize template buttons
   const templateButtons = useMemo(
     () =>
       templates.map((template) => (
@@ -223,7 +257,7 @@ export const Hero: React.FC<HeroProps> = ({ className }) => {
                         ? 'radial-gradient(circle, rgba(34, 197, 94, 0.15) 0%, transparent 70%)'
                         : 'radial-gradient(circle, rgba(59, 130, 246, 0.15) 0%, transparent 70%)',
                   filter: 'blur(1px)',
-                  willChange: 'transform, opacity', // Optimize for GPU
+                  willChange: 'transform, opacity',
                 }}
                 animate={{
                   y: [0, -30, 0],
@@ -310,16 +344,16 @@ export const Hero: React.FC<HeroProps> = ({ className }) => {
           aria-label="Hero Section"
         >
           <div className="mx-auto max-w-7xl w-full text-center">
-            {/* Main Headline - Moved Higher */}
+            {/* Updated Headline */}
             <motion.h1
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8 }}
               className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-white mb-4 tracking-tight leading-tight"
             >
-              Uncover Winning Mining Stocks
+              Precision Analytics for
               <span className="block mt-2 bg-gradient-to-r from-yellow-400 via-amber-400 to-yellow-500 bg-clip-text text-transparent animate-gradient">
-                with One Click
+                Precious Metals Investing
               </span>
             </motion.h1>
 
@@ -329,10 +363,10 @@ export const Hero: React.FC<HeroProps> = ({ className }) => {
               transition={{ duration: 0.8, delay: 0.2 }}
               className="text-lg sm:text-xl md:text-2xl text-gray-300 max-w-3xl mx-auto mb-8 font-light"
             >
-              Analyze Canadian precious metals companies like a pro—find value, growth, and stability effortlessly.
+              Transform raw data into actionable insights with MapleAurum’s proprietary scoring engines and interactive tools, rivaling institutional-grade software.
             </motion.p>
 
-            {/* Video Container with Glassmorphism */}
+            {/* Video Container (unchanged) */}
             <motion.div
               ref={videoContainerRef}
               initial={{ opacity: 0, scale: 0.9, y: 50 }}
@@ -340,16 +374,10 @@ export const Hero: React.FC<HeroProps> = ({ className }) => {
               transition={{ duration: 1, delay: 0.3 }}
               className="relative max-w-4xl mx-auto mb-10"
             >
-              {/* Glassmorphism Container */}
               <div className="relative rounded-3xl overflow-hidden backdrop-blur-sm bg-white/5 border border-white/10 shadow-2xl">
-                {/* Animated Glow Effect */}
                 <div className="absolute -inset-1 bg-gradient-to-r from-yellow-500/20 via-amber-500/20 to-yellow-500/20 rounded-3xl blur-2xl animate-pulse" />
-
-                {/* Inner Container */}
                 <div className="relative p-4 sm:p-6">
-                  {/* Video Element */}
                   <div className="relative rounded-2xl overflow-hidden bg-black/50">
-                    {/* Placeholder Image - shows while video loads */}
                     <AnimatePresence>
                       {!isVideoReady && (
                         <motion.div
@@ -367,7 +395,6 @@ export const Hero: React.FC<HeroProps> = ({ className }) => {
                             width={1200}
                             height={675}
                           />
-                          {/* Loading spinner overlay */}
                           {imageLoaded && (
                             <div className="absolute inset-0 flex items-center justify-center bg-black/20">
                               <motion.div
@@ -405,10 +432,8 @@ export const Hero: React.FC<HeroProps> = ({ className }) => {
                       Your browser does not support the video tag.
                     </video>
 
-                    {/* Video Overlay Gradient */}
                     <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent pointer-events-none" />
 
-                    {/* Video Controls */}
                     <AnimatePresence>
                       {hasVideoLoaded && isVideoReady && (
                         <motion.div
@@ -434,20 +459,18 @@ export const Hero: React.FC<HeroProps> = ({ className }) => {
                             </button>
                           </div>
                           <div className="text-xs text-white/70 bg-black/50 backdrop-blur-sm px-3 py-1 rounded-full">
-                            Experience Maple Aurum
+                            Experience MapleAurum
                           </div>
                         </motion.div>
                       )}
                     </AnimatePresence>
                   </div>
 
-                  {/* Decorative Elements */}
                   <div className="absolute -top-20 -left-20 w-40 h-40 bg-yellow-500/20 rounded-full blur-3xl" />
                   <div className="absolute -bottom-20 -right-20 w-40 h-40 bg-amber-500/20 rounded-full blur-3xl" />
                 </div>
               </div>
 
-              {/* Floating Particles Around Video */}
               {[...Array(4)].map((_, i) => (
                 <motion.div
                   key={i}
@@ -471,7 +494,7 @@ export const Hero: React.FC<HeroProps> = ({ className }) => {
               ))}
             </motion.div>
 
-            {/* CTA Buttons */}
+            {/* Updated CTA Buttons */}
             <motion.div
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
@@ -482,24 +505,24 @@ export const Hero: React.FC<HeroProps> = ({ className }) => {
                 size="lg"
                 className="text-lg px-10 py-6 shadow-2xl transform hover:scale-110 transition-all duration-300 bg-gradient-to-r from-cyan-500 to-purple-600 hover:from-cyan-400 hover:to-purple-500"
                 onClick={() => navigate('/hook')}
-                aria-label="Get Personalized Picks"
+                aria-label="Start Free Analysis"
               >
                 <Rocket className="h-6 w-6 mr-2" />
-                Get Personalized Picks
+                Start Free Analysis
               </Button>
 
               <Button
                 size="lg"
                 className="text-lg px-10 py-6 shadow-2xl transform hover:scale-110 transition-all duration-300"
                 onClick={() => navigate('/scatter-score-pro')}
-                aria-label="Explore Templates"
+                aria-label="Explore Premium Tools"
               >
                 <Zap className="h-6 w-6 mr-2" />
-                Explore Templates
+                Explore Premium Tools
               </Button>
             </motion.div>
 
-            <p className="text-sm text-yellow-400/80 animate-pulse mb-8">Limited free usage—start now!</p>
+            <p className="text-sm text-yellow-400/80 animate-pulse mb-8">Free access with premium features for subscribers!</p>
 
             <motion.div
               initial={{ opacity: 0 }}
@@ -533,7 +556,71 @@ export const Hero: React.FC<HeroProps> = ({ className }) => {
         </motion.div>
       </section>
 
-      {/* Section 2: Choose Your Path */}
+      {/* New Section: Scoring Engines Spotlight */}
+      <section className="relative py-32 bg-gradient-to-b from-navy-900 to-navy-800 overflow-hidden">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <motion.div
+            initial={{ opacity: 0, y: 50 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.8 }}
+            className="text-center mb-16"
+          >
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-6">
+              Proprietary Analytics
+              <span className="block mt-2 bg-gradient-to-r from-yellow-400 to-amber-400 bg-clip-text text-transparent">
+                Powering Your Success
+              </span>
+            </h2>
+            <p className="text-lg sm:text-xl text-gray-300 max-w-3xl mx-auto">
+              MapleAurum’s unique scoring engines transform complex data into clear, actionable insights for investors of all levels.
+            </p>
+          </motion.div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {scoringEngines.map((engine, index) => (
+              <motion.article
+                key={engine.id}
+                initial={{ opacity: 0, y: 50 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.5, delay: index * 0.1 }}
+                whileHover={{ y: -10, scale: 1.02 }}
+                className="group"
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => e.key === 'Enter' && navigate(`/${engine.id}`)}
+                aria-label={`Learn more about ${engine.name}`}
+              >
+                <div className="relative bg-navy-800/50 backdrop-blur-sm rounded-2xl p-8 border border-navy-700 hover:border-yellow-500/50 transition-all duration-300 h-full">
+                  <div className={cn('absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-20 transition-opacity duration-300', `bg-gradient-to-r ${engine.color}/20`)} />
+                  <motion.div
+                    whileHover={{ rotate: 360 }}
+                    transition={{ duration: 0.5 }}
+                    className={cn('inline-flex p-4 rounded-2xl mb-6', 'bg-gradient-to-br', engine.color)}
+                  >
+                    <engine.icon className="h-8 w-8 text-white" />
+                  </motion.div>
+                  <h3 className="text-xl sm:text-2xl font-bold text-white mb-2">{engine.name}</h3>
+                  <p className="text-gray-400 mb-6">{engine.description}</p>
+                  <Button
+                    variant="ghost"
+                    className="w-full bg-white/5 hover:bg-white/10 border border-white/10"
+                    onClick={() => navigate(`/${engine.id}`)}
+                  >
+                    <span className="bg-gradient-to-r from-yellow-400 to-amber-400 bg-clip-text text-transparent font-medium">
+                      Learn More
+                    </span>
+                    <ArrowRight className="h-4 w-4 ml-2 text-yellow-400" />
+                  </Button>
+                </div>
+              </motion.article>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Section 2: Choose Your Path (unchanged) */}
       <section className="relative py-32 bg-gradient-to-b from-navy-900 to-navy-800 overflow-hidden">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <motion.div
@@ -655,7 +742,7 @@ export const Hero: React.FC<HeroProps> = ({ className }) => {
         </div>
       </section>
 
-      {/* Section 3: Problem & Solution */}
+      {/* Section 3: Problem & Solution (updated messaging) */}
       <section className="relative py-32 bg-gradient-to-b from-navy-800 to-navy-900 overflow-hidden">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <motion.div
@@ -666,14 +753,13 @@ export const Hero: React.FC<HeroProps> = ({ className }) => {
             className="text-center mb-16"
           >
             <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-6">
-              Mining Stocks Are Complex.
+              Precious Metals Investing
               <span className="block mt-2 bg-gradient-to-r from-yellow-400 to-amber-400 bg-clip-text text-transparent">
-                We Make It Simple.
+                Simplified with Precision
               </span>
             </h2>
             <p className="text-lg sm:text-xl text-gray-300 max-w-3xl mx-auto">
-              Sifting through reserves, cash flows, and valuations is time-consuming and confusing.
-              ScatterScore™ turns complex data into clear, actionable insights with pre-built templates for every investor.
+              Navigating reserves, valuations, and cash flows is complex. MapleAurum’s proprietary tools deliver institutional-grade insights instantly.
             </p>
           </motion.div>
 
@@ -693,7 +779,7 @@ export const Hero: React.FC<HeroProps> = ({ className }) => {
                     <div className="text-center">
                       <div className="text-6xl mb-4">📊📈📉🤯</div>
                       <h3 className="text-xl sm:text-2xl font-bold text-red-400 mb-2">The Old Way</h3>
-                      <p className="text-gray-400">Hours of complex analysis</p>
+                      <p className="text-gray-400">Hours of manual data crunching</p>
                     </div>
                   </div>
                   <div className="absolute inset-0 opacity-20">
@@ -728,12 +814,12 @@ export const Hero: React.FC<HeroProps> = ({ className }) => {
                 viewport={{ once: true }}
                 transition={{ duration: 0.8 }}
                 className="relative"
-                aria-label="The ScatterScore Way"
+                aria-label="The MapleAurum Way"
               >
                 <div className="relative h-96 rounded-2xl overflow-hidden bg-gradient-to-br from-green-900/20 to-emerald-800/20">
                   <LazyLoadImage
                     src="/ScatterScore1b.webp"
-                    alt="ScatterScore Clarity"
+                    alt="MapleAurum Clarity"
                     className="absolute inset-0 w-full h-full object-cover opacity-80"
                     effect="blur"
                     width={640}
@@ -742,8 +828,8 @@ export const Hero: React.FC<HeroProps> = ({ className }) => {
                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
                   <div className="absolute bottom-0 left-0 right-0 p-8 text-center">
                     <div className="text-6xl mb-4">✨</div>
-                    <h3 className="text-xl sm:text-2xl font-bold text-green-400 mb-2">The ScatterScore™ Way</h3>
-                    <p className="text-gray-300">Instant visual insights</p>
+                    <h3 className="text-xl sm:text-2xl font-bold text-green-400 mb-2">The MapleAurum Way</h3>
+                    <p className="text-gray-300">Instant, actionable insights</p>
                   </div>
                 </div>
               </motion.article>
@@ -752,7 +838,7 @@ export const Hero: React.FC<HeroProps> = ({ className }) => {
         </div>
       </section>
 
-      {/* Section 4: Interactive Demo */}
+      {/* Section 4: Interactive Demo (unchanged) */}
       <section className="relative py-32 bg-gradient-to-b from-navy-800 to-navy-900">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <motion.div
@@ -900,7 +986,7 @@ export const Hero: React.FC<HeroProps> = ({ className }) => {
         </div>
       </section>
 
-      {/* Section 5: Template Spotlight */}
+      {/* Section 5: Template Spotlight (unchanged) */}
       <section className="relative py-32 bg-gradient-to-b from-navy-900 via-navy-800 to-navy-900">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <motion.div
@@ -975,7 +1061,7 @@ export const Hero: React.FC<HeroProps> = ({ className }) => {
         </div>
       </section>
 
-      {/* Section 6: ScatterScore Power */}
+      {/* Section 6: ScatterScore Power (updated messaging) */}
       <section className="relative py-32 bg-gradient-to-b from-navy-900 to-navy-800">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <motion.div
@@ -985,9 +1071,9 @@ export const Hero: React.FC<HeroProps> = ({ className }) => {
             transition={{ duration: 0.8 }}
             className="text-center mb-16"
           >
-            <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-6">Compare and Rank with Precision</h2>
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-6">Unmatched Analytical Precision</h2>
             <p className="text-lg sm:text-xl text-gray-300 max-w-3xl mx-auto">
-              Harness the power of ScatterScore™ to compare and rank any number of companies using over 50 key metrics simultaneously. From valuation ratios to operational efficiency, uncover hidden opportunities with unparalleled precision and speed.
+              Leverage MapleAurum’s ScatterScore™ to analyze Canadian precious metals companies with over 50 metrics, uncovering opportunities with speed and clarity.
             </p>
           </motion.div>
 
@@ -1019,7 +1105,7 @@ export const Hero: React.FC<HeroProps> = ({ className }) => {
         </div>
       </section>
 
-      {/* Section 7: Final CTA */}
+      {/* Section 7: Final CTA (updated messaging) */}
       <section className="relative py-32 bg-gradient-to-b from-navy-800 to-navy-900 overflow-hidden">
         <div className="absolute inset-0">
           <div className="absolute inset-0 bg-gradient-to-r from-yellow-500/10 via-transparent to-amber-500/10" />
@@ -1053,9 +1139,9 @@ export const Hero: React.FC<HeroProps> = ({ className }) => {
             viewport={{ once: true }}
             transition={{ duration: 0.8 }}
           >
-            <h2 className="text-4xl sm:text-5xl md:text-6xl font-bold text-white mb-6">Start Finding Winners Today</h2>
+            <h2 className="text-4xl sm:text-5xl md:text-6xl font-bold text-white mb-6">Unlock Winning Investments Today</h2>
             <p className="text-lg sm:text-xl text-gray-300 mb-8 max-w-2xl mx-auto">
-              Access ScatterScore™ for free and unlock powerful mining stock insights. Upgrade to Pro for unlimited analysis.
+              Start with free access to MapleAurum’s powerful analytics. Upgrade to Pro for unlimited insights and premium tools.
             </p>
 
             <div className="flex flex-col sm:flex-row items-center justify-center gap-6 mb-8">
@@ -1082,7 +1168,7 @@ export const Hero: React.FC<HeroProps> = ({ className }) => {
 
             <div className="bg-black/50 backdrop-blur-sm rounded-full px-6 py-3 inline-flex items-center gap-2 text-yellow-400 mb-8">
               <Zap className="h-5 w-5 animate-pulse" />
-              <span className="font-medium">Free view lacks Premium valuation metrics</span>
+              <span className="font-medium">Free plan includes basic access; Pro unlocks premium analytics</span>
             </div>
 
             <div className="flex flex-wrap items-center justify-center gap-6 text-sm text-gray-400">
@@ -1103,14 +1189,14 @@ export const Hero: React.FC<HeroProps> = ({ className }) => {
         </div>
       </section>
 
-      {/* Sticky CTA Bar */}
+      {/* Sticky CTA Bar (updated messaging) */}
       <motion.div
         initial={{ opacity: 0, y: 100 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, delay: 1 }}
         className="fixed bottom-4 left-1/2 -translate-x-1/2 bg-black/80 backdrop-blur-sm rounded-full px-6 py-3 flex items-center gap-4 z-50"
       >
-        <span className="text-white text-sm font-medium">Ready to find winners?</span>
+        <span className="text-white text-sm font-medium">Ready to unlock premium insights?</span>
         <Button
           size="sm"
           className="bg-gradient-to-r from-yellow-500 to-amber-600 hover:from-yellow-400 hover:to-amber-500"

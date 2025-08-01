@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { LazyLoadComponent } from 'react-lazy-load-image-component';
 import { toast } from 'react-hot-toast';
 import { getPaginatedCompanies } from '../../../lib/supabase';
-import { Settings, Sparkles, TrendingUp, Trophy, Zap, Target, ChevronRight, RefreshCw, Home, ArrowRight, AlertCircle } from 'lucide-react';
+import { Settings, Sparkles, TrendingUp, Trophy, Zap, Target, ChevronRight, ChevronDown,  RefreshCw, Home, ArrowRight, AlertCircle, Crown, Shield, Check, Gem, Rocket, Play, Pause, Volume2, VolumeX, PieChart, BarChart2, LineChart } from 'lucide-react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Button } from '../../../components/ui/button';
 import { LoadingIndicator } from '../../../components/ui/loading-indicator';
@@ -33,6 +33,15 @@ const debugLog = (message: string, data?: any) => {
 
 // Types
 type OnboardingStage = 'welcome' | 'interestSelection' | 'riskProfile' | 'preview' | 'showcase';
+
+// New type for Scoring Engine preview
+interface ScoringEngine {
+  id: string;
+  name: string;
+  description: string;
+  icon: React.ReactNode;
+}
+
 
 interface ProgressStage {
   id: OnboardingStage;
@@ -154,14 +163,38 @@ const EnhancedProgressIndicator: React.FC<{ currentStage: OnboardingStage; setCu
   );
 };
 
+
+
+
 // Main component
 const HookUIPage: React.FC = () => {
   const navigate = useNavigate();
   const filters = useOptionalFilters();
 
+  // Scoring Engines data
+  const scoringEngines: ScoringEngine[] = [
+    {
+      id: 'advanced-scoring',
+      name: 'Advanced Scoring Engine',
+      description: 'Dynamically weights metrics to deliver a Confidence Score, comparing companies against peers.',
+      icon: <BarChart2 className="w-5 h-5" />,
+    },
+    {
+      id: 'fcf-scoring',
+      name: 'FCF-Focused Scoring',
+      description: 'Evaluates financial health through Free Cash Flow with tailored formulas for each company type.',
+      icon: <PieChart className="w-5 h-5" />,
+    },
+    {
+      id: 'scatter-score-pro',
+      name: 'ScatterScore Pro',
+      description: 'Visualizes complex comparisons with weighted composite scores, featuring templates like Value Hunter.',
+      icon: <LineChart className="w-5 h-5" />,
+    },
+  ];
+
   // Use global favorites if available, otherwise use local state
   const [localFavorites, setLocalFavorites] = useState<Set<number>>(() => {
-    // Load from localStorage if no global context
     if (!filters) {
       const saved = localStorage.getItem('hookui_favorites');
       if (saved) {
@@ -184,11 +217,9 @@ const HookUIPage: React.FC = () => {
 
   const toggleFavorite = (companyId: number) => {
     if (filters) {
-      // Use global toggle
       filters.toggleCompanySelection(companyId);
       toast.success(filters.isCompanySelected(companyId) ? 'Removed from favorites' : 'Added to favorites');
     } else {
-      // Use local toggle
       setLocalFavorites(prev => {
         const newSet = new Set(prev);
         if (newSet.has(companyId)) {
@@ -227,7 +258,7 @@ const HookUIPage: React.FC = () => {
   ]);
   const triggerConfetti = useConfetti();
 
-  // Robust fetch and process companies function
+  // Robust fetch and process companies function (unchanged)
   const fetchAndProcessCompanies = useCallback(
     async () => {
       setIsLoading(true);
@@ -341,7 +372,7 @@ const HookUIPage: React.FC = () => {
     [selectedInterestIds, riskProfile]
   );
 
-  // Enhanced sorting and filtering functions
+  // Enhanced sorting and filtering functions (unchanged)
   const enhancedSortFunctions = {
     byMatchScore: () => {
       setCompaniesToShow((prev) => {
@@ -454,7 +485,7 @@ const HookUIPage: React.FC = () => {
     }
   };
 
-  // Effect to trigger company fetching when reaching showcase
+  // Effect to trigger company fetching when reaching showcase (unchanged)
   useEffect(() => {
     if (currentStage === 'showcase' && selectedInterestIds.length > 0 && riskProfile) {
       debugLog('Showcase stage reached, triggering company fetch');
@@ -463,7 +494,7 @@ const HookUIPage: React.FC = () => {
     }
   }, [currentStage, fetchAndProcessCompanies]);
 
-  // Achievement handling
+  // Achievement handling (unchanged)
   const handleAchievement = useCallback(
     (achievementId: string) => {
       setAchievements((prev) =>
@@ -502,7 +533,7 @@ const HookUIPage: React.FC = () => {
     [achievements, triggerConfetti]
   );
 
-  // Event handlers
+  // Event handlers (unchanged)
   const handleInterestsSelected = useCallback(
     (profiles: { id: string; weight: number }[]) => {
       debugLog('Interests selected by user', { count: profiles.length, profiles });
@@ -579,7 +610,7 @@ const HookUIPage: React.FC = () => {
     }
   }, [currentStage, companiesToShow, checkPerfectMatch]);
 
-  // Enhanced showcase rendering with robust error handling
+  // Enhanced showcase rendering with scoring engine tooltip
   const renderEnhancedShowcase = () => (
     <motion.section
       initial={{ opacity: 0, y: 20 }}
@@ -596,7 +627,7 @@ const HookUIPage: React.FC = () => {
         <Settings size={20} />
       </Button>
 
-      {/* Configuration Panel */}
+      {/* Configuration Panel with Scoring Engine Info */}
       <AnimatePresence>
         {isConfigPanelOpen && (
           <motion.div
@@ -616,6 +647,33 @@ const HookUIPage: React.FC = () => {
               >
                 ✕
               </Button>
+            </div>
+
+            {/* Scoring Engine Overview */}
+            <div className="mb-6">
+              <h4 className="text-lg font-semibold text-yellow-400 mb-3 flex items-center gap-2">
+                <Info className="w-5 h-5" />
+                Powered by Proprietary Analytics
+              </h4>
+              <div className="space-y-4">
+                {scoringEngines.map(engine => (
+                  <div key={engine.id} className="p-4 bg-slate-900/50 rounded-lg border border-slate-700">
+                    <div className="flex items-center gap-3 mb-2">
+                      {engine.icon}
+                      <h5 className="text-sm font-bold text-white">{engine.name}</h5>
+                    </div>
+                    <p className="text-xs text-slate-300">{engine.description}</p>
+                    <Button
+                      variant="ghost"
+                      className="mt-2 text-yellow-400 hover:text-yellow-300"
+                      onClick={() => navigate('/learn/scoring-engines')}
+                      aria-label={`Learn more about ${engine.name}`}
+                    >
+                      Learn More
+                    </Button>
+                  </div>
+                ))}
+              </div>
             </div>
 
             {/* Match details toggle */}
@@ -751,7 +809,8 @@ const HookUIPage: React.FC = () => {
         {selectedInterestIds.length > 0 && riskProfile && companiesToShow.length > 0 && (
           <div className="mt-4 space-y-2">
             <p className="text-slate-200">
-              Matched to your {selectedInterestIds.map(si => allInterestProfiles.find(p => p.id === si.id)?.name).filter(Boolean).join(', ')} interests
+              Powered by MapleAurum’s proprietary scoring engines, matched to your{' '}
+              {selectedInterestIds.map(si => allInterestProfiles.find(p => p.id === si.id)?.name).filter(Boolean).join(', ')} interests
               {' '}and {formatPercent(riskProfile.riskTolerance / 100, { decimals: 0 })} risk tolerance
             </p>
             <div className="flex justify-center gap-4 text-sm flex-wrap">
@@ -765,6 +824,9 @@ const HookUIPage: React.FC = () => {
                 📊 {companiesToShow.length} Companies
               </span>
             </div>
+            <p className="text-sm text-yellow-400/80 animate-pulse mt-2">
+              Free access to basic analytics; unlock premium insights with a subscription!
+            </p>
           </div>
         )}
 
@@ -789,7 +851,7 @@ const HookUIPage: React.FC = () => {
 
       {/* Results display with robust error handling */}
       {isLoading ? (
-        <LoadingIndicator message="Finding your perfect matches using advanced algorithms..." />
+        <LoadingIndicator message="Finding your perfect matches using proprietary scoring engines..." />
       ) : error ? (
         <div className="text-center py-10">
           <AlertCircle className="w-16 h-16 text-red-400 mx-auto mb-4" />
@@ -818,12 +880,7 @@ const HookUIPage: React.FC = () => {
         </div>
       ) : companiesToShow.length > 0 ? (
         <motion.div
-		
-		
-          //className="flex flex-wrap justify-center items-start gap-6 lg:gap-8"
-		  className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" // <-- Use Grid layout
-		  
-		  
+          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ staggerChildren: 0.1 }}
@@ -942,10 +999,10 @@ const HookUIPage: React.FC = () => {
                 transition={{ delay: 0.3 }}
               >
                 <span className="bg-gradient-to-r from-cyan-400 via-purple-400 to-pink-400 bg-clip-text text-transparent animate-gradient">
-                  Discover Mining Investments
+                  Precision Analytics for
                 </span>
                 <br />
-                <span className="text-2xl sm:text-3xl md:text-4xl text-slate-200">Tailored to Your Style</span>
+                <span className="text-2xl sm:text-3xl md:text-4xl text-slate-200">Precious Metals Investing</span>
               </motion.h1>
               <motion.p
                 className="text-slate-200 mt-6 text-lg sm:text-xl max-w-2xl mx-auto"
@@ -953,7 +1010,7 @@ const HookUIPage: React.FC = () => {
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ delay: 0.4 }}
               >
-                In just 5 steps, find precious metals companies perfectly matched to your investment preferences
+                Discover personalized mining investments with MapleAurum’s proprietary scoring engines, delivering institutional-grade insights in 5 simple steps.
               </motion.p>
               <motion.div
                 className="mt-8 flex flex-wrap justify-center gap-4 text-sm"
@@ -961,7 +1018,7 @@ const HookUIPage: React.FC = () => {
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ delay: 0.5 }}
               >
-                {['🎯 Personalized Matches', '📊 Data-Driven Insights', '💎 Premium Companies'].map((feature, index) => (
+                {['🎯 Advanced Scoring Engine', '📊 FCF-Focused Analysis', '💎 ScatterScore Pro'].map((feature, index) => (
                   <motion.div
                     key={index}
                     whileHover={{ scale: 1.05 }}
@@ -971,6 +1028,14 @@ const HookUIPage: React.FC = () => {
                   </motion.div>
                 ))}
               </motion.div>
+              <motion.p
+                className="text-sm text-yellow-400/80 animate-pulse mt-4"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.6 }}
+              >
+                Start free today—unlock premium analytics with a subscription!
+              </motion.p>
             </header>
             <motion.div
               className="text-center"
@@ -984,7 +1049,7 @@ const HookUIPage: React.FC = () => {
                 aria-label="Start Onboarding"
               >
                 <span className="flex items-center gap-3">
-                  Let's Get Started
+                  Start Free Analysis
                   <motion.div
                     animate={{ x: [0, 5, 0] }}
                     transition={{ repeat: Infinity, duration: 1.5 }}
@@ -1013,7 +1078,12 @@ const HookUIPage: React.FC = () => {
             >
               <header className="mb-8 text-center">
                 <h1 className="text-3xl sm:text-4xl font-bold text-cyan-400">Choose Your Investment Interests</h1>
-                <p className="text-slate-200 mt-2">Select and prioritize areas that align with your strategy.</p>
+                <p className="text-slate-200 mt-2">
+                  Select priorities to power our proprietary scoring engines for tailored company matches.
+                </p>
+                <p className="text-sm text-yellow-400/80 mt-2">
+                  Your choices drive our Advanced Scoring Engine and ScatterScore Pro.
+                </p>
               </header>
               <EnhancedInterestSelector
                 onSelectionChange={handleInterestsSelected}
@@ -1141,10 +1211,10 @@ const HookUIPage: React.FC = () => {
             aria-label="Return to Home"
           >
             <Home className="w-5 h-5" />
-            <span className="hidden sm:inline">Home</span>
+            <span className="hidden sm:inline">Home
+
+System: Home</span>
           </Button>
-          <h2 className="text-lg font-semibold text-cyan-400">MapleAurum Onboarding</h2>
-          <div className="w-20" />
         </div>
       </nav>
 
@@ -1153,7 +1223,7 @@ const HookUIPage: React.FC = () => {
           <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-purple-900/20 to-slate-900" />
           <motion.div
             className="absolute top-0 left-0 w-96 h-96 bg-cyan-500/10 rounded-full blur-3xl"
-            animate={{ xknight: [0, 100, 0], y: [0, 50, 0] }}
+            animate={{ x: [0, 100, 0], y: [0, 50, 0] }}
             transition={{ repeat: Infinity, duration: 20, ease: 'linear' }}
             aria-hidden="true"
           />
