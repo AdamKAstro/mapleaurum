@@ -1,96 +1,115 @@
 <!DOCTYPE html>
-<html lang="en-CA" dir="ltr" class="bg-pattern"> <!-- Updated lang to en-CA, added dir for accessibility -->
+<html lang="en-CA" dir="ltr">
   <head>
     <meta charset="UTF-8" />
-    <!-- Favicon enhancements for device compatibility -->
-	<link rel="icon" type="image/x-icon" href="/favicon.ico" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    
+    <link rel="icon" type="image/x-icon" href="/favicon.ico" />
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
     <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
-    <link rel="manifest" href="/site.webmanifest" /> <!-- Add web manifest for PWA support -->
-    <meta name="theme-color" content="#1e3a8a" /> <!-- Navy blue to match hero.tsx gradient -->
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <!-- Updated title and meta tags for SEO and consistency with hero.tsx -->
-    <title>Maple Aurum: Uncover Winning Mining Stocks with ScatterScore™</title>
+    <link rel="manifest" href="/site.webmanifest" />
+    <meta name="theme-color" content="#0d1a3e" /> <title>MapleAurum | Professional Analytics for Canadian Mining Stocks</title>
     <meta
       name="description"
-      content="Uncover winning Canadian precious metals stocks with Maple Aurum’s ScatterScore™, comparing 50+ metrics like valuation, financial health, and growth potential. Start analyzing now."
+      content="Go beyond basic data with MapleAurum. Leverage adaptive scoring engines for explorers, producers, and royalty companies to uncover true value in the Canadian precious metals sector."
     />
     <meta
       name="keywords"
-      content="Canadian precious metals, gold investing Canada, mining stock analysis, compare mining stocks, ScatterScore, financial data mining, Maple Aurum"
+      content="Canadian mining stocks, precious metals analysis, FCF scoring, mining stock screener, junior explorer data, gold producer valuation, ScatterScore Pro, royalty company analysis, TSX mining, TSX-V explorers"
     />
-    <meta name="author" content="Maple Aurum" />
+    <meta name="author" content="MapleAurum" />
     <meta name="robots" content="index, follow" />
-    <link rel="canonical" href="https://mapleaurum.com" />
-    <!-- Updated Open Graph and Twitter Card tags -->
-    <meta property="og:title" content="Maple Aurum: Uncover Winning Mining Stocks with ScatterScore™" />
+    <link rel="canonical" href="https://mapleaurum.com/" />
+
+    <meta property="og:title" content="MapleAurum | Professional Analytics for Canadian Mining Stocks" />
     <meta
       property="og:description"
-      content="Compare and rank Canadian gold, silver, and precious metals stocks using ScatterScore™ with 50+ metrics for value, growth, and stability."
+      content="Stop guessing. Start analyzing. MapleAurum provides a suite of powerful tools to score, screen, and visualize Canadian precious metals companies based on their unique lifecycle stage."
     />
     <meta property="og:type" content="website" />
-    <meta property="og:url" content="https://mapleaurum.com" />
-    <meta property="og:image" content="https://mapleaurum.com/GeminiMALBig3.jpg" /> <!-- Updated to use hero.tsx logo -->
-    <meta property="og:site_name" content="Maple Aurum" />
+    <meta property="og:url" content="https://mapleaurum.com/" />
+    <meta property="og:image" content="https://mapleaurum.com/GeminiMALBig3.jpg" />
+    <meta property="og:site_name" content="MapleAurum" />
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="Maple Aurum: Uncover Winning Mining Stocks with ScatterScore™" />
+    <meta name="twitter:title" content="MapleAurum | Professional Analytics for Canadian Mining Stocks" />
     <meta
-      property="twitter:description"
-      content="Analyze Canadian precious metals stocks with ScatterScore™, leveraging 50+ metrics for smarter investment decisions."
+      name="twitter:description"
+      content="The ultimate toolkit for serious mining investors. Analyze explorers, producers, and royalty companies with adaptive scoring engines and advanced visualization."
     />
     <meta name="twitter:image" content="https://mapleaurum.com/GeminiMALBig3.jpg" />
-    <!-- Content Security Policy for security -->
+
     <meta
       http-equiv="Content-Security-Policy"
-      content="default-src 'self'; script-src 'self' https://js.stripe.com https://fonts.googleapis.com 'unsafe-inline'; 'unsafe-eval' blob: https://js.stripe.com https://fonts.googleapis.com; worker-src 'self' blob:; style-src 'self' https://fonts.googleapis.com 'unsafe-inline'; img-src 'self' https://mapleaurum.com https://ui-avatars.com https://dvagrllvivewyxolrhsh.supabase.co data:; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https://api.stripe.com https://dvagrllvivewyxolrhsh.supabase.co;"
+      content="
+        default-src 'self';
+        script-src 'self' https://js.stripe.com https://analytics.ahrefs.com 'unsafe-inline';
+        style-src 'self' https://fonts.googleapis.com 'unsafe-inline';
+        img-src 'self' https://*.supabase.co https://ui-avatars.com data:;
+        font-src 'self' https://fonts.gstatic.com;
+        connect-src 'self' https://api.stripe.com wss://*.supabase.co https://*.supabase.co;
+        frame-src https://js.stripe.com;
+        worker-src 'self' blob:;
+      "
     />
-    <!-- Preload critical assets for performance -->
-	<link rel="preload" href="/Cosmic_Genesis_Logo_Reveal_Video_2.mp4" as="video" type="video/mp4" />
-    <link rel="preload" href="/GeminiMALBig2.jpg" as="image" />
-    <link rel="preload" href="/GeminiMALBig3.jpg" as="image" />
-    <!--<link rel="preload" href="/ScatterScore3.jpg" as="image" /-->
-    <link rel="dns-prefetch" href="https://js.stripe.com" /> <!-- DNS prefetch for Stripe -->
+
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="dns-prefetch" href="https://js.stripe.com" />
+    <link rel="dns-prefetch" href="https://dvagrllvivewyxolrhsh.supabase.co" />
     <link
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@400;700&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
       rel="stylesheet"
-      media="print" onload="this.media='all'" /> <!-- Optimize font loading -->
-    <!-- Structured data for SEO -->
+      media="print" 
+      onload="this.media='all'"
+    />
+
     <script type="application/ld+json">
-      {
-        "@context": "https://schema.org",
+    {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      "name": "MapleAurum",
+      "url": "https://mapleaurum.com/",
+      "description": "A professional-grade financial analytics platform designed for investors in the Canadian precious metals mining sector, featuring adaptive scoring engines and advanced visualization tools.",
+      "potentialAction": {
+        "@type": "SearchAction",
+        "target": {
+          "@type": "EntryPoint",
+          "urlTemplate": "https://mapleaurum.com/companies?q={search_term_string}"
+        },
+        "query-input": "required name=search_term_string"
+      },
+      "publisher": {
         "@type": "Organization",
-        "name": "Maple Aurum",
-        "url": "https://mapleaurum.com",
-        "logo": "https://mapleaurum.com/GeminiMALBig3.jpg",
-        "description": "Maple Aurum provides advanced analytics for Canadian precious metals companies using ScatterScore™, comparing 50+ metrics for value, growth, and stability.",
+        "name": "MapleAurum",
+        "url": "https://mapleaurum.com/",
+        "logo": {
+          "@type": "ImageObject",
+          "url": "https://mapleaurum.com/GeminiMALBig3.jpg"
+        },
         "contactPoint": {
           "@type": "ContactPoint",
           "email": "support@mapleaurum.com",
           "contactType": "Customer Support"
         }
       }
+    }
     </script>
+    
     <script async src="https://js.stripe.com/v3/buy-button.js"></script>
-	<script src="https://analytics.ahrefs.com/analytics.js" data-key="GKWJBgEc4GuKKjfM2a2JMw" async></script>
+    <script src="https://analytics.ahrefs.com/analytics.js" data-key="GKWJBgEc4GuKKjfM2a2JMw" async></script>
   </head>
   <body>
-    <div id="root" role="main"></div> <!-- Added ARIA role for accessibility -->
+    <div id="root" role="main"></div>
     <div id="portal-root"></div>
-    <!-- Noscript fallback for accessibility -->
+    
     <noscript>
-      <div style="text-align: center; padding: 20px; background: #1e3a8a; color: white;">
-        <p>JavaScript is disabled. Please enable JavaScript to use Maple Aurum fully.</p>
-        <p>
-          <a href="/subscribe" style="color: #fbbf24; text-decoration: underline;">
-            Try ScatterScore™ for free
-          </a>
-        </p>
+      <div style="text-align: center; padding: 20px; background: #0d1a3e; color: white; font-family: sans-serif;">
+        <p><strong>JavaScript is required to use the MapleAurum analytics platform.</strong></p>
+        <p>Please enable JavaScript in your browser to continue.</p>
       </div>
     </noscript>
+    
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
