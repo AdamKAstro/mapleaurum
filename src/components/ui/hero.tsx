@@ -1,4 +1,5 @@
-// src/components/ui/hero.tsx
+// src/components/ui/hero.tsx  GROK
+
 import React, { useState, useRef, useMemo, memo, useEffect } from 'react';
 import { ArrowRight, Crown, TrendingUp, Shield, Sparkles, ChevronDown, Check, Zap, Target, Gem, Rocket, Play, Pause, Volume2, VolumeX } from 'lucide-react';
 import { motion, useScroll, useTransform, AnimatePresence, useInView } from 'framer-motion';
@@ -125,12 +126,14 @@ export const Hero: React.FC<HeroProps> = ({ className }) => {
   const [isVideoPlaying, setIsVideoPlaying] = useState(true);
   const [isMuted, setIsMuted] = useState(true);
   const [hasVideoLoaded, setHasVideoLoaded] = useState(false);
+  const [isVideoReady, setIsVideoReady] = useState(false);
+  const [imageLoaded, setImageLoaded] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const videoContainerRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
 
-  const isVideoInView = useInView(videoContainerRef, { once: false, margin: "-100px" });
+  const isVideoInView = useInView(videoContainerRef, { once: false, margin: '-100px' });
 
   const { scrollYProgress } = useScroll({
     target: containerRef,
@@ -145,16 +148,15 @@ export const Hero: React.FC<HeroProps> = ({ className }) => {
   // Video controls
   useEffect(() => {
     if (videoRef.current) {
-      if (isVideoInView && isVideoPlaying) {
+      if (isVideoInView && isVideoPlaying && isVideoReady) {
         videoRef.current.play().catch(() => {
-          // Handle autoplay failure
           setIsVideoPlaying(false);
         });
       } else {
         videoRef.current.pause();
       }
     }
-  }, [isVideoInView, isVideoPlaying]);
+  }, [isVideoInView, isVideoPlaying, isVideoReady]);
 
   const togglePlayPause = () => {
     if (videoRef.current) {
@@ -175,25 +177,27 @@ export const Hero: React.FC<HeroProps> = ({ className }) => {
   };
 
   // Memoize template buttons to prevent re-renders
-  const templateButtons = useMemo(() => (
-    templates.map((template) => (
-      <Button
-        key={template.id}
-        onClick={() => setSelectedTemplate(template)}
-        className={cn(
-          'px-6 py-3 rounded-xl flex items-center gap-2 transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:ring-offset-2 focus:ring-offset-navy-900',
-          selectedTemplate.id === template.id
-            ? `bg-gradient-to-r ${template.color} text-white shadow-lg shadow-yellow-500/25`
-            : 'bg-navy-700/50 text-gray-400 hover:text-white hover:bg-navy-700'
-        )}
-        aria-pressed={selectedTemplate.id === template.id}
-        aria-label={`Select ${template.emotion} template`}
-      >
-        <template.icon className="h-5 w-5" />
-        <span className="font-medium">{template.emotion}</span>
-      </Button>
-    ))
-  ), [selectedTemplate]);
+  const templateButtons = useMemo(
+    () =>
+      templates.map((template) => (
+        <Button
+          key={template.id}
+          onClick={() => setSelectedTemplate(template)}
+          className={cn(
+            'px-6 py-3 rounded-xl flex items-center gap-2 transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:ring-offset-2 focus:ring-offset-navy-900',
+            selectedTemplate.id === template.id
+              ? `bg-gradient-to-r ${template.color} text-white shadow-lg shadow-yellow-500/25`
+              : 'bg-navy-700/50 text-gray-400 hover:text-white hover:bg-navy-700',
+          )}
+          aria-pressed={selectedTemplate.id === template.id}
+          aria-label={`Select ${template.emotion} template`}
+        >
+          <template.icon className="h-5 w-5" />
+          <span className="font-medium">{template.emotion}</span>
+        </Button>
+      )),
+    [selectedTemplate],
+  );
 
   return (
     <main ref={containerRef} className={cn('relative w-full font-sans', className)} aria-label="Maple Aurum Homepage">
@@ -202,12 +206,8 @@ export const Hero: React.FC<HeroProps> = ({ className }) => {
         {/* Dynamic background with glassmorphism */}
         <div className="absolute inset-0 backdrop-blur-[2px]">
           <div className="absolute inset-0 bg-[url('/grid-pattern.png')] bg-[length:40px_40px] opacity-10" />
-          <motion.div
-            className="absolute inset-0"
-            style={{ y: bubblesY }}
-            aria-hidden="true"
-          >
-            {[...Array(20)].map((_, i) => (
+          <motion.div className="absolute inset-0" style={{ y: bubblesY }} aria-hidden="true">
+            {[...Array(10)].map((_, i) => (
               <motion.div
                 key={i}
                 className="absolute rounded-full"
@@ -216,12 +216,14 @@ export const Hero: React.FC<HeroProps> = ({ className }) => {
                   height: `${20 + Math.random() * 40}px`,
                   left: `${Math.random() * 100}%`,
                   top: `${Math.random() * 100}%`,
-                  background: i % 3 === 0
-                    ? 'radial-gradient(circle, rgba(251, 191, 36, 0.2) 0%, transparent 70%)'
-                    : i % 3 === 1
-                    ? 'radial-gradient(circle, rgba(34, 197, 94, 0.15) 0%, transparent 70%)'
-                    : 'radial-gradient(circle, rgba(59, 130, 246, 0.15) 0%, transparent 70%)',
+                  background:
+                    i % 3 === 0
+                      ? 'radial-gradient(circle, rgba(251, 191, 36, 0.2) 0%, transparent 70%)'
+                      : i % 3 === 1
+                        ? 'radial-gradient(circle, rgba(34, 197, 94, 0.15) 0%, transparent 70%)'
+                        : 'radial-gradient(circle, rgba(59, 130, 246, 0.15) 0%, transparent 70%)',
                   filter: 'blur(1px)',
+                  willChange: 'transform, opacity', // Optimize for GPU
                 }}
                 animate={{
                   y: [0, -30, 0],
@@ -229,9 +231,9 @@ export const Hero: React.FC<HeroProps> = ({ className }) => {
                   opacity: [0.2, 0.4, 0.2],
                 }}
                 transition={{
-                  duration: 5 + Math.random() * 5,
+                  duration: 5 + Math.random() * 3,
                   repeat: Infinity,
-                  delay: Math.random() * 5,
+                  delay: Math.random() * 3,
                   ease: 'easeInOut',
                 }}
               />
@@ -342,11 +344,43 @@ export const Hero: React.FC<HeroProps> = ({ className }) => {
               <div className="relative rounded-3xl overflow-hidden backdrop-blur-sm bg-white/5 border border-white/10 shadow-2xl">
                 {/* Animated Glow Effect */}
                 <div className="absolute -inset-1 bg-gradient-to-r from-yellow-500/20 via-amber-500/20 to-yellow-500/20 rounded-3xl blur-2xl animate-pulse" />
-                
+
                 {/* Inner Container */}
                 <div className="relative p-4 sm:p-6">
                   {/* Video Element */}
                   <div className="relative rounded-2xl overflow-hidden bg-black/50">
+                    {/* Placeholder Image - shows while video loads */}
+                    <AnimatePresence>
+                      {!isVideoReady && (
+                        <motion.div
+                          initial={{ opacity: 1 }}
+                          exit={{ opacity: 0 }}
+                          transition={{ duration: 0.5 }}
+                          className="absolute inset-0 z-10"
+                        >
+                          <LazyLoadImage
+                            src="/GeminiMALBig2.jpg"
+                            alt="Maple Aurum Logo"
+                            className="w-full h-full object-cover rounded-2xl"
+                            effect="blur"
+                            onLoad={() => setImageLoaded(true)}
+                            width={1200}
+                            height={675}
+                          />
+                          {/* Loading spinner overlay */}
+                          {imageLoaded && (
+                            <div className="absolute inset-0 flex items-center justify-center bg-black/20">
+                              <motion.div
+                                animate={{ rotate: 360 }}
+                                transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+                                className="w-12 h-12 border-4 border-yellow-400/20 border-t-yellow-400 rounded-full"
+                              />
+                            </div>
+                          )}
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+
                     <video
                       ref={videoRef}
                       className="w-full h-auto rounded-2xl"
@@ -354,8 +388,17 @@ export const Hero: React.FC<HeroProps> = ({ className }) => {
                       loop
                       muted={isMuted}
                       playsInline
+                      preload="auto"
                       onLoadedData={() => setHasVideoLoaded(true)}
-                      poster="/GeminiMALBig3.webp"
+                      onCanPlayThrough={() => {
+                        setIsVideoReady(true);
+                        if (isVideoInView && isVideoPlaying) {
+                          videoRef.current?.play().catch(() => {
+                            setIsVideoPlaying(false);
+                          });
+                        }
+                      }}
+                      poster="/GeminiMALBig2.jpg"
                       aria-label="Maple Aurum Logo Reveal"
                     >
                       <source src="/Cosmic_Genesis_Logo_Reveal_Video_2.mp4" type="video/mp4" />
@@ -367,7 +410,7 @@ export const Hero: React.FC<HeroProps> = ({ className }) => {
 
                     {/* Video Controls */}
                     <AnimatePresence>
-                      {hasVideoLoaded && (
+                      {hasVideoLoaded && isVideoReady && (
                         <motion.div
                           initial={{ opacity: 0 }}
                           animate={{ opacity: 1 }}
@@ -380,22 +423,14 @@ export const Hero: React.FC<HeroProps> = ({ className }) => {
                               className="p-2 rounded-full bg-black/50 backdrop-blur-sm text-white hover:bg-black/70 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-yellow-400"
                               aria-label={isVideoPlaying ? 'Pause video' : 'Play video'}
                             >
-                              {isVideoPlaying ? (
-                                <Pause className="h-4 w-4" />
-                              ) : (
-                                <Play className="h-4 w-4" />
-                              )}
+                              {isVideoPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
                             </button>
                             <button
                               onClick={toggleMute}
                               className="p-2 rounded-full bg-black/50 backdrop-blur-sm text-white hover:bg-black/70 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-yellow-400"
                               aria-label={isMuted ? 'Unmute video' : 'Mute video'}
                             >
-                              {isMuted ? (
-                                <VolumeX className="h-4 w-4" />
-                              ) : (
-                                <Volume2 className="h-4 w-4" />
-                              )}
+                              {isMuted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
                             </button>
                           </div>
                           <div className="text-xs text-white/70 bg-black/50 backdrop-blur-sm px-3 py-1 rounded-full">
@@ -464,9 +499,7 @@ export const Hero: React.FC<HeroProps> = ({ className }) => {
               </Button>
             </motion.div>
 
-            <p className="text-sm text-yellow-400/80 animate-pulse mb-8">
-              Limited free usage—start now!
-            </p>
+            <p className="text-sm text-yellow-400/80 animate-pulse mb-8">Limited free usage—start now!</p>
 
             <motion.div
               initial={{ opacity: 0 }}
@@ -733,8 +766,7 @@ export const Hero: React.FC<HeroProps> = ({ className }) => {
               Explore Stocks Your Way
             </h2>
             <p className="text-lg sm:text-xl text-gray-300 max-w-2xl mx-auto">
-              Choose a template, see insights instantly. From value plays to exploration gems,
-              find what fits your strategy.
+              Choose a template, see insights instantly. From value plays to exploration gems, find what fits your strategy.
             </p>
           </motion.div>
 
@@ -745,20 +777,14 @@ export const Hero: React.FC<HeroProps> = ({ className }) => {
             transition={{ duration: 0.8 }}
             className="bg-navy-800/50 backdrop-blur-sm rounded-3xl p-8 border-2 border-yellow-400/20 shadow-2xl"
           >
-            <div className="flex flex-wrap gap-3 mb-8 justify-center">
-              {templateButtons}
-            </div>
+            <div className="flex flex-wrap gap-3 mb-8 justify-center">{templateButtons}</div>
 
             <div className="relative h-[500px] bg-navy-900/50 rounded-2xl overflow-hidden">
               <div className="absolute inset-0 p-8">
                 <div className="absolute bottom-8 left-8 right-8 h-px bg-gray-600" />
                 <div className="absolute bottom-8 left-8 top-8 w-px bg-gray-600" />
-                <div className="absolute bottom-2 left-1/2 -translate-x-1/2 text-xs text-gray-400">
-                  Valuation Attractiveness →
-                </div>
-                <div className="absolute left-2 top-1/2 -translate-y-1/2 -rotate-90 text-xs text-gray-400">
-                  Financial Strength →
-                </div>
+                <div className="absolute bottom-2 left-1/2 -translate-x-1/2 text-xs text-gray-400">Valuation Attractiveness →</div>
+                <div className="absolute left-2 top-1/2 -translate-y-1/2 -rotate-90 text-xs text-gray-400">Financial Strength →</div>
 
                 {demoCompanies.map((company) => (
                   <motion.div
@@ -779,17 +805,18 @@ export const Hero: React.FC<HeroProps> = ({ className }) => {
                     aria-label={`View details for ${company.name}`}
                   >
                     <div
-                      className={cn(
-                        'w-full h-full rounded-full transition-all duration-300',
-                        selectedTemplate.bgGlow
-                      )}
+                      className={cn('w-full h-full rounded-full transition-all duration-300', selectedTemplate.bgGlow)}
                       style={{
                         background: `radial-gradient(circle, ${
-                          selectedTemplate.color.includes('yellow') ? 'rgba(251, 191, 36, 0.6)' :
-                          selectedTemplate.color.includes('green') ? 'rgba(34, 197, 94, 0.6)' :
-                          selectedTemplate.color.includes('blue') ? 'rgba(59, 130, 246, 0.6)' :
-                          selectedTemplate.color.includes('purple') ? 'rgba(168, 85, 247, 0.6)' :
-                          'rgba(251, 146, 60, 0.6)'
+                          selectedTemplate.color.includes('yellow')
+                            ? 'rgba(251, 191, 36, 0.6)'
+                            : selectedTemplate.color.includes('green')
+                              ? 'rgba(34, 197, 94, 0.6)'
+                              : selectedTemplate.color.includes('blue')
+                                ? 'rgba(59, 130, 246, 0.6)'
+                                : selectedTemplate.color.includes('purple')
+                                  ? 'rgba(168, 85, 247, 0.6)'
+                                  : 'rgba(251, 146, 60, 0.6)'
                         } 0%, transparent 70%)`,
                         boxShadow: hoveredBubble === company.id ? '0 0 30px rgba(251, 191, 36, 0.5)' : '',
                       }}
@@ -883,9 +910,7 @@ export const Hero: React.FC<HeroProps> = ({ className }) => {
             transition={{ duration: 0.8 }}
             className="text-center mb-16"
           >
-            <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-6">
-              Tailored for Every Investor
-            </h2>
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-6">Tailored for Every Investor</h2>
             <p className="text-lg sm:text-xl text-gray-300 max-w-3xl mx-auto">
               Whether you're hunting bargains or betting on growth, our templates deliver insights in seconds.
             </p>
@@ -907,20 +932,11 @@ export const Hero: React.FC<HeroProps> = ({ className }) => {
                 aria-label={`Select ${template.name} strategy`}
               >
                 <div className="relative bg-navy-800/50 backdrop-blur-sm rounded-2xl p-8 border border-navy-700 hover:border-yellow-500/50 transition-all duration-300 h-full">
-                  <div
-                    className={cn(
-                      'absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-20 transition-opacity duration-300',
-                      template.bgGlow
-                    )}
-                  />
+                  <div className={cn('absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-20 transition-opacity duration-300', template.bgGlow)} />
                   <motion.div
                     whileHover={{ rotate: 360 }}
                     transition={{ duration: 0.5 }}
-                    className={cn(
-                      'inline-flex p-4 rounded-2xl mb-6',
-                      'bg-gradient-to-br',
-                      template.color
-                    )}
+                    className={cn('inline-flex p-4 rounded-2xl mb-6', 'bg-gradient-to-br', template.color)}
                   >
                     <template.icon className="h-8 w-8 text-white" />
                   </motion.div>
@@ -933,10 +949,7 @@ export const Hero: React.FC<HeroProps> = ({ className }) => {
                         {[...Array(9)].map((_, i) => (
                           <div
                             key={i}
-                            className={cn(
-                              'w-3 h-3 rounded-full',
-                              template.bgGlow
-                            )}
+                            className={cn('w-3 h-3 rounded-full', template.bgGlow)}
                             style={{
                               opacity: 0.3 + Math.random() * 0.7,
                             }}
@@ -972,9 +985,7 @@ export const Hero: React.FC<HeroProps> = ({ className }) => {
             transition={{ duration: 0.8 }}
             className="text-center mb-16"
           >
-            <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-6">
-              Compare and Rank with Precision
-            </h2>
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-6">Compare and Rank with Precision</h2>
             <p className="text-lg sm:text-xl text-gray-300 max-w-3xl mx-auto">
               Harness the power of ScatterScore™ to compare and rank any number of companies using over 50 key metrics simultaneously. From valuation ratios to operational efficiency, uncover hidden opportunities with unparalleled precision and speed.
             </p>
@@ -999,12 +1010,7 @@ export const Hero: React.FC<HeroProps> = ({ className }) => {
             <div className="absolute bottom-0 left-0 right-0 p-8 text-center">
               <h3 className="text-xl sm:text-2xl font-bold text-white mb-2">Advanced Analytics at Your Fingertips</h3>
               <p className="text-gray-300 mb-6">Visualize complex data effortlessly and make informed investment decisions.</p>
-              <Button
-                size="lg"
-                className="shadow-2xl"
-                onClick={() => navigate('/scatter-score-pro')}
-                aria-label="Explore ScatterScore Now"
-              >
+              <Button size="lg" className="shadow-2xl" onClick={() => navigate('/scatter-score-pro')} aria-label="Explore ScatterScore Now">
                 Explore ScatterScore™ Now
                 <ArrowRight className="h-5 w-5 ml-2" />
               </Button>
@@ -1017,7 +1023,7 @@ export const Hero: React.FC<HeroProps> = ({ className }) => {
       <section className="relative py-32 bg-gradient-to-b from-navy-800 to-navy-900 overflow-hidden">
         <div className="absolute inset-0">
           <div className="absolute inset-0 bg-gradient-to-r from-yellow-500/10 via-transparent to-amber-500/10" />
-          {[...Array(50)].map((_, i) => (
+          {[...Array(30)].map((_, i) => (
             <motion.div
               key={i}
               className="absolute h-1 w-1 bg-yellow-400 rounded-full"
@@ -1047,12 +1053,9 @@ export const Hero: React.FC<HeroProps> = ({ className }) => {
             viewport={{ once: true }}
             transition={{ duration: 0.8 }}
           >
-            <h2 className="text-4xl sm:text-5xl md:text-6xl font-bold text-white mb-6">
-              Start Finding Winners Today
-            </h2>
+            <h2 className="text-4xl sm:text-5xl md:text-6xl font-bold text-white mb-6">Start Finding Winners Today</h2>
             <p className="text-lg sm:text-xl text-gray-300 mb-8 max-w-2xl mx-auto">
-              Access ScatterScore™ for free and unlock powerful mining stock insights.
-              Upgrade to Pro for unlimited analysis.
+              Access ScatterScore™ for free and unlock powerful mining stock insights. Upgrade to Pro for unlimited analysis.
             </p>
 
             <div className="flex flex-col sm:flex-row items-center justify-center gap-6 mb-8">
@@ -1120,4 +1123,4 @@ export const Hero: React.FC<HeroProps> = ({ className }) => {
       </motion.div>
     </main>
   );
-};				  
+};
