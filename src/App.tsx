@@ -19,6 +19,7 @@ import { OnboardingPage } from './pages/onboarding';
 import { CompaniesPage } from './pages/companies';
 import { SubscribePage } from './pages/subscribe';
 import { ScatterChartPage } from './pages/scatter-chart';
+import RPSScoringPage from './pages/RPSScoringPage/index';
 import { FilterPage } from './pages/filter';
 import AdvScoringPage from './pages/scoring-advanced';
 import FCFScoringPage from './pages/fcf-scoring/index';
@@ -31,6 +32,7 @@ import { HelpFCFScoringPage } from './pages/help/fcf-scoring-guide';
 import { HelpScatterPage } from './pages/help/scatter-guide';
 import { HelpScatterScorePage } from './pages/help/scatter-score-guide';
 import { HelpTiersPage } from './pages/help/tiers';
+import { HelpRPSScoringPage } from './pages/help/rps-scoring-guide';
 import { HelpGeneralPage } from './pages/help/general';
 import { AdminSendEmailPage } from './pages/admin/send-email';
 import { GlassCustomizationPage } from './pages/glass-customization';
@@ -297,6 +299,26 @@ function App() {
                         </>
                       }
                     />
+					
+					
+                    <Route
+                      path="/rps-scoring"
+                      element={
+                        <>
+                          <Helmet>
+                            <title>MapleAurum | Relative Performance Score (RPS)</title>
+                            <meta
+                              name="description"
+                              content="Analyze companies using a dynamic, multi-faceted scoring system relative to their true peers with MapleAurum's RPS tool."
+                            />
+                            <link rel="canonical" href="https://mapleaurum.com/rps-scoring" />
+                          </Helmet>
+                          <RPSScoringPage />
+                        </>
+                      }
+                    />					
+									
+					
                     <Route
                       path="/scatter-chart"
                       element={

@@ -4,7 +4,6 @@ import { NavLink } from 'react-router-dom';
 import {
   Home,
   Table2,
-  LineChart,
   Filter,
   Crown,
   ChevronLeft,
@@ -19,6 +18,7 @@ import {
   ScatterChart as Scatter,
   Award,
   TrendingUp,
+  BarChart3, // --- IMPORT THE NEW ICON ---
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { cn } from '../../lib/utils';
@@ -30,10 +30,11 @@ export function Sidebar() {
     { path: '/', label: 'Home', icon: Home },
     { path: '/companies', label: 'Companies', icon: Table2 },
     { path: '/filter', label: 'Filters', icon: Filter },
-    { path: '/scatter-chart', label: 'Scatter Chart', icon: Scatter },	
-//    { path: '/scoring', label: 'Scoring', icon: Calculator },
+    { path: '/scatter-chart', label: 'Scatter Chart', icon: Scatter },
     { path: '/scoring-advanced', label: 'Scoring', icon: Calculator },
-    { path: '/fcf-scoring', label: 'FCF Scoring', icon: DollarSign },	
+    { path: '/fcf-scoring', label: 'FCF Scoring', icon: DollarSign },
+    // --- ADD THE NEW RPS SCORING LINK HERE ---
+    { path: '/rps-scoring', label: 'RPS Scoring', icon: BarChart3 },
     { path: '/scatter-score-pro', label: 'ScatterScore', icon: TrendingUp },
     { path: '/subscribe', label: 'Subscribe', icon: Crown },
   ];
@@ -45,7 +46,9 @@ export function Sidebar() {
     { path: '/help/scoring', label: 'Scoring Guide', icon: Target },
     { path: '/help/scatter-chart', label: 'Scatter Guide', icon: Scatter },
     { path: '/help/scatter-score-pro', label: 'ScatterScore Guide', icon: Scatter },
-	{ path: '/help/fcf-scoring', label: 'FCF Scoring Guide', icon: DollarSign },
+    { path: '/help/fcf-scoring', label: 'FCF Scoring Guide', icon: DollarSign },
+    // --- ADD THE NEW RPS HELP LINK HERE ---
+    { path: '/help/rps-scoring', label: 'RPS Scoring Guide', icon: BarChart3 },
     { path: '/help/tiers', label: 'Subscription Tiers', icon: Award },
     { path: '/help/general', label: 'General & FAQ', icon: BookOpen },
     { path: '/blog', label: 'Blog / Guide', icon: BookIcon },
