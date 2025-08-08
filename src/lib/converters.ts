@@ -42,7 +42,7 @@ function validateNumber(value: any, fieldNameForError: string): number | null {
 function validateString(value: any, fieldNameForError: string, defaultValue: string | null = null): string | null {
   if (value === null || value === undefined || String(value).trim() === "") {
     if (fieldNameForError.includes('company_name') && defaultValue) {
-      return defaultValue; // Default for company_name
+      return defaultValue;
     }
     return null;
   }
@@ -248,6 +248,14 @@ export function convertRpcRowsToCompanies(
         aic_last_year_currency: validateString(row.c_aic_last_year_currency ?? row.aic_last_year_currency, `row[${rowIndex}].c_aic_last_year_currency`),
         tco_current: validateNumber(row.c_tco_current ?? row.tco_current, `row[${rowIndex}].c_tco_current`),
         tco_current_currency: validateString(row.c_tco_current_currency ?? row.tco_current_currency, `row[${rowIndex}].c_tco_current_currency`),
+      },
+      royalty_portfolios: {
+        r_asset_count_total: validateNumber(row.r_asset_count_total ?? null, `row[${rowIndex}].r_asset_count_total`),
+        r_asset_count_producing: validateNumber(row.r_asset_count_producing ?? null, `row[${rowIndex}].r_asset_count_producing`),
+        r_asset_count_developing: validateNumber(row.r_asset_count_developing ?? null, `row[${rowIndex}].r_asset_count_developing`),
+        r_asset_count_exploration: validateNumber(row.r_asset_count_exploration ?? null, `row[${rowIndex}].r_asset_count_exploration`),
+        r_operator_count: validateNumber(row.r_operator_count ?? null, `row[${rowIndex}].r_operator_count`),
+        r_country_count: validateNumber(row.r_country_count ?? null, `row[${rowIndex}].r_country_count`),
       },
     };
 

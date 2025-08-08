@@ -1,58 +1,193 @@
 // src/pages/help/rps-scoring-guide.tsx
 
 import React from 'react';
-import { PageContainer } from '@/components/ui/page-container';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { BarChart3, Users, Scales, Factory } from 'lucide-react';
+import { Helmet } from 'react-helmet-async';
+import { PageContainer } from '../../components/ui/page-container';
+import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
+import {
+    BarChart3,
+    Calculator,
+    Users,
+    Scale,
+    Factory,
+    PieChart,
+    Brain,
+    Eye,
+    Pickaxe,
+    Zap,
+    Crown,
+    CheckCircle,
+    XCircle,
+    Lightbulb,
+    Target,
+    Settings,
+    AlertTriangle,
+} from 'lucide-react';
+import { cn } from '../../lib/utils';
 
 export function HelpRPSScoringPage() {
+    // Component for mathematical formula display
+    const FormulaDisplay: React.FC<{ children: string; className?: string }> = ({ children, className }) => (
+        <div className={cn('my-3 p-3 bg-navy-900/60 border border-navy-700 rounded-md text-sm shadow-inner overflow-x-auto', className)}>
+            <pre className="text-cyan-300 whitespace-pre-wrap font-mono text-[0.8rem] sm:text-xs md:text-sm leading-relaxed m-0 p-0 bg-transparent">
+                {children}
+            </pre>
+        </div>
+    );
+
     return (
         <PageContainer
-            title="RPS Scoring Guide"
-            description="Understand the methodology behind the Relative Performance Score (RPS) system."
+            title="Guide: Relative Performance Score (RPS)"
+            description="Master relative-value analysis with a dynamic scoring system that compares companies to their most relevant peers."
         >
-            <div className="space-y-6">
-                <Card>
+            <Helmet>
+                <title>MapleAurum | RPS Scoring Guide</title>
+                <meta name="description" content="Complete guide to the Relative Performance Score (RPS) system for advanced mining company analysis." />
+            </Helmet>
+            
+            <div className={cn(
+                'relative z-0 space-y-6 text-gray-300 max-w-5xl mx-auto prose prose-sm sm:prose-base prose-invert',
+                'prose-headings:text-cyan-400 prose-headings:font-semibold prose-a:text-accent-teal hover:prose-a:text-accent-yellow prose-strong:text-surface-white'
+            )}>
+
+                {/* Introduction to RPS */}
+                <Card className="bg-navy-800/70 border border-navy-700 backdrop-blur-sm shadow-xl">
                     <CardHeader>
-                        <CardTitle className="flex items-center gap-2">
-                            <BarChart3 className="text-accent-teal" />
-                            Understanding the Relative Performance Score (RPS)
+                        <CardTitle className="text-xl sm:text-2xl flex items-center gap-2.5">
+                            <BarChart3 size={24} className="text-cyan-400" />
+                            Beyond Absolute Scores: Why Relative Performance Matters
                         </CardTitle>
                     </CardHeader>
-                    <CardContent className="space-y-4 text-gray-300">
+                    <CardContent className="space-y-4 text-sm">
                         <p>
-                            The **Relative Performance Score (RPS)** is a dynamic system designed to evaluate a company not in a vacuum, but directly against its most relevant peers. Instead of a single, absolute score, the RPS provides a multi-faceted view by comparing a company across three distinct peer groups.
+                            In investing, context is everything. Is a score of 75 good? It depends. A score of 75 for a senior gold producer means something entirely different than a 75 for a pre-revenue explorer. A single, absolute score can be misleading because it ignores the vast differences in scale, risk, and business models across the mining sector.
                         </p>
+                        <div className="bg-gradient-to-r from-cyan-900/20 to-teal-900/20 border-l-4 border-cyan-400 p-4 rounded-r-md">
+                            <p className="font-semibold text-cyan-400 mb-2">The RPS Advantage:</p>
+                            <p className="text-xs">
+                                The **Relative Performance Score (RPS)** was designed to solve this problem. Instead of providing one number, it analyzes a company through three distinct lenses, scoring it against its true peers. This provides a multi-dimensional view of a company's strengths and weaknesses, helping you uncover value that others might miss.
+                            </p>
+                        </div>
+                    </CardContent>
+                </Card>
+
+                {/* The Three Peer Groups */}
+                <Card className="bg-navy-800/70 border border-navy-700 backdrop-blur-sm shadow-xl">
+                    <CardHeader>
+                        <CardTitle className="text-xl sm:text-2xl flex items-center gap-2.5">
+                            <Eye size={24} className="text-cyan-400" />
+                            The Three Lenses of Analysis: Understanding Peer Groups
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4 text-sm">
+                        <p>The power of the RPS comes from its three dynamic peer groups. Your master sliders give you control over how much weight each peer group's score contributes to the final RPS.</p>
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            <div className="p-4 bg-navy-800/50 rounded-lg">
-                                <h3 className="font-semibold text-surface-white flex items-center gap-2"><Users size={16}/> Status Peers</h3>
-                                <p className="text-sm mt-1">How does it rank against all companies of the same status (e.g., all Producers)?</p>
+                            <div className="border border-teal-700/50 bg-teal-900/10 rounded-lg p-4 text-center flex flex-col items-center">
+                                <Users size={24} className="text-teal-400 mb-2" />
+                                <h4 className="font-semibold text-teal-400">Status Peers</h4>
+                                <p className="text-xs mt-2">The big picture. How does this company rank against **all** other companies of the same status (e.g., all 400+ Explorers)?</p>
                             </div>
-                            <div className="p-4 bg-navy-800/50 rounded-lg">
-                                <h3 className="font-semibold text-surface-white flex items-center gap-2"><Scales size={16}/> Valuation Peers</h3>
-                                <p className="text-sm mt-1">How does it measure up against the 10 most similarly-sized companies by Market Cap & EV?</p>
+                            <div className="border border-sky-700/50 bg-sky-900/10 rounded-lg p-4 text-center flex flex-col items-center">
+                                <Scale size={24} className="text-sky-400 mb-2" />
+                                <h4 className="font-semibold text-sky-400">Valuation Peers</h4>
+                                <p className="text-xs mt-2">The direct financial competitors. How does it rank against the **10 most similarly-sized** companies by Market Cap and Enterprise Value?</p>
                             </div>
-                            <div className="p-4 bg-navy-800/50 rounded-lg">
-                                <h3 className="font-semibold text-surface-white flex items-center gap-2"><Factory size={16}/> Operational Peers</h3>
-                                <p className="text-sm mt-1">How does it perform against companies with a similar operational scale (e.g., Junior vs. Junior)?</p>
+                            <div className="border border-indigo-700/50 bg-indigo-900/10 rounded-lg p-4 text-center flex flex-col items-center">
+                                <Factory size={24} className="text-indigo-400 mb-2" />
+                                <h4 className="font-semibold text-indigo-400">Operational Peers</h4>
+                                <p className="text-xs mt-2">The "apples-to-apples" view. How does it rank against companies with a **similar operational scale** (e.g., junior producers vs. other juniors)?</p>
                             </div>
                         </div>
                     </CardContent>
                 </Card>
 
-                <Card>
+                {/* Scoring Mathematics */}
+                <Card className="bg-navy-800/70 border border-navy-700 backdrop-blur-sm shadow-xl">
                     <CardHeader>
-                        <CardTitle>The Methodology</CardTitle>
+                        <CardTitle className="text-xl sm:text-2xl flex items-center gap-2.5">
+                            <Calculator size={24} className="text-cyan-400" />
+                            RPS Mathematics & Methodology
+                        </CardTitle>
                     </CardHeader>
-                    <CardContent className="space-y-4 text-gray-300">
-                        <p>
-                            The RPS is calculated by scoring a company on a weighted "basket" of metrics tailored to its status. Each metric is normalized to a 0-100 score based on its percentile rank within a peer group, ensuring fair comparison. You can view and adjust these weights in the RPS Configuration panel.
-                        </p>
-                        <p>
-                            For a full mathematical breakdown, please refer to the "RPS Help" button on the main RPS Scoring page.
-                        </p>
+                    <CardContent className="space-y-4 text-sm">
+                         <p>The RPS system uses a transparent, multi-step process to derive its scores, combining peer-based normalization with your custom weightings.</p>
+
+                        <h4 className="text-md font-semibold text-cyan-400 mt-4">Step 1: Metric Normalization (0-100 Score)</h4>
+                        <p className="text-xs">For each metric, a company's raw value is compared against its peers to generate a percentile rank, which is then converted to an intuitive 0-100 score using a sigmoid function. This is done for all three peer groups.</p>
+                        <FormulaDisplay>
+{`// Simplified Logic
+percentile_rank = getPercentile(company_value, peer_values)
+adjusted_percentile = higher_is_better ? percentile_rank : (1 - percentile_rank)
+normalized_score = convertToSigmoidScale(adjusted_percentile) // Returns 0-100`}
+                        </FormulaDisplay>
+                        
+                        <h4 className="text-md font-semibold text-cyan-400 mt-4">Step 2: Operational Peer Group Calculation</h4>
+                        <p className="text-xs">Operational peers are not based on size alone, but on a composite "Scale Score" that provides a more holistic view of their operational footprint.</p>
+                        <FormulaDisplay>
+{`// Producer Scale Score
+Score = (0.4 * Production) + (0.3 * Reserves) + (0.3 * Market Cap)
+
+// Developer Scale Score
+Score = (0.5 * CAPEX) + (0.5 * Mineable Resources)
+
+// Explorer Scale Score
+Score = (0.6 * Resources) + (0.4 * Cash Position)`}
+                        </FormulaDisplay>
+
+                        <h4 className="text-md font-semibold text-cyan-400 mt-4">Step 3: The Blended Score Calculation</h4>
+                        <p className="text-xs">For each metric, a blended score is created based on the weights from your master sliders. This blended score is then used to calculate the final RPS.</p>
+                        <FormulaDisplay>
+{`// W = Weight from master sliders (e.g., 34%, 33%, 33%)
+Blended Score = (Score_vs_Status * W_status) + 
+                (Score_vs_Valuation * W_valuation) + 
+                (Score_vs_Operational * W_operational)
+
+// Final Calculation
+Contribution = (Blended Score * Metric Weight) / 100
+Final RPS = SUM(All Contributions)`}
+                        </FormulaDisplay>
                     </CardContent>
                 </Card>
+                
+                 {/* Advanced Strategies */}
+                <Card className="bg-navy-800/70 border border-navy-700 backdrop-blur-sm shadow-xl">
+                    <CardHeader>
+                        <CardTitle className="text-xl sm:text-2xl flex items-center gap-2.5">
+                            <Target size={24} className="text-cyan-400" />
+                            Advanced RPS Strategies
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4 text-sm">
+                        <div className="bg-navy-900/40 p-4 rounded border border-cyan-700/30">
+                           <h4 className="font-semibold text-surface-white mb-2">Strategy 1: Find Undervalued Operators</h4>
+                           <p className="text-xs mb-3">
+                               <strong>Objective:</strong> Identify operationally excellent companies that the market may be overlooking.
+                           </p>
+                           <p className="text-xs">
+                               <strong>Method:</strong> Set the Peer Group Weights to **70% Operational** and **30% Status**. Run the calculation for Producers. Look for companies with a high overall RPS. These companies rank exceptionally well against their direct operational competitors, suggesting high efficiency, even if their market valuation doesn't fully reflect it yet.
+                           </p>
+                        </div>
+                        <div className="bg-navy-900/40 p-4 rounded border border-blue-700/30">
+                           <h4 className="font-semibold text-surface-white mb-2">Strategy 2: Identify High-Quality Growth</h4>
+                           <p className="text-xs mb-3">
+                               <strong>Objective:</strong> Find well-funded developers with robust projects compared to their similarly-sized peers.
+                           </p>
+                           <p className="text-xs">
+                               <strong>Method:</strong> Filter to Developers. Set Peer Group Weights to **70% Valuation** and **30% Status**. Look for companies with a high RPS. This prioritizes developers that have strong project economics (high resource, reasonable CAPEX) when compared specifically against other companies the market values similarly.
+                           </p>
+                        </div>
+                         <div className="bg-navy-900/40 p-4 rounded border border-amber-700/30">
+                           <h4 className="font-semibold text-surface-white mb-2">Strategy 3: De-Risking Exploration</h4>
+                           <p className="text-xs mb-3">
+                               <strong>Objective:</strong> Find explorers with the best balance of discovery potential and financial stability.
+                           </p>
+                           <p className="text-xs">
+                               <strong>Method:</strong> Filter to Explorers. Set Peer Group Weights to **50% Operational** and **50% Status**. The 'Operational' score for explorers is based on resource size and cash. This blend identifies explorers that not only have large potential discoveries but also the cash to survive and advance them, when compared to the entire universe of explorers.
+                           </p>
+                        </div>
+                    </CardContent>
+                </Card>
+
             </div>
         </PageContainer>
     );

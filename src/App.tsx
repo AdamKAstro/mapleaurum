@@ -634,6 +634,26 @@ function App() {
                         </>
                       }
                     />
+			
+                    <Route
+                      path="/help/rps-scoring"
+                      element={
+                        <>
+                          <Helmet>
+                            <title>MapleAurum | RPS Scoring Guide</title>
+                            <meta
+                              name="description"
+                              content="Learn the methodology behind the Relative Performance Score (RPS) system for evaluating Canadian precious metals companies."
+                            />
+                             <link rel="canonical" href="https://mapleaurum.com/help/rps-scoring" />
+                          </Helmet>
+                          <HelpRPSScoringPage />
+                        </>
+                      }
+                    />					
+					
+			
+					
                     <Route
                       path="/help/scatter-chart"
                       element={

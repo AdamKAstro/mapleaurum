@@ -4,196 +4,232 @@ import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import type { Company, CompanyStatus } from '@/lib/types';
 import { useFilters } from '@/contexts/filter-context';
 import { getAccessibleMetrics } from '@/lib/metric-types';
-
-// Import the new RPS-specific engine, configs, and types
-import { RPS_SCORING_CONFIGS, RPSCompanyConfig } from './rps-scoring-configs';
-import { calculateRelativePerformanceScores } from './rps-scoring-engine';
-import type { RPSScoringResult } from './rps-scoring-engine';
-
-// Import UI components (we will create the RPS versions in the next steps)
+import { debounce } from 'lodash';
+import { RPS_SCORING_CONFIGS } from './rps-scoring-configs';
+import { precomputeRPSData, applyWeightsToPrecomputedData } from './rps-scoring-engine';
+import type { RPSScoringResult, PrecomputedResult } from './rps-scoring-engine';
 import { PageContainer } from '@/components/ui/page-container';
 import { LoadingIndicator } from '@/components/ui/loading-indicator';
-import { EducationalSidebar } from '../fcf-scoring/components/EducationalSidebar'; // Can be reused or adapted
+import { EducationalSidebar } from '../fcf-scoring/components/EducationalSidebar';
 import { RPSConfigPanel } from './components/RPSConfigPanel';
 import { RPSResultsDisplay } from './components/RPSResultsDisplay';
-
-import { AlertCircle, BookOpen, BarChart3 } from 'lucide-react';
+import { PeerGroupWeightsPanel } from './components/PeerGroupWeightsPanel';
+import { ScorePreviewBar } from './components/ScorePreviewBar';
+import { AlertCircle, Scale, BarChart3 } from 'lucide-react';
 
 export function RPSScoringPage() {
-    // --- State Management ---
-    const { activeCompanyIds, fetchCompaniesByIds, currentUserTier, loading: isFilterContextLoading } = useFilters();
+  // --- State Management ---
+  const { activeCompanyIds, fetchCompaniesByIds, currentUserTier, loading: isFilterContextLoading } = useFilters();
+  
+  const [allCompanyDetails, setAllCompanyDetails] = useState<Company[]>([]);
+  const [isDataLoading, setIsDataLoading] = useState(false);
+  const [scoringResults, setScoringResults] = useState<RPSScoringResult[]>([]);
+  const [isCalculating, setIsCalculating] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [lastFetchedIds, setLastFetchedIds] = useState<string>('');
+  const [showEducationalSidebar, setShowEducationalSidebar] = useState(false);
+  
+  // Configuration State
+  const [activeCompanyType, setActiveCompanyType] = useState<CompanyStatus>('producer');
+  const [metricWeights, setMetricWeights] = useState(RPS_SCORING_CONFIGS);
+  const [peerGroupWeights, setPeerGroupWeights] = useState({
+    status: 34,
+    valuation: 33,
+    operational: 33,
+  });
 
-    const [allCompanyDetails, setAllCompanyDetails] = useState<Company[]>([]);
-    const [isDataLoading, setIsDataLoading] = useState(false);
-    const [scoringResults, setScoringResults] = useState<RPSScoringResult[]>([]);
-    const [isCalculating, setIsCalculating] = useState(false);
-    const [error, setError] = useState<string | null>(null);
-    const [lastFetchedIds, setLastFetchedIds] = useState<string>('');
-    const [showEducationalSidebar, setShowEducationalSidebar] = useState(false);
+  // State for pre-computed data
+  const [precomputedData, setPrecomputedData] = useState<PrecomputedResult[]>([]);
+  
+  // State for the live preview bar
+  const [previewScores, setPreviewScores] = useState<{
+    topCompanies: { company: Company; score: number; change: number }[];
+    isCalculating: boolean;
+  }>({
+    topCompanies: [],
+    isCalculating: false,
+  });
 
-    // State for the RPS configuration
-    const [activeCompanyType, setActiveCompanyType] = useState<CompanyStatus>('producer');
-    const [metricWeights, setMetricWeights] = useState(RPS_SCORING_CONFIGS);
+  const effectiveTier = currentUserTier || 'free';
+  const accessibleMetrics = useMemo(() => getAccessibleMetrics(effectiveTier), [effectiveTier]);
 
-    // --- Memoized Values ---
-    const effectiveTier = currentUserTier || 'free';
-    const accessibleMetrics = useMemo(() => getAccessibleMetrics(effectiveTier), [effectiveTier]);
+  // --- Data Fetching ---
+  useEffect(() => {
+    const fetchDataForScoring = async () => {
+      if (isFilterContextLoading || isDataLoading) return;
+      const idsToFetch = activeCompanyIds ? Array.from(new Set(activeCompanyIds)).sort() : [];
+      const currentIdString = idsToFetch.join(',');
 
-    // --- Data Fetching ---
-    useEffect(() => {
-        const fetchDataForScoring = async () => {
-            if (isFilterContextLoading || isDataLoading) {
-                return; // Don't fetch if context is loading or a fetch is in progress
-            }
+      if (idsToFetch.length === 0) {
+        setAllCompanyDetails([]);
+        setScoringResults([]);
+        setPrecomputedData([]);
+        setPreviewScores({ topCompanies: [], isCalculating: false });
+        setLastFetchedIds('');
+        return;
+      }
+      if (currentIdString === lastFetchedIds) return;
 
-            const idsToFetch = activeCompanyIds ? Array.from(new Set(activeCompanyIds)) : [];
-            const currentIdString = idsToFetch.sort().join(',');
+      setIsDataLoading(true);
+      setError(null);
+      try {
+        const companies = await fetchCompaniesByIds(idsToFetch);
+        setAllCompanyDetails(Array.isArray(companies) ? companies : []);
+        setLastFetchedIds(currentIdString);
+        setScoringResults([]);
+        setPrecomputedData([]);
+        setPreviewScores({ topCompanies: [], isCalculating: false });
+      } catch (e: any) {
+        setError(e.message || "Failed to load company details.");
+        setAllCompanyDetails([]);
+      } finally {
+        setIsDataLoading(false);
+      }
+    };
+    fetchDataForScoring();
+  }, [activeCompanyIds, isFilterContextLoading, fetchCompaniesByIds, isDataLoading, lastFetchedIds]);
 
-            if (idsToFetch.length === 0) {
-                setAllCompanyDetails([]);
-                setScoringResults([]);
-                setLastFetchedIds('');
-                return;
-            }
-            
-            if (currentIdString === lastFetchedIds) {
-                return; // Data is already fresh for the current set of IDs
-            }
+  // --- Main Calculation Handler ---
+  const handleCalculateScores = useCallback(async () => {
+    if (allCompanyDetails.length === 0) {
+      setError('No companies loaded to calculate.');
+      return;
+    }
+    setIsCalculating(true);
+    setError(null);
+    setPreviewScores({ topCompanies: [], isCalculating: false });
 
-            setIsDataLoading(true);
-            setError(null);
-            try {
-                const data = await fetchCompaniesByIds(idsToFetch);
-                setAllCompanyDetails(Array.isArray(data) ? data : []);
-                setLastFetchedIds(currentIdString);
-                setScoringResults([]); // Clear old results when new data is loaded
-            } catch (e: any) {
-                console.error("[RPS Page] Failed to fetch company details:", e);
-                setError(e.message || "Failed to load company details for scoring.");
-                setAllCompanyDetails([]);
-            } finally {
-                setIsDataLoading(false);
-            }
+    try {
+      await new Promise(resolve => setTimeout(resolve, 50));
+      const precomputed = precomputeRPSData(allCompanyDetails, metricWeights);
+      setPrecomputedData(precomputed);
+      const finalResults = applyWeightsToPrecomputedData(precomputed, metricWeights, peerGroupWeights);
+      setScoringResults(finalResults);
+      if (finalResults.length === 0) {
+        setError('Scoring did not produce results due to insufficient data.');
+      }
+    } catch (e: any) {
+      console.error('[RPS Page] Calculation failed:', e);
+      setError(e.message || 'An unexpected error occurred during calculation.');
+      setScoringResults([]);
+      setPrecomputedData([]);
+    } finally {
+      setIsCalculating(false);
+    }
+  }, [allCompanyDetails, metricWeights, peerGroupWeights]);
+
+  // --- Debounced Preview Effect ---
+  const debouncedPreview = useCallback(
+    debounce((precomputed, currentResults, metrics, peers) => {
+      setPreviewScores(prev => ({ ...prev, isCalculating: true }));
+      const newResults = applyWeightsToPrecomputedData(precomputed, metrics, peers);
+      const topPreview = newResults.slice(0, 5).map(newResult => {
+        const oldResult = currentResults.find(r => r.company.company_id === newResult.company.company_id);
+        return {
+          company: newResult.company,
+          score: newResult.finalScore,
+          change: oldResult ? newResult.finalScore - oldResult.finalScore : 0,
         };
+      });
+      setPreviewScores({ topCompanies: topPreview, isCalculating: false });
+    }, 300),
+    []
+  );
 
-        fetchDataForScoring();
-    }, [activeCompanyIds, isFilterContextLoading, fetchCompaniesByIds, isDataLoading, lastFetchedIds]);
+  useEffect(() => {
+    if (precomputedData.length > 0 && scoringResults.length > 0) {
+      debouncedPreview(precomputedData, scoringResults, metricWeights, peerGroupWeights);
+    }
+  }, [metricWeights, peerGroupWeights, precomputedData, scoringResults, debouncedPreview]);
 
+  // --- Other Callbacks ---
+  const handleWeightChange = useCallback((theme: string, metricKey: string, weight: number) => {
+    setMetricWeights(prev => ({
+      ...prev,
+      [activeCompanyType]: {
+        ...prev[activeCompanyType],
+        [theme]: {
+          ...prev[activeCompanyType][theme],
+          [metricKey]: weight,
+        },
+      },
+    }));
+  }, [activeCompanyType]);
 
-    // --- Callback Handlers ---
-    const handleWeightChange = useCallback((theme: string, metricKey: string, weight: number) => {
-        setMetricWeights(prev => ({
-            ...prev,
-            [activeCompanyType]: {
-                ...prev[activeCompanyType],
-                [theme]: {
-                    ...prev[activeCompanyType][theme],
-                    [metricKey]: weight,
-                },
-            },
-        }));
-    }, [activeCompanyType]);
+  const handlePeerWeightChange = useCallback((group: 'status' | 'valuation' | 'operational', value: number) => {
+    setPeerGroupWeights(prev => ({ ...prev, [group]: value }));
+  }, []);
 
-    const handleCalculateScores = useCallback(async () => {
-        if (allCompanyDetails.length === 0) {
-            setError("No companies loaded. Please select companies using the main filter panel.");
-            return;
-        }
+  const isLoading = isDataLoading || isCalculating;
 
-        setIsCalculating(true);
-        setError(null);
-
-        try {
-            // Use a brief timeout to allow the UI to update to the "Calculating..." state
-            await new Promise(resolve => setTimeout(resolve, 50));
-            
-            const results = calculateRelativePerformanceScores(allCompanyDetails, metricWeights);
-            setScoringResults(results);
-
-            if (results.length === 0) {
-                 setError("Scoring did not produce any results. This may be due to insufficient data for the selected companies.");
-            }
-        } catch (e: any) {
-            console.error("[RPS Page] RPS calculation failed:", e);
-            setError(e.message || "An unexpected error occurred during calculation.");
-            setScoringResults([]);
-        } finally {
-            setIsCalculating(false);
-        }
-    }, [allCompanyDetails, metricWeights]);
-
-    const isLoading = isDataLoading || isCalculating;
-
-    // --- Render ---
-    return (
-        <PageContainer
-            title="Relative Performance Score (RPS)"
-            description="Analyze companies using a dynamic, multi-faceted scoring system relative to their true peers."
+  // --- Render ---
+  return (
+    <PageContainer
+      title="Relative Performance Score (RPS)"
+      description="Analyze companies using a dynamic, multi-faceted scoring system relative to their true peers."
+    >
+      <div className="flex justify-end mb-4">
+        <button
+          onClick={() => setShowEducationalSidebar(true)}
+          className="flex items-center gap-2 px-4 py-2 bg-navy-700/50 hover:bg-navy-700 border border-navy-600 rounded-lg transition-colors"
         >
-            <div className="flex justify-end mb-4">
-                <button
-                    onClick={() => setShowEducationalSidebar(true)}
-                    className="flex items-center gap-2 px-4 py-2 bg-navy-700/50 hover:bg-navy-700 border border-navy-600 rounded-lg transition-colors"
-                >
-                    <BookOpen size={18} />
-                    <span className="text-sm">RPS Help</span>
-                </button>
-            </div>
+          <Scale size={18} />
+          <span className="text-sm">RPS Help</span>
+        </button>
+      </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 h-full">
-                <div className="lg:col-span-1">
-                    <RPSConfigPanel
-                        activeCompanyType={activeCompanyType}
-                        onCompanyTypeChange={setActiveCompanyType}
-                        weights={metricWeights[activeCompanyType]}
-                        onWeightChange={handleWeightChange}
-                        onCalculate={handleCalculateScores}
-                        isCalculating={isLoading}
-                        companyCount={allCompanyDetails.length}
-                        accessibleMetrics={accessibleMetrics}
-                    />
-                </div>
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 h-full">
+        <div className="lg:col-span-1">
+          <RPSConfigPanel
+            activeCompanyType={activeCompanyType}
+            onCompanyTypeChange={setActiveCompanyType}
+            weights={metricWeights[activeCompanyType]}
+            onWeightChange={handleWeightChange}
+            onCalculate={handleCalculateScores}
+            isCalculating={isLoading}
+            companyCount={allCompanyDetails.length}
+            accessibleMetrics={accessibleMetrics}
+          />
+        </div>
+        <div className="lg:col-span-3">
+          <div className="bg-navy-700/30 p-6 rounded-xl border border-navy-600/50 min-h-[700px] flex flex-col">
+            <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
+              <BarChart3 size={24} className="text-accent-teal" />
+              RPS Results
+            </h2>
 
-                <div className="lg:col-span-3">
-                    <div className="bg-navy-700/30 p-6 rounded-xl border border-navy-600/50 min-h-[700px] flex flex-col">
-                        <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
-                            <BarChart3 size={24} className="text-accent-teal" />
-                            RPS Results
-                        </h2>
-
-                        {error && (
-                            <div className="flex items-center gap-2 text-red-400 p-4 bg-red-500/10 rounded-md mb-4">
-                                <AlertCircle size={20} />
-                                <p>{error}</p>
-                            </div>
-                        )}
-
-                        {isLoading ? (
-                            <div className="flex-grow flex justify-center items-center">
-                                <LoadingIndicator
-                                    message={isDataLoading ? 'Loading company data...' : 'Calculating Relative Performance Scores...'}
-                                />
-                            </div>
-                        ) : scoringResults.length > 0 ? (
-                            <RPSResultsDisplay results={scoringResults} />
-                        ) : (
-                            <div className="flex-grow flex flex-col justify-center items-center text-center text-muted-foreground">
-                                <p className="text-lg mb-2">Configure settings and click "Calculate RPS" to begin.</p>
-                                <p className="text-sm max-w-md">
-                                    The scoring system will analyze the {allCompanyDetails.length} selected companies using the RPS formula for the '{activeCompanyType}' category.
-                                </p>
-                            </div>
-                        )}
-                    </div>
-                </div>
-            </div>
-            
-            {showEducationalSidebar && (
-                // We can create a dedicated RPSHelpSidebar or adapt the existing one
-                <EducationalSidebar onClose={() => setShowEducationalSidebar(false)} />
+            {error && (
+              <div className="flex items-center gap-2 text-red-400 p-4 bg-red-500/10 rounded-md mb-4">
+                <AlertCircle size={20} />
+                <p>{error}</p>
+              </div>
             )}
-        </PageContainer>
-    );
+
+            {isLoading ? (
+              <div className="flex-grow flex justify-center items-center">
+                <LoadingIndicator message={isDataLoading ? 'Loading company data...' : 'Calculating RPS...'} />
+              </div>
+            ) : scoringResults.length > 0 ? (
+              <>
+                <ScorePreviewBar previewData={previewScores} onApply={handleCalculateScores} />
+                <PeerGroupWeightsPanel weights={peerGroupWeights} onWeightChange={handlePeerWeightChange} />
+                <RPSResultsDisplay results={scoringResults} />
+              </>
+            ) : (
+              <div className="flex-grow flex flex-col justify-center items-center text-center text-muted-foreground">
+                <p className="text-lg mb-2">Configure and click "Calculate RPS" to begin.</p>
+                <p className="text-sm max-w-md">
+                  The system will analyze the {allCompanyDetails.length} selected companies using the '{activeCompanyType}' formula.
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+      
+      {showEducationalSidebar && <EducationalSidebar onClose={() => setShowEducationalSidebar(false)} />}
+    </PageContainer>
+  );
 }
 
 export default RPSScoringPage;
