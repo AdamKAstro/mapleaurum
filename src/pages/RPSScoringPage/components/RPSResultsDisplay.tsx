@@ -1,5 +1,6 @@
 // src/pages/RPSScoringPage/components/RPSResultsDisplay.tsx
 import React, { useEffect, useRef, useState, useMemo, Fragment } from 'react';
+import { useNavigate } from 'react-router-dom';
 import type { RPSScoringResult } from '../rps-scoring-engine';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -7,7 +8,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { Button } from '@/components/ui/button';
 import { StatusBadge } from '@/components/status-badge';
 import { RPSDetailsRow } from './RPSDetailsRow';
-import { ChevronDown, Info, BarChart3 } from 'lucide-react';
+import { ChevronDown, Info, BarChart3, ExternalLink } from 'lucide-react'; // IMPORTED: ExternalLink
 import { cn } from '@/lib/utils';
 
 // --- Component Props ---
@@ -156,6 +157,8 @@ export const RPSResultsDisplay: React.FC<RPSResultsDisplayProps> = ({ results })
   const [page, setPage] = useState(1);
   const pageSize = 25;
 
+  const navigate = useNavigate();
+
   const paginatedResults = useMemo(() => {
     const start = (page - 1) * pageSize;
     return results.slice(start, start + pageSize);
@@ -171,6 +174,12 @@ export const RPSResultsDisplay: React.FC<RPSResultsDisplayProps> = ({ results })
       }
       return next;
     });
+  };
+  
+  const handleNavigate = (companyId: string | number | undefined | null) => {
+      if (companyId) {
+          navigate(`/company/${companyId}`);
+      }
   };
 
   if (!results.length) {
@@ -222,7 +231,7 @@ export const RPSResultsDisplay: React.FC<RPSResultsDisplayProps> = ({ results })
                 const globalRank = (page - 1) * pageSize + index + 1;
                 const companyId = result.company.company_id ?? `company-${index}`;
                 const isExpanded = expandedRows.has(companyId);
-                const rowDelay = index * 30; // 30ms stagger between rows
+                const rowDelay = index * 30;
 
                 return (
                   <Fragment key={companyId}>
@@ -235,6 +244,7 @@ export const RPSResultsDisplay: React.FC<RPSResultsDisplayProps> = ({ results })
                         delay: rowDelay / 1000,
                       }}
                       className="cursor-pointer hover:bg-navy-700/30 transition-colors"
+                      // REVERTED: Row click now toggles the details view
                       onClick={() => toggleRow(companyId)}
                       whileHover={{ backgroundColor: 'rgba(30, 41, 59, 0.3)' }}
                       role="button"
@@ -245,10 +255,7 @@ export const RPSResultsDisplay: React.FC<RPSResultsDisplayProps> = ({ results })
                           className="text-lg font-bold text-muted-foreground"
                           initial={{ scale: 0 }}
                           animate={{ scale: 1 }}
-                          transition={{
-                            type: 'spring',
-                            delay: (rowDelay + 50) / 1000,
-                          }}
+                          transition={{ type: 'spring', delay: (rowDelay + 50) / 1000 }}
                         >
                           #{globalRank}
                         </motion.div>
@@ -262,11 +269,35 @@ export const RPSResultsDisplay: React.FC<RPSResultsDisplayProps> = ({ results })
                         >
                           <StatusBadge status={result.company.status} />
                           <div>
-                            <div className="font-bold text-surface-white">
-                              {result.company.company_name ?? 'Unknown'}
+                            <div className="flex items-center gap-1.5">
+                              <span className="font-bold text-surface-white">
+                                {result.company.company_name ?? 'Unknown'}
+                              </span>
+                              {/* ADDED: Navigation button next to the company name */}
+                              <TooltipProvider>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      className="h-5 w-5 text-muted-foreground hover:text-accent-teal"
+                                      onClick={(e) => {
+                                        e.stopPropagation(); // Prevents the row's toggle onClick
+                                        handleNavigate(result.company.company_id);
+                                      }}
+                                      aria-label={`View details for ${result.company.company_name}`}
+                                    >
+                                      <ExternalLink size={14} />
+                                    </Button>
+                                  </TooltipTrigger>
+                                  <TooltipContent>
+                                    <p>View Company Details</p>
+                                  </TooltipContent>
+                                </Tooltip>
+                              </TooltipProvider>
                             </div>
                             <div className="text-xs text-muted-foreground">
-                              {result.company.tsx_code || ''} {/* Show empty string if tsx_code is null */}
+                              {result.company.tsx_code || ''}
                             </div>
                           </div>
                         </motion.div>
@@ -278,14 +309,8 @@ export const RPSResultsDisplay: React.FC<RPSResultsDisplayProps> = ({ results })
                               <motion.div className="inline-flex items-center gap-2" whileHover={{ scale: 1.05 }}>
                                 <AnimatedScore value={result.finalScore} delay={rowDelay + 100} />
                                 <motion.div
-                                  animate={{
-                                    rotate: [0, 10, -10, 0],
-                                  }}
-                                  transition={{
-                                    duration: 2,
-                                    repeat: Infinity,
-                                    repeatDelay: 3,
-                                  }}
+                                  animate={{ rotate: [0, 10, -10, 0] }}
+                                  transition={{ duration: 2, repeat: Infinity, repeatDelay: 3 }}
                                   aria-hidden="true"
                                 >
                                   <BarChart3 className="text-accent-teal/50" size={18} />
@@ -320,6 +345,7 @@ export const RPSResultsDisplay: React.FC<RPSResultsDisplayProps> = ({ results })
                         />
                       </TableCell>
                       <TableCell>
+                        {/* REVERTED: Chevron is now a visual indicator again */}
                         <motion.div
                           animate={{ rotate: isExpanded ? 180 : 0 }}
                           transition={{ duration: 0.3 }}
