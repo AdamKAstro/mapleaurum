@@ -5,23 +5,19 @@ import type { CompanyStatus } from '@/lib/types';
 import type { MetricConfig } from '@/lib/metric-types';
 import { getMetricByKey } from '@/lib/metric-types';
 import { cn } from '@/lib/utils';
-
-// Import the RPS-specific configs and types
-import { RPSCompanyConfig } from '../rps-scoring-configs';
-import { getMetricRationale } from '../rps-scoring-configs';
-
-// Import UI Components from your library
+import { RPSCompanyConfig, getMetricRationale } from '../rps-scoring-configs';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { Calculator, Loader2, Info, AlertCircle } from 'lucide-react';
+import { Calculator, Loader2, Info, AlertCircle, ChevronLeft } from 'lucide-react';
 
 // --- Component Props ---
 interface RPSConfigPanelProps {
+    onCollapse?: () => void;
     activeCompanyType: CompanyStatus;
     onCompanyTypeChange: (type: CompanyStatus) => void;
-    weights: RPSCompanyConfig; // The weights object for the active company type
+    weights: RPSCompanyConfig;
     onWeightChange: (theme: string, metricKey: string, weight: number) => void;
     onCalculate: () => void;
     isCalculating: boolean;
@@ -40,11 +36,9 @@ const MetricWeightControl: React.FC<{
     onChange: (weight: number) => void;
     isAccessible: boolean;
 }> = ({ metricKey, weight, theme, companyType, onChange, isAccessible }) => {
-    // Attempt to get rationale from our new RPS config
     const rationale = getMetricRationale(companyType, metricKey);
     if (!rationale) return null;
 
-    // Use a placeholder if metric isn't in the central registry (e.g., for calculated metrics)
     const metricConfig = getMetricByKey(metricKey) || { label: rationale.label, accessTier: 'free' };
 
     return (
@@ -93,7 +87,7 @@ const MetricWeightControl: React.FC<{
                 onValueChange={([v]) => onChange(v)}
                 min={0}
                 max={50}
-                step={1} // Allow finer control
+                step={1}
                 disabled={!isAccessible}
                 className="mt-2"
             />
@@ -104,6 +98,7 @@ const MetricWeightControl: React.FC<{
 
 // --- Main Panel Component ---
 export const RPSConfigPanel: React.FC<RPSConfigPanelProps> = ({
+    onCollapse,
     activeCompanyType,
     onCompanyTypeChange,
     weights,
@@ -113,16 +108,21 @@ export const RPSConfigPanel: React.FC<RPSConfigPanelProps> = ({
     companyCount,
     accessibleMetrics,
 }) => {
-    // Calculate the total weight of all metrics for the active company type
     const totalWeight = Object.values(weights)
         .flatMap(theme => Object.values(theme))
         .reduce((sum, w) => sum + w, 0);
     
     return (
         <div className="flex flex-col space-y-4 bg-navy-700/30 p-5 rounded-xl border border-navy-600/50 h-full">
-            <h2 className="text-xl font-bold text-surface-white flex-shrink-0">RPS Configuration</h2>
+            <div className="flex justify-between items-center flex-shrink-0">
+                <h2 className="text-xl font-bold text-surface-white">RPS Configuration</h2>
+                {onCollapse && (
+                    <Button variant="ghost" size="icon" onClick={onCollapse} aria-label="Collapse panel">
+                        <ChevronLeft size={20} />
+                    </Button>
+                )}
+            </div>
             
-            {/* --- Calculate Button --- */}
             <div className="flex-shrink-0">
                 <Button 
                     onClick={onCalculate} 
@@ -143,7 +143,6 @@ export const RPSConfigPanel: React.FC<RPSConfigPanelProps> = ({
                 </Button>
             </div>
             
-            {/* --- Company Type Tabs & Weight Summary --- */}
             <div className="bg-navy-800/40 p-3 rounded-lg border border-navy-600/50 flex-shrink-0">
                 <div className="flex border-b border-navy-600 mb-3 flex-wrap">
                     {COMPANY_TYPE_TABS.map(type => (
@@ -180,7 +179,6 @@ export const RPSConfigPanel: React.FC<RPSConfigPanelProps> = ({
                 </div>
             </div>
             
-            {/* --- Metric Weight Sliders (Themed) --- */}
             <div className="bg-navy-800/40 p-3 rounded-lg border border-navy-600/50 flex-grow flex flex-col min-h-0">
                 <div className="flex-grow overflow-y-auto space-y-4 pr-2 scrollbar-thin scrollbar-thumb-navy-600">
                     {Object.entries(weights).map(([theme, metrics]) => (
@@ -189,7 +187,7 @@ export const RPSConfigPanel: React.FC<RPSConfigPanelProps> = ({
                             <div className="space-y-3">
                                 {Object.entries(metrics).map(([metricKey, weight]) => {
                                     const metricConfig = getMetricByKey(metricKey);
-                                    const isAccessible = metricConfig ? accessibleMetrics.includes(metricConfig) : true; // Default true for calculated metrics
+                                    const isAccessible = metricConfig ? accessibleMetrics.includes(metricConfig) : true;
 
                                     return (
                                         <MetricWeightControl

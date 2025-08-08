@@ -174,7 +174,7 @@ export function applyWeightsToPrecomputedData(
     };
   });
 
-  const rankContext = createCalculationContext(precomputedResults.map(r => r.company));
+  const rankContext = createCalculationContext(results.map(r => r.company));
   buildAdvancedPeerGroups(rankContext);
   addFinalRankings(results, rankContext);
 

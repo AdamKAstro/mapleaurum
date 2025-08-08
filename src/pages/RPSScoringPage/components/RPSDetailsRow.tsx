@@ -4,7 +4,7 @@ import React from 'react';
 import type { RPSScoringResult, RPSMetricBreakdown } from '../rps-scoring-engine';
 import { motion } from 'framer-motion';
 // Import Icons and Utilities
-import { TrendingUp, TrendingDown, Users, Factory } from 'lucide-react';
+import { TrendingUp, TrendingDown, Users, Factory, Gauge } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
@@ -19,8 +19,8 @@ function formatMetricValue(value: number | null, metricKey: string): string {
 
     const absValue = Math.abs(value);
 
-    // Simplified formatter for demonstration
-    if (metricKey.includes('_cost') || metricKey.includes('price')) {
+    // Use includes() which works on the new nested keys e.g., 'costs.aisc_last_year'
+    if (metricKey.includes('cost') || metricKey.includes('price')) {
         return `$${value.toFixed(2)}`;
     }
     if (metricKey.includes('_oz')) {
@@ -34,10 +34,10 @@ function formatMetricValue(value: number | null, metricKey: string): string {
         if (absValue >= 1e3) return `$${(value / 1e3).toFixed(0)}k`;
         return `$${value.toFixed(0)}`;
     }
-    if (metricKey.includes('_yield') || metricKey.includes('_margin')) {
+    if (metricKey.includes('yield') || metricKey.includes('margin')) {
         return `${value.toFixed(1)}%`;
     }
-     if (metricKey.includes('_shares')) {
+     if (metricKey.includes('shares')) {
         if (absValue >= 1e6) return `${(value / 1e6).toFixed(0)}M`;
         return value.toFixed(0);
     }
@@ -82,10 +82,10 @@ const PeerComparison: React.FC<{
                 <TooltipProvider delayDuration={100}>
                     <Tooltip>
                         <TooltipTrigger>
-                            <span className="text-accent-teal/80">({(percentile ?? 0.5 * 100).toFixed(0)}%)</span>
+                            <span className="text-accent-teal/80">({((percentile ?? 0.5) * 100).toFixed(0)}%)</span>
                         </TooltipTrigger>
                         <TooltipContent side="top">
-                            <p>This company is in the {(percentile ?? 0.5 * 100).toFixed(0)}th percentile of this peer group.</p>
+                            <p>This company is in the {((percentile ?? 0.5) * 100).toFixed(0)}th percentile of this peer group.</p>
                         </TooltipContent>
                     </Tooltip>
                 </TooltipProvider>
@@ -97,10 +97,10 @@ const PeerComparison: React.FC<{
 
 // --- Sub-Component for a Single Metric Card ---
 const MetricCard: React.FC<{ metricData: RPSMetricBreakdown }> = ({ metricData }) => {
+    // FIX: Destructure higherIsBetter directly from metricData.
+    // The engine now provides this, so we don't have to guess it.
     const { label, weight, rawValue, normalizedScore, contribution, metricKey,
-            statusPeers, valuationPeers, operationalPeers } = metricData;
-
-    const higherIsBetter = contribution > 0 ? (rawValue ?? 0) >= (statusPeers.medianValue ?? -Infinity) : (rawValue ?? Infinity) <= (statusPeers.medianValue ?? 0);
+            statusPeers, valuationPeers, operationalPeers, higherIsBetter } = metricData;
 
     return (
         <div className="bg-navy-900/50 p-4 rounded-lg border border-navy-600/50 flex flex-col">
@@ -130,7 +130,7 @@ const MetricCard: React.FC<{ metricData: RPSMetricBreakdown }> = ({ metricData }
                  />
                  <PeerComparison 
                     label="Valuation Peers" 
-                    icon={Factory}
+                    icon={Gauge}
                     companyValue={rawValue}
                     peerMedian={valuationPeers.medianValue}
                     percentile={valuationPeers.percentile}
@@ -166,7 +166,7 @@ const MetricCard: React.FC<{ metricData: RPSMetricBreakdown }> = ({ metricData }
 
 // --- Main Details Row Component ---
 export const RPSDetailsRow: React.FC<RPSDetailsRowProps> = ({ result }) => {
-    // Sort metrics by their contribution to the score for intuitive display
+    // Sort metrics by their weight for intuitive display
     const sortedBreakdown = [...result.breakdown].sort((a,b) => b.weight - a.weight);
 
     return (

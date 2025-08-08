@@ -15,7 +15,9 @@ import { RPSConfigPanel } from './components/RPSConfigPanel';
 import { RPSResultsDisplay } from './components/RPSResultsDisplay';
 import { PeerGroupWeightsPanel } from './components/PeerGroupWeightsPanel';
 import { ScorePreviewBar } from './components/ScorePreviewBar';
-import { AlertCircle, Scale, BarChart3 } from 'lucide-react';
+import { AlertCircle, Scale, BarChart3, ChevronRight } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 
 export function RPSScoringPage() {
   // --- State Management ---
@@ -28,6 +30,7 @@ export function RPSScoringPage() {
   const [error, setError] = useState<string | null>(null);
   const [lastFetchedIds, setLastFetchedIds] = useState<string>('');
   const [showEducationalSidebar, setShowEducationalSidebar] = useState(false);
+  const [isConfigPanelCollapsed, setIsConfigPanelCollapsed] = useState(false);
   
   // Configuration State
   const [activeCompanyType, setActiveCompanyType] = useState<CompanyStatus>('producer');
@@ -165,38 +168,46 @@ export function RPSScoringPage() {
   // --- Render ---
   return (
     <PageContainer
-      title="Relative Performance Score (RPS)"
+      title="Relative Performance Score (Peers)"
       description="Analyze companies using a dynamic, multi-faceted scoring system relative to their true peers."
     >
-      <div className="flex justify-end mb-4">
-        <button
-          onClick={() => setShowEducationalSidebar(true)}
-          className="flex items-center gap-2 px-4 py-2 bg-navy-700/50 hover:bg-navy-700 border border-navy-600 rounded-lg transition-colors"
-        >
-          <Scale size={18} />
-          <span className="text-sm">RPS Help</span>
-        </button>
-      </div>
-
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 h-full">
-        <div className="lg:col-span-1">
-          <RPSConfigPanel
-            activeCompanyType={activeCompanyType}
-            onCompanyTypeChange={setActiveCompanyType}
-            weights={metricWeights[activeCompanyType]}
-            onWeightChange={handleWeightChange}
-            onCalculate={handleCalculateScores}
-            isCalculating={isLoading}
-            companyCount={allCompanyDetails.length}
-            accessibleMetrics={accessibleMetrics}
-          />
-        </div>
-        <div className="lg:col-span-3">
+        {!isConfigPanelCollapsed && (
+          <div className="lg:col-span-1">
+            <RPSConfigPanel
+              onCollapse={() => setIsConfigPanelCollapsed(true)}
+              activeCompanyType={activeCompanyType}
+              onCompanyTypeChange={setActiveCompanyType}
+              weights={metricWeights[activeCompanyType]}
+              onWeightChange={handleWeightChange}
+              onCalculate={handleCalculateScores}
+              isCalculating={isLoading}
+              companyCount={allCompanyDetails.length}
+              accessibleMetrics={accessibleMetrics}
+            />
+          </div>
+        )}
+
+        <div className={cn("lg:col-span-3", isConfigPanelCollapsed && "lg:col-span-4")}>
           <div className="bg-navy-700/30 p-6 rounded-xl border border-navy-600/50 min-h-[700px] flex flex-col">
-            <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
-              <BarChart3 size={24} className="text-accent-teal" />
-              RPS Results
-            </h2>
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-bold flex items-center gap-2">
+                {isConfigPanelCollapsed && (
+                  <Button variant="ghost" size="icon" onClick={() => setIsConfigPanelCollapsed(false)} className="mr-2" aria-label="Expand panel">
+                    <ChevronRight />
+                  </Button>
+                )}
+                <BarChart3 size={24} className="text-accent-teal" />
+                RPS Results
+              </h2>
+              <button
+                onClick={() => setShowEducationalSidebar(true)}
+                className="flex items-center gap-2 px-4 py-2 bg-navy-700/50 hover:bg-navy-700 border border-navy-600 rounded-lg transition-colors"
+              >
+                <Scale size={18} />
+                <span className="text-sm">RPS Help</span>
+              </button>
+            </div>
 
             {error && (
               <div className="flex items-center gap-2 text-red-400 p-4 bg-red-500/10 rounded-md mb-4">
