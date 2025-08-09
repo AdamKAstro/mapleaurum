@@ -10,18 +10,12 @@ import {
     Users,
     Scale,
     Factory,
-    PieChart,
-    Brain,
     Eye,
     Pickaxe,
     Zap,
     Crown,
-    CheckCircle,
-    XCircle,
-    Lightbulb,
     Target,
     Settings,
-    AlertTriangle,
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 
@@ -101,6 +95,37 @@ export function HelpRPSScoringPage() {
                     </CardContent>
                 </Card>
 
+                {/* NEW: Tailored Scoring Models */}
+                <Card className="bg-navy-800/70 border border-navy-700 backdrop-blur-sm shadow-xl">
+                    <CardHeader>
+                        <CardTitle className="text-xl sm:text-2xl flex items-center gap-2.5">
+                            <Settings size={24} className="text-cyan-400" />
+                            Tailored Scoring Models: Metrics by Company Type
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4 text-sm">
+                        <p>RPS uses distinct scoring models for each company type, focusing on the metrics that are most critical for success at each stage of the mining lifecycle.</p>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="bg-navy-900/40 p-4 rounded">
+                                <h4 className="flex items-center gap-2 font-semibold text-surface-white mb-2"><Crown size={16} className="text-yellow-400"/>Producers</h4>
+                                <p className="text-xs">Judged on **profitability, operational efficiency, and sustainability**. Key metrics include <strong className="text-surface-white">All-In Sustaining Cost (AISC)</strong>, <strong className="text-surface-white">Free Cash Flow Margin</strong>, and <strong className="text-surface-white">Reserve Life</strong>.</p>
+                            </div>
+                            <div className="bg-navy-900/40 p-4 rounded">
+                                <h4 className="flex items-center gap-2 font-semibold text-surface-white mb-2"><Pickaxe size={16} className="text-orange-400"/>Developers</h4>
+                                <p className="text-xs">Judged on **project economics, de-risking, and funding capacity**. Key metrics include <strong className="text-surface-white">Construction CAPEX</strong>, <strong className="text-surface-white">Mineable Ounces</strong>, and <strong className="text-surface-white">Cash Position</strong> vs. debt.</p>
+                            </div>
+                            <div className="bg-navy-900/40 p-4 rounded">
+                                <h4 className="flex items-center gap-2 font-semibold text-surface-white mb-2"><Zap size={16} className="text-blue-400"/>Explorers</h4>
+                                <p className="text-xs">Judged on **discovery potential, financial runway, and dilution risk**. Key metrics include <strong className="text-surface-white">M&I and Potential Resources</strong>, <strong className="text-surface-white">Cash Burn Rate</strong>, and <strong className="text-surface-white">Fully Diluted Shares</strong>.</p>
+                            </div>
+                             <div className="bg-navy-900/40 p-4 rounded">
+                                <h4 className="flex items-center gap-2 font-semibold text-surface-white mb-2"><BarChart3 size={16} className="text-green-400"/>Royalty Companies</h4>
+                                <p className="text-xs">Judged on **cash flow generation and portfolio quality**. Key metrics include <strong className="text-surface-white">FCF Yield</strong>, <strong className="text-surface-white">FCF Margin</strong>, and portfolio diversification like <strong className="text-surface-white">Producing Asset Count</strong>.</p>
+                            </div>
+                        </div>
+                    </CardContent>
+                </Card>
+
                 {/* Scoring Mathematics */}
                 <Card className="bg-navy-800/70 border border-navy-700 backdrop-blur-sm shadow-xl">
                     <CardHeader>
@@ -112,7 +137,7 @@ export function HelpRPSScoringPage() {
                     <CardContent className="space-y-4 text-sm">
                          <p>The RPS system uses a transparent, multi-step process to derive its scores, combining peer-based normalization with your custom weightings.</p>
 
-                        <h4 className="text-md font-semibold text-cyan-400 mt-4">Step 1: Metric Normalization (0-100 Score)</h4>
+                        <h4 className="text-md font-semibold text-cyan-400 mt-4">Step 1: Metric Normalization</h4>
                         <p className="text-xs">For each metric, a company's raw value is compared against its peers to generate a percentile rank, which is then converted to an intuitive 0-100 score using a sigmoid function. This is done for all three peer groups.</p>
                         <FormulaDisplay>
 {`// Simplified Logic
@@ -121,20 +146,7 @@ adjusted_percentile = higher_is_better ? percentile_rank : (1 - percentile_rank)
 normalized_score = convertToSigmoidScale(adjusted_percentile) // Returns 0-100`}
                         </FormulaDisplay>
                         
-                        <h4 className="text-md font-semibold text-cyan-400 mt-4">Step 2: Operational Peer Group Calculation</h4>
-                        <p className="text-xs">Operational peers are not based on size alone, but on a composite "Scale Score" that provides a more holistic view of their operational footprint.</p>
-                        <FormulaDisplay>
-{`// Producer Scale Score
-Score = (0.4 * Production) + (0.3 * Reserves) + (0.3 * Market Cap)
-
-// Developer Scale Score
-Score = (0.5 * CAPEX) + (0.5 * Mineable Resources)
-
-// Explorer Scale Score
-Score = (0.6 * Resources) + (0.4 * Cash Position)`}
-                        </FormulaDisplay>
-
-                        <h4 className="text-md font-semibold text-cyan-400 mt-4">Step 3: The Blended Score Calculation</h4>
+                        <h4 className="text-md font-semibold text-cyan-400 mt-4">Step 2: The Blended Score Calculation</h4>
                         <p className="text-xs">For each metric, a blended score is created based on the weights from your master sliders. This blended score is then used to calculate the final RPS.</p>
                         <FormulaDisplay>
 {`// W = Weight from master sliders (e.g., 34%, 33%, 33%)
@@ -164,16 +176,16 @@ Final RPS = SUM(All Contributions)`}
                                <strong>Objective:</strong> Identify operationally excellent companies that the market may be overlooking.
                            </p>
                            <p className="text-xs">
-                               <strong>Method:</strong> Set the Peer Group Weights to **70% Operational** and **30% Status**. Run the calculation for Producers. Look for companies with a high overall RPS. These companies rank exceptionally well against their direct operational competitors, suggesting high efficiency, even if their market valuation doesn't fully reflect it yet.
+                               <strong>Method:</strong> Set Peer Group Weights to **70% Operational** and **30% Status**. Run for Producers. A high RPS here indicates companies that are highly efficient relative to their operational scale, even if their market cap doesn't reflect it. Check their score breakdown for top ranks in <strong className="text-surface-white">AISC</strong> and <strong className="text-surface-white">FCF Margin</strong>.
                            </p>
                         </div>
                         <div className="bg-navy-900/40 p-4 rounded border border-blue-700/30">
-                           <h4 className="font-semibold text-surface-white mb-2">Strategy 2: Identify High-Quality Growth</h4>
+                           <h4 className="font-semibold text-surface-white mb-2">Strategy 2: Find High-Quality Growth</h4>
                            <p className="text-xs mb-3">
                                <strong>Objective:</strong> Find well-funded developers with robust projects compared to their similarly-sized peers.
                            </p>
                            <p className="text-xs">
-                               <strong>Method:</strong> Filter to Developers. Set Peer Group Weights to **70% Valuation** and **30% Status**. Look for companies with a high RPS. This prioritizes developers that have strong project economics (high resource, reasonable CAPEX) when compared specifically against other companies the market values similarly.
+                               <strong>Method:</strong> Filter to Developers. Set Peer Group Weights to **70% Valuation** and **30% Status**. This prioritizes how a developer stacks up against others the market values similarly. A top score suggests strong project economics (<strong className="text-surface-white">Mineable Ounces</strong> vs. <strong className="text-surface-white">CAPEX</strong>) relative to its market cap.
                            </p>
                         </div>
                          <div className="bg-navy-900/40 p-4 rounded border border-amber-700/30">
@@ -182,7 +194,7 @@ Final RPS = SUM(All Contributions)`}
                                <strong>Objective:</strong> Find explorers with the best balance of discovery potential and financial stability.
                            </p>
                            <p className="text-xs">
-                               <strong>Method:</strong> Filter to Explorers. Set Peer Group Weights to **50% Operational** and **50% Status**. The 'Operational' score for explorers is based on resource size and cash. This blend identifies explorers that not only have large potential discoveries but also the cash to survive and advance them, when compared to the entire universe of explorers.
+                               <strong>Method:</strong> Filter to Explorers. Set Peer Group Weights to **50% Operational** and **50% Status**. An Explorer's operational score is based on resource size and cash. This blend finds explorers with large potential discoveries that also have the cash to advance them, preventing imminent shareholder dilution.
                            </p>
                         </div>
                     </CardContent>
