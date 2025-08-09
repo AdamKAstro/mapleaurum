@@ -19,25 +19,27 @@ function formatMetricValue(value: number | null, metricKey: string): string {
 
     const absValue = Math.abs(value);
 
-    // Use includes() which works on the new nested keys e.g., 'costs.aisc_last_year'
-    if (metricKey.includes('cost') || metricKey.includes('price')) {
-        return `$${value.toFixed(2)}`;
+    if (metricKey.includes('_cost') || metricKey.includes('price')) {
+        if (absValue >= 1e9) return `$${(value / 1e9).toFixed(1)}B`;
+        if (absValue >= 1e6) return `$${(value / 1e6).toFixed(1)}M`;
+        return `$${value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
     }
     if (metricKey.includes('_oz')) {
          if (absValue >= 1000000) return `${(value / 1000000).toFixed(1)}M oz`;
          if (absValue >= 1000) return `${(value / 1000).toFixed(1)}k oz`;
          return `${value.toFixed(1)} oz`;
     }
-    if (metricKey.includes('value') || metricKey.includes('revenue') || metricKey.includes('ebitda')) {
+    // CORRECTED: Added 'cash' and 'assets' to this condition to format FCF and Financial Assets
+    if (metricKey.includes('value') || metricKey.includes('revenue') || metricKey.includes('ebitda') || metricKey.includes('cash') || metricKey.includes('assets')) {
         if (absValue >= 1e9) return `$${(value / 1e9).toFixed(1)}B`;
         if (absValue >= 1e6) return `$${(value / 1e6).toFixed(1)}M`;
         if (absValue >= 1e3) return `$${(value / 1e3).toFixed(0)}k`;
         return `$${value.toFixed(0)}`;
     }
-    if (metricKey.includes('yield') || metricKey.includes('margin')) {
+    if (metricKey.includes('_yield') || metricKey.includes('_margin')) {
         return `${value.toFixed(1)}%`;
     }
-     if (metricKey.includes('shares')) {
+     if (metricKey.includes('_shares')) {
         if (absValue >= 1e6) return `${(value / 1e6).toFixed(0)}M`;
         return value.toFixed(0);
     }
@@ -97,8 +99,6 @@ const PeerComparison: React.FC<{
 
 // --- Sub-Component for a Single Metric Card ---
 const MetricCard: React.FC<{ metricData: RPSMetricBreakdown }> = ({ metricData }) => {
-    // FIX: Destructure higherIsBetter directly from metricData.
-    // The engine now provides this, so we don't have to guess it.
     const { label, weight, rawValue, normalizedScore, contribution, metricKey,
             statusPeers, valuationPeers, operationalPeers, higherIsBetter } = metricData;
 
