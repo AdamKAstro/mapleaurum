@@ -10,7 +10,8 @@ import { precomputeRPSData, applyWeightsToPrecomputedData } from './rps-scoring-
 import type { RPSScoringResult, PrecomputedResult } from './rps-scoring-engine';
 import { PageContainer } from '@/components/ui/page-container';
 import { LoadingIndicator } from '@/components/ui/loading-indicator';
-import { EducationalSidebar } from '../fcf-scoring/components/EducationalSidebar';
+// UPDATED: Import the new RPS sidebar
+import { RPSEducationalSidebar } from './components/RPSEducationalSidebar';
 import { RPSConfigPanel } from './components/RPSConfigPanel';
 import { RPSResultsDisplay } from './components/RPSResultsDisplay';
 import { PeerGroupWeightsPanel } from './components/PeerGroupWeightsPanel';
@@ -238,7 +239,8 @@ export function RPSScoringPage() {
         </div>
       </div>
       
-      {showEducationalSidebar && <EducationalSidebar onClose={() => setShowEducationalSidebar(false)} />}
+      {/* UPDATED: Render the new RPS sidebar */}
+      {showEducationalSidebar && <RPSEducationalSidebar onClose={() => setShowEducationalSidebar(false)} />}
     </PageContainer>
   );
 }
