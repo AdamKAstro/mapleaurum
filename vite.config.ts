@@ -17,13 +17,14 @@ export default defineConfig({
       'react-hot-toast',
       'react-lazy-load-image-component',
       'lodash',
-	  'react-helmet-async',
+      'react-helmet-async',
+      'framer-motion',
     ],
   },
   build: {
-    minify: true,
+    minify: 'esbuild',
     sourcemap: false,
-    chunkSizeWarningLimit: 1000,
+    chunkSizeWarningLimit: 1500,
     cssCodeSplit: false,
     rollupOptions: {
       output: {
@@ -31,8 +32,9 @@ export default defineConfig({
           vendor: ['react', 'react-dom', 'react-router-dom', 'react-helmet-async'],
           lucide: ['lucide-react'],
           utilities: ['react-hot-toast', 'react-lazy-load-image-component', 'lodash'],
+          motion: ['framer-motion'],
         },
-        assetFileNames: 'assets/[name]-[hash][extname]', // Ensures CSS goes to dist/assets/
+        assetFileNames: 'assets/[name]-[hash][extname]',
         entryFileNames: 'assets/[name]-[hash].js',
         chunkFileNames: 'assets/[name]-[hash].js',
       },
@@ -41,25 +43,21 @@ export default defineConfig({
   css: {
     devSourcemap: true,
     preprocessorOptions: {
-      // Add support for SCSS if used in the future
       scss: {
-        additionalData: `@import "@/styles/variables.scss";`, // Optional
+        additionalData: `@import "@/styles/variables.scss";`,
       },
     },
   },
   server: {
-    // Ensure correct MIME types for CSS
     mimeTypes: {
       'text/css': ['css'],
     },
     fs: {
-      // Allow serving files from src/
       allow: ['.'],
     },
-    // Add Content Security Policy for development
     headers: {
-      'Content-Security-Policy':
-        "default-src 'self'; img-src 'self' https://mapleaurum.com https://ui-avatars.com https://dvagrllvivewyxolrhsh.supabase.co data:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.stripe.com; connect-src 'self' https://dvagrllvivewyxolrhsh.supabase.co https://api.stripe.com; font-src 'self' data: https://fonts.gstatic.com; blob:; worker-src 'self' blob:;",
+      'Content-Security-Policy': "default-src 'self'; script-src 'self' https://js.stripe.com 'unsafe-inline' 'unsafe-eval'; style-src 'self' https://fonts.googleapis.com 'unsafe-inline'; img-src 'self' https://mapleaurum.com https://ui-avatars.com https://*.supabase.co data:; font-src 'self' https://fonts.gstatic.com data:; connect-src 'self' https://api.stripe.com wss://*.supabase.co https://*.supabase.co ws://localhost:5173 wss://localhost:5173; frame-src 'self' https://js.stripe.com https://share.descript.com; media-src 'self' blob:; worker-src 'self' blob:; base-uri 'self'; form-action 'self'; object-src 'none'; upgrade-insecure-requests; report-to csp-report;",
+      'Report-To': '{"group":"csp-report","max_age":10886400,"endpoints":[{"url":"https://your-report-endpoint.com"}]}',
     },
   },
 });

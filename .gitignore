@@ -94,3 +94,6 @@ SupabaseSnippetCompanyDetailsRetrievalStatusSharePrice150525.csv
 node_modules/
 dist/
 *.zip
+
+# Local Netlify folder
+.netlify

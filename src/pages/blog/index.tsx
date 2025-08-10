@@ -9,6 +9,13 @@ import { Helmet } from 'react-helmet-async';
 // We'll manage our list of blog posts here
 const blogPosts = [
   {
+    slug: 'mastering-rps-a-quick-guide',
+    title: 'Mastering the Relative Performance Score: A Quick Guide',
+    description: 'A video guide to our most powerful analysis tool, explaining how to use peer-based scoring to find contextual value in the mining sector.',
+    date: 'August 10, 2025',
+    author: 'The MapleAurum Team',
+  },
+  {
     slug: 'how-to-choose-a-precious-metals-mining-company-to-invest-in',
     title: 'How to Choose a Precious Metals Mining Company to Invest In',
     description: 'Our expert guide on selecting the best mining companies for your portfolio, covering key metrics and analysis techniques.',

@@ -167,7 +167,9 @@ export const Hero: React.FC<HeroProps> = ({ className }) => {
   const videoContainerRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
 
-  const isVideoInView = useInView(videoContainerRef, { once: false, margin: '-100px' });
+  
+  const isVideoInView = useInView(videoContainerRef, { once: false, margin: '0px' }); // Simplified margin
+
 
   const { scrollYProgress } = useScroll({
     target: containerRef,
@@ -181,16 +183,20 @@ export const Hero: React.FC<HeroProps> = ({ className }) => {
 
   // Video controls
   useEffect(() => {
-    if (videoRef.current) {
-      if (isVideoInView && isVideoPlaying && isVideoReady) {
-        videoRef.current.play().catch(() => {
-          setIsVideoPlaying(false);
-        });
-      } else {
-        videoRef.current.pause();
-      }
+    if (videoRef.current && isVideoInView && isVideoReady) {
+      videoRef.current.play().then(() => {
+        setIsVideoPlaying(true);
+        console.log('[HeroVideo] Playback started.');
+      }).catch((err) => {
+        setIsVideoPlaying(false);
+        console.error('[HeroVideo] Play failed:', err);
+      });
+    } else if (videoRef.current) {
+      videoRef.current.pause();
+      setIsVideoPlaying(false);
+      console.log('[HeroVideo] Paused; not in view or not ready.');
     }
-  }, [isVideoInView, isVideoPlaying, isVideoReady]);
+  }, [isVideoInView, isVideoReady]);
 
   const togglePlayPause = () => {
     if (videoRef.current) {
@@ -234,7 +240,7 @@ export const Hero: React.FC<HeroProps> = ({ className }) => {
   );
 
   return (
-    <main ref={containerRef} className={cn('relative w-full font-sans', className)} aria-label="Maple Aurum Homepage">
+    <main ref={containerRef} className={cn('relative w-full font-sans', className)} style={{ position: 'relative' }} aria-label="Maple Aurum Homepage">
       {/* Section 1: Hero Banner with Video */}
       <section className="relative min-h-screen flex flex-col overflow-hidden bg-gradient-to-b from-navy-900 via-navy-800 to-navy-900">
         {/* Dynamic background with glassmorphism */}
@@ -366,7 +372,8 @@ export const Hero: React.FC<HeroProps> = ({ className }) => {
               Transform raw data into actionable insights with MapleAurum’s proprietary scoring engines and interactive tools, rivaling institutional-grade software.
             </motion.p>
 
-            {/* Video Container (unchanged) */}
+
+            {/* Video Container */}
             <motion.div
               ref={videoContainerRef}
               initial={{ opacity: 0, scale: 0.9, y: 50 }}
@@ -411,20 +418,23 @@ export const Hero: React.FC<HeroProps> = ({ className }) => {
                     <video
                       ref={videoRef}
                       className="w-full h-auto rounded-2xl"
-                      autoPlay
+                      autoPlay={false}
                       loop
                       muted={isMuted}
                       playsInline
                       preload="auto"
-                      onLoadedData={() => setHasVideoLoaded(true)}
+                      onLoadedData={() => {
+                        setHasVideoLoaded(true);
+                        console.log('[HeroVideo] Loaded data event fired.');
+                      }}
                       onCanPlayThrough={() => {
                         setIsVideoReady(true);
-                        if (isVideoInView && isVideoPlaying) {
-                          videoRef.current?.play().catch(() => {
-                            setIsVideoPlaying(false);
-                          });
-                        }
+                        console.log('[HeroVideo] Can play through; video ready.');
                       }}
+                      onError={(e) => console.error('[HeroVideo] Load/play error:', e.currentTarget.error)}
+                      onLoadStart={() => console.log('[HeroVideo] Load start event.')}
+                      onPlay={() => console.log('[HeroVideo] Play event fired.')}
+                      onPause={() => console.log('[HeroVideo] Pause event fired.')}
                       poster="/GeminiMALBig2.jpg"
                       aria-label="Maple Aurum Logo Reveal"
                     >
@@ -494,6 +504,8 @@ export const Hero: React.FC<HeroProps> = ({ className }) => {
               ))}
             </motion.div>
 
+
+
             {/* Updated CTA Buttons */}
             <motion.div
               initial={{ opacity: 0, y: 30 }}
@@ -528,7 +540,7 @@ export const Hero: React.FC<HeroProps> = ({ className }) => {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ duration: 1, delay: 0.8 }}
-              className="flex flex-col sm:flex-row items-center justify-center gap-8 text-sm text-gray-400"
+              className="flex flex-col sm:flex-row items-center justify-center gap-8 text-sm text-muted-foreground"
             >
               <div className="flex items-center gap-2">
                 <Check className="h-4 w-4 text-green-400" />

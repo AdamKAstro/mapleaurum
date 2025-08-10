@@ -1,6 +1,6 @@
 //src/pages/scoring-advanced/components/ScoringConfigurationPanel.tsx
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react'; // Added useMemo
 import type { CompanyStatus } from '@/lib/types';
 import type { ScoringStrategy } from '@/lib/scoringUtilsAdvanced';
 import { type MetricConfig } from '@/lib/metric-types';
@@ -43,14 +43,37 @@ export const ScoringConfigurationPanel: React.FC<ScoringConfigurationPanelProps>
     const [activeTab, setActiveTab] = useState<CompanyStatus>('producer');
     const activeStrategy = strategies[activeTab];
 
+    // Memoize sorted metrics to avoid resorting on every render
+    const sortedMetrics = useMemo(() => 
+        allMetrics.slice().sort((a, b) => a.label.localeCompare(b.label)),
+        [allMetrics]
+    );
+
     return (
         <div className="flex flex-col space-y-4 bg-navy-700/30 p-4 rounded-xl border border-navy-600/50 h-full">
             <h2 className="text-xl font-bold text-surface-white flex-shrink-0">Configuration</h2>
             
             <div className="flex-shrink-0">
-                <Button onClick={onCalculate} disabled={isCalculating || companyCount === 0} className="w-full h-12 text-base font-bold bg-gradient-to-r from-accent-teal to-teal-500 hover:from-teal-500 hover:to-accent-teal shadow-lg">
-                    {isCalculating ? (<span className="flex items-center gap-2"><Loader2 className="animate-spin" />Calculating...</span>) : (<span className="flex items-center gap-2"><Sparkles />Calculate Scores ({companyCount} Companies)</span>)}
-                </Button>
+                <TooltipProvider>
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                            <span> {/* Wrap Button in span for TooltipTrigger */}
+                                <Button 
+                                    onClick={onCalculate} 
+                                    disabled={isCalculating || companyCount === 0} 
+                                    className="w-full h-12 text-base font-bold bg-gradient-to-r from-accent-teal to-teal-500 hover:from-teal-500 hover:to-accent-teal shadow-lg"
+                                >
+                                    {isCalculating ? (<span className="flex items-center gap-2"><Loader2 className="animate-spin" />Calculating...</span>) : (<span className="flex items-center gap-2"><Sparkles />Calculate Scores ({companyCount} Companies)</span>)}
+                                </Button>
+                            </span>
+                        </TooltipTrigger>
+                        {companyCount === 0 && !isCalculating && (
+                            <TooltipContent side="top" className="p-3 bg-navy-700/95 border border-navy-600/80 font-sans">
+                                No companies selected—apply filters on the Companies page first.
+                            </TooltipContent>
+                        )}
+                    </Tooltip>
+                </TooltipProvider>
             </div>
 
             <div className="bg-navy-800/40 p-3 rounded-lg border border-navy-600/50 flex-shrink-0">
@@ -82,10 +105,22 @@ export const ScoringConfigurationPanel: React.FC<ScoringConfigurationPanelProps>
             <div className="bg-navy-800/40 p-3 rounded-lg border border-navy-600/50 flex-grow flex flex-col min-h-0">
                 <h3 className="text-base font-semibold mb-2 flex-shrink-0">Metric Base Weights</h3>
                 <div className="flex-grow overflow-y-auto space-y-2 pr-2 scrollbar-thin scrollbar-thumb-navy-600">
-                    {allMetrics.length > 0 ? allMetrics.slice().sort((a,b) => a.label.localeCompare(b.label)).map(metric => (
+                    {sortedMetrics.length > 0 ? sortedMetrics.map(metric => ( // Use memoized sortedMetrics
                         <div key={metric.key} className="flex items-center justify-between gap-2">
                             <Label htmlFor={`weight-${metric.key}`} className="text-xs text-muted-foreground truncate flex-1" title={metric.label}>{metric.label}</Label>
-                            <Input id={`weight-${metric.key}`} type="number" value={weights[metric.key] || 0} onChange={e => onWeightChange(metric.key, parseInt(e.target.value, 10) || 0)} className="h-7 text-xs w-20 bg-navy-900/50 border-navy-600 text-center" min={0} max={100} />
+                            <Input 
+                                id={`weight-${metric.key}`} 
+                                type="number" 
+                                value={weights[metric.key] || 0} 
+                                onChange={e => {
+                                    let newWeight = parseInt(e.target.value, 10) || 0;
+                                    newWeight = Math.max(0, Math.min(100, newWeight)); // Clamp between 0 and 100
+                                    onWeightChange(metric.key, newWeight);
+                                }} 
+                                className="h-7 text-xs w-20 bg-navy-900/50 border-navy-600 text-center" 
+                                min={0} 
+                                max={100} 
+                            />
                         </div>
                     )) : <p className="text-xs text-center text-muted-foreground py-4">No metrics available for your subscription tier.</p>}
                 </div>
@@ -107,7 +142,7 @@ const StrategySlider: React.FC<{label: string, value: number, onChange: (v: numb
      <div className="space-y-1">
         <div className="flex items-center justify-between">
             <div className="flex items-center"><Label className="text-xs font-medium text-muted-foreground">{label}</Label><HelpTooltip content={tooltipContent} /></div>
-            <span className="text-xs font-mono">{value.toFixed(0)}{suffix}</span>
+            <span className="text-xs font-mono">{Math.round(value)}{suffix}</span> {/* Ensure integer display */}
         </div>
         <Slider value={[value]} onValueChange={([v]) => onChange(v)} min={min} max={max} step={step} className="mt-2" />
     </div>

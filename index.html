@@ -3,13 +3,13 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    
     <link rel="icon" type="image/x-icon" href="/favicon.ico" />
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
     <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
     <link rel="manifest" href="/site.webmanifest" />
-    <meta name="theme-color" content="#0d1a3e" /> <title>MapleAurum | Professional Analytics for Canadian Mining Stocks</title>
+    <meta name="theme-color" content="#0d1a3e" />
+    <title>MapleAurum | Professional Analytics for Canadian Mining Stocks</title>
     <meta
       name="description"
       content="Go beyond basic data with MapleAurum. Leverage adaptive scoring engines for explorers, producers, and royalty companies to uncover true value in the Canadian precious metals sector."
@@ -21,7 +21,6 @@
     <meta name="author" content="MapleAurum" />
     <meta name="robots" content="index, follow" />
     <link rel="canonical" href="https://mapleaurum.com/" />
-
     <meta property="og:title" content="MapleAurum | Professional Analytics for Canadian Mining Stocks" />
     <meta
       property="og:description"
@@ -38,21 +37,6 @@
       content="The ultimate toolkit for serious mining investors. Analyze explorers, producers, and royalty companies with adaptive scoring engines and advanced visualization."
     />
     <meta name="twitter:image" content="https://mapleaurum.com/GeminiMALBig3.jpg" />
-
-    <meta
-      http-equiv="Content-Security-Policy"
-      content="
-        default-src 'self';
-        script-src 'self' https://js.stripe.com https://analytics.ahrefs.com 'unsafe-inline';
-        style-src 'self' https://fonts.googleapis.com 'unsafe-inline';
-        img-src 'self' https://*.supabase.co https://ui-avatars.com data:;
-        font-src 'self' https://fonts.gstatic.com;
-        connect-src 'self' https://api.stripe.com wss://*.supabase.co https://*.supabase.co;
-        frame-src https://js.stripe.com;
-        worker-src 'self' blob:;
-      "
-    />
-
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link rel="dns-prefetch" href="https://js.stripe.com" />
@@ -60,56 +44,22 @@
     <link
       href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
       rel="stylesheet"
-      media="print" 
+      media="print"
       onload="this.media='all'"
     />
-
-    <script type="application/ld+json">
-    {
-      "@context": "https://schema.org",
-      "@type": "WebSite",
-      "name": "MapleAurum",
-      "url": "https://mapleaurum.com/",
-      "description": "A professional-grade financial analytics platform designed for investors in the Canadian precious metals mining sector, featuring adaptive scoring engines and advanced visualization tools.",
-      "potentialAction": {
-        "@type": "SearchAction",
-        "target": {
-          "@type": "EntryPoint",
-          "urlTemplate": "https://mapleaurum.com/companies?q={search_term_string}"
-        },
-        "query-input": "required name=search_term_string"
-      },
-      "publisher": {
-        "@type": "Organization",
-        "name": "MapleAurum",
-        "url": "https://mapleaurum.com/",
-        "logo": {
-          "@type": "ImageObject",
-          "url": "https://mapleaurum.com/GeminiMALBig3.jpg"
-        },
-        "contactPoint": {
-          "@type": "ContactPoint",
-          "email": "support@mapleaurum.com",
-          "contactType": "Customer Support"
-        }
-      }
-    }
-    </script>
-    
+    <!-- JSON-LD as static asset -->
+    <script type="application/ld+json" src="/schema.json"></script>
     <script async src="https://js.stripe.com/v3/buy-button.js"></script>
-    <script src="https://analytics.ahrefs.com/analytics.js" data-key="GKWJBgEc4GuKKjfM2a2JMw" async></script>
   </head>
   <body>
     <div id="root" role="main"></div>
     <div id="portal-root"></div>
-    
     <noscript>
       <div style="text-align: center; padding: 20px; background: #0d1a3e; color: white; font-family: sans-serif;">
         <p><strong>JavaScript is required to use the MapleAurum analytics platform.</strong></p>
         <p>Please enable JavaScript in your browser to continue.</p>
       </div>
     </noscript>
-    
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
