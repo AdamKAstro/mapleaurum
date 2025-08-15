@@ -833,6 +833,7 @@ function App() {
                                                 </>
                                             }
                                         />
+										<Route path="/onboarding" element={<OnboardingPage />} />
                                         {/* ADDED: Route for the new Mastering RPS blog page */}
                                         <Route
                                             path="/blog/mastering-rps-a-quick-guide"
@@ -882,7 +883,7 @@ function App() {
                                     <Route path="/auth" element={<Navigate to="/login" replace />} />
                                     <Route path="/forgot-password" element={<ForgotPasswordPage />} />
                                     <Route path="/reset-password" element={<ResetPasswordPage />} />
-                                    <Route path="/onboarding" element={<OnboardingPage />} />
+                                    
                                     <Route path="*" element={<NotFoundPage />} />
                                 </Routes>
                             </ErrorBoundary>
