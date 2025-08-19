@@ -42,6 +42,7 @@ import { ProfilePage } from './pages/account/profile';
 import { HowToChooseMiningCompanyBlogPage } from './pages/blog/how-to-choose-a-precious-metals-mining-company-to-invest-in';
 import { BlogLandingPage } from './pages/blog/index';
 import { MasteringRPSBlogPage } from './pages/blog/mastering-rps-a-quick-guide';
+import HGRAPHPage from './pages/HGRAPHPage'; // Add this import at the top of App.tsx
 
 
 function NotFoundPage() {
@@ -791,6 +792,47 @@ function App() {
                                                 </>
                                             }
                                         />
+										
+												
+																			
+										{/* New HGRAPH route */}
+										<Route
+										  path="/HGRAPH"
+										  element={
+											<>
+											  <Helmet>
+												<title>MapleAurum | Hydrograph (HGRAPH) Token</title>
+												<meta
+												  name="description"
+												  content="Discover Hydrograph (HGRAPH), a cryptocurrency token for speculative investment in the precious metals analytics ecosystem, distinct from Hydrograph Clean Energy."
+												/>
+												<meta
+												  name="keywords"
+												  content="HGRAPH, Hydrograph token, cryptocurrency, precious metals, investment, MapleAurum"
+												/>
+												<link rel="canonical" href="https://mapleaurum.com/HGRAPH" />
+												<script type="application/ld+json">
+												  {JSON.stringify({
+													'@context': 'https://schema.org',
+													'@type': 'BreadcrumbList',
+													itemListElement: [
+													  { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://mapleaurum.com/' },
+													  {
+														'@type': 'ListItem',
+														position: 2,
+														name: 'HGRAPH Token',
+														item: 'https://mapleaurum.com/HGRAPH',
+													  },
+													],
+												  })}
+												</script>
+											  </Helmet>
+											  <HGRAPHPage />
+											</>
+										  }
+										/>
+									
+										
                                         <Route path="/admin/send-email" element={<AdminSendEmailPage />} />
                                         <Route path="/admin/promo-tracking" element={<PromoTrackingPage />} />
                                         <Route path="/account/profile" element={<ProfilePage />} />
