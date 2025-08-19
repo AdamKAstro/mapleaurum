@@ -1,4 +1,5 @@
 // src/pages/login/index.tsx
+
 import React, { useState, useEffect, FormEvent } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { Button } from '../../components/ui/button';
@@ -16,7 +17,15 @@ interface LoginFormData {
 }
 
 export function LoginPage() {
-  const { signIn, signUp, resendConfirmationEmail, isLoading: authLoading, error: authError, clearError } = useAuth();
+  const { 
+    signIn, 
+    signUp, 
+    resendConfirmationEmail, 
+    isLoading: authLoading, 
+    error: authError, 
+    clearError,
+    signInWithGoogle // Get the new function from the hook
+  } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -28,7 +37,6 @@ export function LoginPage() {
   const [showConfirmationOptions, setShowConfirmationOptions] = useState(false);
   const [emailForConfirmation, setEmailForConfirmation] = useState<string>('');
 
-  // Parse URL parameters
   useEffect(() => {
     const searchParams = new URLSearchParams(location.search);
     const action = searchParams.get('action');
@@ -38,15 +46,12 @@ export function LoginPage() {
     const promoCode = searchParams.get('promo_code') as AppTrialPromoCodeKey | null;
     const coupon = searchParams.get('coupon');
 
-    // Set initial mode
     setIsSignupMode(action === 'signup');
 
-    // Pre-fill email if provided
     if (email) {
       setFormData(prev => ({ ...prev, email: decodeURIComponent(email) }));
     }
 
-    // Handle return messages
     if (message === 'confirm_email') {
       setSuccessMessage('Email confirmed! Please log in to continue.');
       setIsSignupMode(false);
@@ -58,7 +63,6 @@ export function LoginPage() {
       setIsSignupMode(false);
     }
 
-    // Build context message for sign up
     if (action === 'signup' && (planName || promoCode || coupon)) {
       let contextMessage = 'Create your account';
       if (planName) contextMessage += ` to access your ${planName}`;
@@ -67,14 +71,12 @@ export function LoginPage() {
       setSuccessMessage(contextMessage + '!');
     }
 
-    // Handle resend confirmation request
     if (action === 'resend_confirmation' && email) {
       setEmailForConfirmation(decodeURIComponent(email));
       setShowConfirmationOptions(true);
     }
   }, [location.search]);
 
-  // Clear errors when switching modes
   useEffect(() => {
     setLocalError(null);
     clearError();
@@ -89,35 +91,27 @@ export function LoginPage() {
       setLocalError('Please fill in all fields');
       return false;
     }
-
     if (!formData.email.includes('@')) {
       setLocalError('Please enter a valid email address');
       return false;
     }
-
     if (formData.password.length < 6) {
       setLocalError('Password must be at least 6 characters');
       return false;
     }
-
     if (isSignupMode && formData.password !== formData.confirmPassword) {
       setLocalError('Passwords do not match');
       return false;
     }
-
     return true;
   };
 
   const getRedirectPath = (): string => {
     const fromState = (location.state as { from?: { pathname: string; search: string } })?.from;
     const searchParams = new URLSearchParams(location.search);
-    
-    // Check if we have specific redirect parameters
     if (searchParams.get('plan_name') || searchParams.get('promo_code') || searchParams.get('coupon')) {
       return `/subscribe?${searchParams.toString()}`;
     }
-    
-    // Use the 'from' state or default to companies
     return fromState ? `${fromState.pathname}${fromState.search || ''}` : '/companies';
   };
 
@@ -125,12 +119,9 @@ export function LoginPage() {
     e.preventDefault();
     setLocalError(null);
     setSuccessMessage(null);
-    
     if (!validateForm()) return;
-    
     setIsProcessing(true);
     const redirectPath = getRedirectPath();
-
     try {
       if (isSignupMode) {
         const { error, requiresEmailConfirmation, user, emailSendingFailed } = await signUp({
@@ -138,9 +129,7 @@ export function LoginPage() {
           password: formData.password,
           emailRedirectTo: `${window.location.origin}/login?message=confirm_email`
         });
-
         if (error && !emailSendingFailed) {
-          // Handle specific signup errors
           if (error.message.toLowerCase().includes('already registered')) {
             setLocalError('This email is already registered. Please sign in or reset your password.');
             setShowConfirmationOptions(false);
@@ -149,18 +138,14 @@ export function LoginPage() {
           }
         } else if (requiresEmailConfirmation) {
           if (emailSendingFailed) {
-            // Account created but email failed to send
             setSuccessMessage(
               `Account created successfully! However, we couldn't send the confirmation email to ${formData.email}. ` +
               `This is likely a temporary issue. You can try resending the confirmation email below.`
             );
             setEmailForConfirmation(formData.email);
             setShowConfirmationOptions(true);
-            
-            // Clear the form
             setFormData({ email: '', password: '', confirmPassword: '' });
           } else {
-            // Normal flow - email sent successfully
             setSuccessMessage(
               `Account created! Please check your email (${formData.email}) to confirm your account. ` +
               `You may need to check your spam folder.`
@@ -168,8 +153,6 @@ export function LoginPage() {
             setEmailForConfirmation(formData.email);
             setShowConfirmationOptions(true);
             setFormData({ email: '', password: '', confirmPassword: '' });
-            
-            // Optionally redirect after showing message
             setTimeout(() => {
               if (redirectPath.includes('subscribe')) {
                 navigate(redirectPath);
@@ -177,16 +160,13 @@ export function LoginPage() {
             }, 5000);
           }
         } else if (user && !requiresEmailConfirmation) {
-          // Auto-confirmed, redirect immediately
           navigate(redirectPath, { replace: true });
         }
       } else {
-        // Sign in
         const { error } = await signIn({
           email: formData.email,
           password: formData.password,
         });
-
         if (error) {
           if (error.message.toLowerCase().includes('email not confirmed')) {
             setLocalError('Please confirm your email before signing in. Check your inbox for the confirmation link.');
@@ -198,44 +178,32 @@ export function LoginPage() {
             setLocalError(error.message);
           }
         } else {
-          // Successful login - check for pending promo activation
           const pendingPromoCode = sessionStorage.getItem('pending_promo_code');
           const pendingPromoPlan = sessionStorage.getItem('pending_promo_plan');
           const pendingPromoYearly = sessionStorage.getItem('pending_promo_yearly');
           const userJustConfirmed = sessionStorage.getItem('user_just_confirmed');
-          
-          // Log for debugging
           console.log('[LoginPage] Checking for pending promo activation:', {
             pendingPromoCode,
             pendingPromoPlan,
             pendingPromoYearly,
             userJustConfirmed
           });
-          
           if (pendingPromoCode && pendingPromoPlan && userJustConfirmed === 'true') {
-            // Clear session items to prevent re-triggering
             sessionStorage.removeItem('pending_promo_code');
             sessionStorage.removeItem('pending_promo_plan');
             sessionStorage.removeItem('pending_promo_yearly');
             sessionStorage.removeItem('user_just_confirmed');
-            
-            // Build activation URL with all necessary parameters
             const activationParams = new URLSearchParams({
               promo_code: pendingPromoCode,
               plan: pendingPromoPlan,
               activate_now: 'true'
             });
-            
             if (pendingPromoYearly === 'true') {
               activationParams.set('yearly', 'true');
             }
-            
             console.log('[LoginPage] Redirecting to activate promo:', `/subscribe?${activationParams.toString()}`);
-            
-            // Redirect to the subscribe page with activation parameters
             navigate(`/subscribe?${activationParams.toString()}`, { replace: true });
           } else {
-            // Normal redirect flow - either no pending promo or not just confirmed
             navigate(redirectPath, { replace: true });
           }
         }
@@ -250,13 +218,10 @@ export function LoginPage() {
 
   const handleResendConfirmation = async () => {
     if (!emailForConfirmation) return;
-    
     setIsProcessing(true);
     setLocalError(null);
-    
     try {
       const { error } = await resendConfirmationEmail(emailForConfirmation);
-      
       if (error) {
         setLocalError(`Unable to resend confirmation: ${error.message}`);
       } else {
@@ -276,6 +241,12 @@ export function LoginPage() {
     setShowConfirmationOptions(false);
     clearError();
   };
+  
+  // NEW FUNCTION: Handles the Google sign-in click event
+  const handleGoogleSignIn = async () => {
+    clearError();
+    await signInWithGoogle();
+  };
 
   const displayError = localError || authError?.message;
   const isLoading = authLoading || isProcessing;
@@ -294,8 +265,8 @@ export function LoginPage() {
           {isSignupMode ? 'Create Your Account' : 'Welcome Back'}
         </Typography>
         <Typography variant="body" className="mt-2 text-gray-300 text-base sm:text-lg">
-          {isSignupMode 
-            ? 'Join MapleAurum to access premium mining analytics' 
+          {isSignupMode
+            ? 'Join MapleAurum to access premium mining analytics'
             : 'Sign in to continue your analysis'}
         </Typography>
       </div>
@@ -337,7 +308,6 @@ export function LoginPage() {
                   )}
                   Resend Confirmation Email
                 </Button>
-                
                 <div className="text-xs space-y-1">
                   <p className="font-medium">Didn't receive the email? Try these steps:</p>
                   <ul className="list-disc list-inside space-y-1 text-gray-300">
@@ -436,14 +406,34 @@ export function LoginPage() {
             disabled={isLoading}
             className="w-full bg-gradient-to-r from-cyan-600 to-teal-600 hover:from-cyan-700 hover:to-teal-700 text-white py-2.5 flex items-center justify-center"
           >
-            {isLoading && <Loader2 className="mr-2 h-5 w-5 animate-spin" />}
-            {isLoading 
-              ? 'Processing...' 
-              : isSignupMode 
-                ? 'Create Account' 
+            {isLoading
+              ? 'Processing...'
+              : isSignupMode
+                ? 'Create Account'
                 : 'Sign In'}
           </Button>
         </form>
+
+        {/* Divider and Google Sign-in button */}
+        <div className="flex items-center my-6">
+          <div className="flex-grow border-t border-gray-700"></div>
+          <span className="flex-shrink mx-4 text-gray-500 text-sm">OR</span>
+          <div className="flex-grow border-t border-gray-700"></div>
+        </div>
+        
+        <Button
+          onClick={handleGoogleSignIn}
+          disabled={isLoading}
+          className="w-full flex items-center justify-center space-x-2 bg-gray-800 hover:bg-gray-700 text-white border border-gray-700 py-2.5"
+          type="button" // Prevents form submission
+        >
+          {isLoading ? (
+            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+          ) : (
+            <img src="/google-icon.svg" alt="Google" className="h-4 w-4" />
+          )}
+          <span>Sign {isSignupMode ? 'Up' : 'In'} with Google</span>
+        </Button>
 
         <div className="mt-6 text-center">
           <Typography variant="body" className="text-sm text-gray-400">

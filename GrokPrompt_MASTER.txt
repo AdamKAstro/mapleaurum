@@ -1,151 +1,150 @@
-i need you to update / fix / research / populate as many nulls in my existing supabase db as possible Company to fix is 508 Almaden and ill give you a template for the sql updater we need. FOLLOW THE TEMPLATE. Costs(AISC, TCO etc) should be uploaded as AuEq ! stock price is not as important to update ( i do have a separate script for that)  my db for this company :  
+i need you to update / fix / research / populate as many nulls in my existing supabase db as possible Company to fix is 135 Empress and ill give you a template for the sql updater we need. FOLLOW THE TEMPLATE. Costs(AISC, TCO etc) should be uploaded as AuEq !. aueq_koz ! NOT ageq_koz Im pretty sure there is some very incorrect numbers in my DB for ex units in my json might say aueq_koz but i dont really trust it is always in au and not ag *needs review.  stock price is not as important to update ( i do have a separate script for that)  my db for this company : 
 
 [
   {
     "export_company_data_as_json": {
       "costs_data": {
-        "company_id": 508,
+        "company_id": 135,
         "tco_future": null,
-        "aisc_future": 1250,
+        "aisc_future": null,
         "tco_current": null,
-        "last_updated": "2025-08-05T05:51:34.476312+00:00",
-        "aic_last_year": 500,
+        "last_updated": "2025-03-23T00:00:00+00:00",
+        "aic_last_year": null,
         "aisc_last_year": null,
-        "aic_last_quarter": 500,
+        "aic_last_quarter": null,
         "aisc_last_quarter": null,
-        "construction_costs": 174000000,
-        "tco_future_currency": "USD",
-        "aisc_future_currency": "USD",
-        "tco_current_currency": "USD",
-        "aic_last_year_currency": "USD",
-        "aisc_last_year_currency": "USD",
-        "aic_last_quarter_currency": "USD",
-        "aisc_last_quarter_currency": "USD",
-        "construction_costs_currency": "USD"
+        "construction_costs": null,
+        "tco_future_currency": null,
+        "aisc_future_currency": null,
+        "tco_current_currency": null,
+        "aic_last_year_currency": null,
+        "aisc_last_year_currency": null,
+        "aic_last_quarter_currency": null,
+        "aisc_last_quarter_currency": null,
+        "construction_costs_currency": null
       },
       "company_profile": {
-        "status": "developer",
-        "tsx_code": "AMM.TO",
-        "company_id": 508,
-        "description": "Almaden Minerals Ltd. is a development-stage company focused on the Ixtaca Gold-Silver Project in Puebla, Mexico (100% owned, 2% NSR to Almadex Minerals). Discovered in 2010, Ixtaca hosts 73.1M tonnes of proven/probable reserves (0.59 g/t Au, 36.3 g/t Ag). The 2018 Feasibility Study outlined a 11-year open-pit mine producing 90,000 oz Au and 6M oz Ag annually, with $174M USD initial capex. Development is stalled due to a 2020 environmental permit denial and a 2022 Mexican Supreme Court ruling declaring mineral titles ineffective, pending indigenous consultation. Almaden is pursuing a US$1.06B arbitration claim against Mexico under CPTPP (filed June 2024, memorial submitted March 2025). Community engagement includes water projects and local employment. [Sources: Almaden Minerals Website, SEDAR Filings, 2018 FS, Junior Mining Network, Updated: 2025-06-03]",
-        "company_name": "ALMADEN MINERALS LTD.",
-        "headquarters": "1333 Johnston Street, Vancouver, BC, Canada, V6H 3R9",
-        "last_updated": "2025-08-05T00:13:01.09+00:00",
-        "percent_gold": 50,
-        "percent_silver": 50,
-        "minerals_of_interest": "Gold, Silver"
+        "status": "royalty",
+        "tsx_code": "EMPR.V",
+        "company_id": 135,
+        "description": "Empress Royalty Corp. engages in creating and investing in a portfolio of precious metal royalty and streaming interests in Canada. It focuses on small to mid-tier producing or development stage mining companies. The company also holds interest in the Manica Project Royalty, the Pinos Project Royalty, and the Canadian Exploration Royalties projects. Empress Royalty Corp. was incorporated in 2020 and is headquartered in Vancouver, Canada.",
+        "company_name": "EMPRESS ROYALTY",
+        "headquarters": "595 Burrard Street, Vancouver, BC, Canada, V7X 1J1",
+        "last_updated": "2025-08-11T23:53:07.97+00:00",
+        "percent_gold": 60,
+        "percent_silver": 40,
+        "minerals_of_interest": "gold, silver"
       },
       "financials_data": {
-        "ebitda": -1626890,
-        "cash_date": "2024-09-30T00:00:00+00:00",
-        "hedgebook": "No active precious metals hedging programs; development-stage company advancing Ixtaca gold-silver project in Mexico, with no current production or revenue requiring hedging strategies",
+        "ebitda": 4211917,
+        "cash_date": "2025-07-01T00:00:00+00:00",
+        "hedgebook": "No active hedging program disclosed",
         "peg_ratio": null,
-        "cash_value": 5355388,
-        "company_id": 508,
-        "debt_value": 9636118,
-        "forward_pe": null,
-        "liabilities": 3485507,
-        "trailing_pe": -12.5,
+        "cash_value": 1775329,
+        "company_id": 135,
+        "debt_value": 4566415,
+        "forward_pe": 7.010309,
+        "liabilities": 11416037.5,
+        "trailing_pe": 68,
         "gross_profit": 0,
-        "last_updated": "2025-08-04T00:39:02.566+00:00",
+        "last_updated": "2025-08-05T07:59:35.553371+00:00",
         "cash_currency": "CAD",
         "debt_currency": "CAD",
-        "price_to_book": 20.833334,
-        "revenue_value": 0,
-        "free_cash_flow": 667161,
-        "price_to_sales": null,
+        "price_to_book": 4.4736843,
+        "revenue_value": 9796828,
+        "free_cash_flow": 1919423,
+        "price_to_sales": 7.39722486166229,
         "cost_of_revenue": 0,
-        "investments_json": "{\"UpdateContext\": \"Q3 2024 financials and Ixtaca arbitration\", \"Feasibility_Study_Year\": 2018, \"Q3_2024_Shares_Million\": 137.221, \"Arbitration_Filing_Date\": \"2024-06-17\", \"Memorial_Submission_Date\": \"2025-03-20\", \"Q3_2024_Cash_USD_Million\": 3.884, \"Q3_2024_Debt_USD_Million\": 3.0, \"Arbitration_Claim_USD_Billion\": 1.06, \"Rock_Creek_Mill_Value_USD_Million\": 6.5}",
-        "market_cap_value": 34305248,
-        "net_income_value": -3438331,
+        "investments_json": "{\"marketable_securities\" : 124273.03, \"strategic_investments\" : 53259.87, \"currency\" : \"CAD\"}",
+        "market_cap_value": 100793002.827168,
+        "net_income_value": 1982285,
         "operating_income": 0,
         "revenue_currency": "CAD",
         "operating_expense": 0,
-        "shares_outstanding": 137220992,
+        "shares_outstanding": 118580000,
         "market_cap_currency": "CAD",
         "net_income_currency": "CAD",
-        "enterprise_to_ebitda": -23.718,
-        "liabilities_currency": "USD",
-        "net_financial_assets": -4280730,
-        "enterprise_to_revenue": null,
-        "enterprise_value_value": 38586080,
+        "enterprise_to_ebitda": 15.17,
+        "liabilities_currency": "CAD",
+        "net_financial_assets": -2791086,
+        "enterprise_to_revenue": 8.516,
+        "enterprise_value_value": 83425768,
         "financials_data_source": "Yahoo Finance",
-        "other_financial_assets": 6500000,
+        "other_financial_assets": 177532.9,
         "enterprise_value_currency": "CAD",
-        "net_financial_assets_currency": "USD",
-        "other_financial_assets_currency": "USD"
+        "net_financial_assets_currency": "CAD",
+        "other_financial_assets_currency": "CAD"
       },
       "production_data": {
-        "company_id": 508,
-        "last_updated": "2025-06-03T01:27:54.12794+00:00",
-        "reserve_life_years": 11,
-        "future_production_total_aueq_koz": 158,
+        "company_id": 135,
+        "last_updated": "2025-08-05T07:59:35.553371+00:00",
+        "reserve_life_years": null,
+        "future_production_total_aueq_koz": null,
         "current_production_total_aueq_koz": null,
         "current_production_precious_aueq_koz": null,
         "current_production_non_precious_aueq_koz": null
       },
-      "target_company_id": 508,
+      "target_company_id": 135,
       "capital_structure_data": {
-        "company_id": 508,
-        "last_updated": "2025-06-10T04:20:38.454+00:00",
-        "existing_shares": 137220992,
-        "options_revenue": 3000000,
-        "fully_diluted_shares": 167221000,
-        "in_the_money_options": 15000000,
+        "company_id": 135,
+        "last_updated": "2025-08-05T07:42:22.517414+00:00",
+        "existing_shares": 121289000,
+        "options_revenue": 7732173.96688163,
+        "fully_diluted_shares": 133417900,
+        "in_the_money_options": 12128900,
         "options_revenue_currency": "CAD"
       },
       "mineral_estimates_data": {
-        "company_id": 508,
-        "last_updated": "2025-06-03T01:27:54.12794+00:00",
-        "mineable_total_aueq_moz": 2.11,
-        "reserves_total_aueq_moz": 2.34,
-        "potential_total_aueq_moz": 0.5,
-        "resources_total_aueq_moz": 3.04,
-        "mineable_precious_aueq_moz": 2.11,
-        "reserves_precious_aueq_moz": 2.34,
-        "resources_precious_aueq_moz": 3.04,
-        "mineable_non_precious_aueq_moz": 0,
-        "reserves_non_precious_aueq_moz": 0,
-        "potential_non_precious_aueq_moz": 0,
-        "resources_non_precious_aueq_moz": 0,
-        "measured_indicated_total_aueq_moz": 2.62,
-        "measured_indicated_precious_aueq_moz": 2.62,
-        "measured_indicated_non_precious_aueq_moz": 0
+        "company_id": 135,
+        "last_updated": "2025-08-05T07:59:35.553371+00:00",
+        "mineable_total_aueq_moz": null,
+        "reserves_total_aueq_moz": null,
+        "potential_total_aueq_moz": null,
+        "resources_total_aueq_moz": null,
+        "mineable_precious_aueq_moz": null,
+        "reserves_precious_aueq_moz": null,
+        "resources_precious_aueq_moz": null,
+        "mineable_non_precious_aueq_moz": null,
+        "reserves_non_precious_aueq_moz": null,
+        "potential_non_precious_aueq_moz": null,
+        "resources_non_precious_aueq_moz": null,
+        "measured_indicated_total_aueq_moz": null,
+        "measured_indicated_precious_aueq_moz": null,
+        "measured_indicated_non_precious_aueq_moz": null
       },
       "valuation_metrics_data": {
-        "company_id": 508,
-        "last_updated": "2025-07-23T04:54:47.661096+00:00",
-        "ev_per_mi_oz_all": 8.96,
+        "company_id": 135,
+        "last_updated": "2025-08-05T07:14:03.69931+00:00",
+        "ev_per_mi_oz_all": null,
         "ev_per_production_oz": null,
-        "ev_per_mi_oz_precious": 8.96,
-        "ev_per_reserve_oz_all": 10.04,
-        "mkt_cap_per_mi_oz_all": 7.59,
-        "ev_per_mineable_oz_all": 11.13,
-        "ev_per_resource_oz_all": 7.73,
+        "ev_per_mi_oz_precious": null,
+        "ev_per_reserve_oz_all": null,
+        "mkt_cap_per_mi_oz_all": null,
+        "ev_per_mineable_oz_all": null,
+        "ev_per_resource_oz_all": null,
         "mkt_cap_per_production_oz": null,
-        "ev_per_reserve_oz_precious": 10.04,
-        "mkt_cap_per_mi_oz_precious": 7.59,
-        "mkt_cap_per_reserve_oz_all": 8.5,
-        "ev_per_mineable_oz_precious": 11.13,
-        "ev_per_resource_oz_precious": 7.73,
-        "mkt_cap_per_mineable_oz_all": 9.43,
-        "mkt_cap_per_resource_oz_all": 6.54,
-        "mkt_cap_per_reserve_oz_precious": 8.5,
-        "mkt_cap_per_mineable_oz_precious": 9.43,
-        "mkt_cap_per_resource_oz_precious": 6.54
+        "ev_per_reserve_oz_precious": null,
+        "mkt_cap_per_mi_oz_precious": null,
+        "mkt_cap_per_reserve_oz_all": null,
+        "ev_per_mineable_oz_precious": null,
+        "ev_per_resource_oz_precious": null,
+        "mkt_cap_per_mineable_oz_all": null,
+        "mkt_cap_per_resource_oz_all": null,
+        "mkt_cap_per_reserve_oz_precious": null,
+        "mkt_cap_per_mineable_oz_precious": null,
+        "mkt_cap_per_resource_oz_precious": null
       },
       "latest_stock_price_entry": {
-        "company_id": 508,
-        "share_price": 0.25,
-        "last_updated": "2025-08-05T00:13:00.969+00:00",
+        "company_id": 135,
+        "share_price": 0.930000007152557,
+        "last_updated": "2025-08-11T23:53:07.84+00:00",
         "share_price_source": "Yahoo Finance - Historical Close",
         "share_price_currency": "CAD",
-        "share_price_actual_date": "2025-08-01"
+        "share_price_actual_date": "2025-08-08"
       }
     }
   }
 ]
-
 
 TEMPLATE TO FOLLOW (below) !!  **also should add yahoo finance url if poss  
 
@@ -161,7 +160,7 @@ Handle Shares Outstanding Conflicts: When web data (e.g., 42M shares) conflicts 
 
 Estimate Missing Data Conservatively: For fields like mineral estimates or construction costs, where no NI 43-101 or financial reports exist, use conservative estimates based on historical grades or exploration-stage norms (e.g., 0.3 Moz AuEq, CAD 3M costs). Clearly note these as estimates in comments and logs (e.g., -- Estimated exploration costs).
 
-Currency Consistency and Conversion: Use CAD for all financial fields unless specified (e.g., valuation metrics in USD). Apply a consistent exchange rate (e.g., 1.38* or whatever is correct currently CAD/USD) for conversions and document it in comments (e.g., -- MCap_USD = 2.33M / 1.38 = 1.69M USD). Ensure currency fields (e.g., market_cap_currency) are set explicitly.
+Currency Consistency and Conversion: Use CAD for all financial fields unless specified (e.g., valuation metrics in USD). Apply a consistent exchange rate (e.g., 1.38* or whatever is correct currently CAD/USD) for conversions and document it in comments (e.g., -- MCap_USD = 2.33M / 1.375 = 1.69M USD). Ensure currency fields (e.g., market_cap_currency) are set explicitly.
 
 Avoid Trailing Comments in SELECT Statements: Do not include comments or text (e.g., Rosources: ...) after the verification SELECT statement, as they can break the query’s syntax. Keep source citations in the description field or separate comments above the query.
 
@@ -621,7 +620,7 @@ Exclude stock price updates (handled by a separate script).
 
 Use standard column names as defined in the JSON schema (e.g., market_cap_value, cash_value, reserves_total_aueq_moz).
 
-Ensure currency consistency: CAD for financials, USD for valuation metrics (using 1.38 CAD/USD exchange rate).
+Ensure currency consistency: CAD for financials, USD for valuation metrics (using 1.375 CAD/USD exchange rate).
 
 Include a verification SELECT query joining all tables to confirm updated fields, using LEFT JOIN and WHERE cu.company_id = c.company_id AND cu.url_type='company_website' LIMIT 1 for the website URL.
 
