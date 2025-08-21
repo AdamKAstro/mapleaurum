@@ -19,64 +19,130 @@ const HGRAPHPage: React.FC = () => {
       </Helmet>
       
       <div className="max-w-4xl mx-auto">
-        {/* CRITICAL DISCLAIMER - TOP OF PAGE */}
-        <div className="mb-8 p-6 bg-red-900 border-2 border-red-600 rounded-lg">
-          <h2 className="text-2xl font-bold text-red-200 mb-4">⚠️ IMPORTANT DISCLAIMERS</h2>
-          <div className="space-y-3 text-red-100">
-            <p className="font-semibold">
-              HGRAPH is an INDEPENDENT community token NOT AFFILIATED with HydroGraph Clean Power Inc. or any other company.
-            </p>
-            <p>
-              This is a highly speculative, experimental cryptocurrency with extreme risk of total loss. 
-              Only trade with funds you can afford to lose completely.
-            </p>
-            <p>
-              This token was created as an educational/community project inspired by graphene research. 
-              It has NO intrinsic value and NO business backing.
-            </p>
-            <p className="font-semibold">
-              NOT FINANCIAL ADVICE. Consult professionals before any investment decisions.
-            </p>
-          </div>
+        {/* BRIEF TOP DISCLAIMER */}
+        <div className="mb-6 p-4 bg-yellow-900 border border-yellow-600 rounded-lg">
+          <p className="text-yellow-100 text-center">
+            <strong>HGRAPH is an independent community token</strong> inspired by graphene research. 
+            Not affiliated with any company. <strong>High risk - see full disclaimers below.</strong>
+          </p>
         </div>
 
         {/* Logo Section */}
         <div className="mb-8 text-center">
-          <div className="mx-auto w-32 h-32 bg-gradient-to-br from-gray-600 to-gray-800 rounded-full flex items-center justify-center mb-4">
-            <span className="text-3xl font-bold text-white">HG</span>
-          </div>
-          <p className="text-sm text-gray-400">Custom logo coming soon</p>
+          <img
+            src="/HGRAPHl.jpg"
+            alt="HGRAPH Token Logo"
+            className="mx-auto w-32 h-32 object-contain"
+          />
         </div>
 
-        <h1 className="text-4xl font-bold mb-6 text-center">HGRAPH: Community Token Inspired by Graphene Research</h1>
+        <h1 className="text-4xl font-bold mb-6 text-center bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent">
+          HGRAPH: Celebrating the Graphene Revolution
+        </h1>
         
         {/* NOW LIVE Section */}
-        <div className="mb-8 p-4 bg-green-800 border border-green-600 rounded-lg">
-          <h3 className="text-lg font-semibold text-green-200 mb-2">🎉 NOW LIVE ON POLYGON</h3>
-          <p className="text-green-100">
-            HGRAPH is now tradeable with active liquidity pools. Proceed with extreme caution - very low liquidity means high volatility.
+        <div className="mb-8 p-6 bg-gradient-to-r from-green-800 to-emerald-800 border border-green-600 rounded-lg">
+          <h3 className="text-2xl font-semibold text-green-200 mb-3">🚀 THE GRAPHENE REVOLUTION IS HERE!</h3>
+          <p className="text-green-100 text-lg">
+            HGRAPH is now live and tradeable - join the community celebrating breakthrough graphene innovations 
+            that are transforming materials science forever.
           </p>
         </div>
 
-        <p className="text-lg mb-4">
-          HGRAPH is an independent community cryptocurrency token created to celebrate and discuss the potential of graphene research. 
-          Inspired by innovations in fractal graphene and materials science, this educational project brings together enthusiasts 
-          interested in the "wonder material" that could transform multiple industries.
-        </p>
-
-        {/* Educational Focus */}
-        <section className="mb-8">
-          <h2 className="text-2xl font-semibold mb-4">Educational Mission: The Graphene Revolution</h2>
-          <p className="text-gray-200 mb-4">
-            Graphene, a single layer of carbon atoms, represents one of the most promising materials of the 21st century. 
-            Research into fractal graphene production, enhanced dispersion methods, and scalable manufacturing continues to 
-            advance across universities and companies worldwide.
+        <div className="text-lg mb-6 leading-relaxed">
+          <p className="mb-4">
+            Welcome to the <strong className="text-cyan-400">graphene revolution</strong>! HGRAPH is a community token 
+            that celebrates one of the most exciting breakthroughs in materials science history. Inspired by 
+            revolutionary advances in <strong>fractal and reactive graphene</strong>, this project brings together 
+            enthusiasts who believe graphene will reshape our entire technological landscape.
           </p>
-          <ul className="list-disc list-inside text-gray-200 space-y-2">
-            <li><strong>Educational Purpose</strong>: This token serves as a focal point for graphene research discussions and community building around materials science.</li>
-            <li><strong>Research Awareness</strong>: Highlighting innovations in graphene production, from detonation synthesis to scalable manufacturing processes.</li>
-            <li><strong>Community Driven</strong>: Building a network of enthusiasts interested in next-generation materials and their applications.</li>
-          </ul>
+          <p className="text-gray-200">
+            From ultra-strong composites that make steel obsolete to batteries that charge in seconds, 
+            graphene represents a civilizational shift. Join us in celebrating and learning about 
+            the innovations that will define the next century.
+          </p>
+        </div>
+
+        {/* HydroGraph Innovation Spotlight */}
+        <section className="mb-8">
+          <h2 className="text-3xl font-semibold mb-6 text-center bg-gradient-to-r from-purple-400 to-pink-500 bg-clip-text text-transparent">
+            🔬 Revolutionary Graphene Breakthroughs
+          </h2>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+            <div className="bg-gradient-to-br from-purple-800 to-purple-900 p-6 rounded-lg border border-purple-600">
+              <h3 className="text-xl font-semibold text-purple-200 mb-3">⚛️ Fractal Graphene Innovation</h3>
+              <p className="text-purple-100">
+                Breakthrough detonation synthesis creates fractal graphene with reactive edges, solving the 
+                clumping problem that limited graphene for decades. This 99.8% pure graphene offers 
+                unprecedented dispersion in composites.
+              </p>
+            </div>
+            
+            <div className="bg-gradient-to-br from-blue-800 to-blue-900 p-6 rounded-lg border border-blue-600">
+              <h3 className="text-xl font-semibold text-blue-200 mb-3">🏗️ Real-World Applications</h3>
+              <p className="text-blue-100">
+                27% strength boost in concrete, 80% wear reduction in aerospace applications, 
+                ultra-efficient batteries, and flexible electronics. The applications are limitless 
+                and the transformation has begun.
+              </p>
+            </div>
+          </div>
+
+          <div className="bg-gradient-to-r from-cyan-800 to-teal-800 p-6 rounded-lg border border-cyan-600">
+            <h3 className="text-xl font-semibold text-cyan-200 mb-4">🌍 The $3.7 Billion Graphene Market Explosion</h3>
+            <p className="text-cyan-100 mb-4">
+              The graphene market is projected to explode from $897M in 2025 to $3.7B by 2030 - 
+              a staggering 33.11% compound annual growth rate. This isn't just growth; it's a 
+              technological revolution unfolding before our eyes.
+            </p>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
+              <div>
+                <div className="text-2xl font-bold text-cyan-300">$897M</div>
+                <div className="text-cyan-200 text-sm">2025 Market</div>
+              </div>
+              <div>
+                <div className="text-2xl font-bold text-cyan-300">33.11%</div>
+                <div className="text-cyan-200 text-sm">Annual Growth</div>
+              </div>
+              <div>
+                <div className="text-2xl font-bold text-cyan-300">$3.7B</div>
+                <div className="text-cyan-200 text-sm">2030 Projection</div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Educational Mission */}
+        <section className="mb-8">
+          <h2 className="text-2xl font-semibold mb-4">📚 Our Educational Mission</h2>
+          <p className="text-gray-200 mb-4">
+            HGRAPH serves as a focal point for graphene education and community building. We're passionate about 
+            sharing the incredible potential of this wonder material and supporting the researchers and companies 
+            making breakthrough discoveries.
+          </p>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="bg-gray-800 p-4 rounded-lg">
+              <h3 className="text-lg font-semibold text-yellow-400 mb-2">🔬 Research Awareness</h3>
+              <ul className="text-gray-300 text-sm space-y-1">
+                <li>• Highlighting breakthrough synthesis methods</li>
+                <li>• Showcasing real-world applications</li>
+                <li>• Following scalable production advances</li>
+                <li>• Celebrating research milestones</li>
+              </ul>
+            </div>
+            
+            <div className="bg-gray-800 p-4 rounded-lg">
+              <h3 className="text-lg font-semibold text-green-400 mb-2">🤝 Community Building</h3>
+              <ul className="text-gray-300 text-sm space-y-1">
+                <li>• Connecting graphene enthusiasts</li>
+                <li>• Supporting materials science education</li>
+                <li>• Discussing future applications</li>
+                <li>• Building awareness of innovation</li>
+              </ul>
+            </div>
+          </div>
         </section>
 
         {/* Token Details */}
@@ -135,10 +201,11 @@ const HGRAPHPage: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
             <div className="bg-gray-800 p-4 rounded-lg">
               <h3 className="text-lg font-semibold text-purple-400 mb-2">SushiSwap (Primary)</h3>
-              <p className="text-gray-300 text-sm mb-3">Available trading pairs with low liquidity</p>
+              <p className="text-gray-300 text-sm mb-3">Live trading pairs - start small due to low liquidity</p>
               <ul className="text-gray-300 text-sm space-y-1 mb-3">
                 <li>• HGRAPH/WPOL (~$21 liquidity)</li>
                 <li>• HGRAPH/USDC (~$1 liquidity)</li>
+                <li>• <span className="text-yellow-400">⚠️ Use high slippage (10-20%)</span></li>
               </ul>
               <a
                 href="https://sushi.com/swap?token0=0x0d500B1d8E8eF31E21C99d1Db9A6444d3ADf1270&token1=0x5209500eed0c66762158770f0d719EE7745954E0"
