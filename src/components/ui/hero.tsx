@@ -1,8 +1,8 @@
 // src/components/ui/hero.tsx
 
-import React, { useState, useRef, useMemo, memo, useEffect } from 'react';
-import { ArrowRight, Crown, TrendingUp, Shield, Sparkles, ChevronDown, Check, Zap, Target, Gem, Rocket, Play, Pause, Volume2, VolumeX, BarChart2, PieChart, LineChart } from 'lucide-react';
-import { motion, useScroll, useTransform, AnimatePresence, useInView } from 'framer-motion';
+import React, { useState, useMemo, memo } from 'react';
+import { ArrowRight, Crown, TrendingUp, Shield, Sparkles, ChevronDown, Check, Zap, Target, Gem, Rocket, BarChart2, PieChart, LineChart } from 'lucide-react';
+import { motion, useScroll, useTransform, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { LazyLoadImage } from 'react-lazy-load-image-component';
 import 'react-lazy-load-image-component/src/effects/blur.css';
@@ -157,19 +157,8 @@ const demoCompanies = [
 export const Hero: React.FC<HeroProps> = ({ className }) => {
   const [selectedTemplate, setSelectedTemplate] = useState(templates[0]);
   const [hoveredBubble, setHoveredBubble] = useState<number | null>(null);
-  const [isVideoPlaying, setIsVideoPlaying] = useState(true);
-  const [isMuted, setIsMuted] = useState(true);
-  const [hasVideoLoaded, setHasVideoLoaded] = useState(false);
-  const [isVideoReady, setIsVideoReady] = useState(false);
-  const [imageLoaded, setImageLoaded] = useState(false);
-  const containerRef = useRef<HTMLDivElement>(null);
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const videoContainerRef = useRef<HTMLDivElement>(null);
+  const containerRef = React.useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
-
-  
-  const isVideoInView = useInView(videoContainerRef, { once: false, margin: '0px' }); // Simplified margin
-
 
   const { scrollYProgress } = useScroll({
     target: containerRef,
@@ -180,41 +169,6 @@ export const Hero: React.FC<HeroProps> = ({ className }) => {
   const heroY = useTransform(scrollYProgress, [0, 1], [0, -150]);
   const bubblesY = useTransform(scrollYProgress, [0, 1], [0, -100]);
   const fadeOut = useTransform(scrollYProgress, [0, 0.3], [1, 0.8]);
-
-  // Video controls
-  useEffect(() => {
-    if (videoRef.current && isVideoInView && isVideoReady) {
-      videoRef.current.play().then(() => {
-        setIsVideoPlaying(true);
-        console.log('[HeroVideo] Playback started.');
-      }).catch((err) => {
-        setIsVideoPlaying(false);
-        console.error('[HeroVideo] Play failed:', err);
-      });
-    } else if (videoRef.current) {
-      videoRef.current.pause();
-      setIsVideoPlaying(false);
-      console.log('[HeroVideo] Paused; not in view or not ready.');
-    }
-  }, [isVideoInView, isVideoReady]);
-
-  const togglePlayPause = () => {
-    if (videoRef.current) {
-      if (isVideoPlaying) {
-        videoRef.current.pause();
-      } else {
-        videoRef.current.play();
-      }
-      setIsVideoPlaying(!isVideoPlaying);
-    }
-  };
-
-  const toggleMute = () => {
-    if (videoRef.current) {
-      videoRef.current.muted = !isMuted;
-      setIsMuted(!isMuted);
-    }
-  };
 
   // Memoize template buttons
   const templateButtons = useMemo(
@@ -241,7 +195,7 @@ export const Hero: React.FC<HeroProps> = ({ className }) => {
 
   return (
     <main ref={containerRef} className={cn('relative w-full font-sans', className)} style={{ position: 'relative' }} aria-label="Maple Aurum Homepage">
-      {/* Section 1: Hero Banner with Video */}
+      {/* Section 1: Hero Banner with Image */}
       <section className="relative min-h-screen flex flex-col overflow-hidden bg-gradient-to-b from-navy-900 via-navy-800 to-navy-900">
         {/* Dynamic background with glassmorphism */}
         <div className="absolute inset-0 backdrop-blur-[2px]">
@@ -292,7 +246,7 @@ export const Hero: React.FC<HeroProps> = ({ className }) => {
             >
               <div className="relative">
                 <LazyLoadImage
-                  src="/GeminiMALBig3.jpg"
+                  src="/GeminiMALBig2.jpg"
                   alt="Maple Aurum Logo"
                   className="h-12 w-12 rounded-xl object-cover ring-2 ring-yellow-500/20 group-hover:ring-yellow-400/50 transition-all duration-300"
                   effect="blur"
@@ -343,7 +297,7 @@ export const Hero: React.FC<HeroProps> = ({ className }) => {
           </nav>
         </header>
 
-        {/* Hero Content with Video */}
+        {/* Hero Content with Image */}
         <motion.main
           className="relative flex-1 flex flex-col items-center justify-start px-4 sm:px-6 lg:px-8 pt-12"
           style={{ y: heroY, opacity: fadeOut }}
@@ -373,107 +327,26 @@ export const Hero: React.FC<HeroProps> = ({ className }) => {
             </motion.p>
 
 
-            {/* Video Container */}
+            {/* Image Container */}
             <motion.div
-              ref={videoContainerRef}
               initial={{ opacity: 0, scale: 0.9, y: 50 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               transition={{ duration: 1, delay: 0.3 }}
-              className="relative max-w-4xl mx-auto mb-10"
+              //className="relative max-w-4xl mx-auto mb-10"
+			  className="relative mx-auto w-full px-4 sm:px-6 lg:px-8 mb-10"
             >
               <div className="relative rounded-3xl overflow-hidden backdrop-blur-sm bg-white/5 border border-white/10 shadow-2xl">
                 <div className="absolute -inset-1 bg-gradient-to-r from-yellow-500/20 via-amber-500/20 to-yellow-500/20 rounded-3xl blur-2xl animate-pulse" />
                 <div className="relative p-4 sm:p-6">
                   <div className="relative rounded-2xl overflow-hidden bg-black/50">
-                    <AnimatePresence>
-                      {!isVideoReady && (
-                        <motion.div
-                          initial={{ opacity: 1 }}
-                          exit={{ opacity: 0 }}
-                          transition={{ duration: 0.5 }}
-                          className="absolute inset-0 z-10"
-                        >
-                          <LazyLoadImage
-                            src="/GeminiMALBig2.jpg"
-                            alt="Maple Aurum Logo"
-                            className="w-full h-full object-cover rounded-2xl"
-                            effect="blur"
-                            onLoad={() => setImageLoaded(true)}
-                            width={1200}
-                            height={675}
-                          />
-                          {imageLoaded && (
-                            <div className="absolute inset-0 flex items-center justify-center bg-black/20">
-                              <motion.div
-                                animate={{ rotate: 360 }}
-                                transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
-                                className="w-12 h-12 border-4 border-yellow-400/20 border-t-yellow-400 rounded-full"
-                              />
-                            </div>
-                          )}
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
-
-                    <video
-                      ref={videoRef}
-                      className="w-full h-auto rounded-2xl"
-                      autoPlay={false}
-                      loop
-                      muted={isMuted}
-                      playsInline
-                      preload="auto"
-                      onLoadedData={() => {
-                        setHasVideoLoaded(true);
-                        console.log('[HeroVideo] Loaded data event fired.');
-                      }}
-                      onCanPlayThrough={() => {
-                        setIsVideoReady(true);
-                        console.log('[HeroVideo] Can play through; video ready.');
-                      }}
-                      onError={(e) => console.error('[HeroVideo] Load/play error:', e.currentTarget.error)}
-                      onLoadStart={() => console.log('[HeroVideo] Load start event.')}
-                      onPlay={() => console.log('[HeroVideo] Play event fired.')}
-                      onPause={() => console.log('[HeroVideo] Pause event fired.')}
-                      poster="/GeminiMALBig2.jpg"
-                      aria-label="Maple Aurum Logo Reveal"
-                    >
-                      <source src="/Cosmic_Genesis_Logo_Reveal_Video_2.mp4" type="video/mp4" />
-                      Your browser does not support the video tag.
-                    </video>
-
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent pointer-events-none" />
-
-                    <AnimatePresence>
-                      {hasVideoLoaded && isVideoReady && (
-                        <motion.div
-                          initial={{ opacity: 0 }}
-                          animate={{ opacity: 1 }}
-                          exit={{ opacity: 0 }}
-                          className="absolute bottom-4 left-4 right-4 flex items-center justify-between"
-                        >
-                          <div className="flex items-center gap-2">
-                            <button
-                              onClick={togglePlayPause}
-                              className="p-2 rounded-full bg-black/50 backdrop-blur-sm text-white hover:bg-black/70 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-yellow-400"
-                              aria-label={isVideoPlaying ? 'Pause video' : 'Play video'}
-                            >
-                              {isVideoPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
-                            </button>
-                            <button
-                              onClick={toggleMute}
-                              className="p-2 rounded-full bg-black/50 backdrop-blur-sm text-white hover:bg-black/70 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-yellow-400"
-                              aria-label={isMuted ? 'Unmute video' : 'Mute video'}
-                            >
-                              {isMuted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
-                            </button>
-                          </div>
-                          <div className="text-xs text-white/70 bg-black/50 backdrop-blur-sm px-3 py-1 rounded-full">
-                            Experience MapleAurum
-                          </div>
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
+                    <LazyLoadImage
+                      src="/LOGO_Scene.jpg"
+                      alt="Maple Aurum logo over a mountain scene"
+                      className="w-full h-full rounded-2xl object-cover"
+                      effect="blur"
+                      width={1200}
+                      height={675}
+                    />
                   </div>
 
                   <div className="absolute -top-20 -left-20 w-40 h-40 bg-yellow-500/20 rounded-full blur-3xl" />
@@ -742,6 +615,7 @@ export const Hero: React.FC<HeroProps> = ({ className }) => {
             </motion.article>
           </div>
 
+          {/* This is the corrected section */}
           <motion.p
             initial={{ opacity: 0 }}
             whileInView={{ opacity: 1 }}
@@ -751,6 +625,7 @@ export const Hero: React.FC<HeroProps> = ({ className }) => {
           >
             Not sure which to choose? Start with the personalized journey—you can always explore templates later!
           </motion.p>
+          {/* End of corrected section */}
         </div>
       </section>
 
@@ -841,7 +716,11 @@ export const Hero: React.FC<HeroProps> = ({ className }) => {
                   <div className="absolute bottom-0 left-0 right-0 p-8 text-center">
                     <div className="text-6xl mb-4">✨</div>
                     <h3 className="text-xl sm:text-2xl font-bold text-green-400 mb-2">The MapleAurum Way</h3>
-                    <p className="text-gray-300">Instant, actionable insights</p>
+                    <p className="text-gray-300 mb-6">Instant, actionable insights</p>
+                    <Button size="lg" className="shadow-2xl" onClick={() => navigate('/scatter-score-pro')} aria-label="Explore ScatterScore Now">
+                      Explore ScatterScore™ Now
+                      <ArrowRight className="h-5 w-5 ml-2" />
+                    </Button>
                   </div>
                 </div>
               </motion.article>
@@ -1097,7 +976,7 @@ export const Hero: React.FC<HeroProps> = ({ className }) => {
             className="relative rounded-2xl overflow-hidden bg-gradient-to-br from-navy-800 to-navy-900 shadow-2xl border border-yellow-400/20"
           >
             <LazyLoadImage
-              src="/ScatterScore3.webp"
+              src="/ScatterScore1b.webp"
               alt="ScatterScore Analysis Interface"
               className="w-full h-auto object-cover"
               effect="blur"
