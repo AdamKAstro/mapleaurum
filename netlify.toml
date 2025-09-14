@@ -18,8 +18,7 @@
   [headers.values]
     Content-Security-Policy = "default-src 'self'; script-src 'self' https://js.stripe.com; style-src 'self' https://fonts.googleapis.com 'unsafe-inline'; img-src 'self' https://*.supabase.co https://ui-avatars.com data:; font-src 'self' https://fonts.gstatic.com data:; connect-src 'self' https://api.stripe.com wss://*.supabase.co https://*.supabase.co; frame-src 'self' https://js.stripe.com https://share.descript.com; media-src 'self' blob:; worker-src 'self' blob:; base-uri 'self'; form-action 'self'; object-src 'none'; upgrade-insecure-requests; report-to csp-report;"
     Report-To = '{"group":"csp-report","max_age":10886400,"endpoints":[{"url":"https://your-report-endpoint.com"}]}'
-    X-Frame-Options = "DENY"
+    X-Frame-Options = "SAMEORIGIN"
     X-Content-Type-Options = "nosniff"
     Referrer-Policy = "strict-origin-when-cross-origin"
     Strict-Transport-Security = "max-age=31536000; includeSubDomains; preload"
-	X-Frame-Options = "SAMEORIGIN"
