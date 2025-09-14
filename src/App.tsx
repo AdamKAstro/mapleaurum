@@ -42,7 +42,8 @@ import { ProfilePage } from './pages/account/profile';
 import { HowToChooseMiningCompanyBlogPage } from './pages/blog/how-to-choose-a-precious-metals-mining-company-to-invest-in';
 import { BlogLandingPage } from './pages/blog/index';
 import { MasteringRPSBlogPage } from './pages/blog/mastering-rps-a-quick-guide';
-import HGRAPHPage from './pages/HGRAPHPage'; // Add this import at the top of App.tsx
+import HGRAPHPage from './pages/HGRAPHPage'; 
+import GrapheneExplorerPage from './pages/GrapheneExplorerPage'; // ADD THIS LINE
 
 
 function NotFoundPage() {
@@ -891,6 +892,7 @@ function App() {
                                             }
                                         />
                                     </Route>
+									<Route path="/graphene-explorer" element={<GrapheneExplorerPage />} />
                                     <Route
                                         path="/hook"
                                         element={
