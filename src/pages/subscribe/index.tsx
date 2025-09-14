@@ -1,7 +1,7 @@
 // src/pages/subscribe/index.tsx
 
-import React, { useState, useEffect, useCallback } from 'react';
-import { Star, Crown, Check, Loader2, Gift, Link as LinkIcon, Copy, Zap } from 'lucide-react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { Star, Crown, Check, Loader2, Gift, Link as LinkIcon, Copy, Zap, AlertCircle } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '../../components/ui/button';
 import { Typography } from '../../components/ui/typography';
@@ -161,7 +161,7 @@ function PlanCard({
     cardHighlightType = 'none';
   } else if (!canUpgradeGenerally) {
     buttonText = 'Manage Subscription';
-    buttonDisabled = true; 
+    buttonDisabled = false; 
     buttonAction = () => navigate('/account');
     buttonVariant = 'secondary';
     cardHighlightType = 'none';
@@ -404,12 +404,35 @@ function AdminCouponPanel() {
   );
 }
 
+function PromoActivationNotification({ message, type }: { message: string; type: 'loading' | 'success' | 'error' }) {
+  const bgColor = type === 'loading' ? 'bg-purple-600' : type === 'success' ? 'bg-emerald-600' : 'bg-red-600';
+  const icon = type === 'loading' ? (
+    <Loader2 className="h-5 w-5 animate-spin" />
+  ) : type === 'success' ? (
+    <Check className="h-5 w-5" />
+  ) : (
+    <AlertCircle className="h-5 w-5" />
+  );
+
+  return (
+    <div className={cn(
+      'fixed top-4 right-4 z-50 flex items-center gap-3 px-4 py-3 rounded-lg shadow-lg text-white',
+      bgColor
+    )}>
+      {icon}
+      <span className="font-medium">{message}</span>
+    </div>
+  );
+}
+
 export function SubscribePage() {
   const { session, user, isLoading: isAuthLoading } = useAuth();
   const { currentUserSubscriptionTier, isLoading: isSubscriptionLoading, refreshSubscriptionStatus } = useSubscription();
   const [isYearly, setIsYearly] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [hasAttemptedAutoActivation, setHasAttemptedAutoActivation] = useState(false);
+  const [notification, setNotification] = useState<{ message: string; type: 'loading' | 'success' | 'error' } | null>(null);
+  const notificationTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -417,6 +440,21 @@ export function SubscribePage() {
   const stripeCouponIdParam = urlParams.get('coupon');
   const appPromoCodeParam = urlParams.get('promo_code') as AppTrialPromoCodeKey | null;
   const planFromUrlParam = urlParams.get('plan') as Exclude<ProductKey, 'free'> | null;
+
+  const showNotification = (message: string, type: 'loading' | 'success' | 'error', duration?: number) => {
+    if (notificationTimeoutRef.current) {
+      clearTimeout(notificationTimeoutRef.current);
+    }
+    
+    setNotification({ message, type });
+    
+    if (duration) {
+      notificationTimeoutRef.current = setTimeout(() => {
+        setNotification(null);
+        notificationTimeoutRef.current = null;
+      }, duration);
+    }
+  };
 
   useEffect(() => {
     if (!isAuthLoading && session) {
@@ -503,7 +541,7 @@ export function SubscribePage() {
           );
         }
         
-        alert(`Stripe Checkout Error: ${error.message || 'Please try again.'}`);
+        showNotification(`Stripe Checkout Error: ${error.message || 'Please try again.'}`, 'error', 5000);
     } finally {
         setIsProcessing(false);
     }
@@ -519,10 +557,15 @@ export function SubscribePage() {
     
     if (!user || !session?.access_token) {
       const trialDetails = APP_TRIAL_PROMO_CODES[promoCodeToActivate];
+      sessionStorage.setItem('pending_promo_code', promoCodeToActivate);
+      sessionStorage.setItem('pending_promo_plan', trialDetails.tier);
       navigate(`/login?action=login&promo_code=${promoCodeToActivate}&plan=${trialDetails.tier}`);
       return;
     }
+    
     setIsProcessing(true);
+    showNotification('Activating your trial...', 'loading');
+    
     try {
       const { data, error } = await supabase.functions.invoke('activate-app-trial', {
         body: { promo_code: promoCodeToActivate }
@@ -539,26 +582,7 @@ export function SubscribePage() {
           data.subscription_id
         );
         
-        alert(data.message);
-        await refreshSubscriptionStatus(); 
-        
-        // Clear sessionStorage after successful activation
-        sessionStorage.removeItem('pending_promo_code');
-        sessionStorage.removeItem('pending_promo_plan');
-        sessionStorage.removeItem('pending_promo_yearly');
-        
-        navigate('/companies'); 
-      } else {
-        console.warn('App trial activation returned no specific message, but no error. Data:', data);
-        
-        await PromoTrackingService.trackActivation(
-          promoCodeToActivate,
-          'app_trial',
-          user.id,
-          user.email!
-        );
-        
-        alert('Trial processed. Please check your account.');
+        showNotification(data.message, 'success', 3000);
         await refreshSubscriptionStatus();
         
         // Clear sessionStorage after successful activation
@@ -566,7 +590,17 @@ export function SubscribePage() {
         sessionStorage.removeItem('pending_promo_plan');
         sessionStorage.removeItem('pending_promo_yearly');
         
-        navigate('/companies');
+        // Clear URL params
+        const newUrl = new URL(window.location.href);
+        newUrl.searchParams.delete('promo_code');
+        newUrl.searchParams.delete('plan');
+        window.history.replaceState({}, '', newUrl.toString());
+        
+        setTimeout(() => {
+          navigate('/companies');
+        }, 2000);
+      } else {
+        throw new Error('Trial activation returned no message');
       }
     } catch (err: any) {
       console.error('App trial activation error:', err);
@@ -581,13 +615,13 @@ export function SubscribePage() {
         user?.email
       );
       
-      alert(`Trial Activation Error: ${displayMessage}`);
+      showNotification(`Trial Activation Error: ${displayMessage}`, 'error', 5000);
     } finally {
       setIsProcessing(false);
     }
   }, [user, session, navigate, refreshSubscriptionStatus]);
 
-  // Auto-activation effect for users returning from login with pending promo code
+  // Enhanced auto-activation effect for users returning from signup/login
   useEffect(() => {
     const checkAndActivatePendingPromo = async () => {
       // Only run once per session
@@ -596,24 +630,75 @@ export function SubscribePage() {
       // Check if user is logged in and not processing
       if (!user || isProcessing || isAuthLoading || isSubscriptionLoading) return;
       
+      // Wait a bit for subscription status to load properly
+      if (currentUserSubscriptionTier === undefined) return;
+      
+      // Check URL params first (takes precedence over sessionStorage)
+      const urlParams = new URLSearchParams(location.search);
+      const urlPromoCode = urlParams.get('promo_code') as AppTrialPromoCodeKey | null;
+      const urlPlan = urlParams.get('plan');
+      
       // Check for pending promo code in sessionStorage
       const pendingPromoCode = sessionStorage.getItem('pending_promo_code') as AppTrialPromoCodeKey | null;
       const pendingPromoPlan = sessionStorage.getItem('pending_promo_plan');
-      const pendingPromoYearly = sessionStorage.getItem('pending_promo_yearly');
       
-      if (pendingPromoCode && isValidAppTrialPromoCode(pendingPromoCode)) {
-        console.log(`[SubscribePage] Auto-activating pending trial for promo code: ${pendingPromoCode}`);
+      // Determine which promo code to use (URL takes precedence)
+      const promoCodeToActivate = urlPromoCode || pendingPromoCode;
+      const planToActivate = urlPlan || pendingPromoPlan;
+      
+      if (promoCodeToActivate && isValidAppTrialPromoCode(promoCodeToActivate)) {
+        // Check if user already has an active subscription
+        if (currentUserSubscriptionTier !== 'free') {
+          console.log(`[SubscribePage] User already has ${currentUserSubscriptionTier} subscription, skipping auto-activation`);
+          // Clear storage and URL params
+          sessionStorage.removeItem('pending_promo_code');
+          sessionStorage.removeItem('pending_promo_plan');
+          sessionStorage.removeItem('pending_promo_yearly');
+          
+          const newUrl = new URL(window.location.href);
+          newUrl.searchParams.delete('promo_code');
+          newUrl.searchParams.delete('plan');
+          window.history.replaceState({}, '', newUrl.toString());
+          return;
+        }
+        
+        console.log(`[SubscribePage] Auto-activating trial for promo code: ${promoCodeToActivate}`);
         
         // Mark that we've attempted activation
         setHasAttemptedAutoActivation(true);
         
-        // Activate the trial
-        await handleActivateAppTrial(pendingPromoCode);
+        try {
+          await handleActivateAppTrial(promoCodeToActivate);
+        } catch (error) {
+          console.error('[SubscribePage] Auto-activation failed:', error);
+        }
       }
     };
     
-    checkAndActivatePendingPromo();
-  }, [user, isProcessing, isAuthLoading, isSubscriptionLoading, hasAttemptedAutoActivation, handleActivateAppTrial]);
+    // Add a small delay to ensure all auth/subscription checks are complete
+    const timeoutId = setTimeout(() => {
+      checkAndActivatePendingPromo();
+    }, 500);
+    
+    return () => clearTimeout(timeoutId);
+  }, [
+    user,
+    isProcessing,
+    isAuthLoading,
+    isSubscriptionLoading,
+    hasAttemptedAutoActivation,
+    handleActivateAppTrial,
+    currentUserSubscriptionTier,
+    location.search
+  ]);
+
+  useEffect(() => {
+    return () => {
+      if (notificationTimeoutRef.current) {
+        clearTimeout(notificationTimeoutRef.current);
+      }
+    };
+  }, []);
 
   const isLoading = isAuthLoading || isSubscriptionLoading;
   const currentTier = currentUserSubscriptionTier || 'free';
@@ -634,6 +719,10 @@ export function SubscribePage() {
       className="relative min-h-screen w-full overflow-hidden bg-gradient-to-b from-navy-900 via-navy-800 to-navy-900"
     >
       <div className="absolute inset-0 bg-cover bg-center opacity-20 -z-10" style={{ backgroundImage: "url('/Background2.jpg')" }} />
+      
+      {notification && (
+        <PromoActivationNotification message={notification.message} type={notification.type} />
+      )}
       
       {isLoading && (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 backdrop-blur-sm">

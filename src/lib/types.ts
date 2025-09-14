@@ -8,7 +8,7 @@ export type ColumnTier = 'free' | 'pro' | 'premium';
 export type SubscriptionTier = 'free' | 'pro' | 'premium';
 
 export type Currency = 'USD' | 'CAD' | 'AUD' | 'EUR' | 'GBP';
-export type CompanyStatus = 'producer' | 'developer' | 'explorer' | 'royalty' ; // Updated to lowercase to match converters.ts
+export type CompanyStatus = 'producer' | 'developer' | 'explorer' | 'other' | 'royalty' ; // Updated to lowercase to match converters.ts
 
 // --- Interface for augmented share price details ---
 export interface AugmentedPriceInfo {

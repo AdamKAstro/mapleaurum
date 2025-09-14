@@ -1,11 +1,3 @@
 User-agent: *
 Allow: /
-Disallow: /subscribe/success
-Disallow: /admin/
-Disallow: /account/
-Disallow: /login
-Disallow: /reset-password
-Disallow: /forgot-password
-Disallow: /onboarding
-
 Sitemap: https://mapleaurum.com/sitemap.xml
