@@ -1,0 +1,1651 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HydroGraph Reactive Graphene Explorer</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #0a0e27 0%, #1a1f3a 50%, #0d1117 100%);
+            color: #e4e9f0;
+            overflow: hidden;
+            height: 100vh;
+        }
+        
+        .main-container {
+            display: flex;
+            height: 100vh;
+        }
+        
+        .control-panel {
+            width: 400px;
+            background: rgba(20, 27, 45, 0.95);
+            border-right: 1px solid rgba(100, 255, 218, 0.2);
+            padding: 20px;
+            overflow-y: auto;
+            box-shadow: 5px 0 20px rgba(0, 0, 0, 0.3);
+            /* Added scrollbar styling for a consistent look */
+            scrollbar-width: thin;
+            scrollbar-color: #64ffda rgba(30, 41, 59, 0.6);
+        }
+
+        .control-panel::-webkit-scrollbar {
+            width: 8px;
+        }
+        .control-panel::-webkit-scrollbar-track {
+            background: rgba(30, 41, 59, 0.6);
+        }
+        .control-panel::-webkit-scrollbar-thumb {
+            background-color: #64ffda;
+            border-radius: 4px;
+            border: 2px solid rgba(30, 41, 59, 0.6);
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid rgba(100, 255, 218, 0.3);
+        }
+        
+        .header h1 {
+            font-size: 24px;
+            background: linear-gradient(135deg, #64ffda 0%, #48cae4 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 8px;
+        }
+        
+        .subtitle {
+            color: #8892b0;
+            font-size: 13px;
+        }
+        
+        .control-section {
+            background: rgba(30, 41, 59, 0.6);
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 15px;
+            border: 1px solid rgba(100, 255, 218, 0.1);
+        }
+        
+        /* NEW: Helper icon style for contextual tooltips */
+        .helper-tooltip {
+            display: inline-block;
+            margin-left: 8px;
+            font-size: 11px;
+            font-family: monospace;
+            color: #8892b0;
+            border: 1px solid #8892b0;
+            border-radius: 50%;
+            width: 16px;
+            height: 16px;
+            line-height: 16px;
+            text-align: center;
+            cursor: help;
+            font-weight: bold;
+        }
+        .helper-tooltip:hover {
+            color: #64ffda;
+            border-color: #64ffda;
+        }
+
+        /* NEW: Style for the "About" section */
+        .about-section-intro {
+            font-size: 13px;
+            color: #e4e9f0;
+            margin-bottom: 12px;
+            line-height: 1.5;
+        }
+        .about-section-intro strong {
+            color: #64ffda;
+        }
+        .about-section-steps {
+            list-style: none;
+            padding-left: 0;
+        }
+        .about-section-steps li {
+            position: relative;
+            padding-left: 25px;
+            font-size: 12px;
+            color: #8892b0;
+            margin-bottom: 8px;
+            line-height: 1.4;
+        }
+        .about-section-steps li::before {
+            content: '✓';
+            position: absolute;
+            left: 0;
+            top: 0;
+            color: #64ffda;
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+
+        .section-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #64ffda;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .section-title::before {
+            content: '◆';
+            color: #8b5cf6;
+            font-size: 10px;
+        }
+        
+        button {
+            padding: 8px 12px;
+            background: linear-gradient(135deg, rgba(139, 92, 246, 0.2), rgba(100, 255, 218, 0.2));
+            border: 1px solid rgba(100, 255, 218, 0.3);
+            border-radius: 6px;
+            color: #e4e9f0;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin: 2px;
+        }
+        
+        button:hover {
+            background: linear-gradient(135deg, rgba(139, 92, 246, 0.4), rgba(100, 255, 218, 0.4));
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(100, 255, 218, 0.3);
+        }
+        
+        button.active {
+            background: linear-gradient(135deg, rgba(100, 255, 218, 0.4), rgba(139, 92, 246, 0.4));
+            border-color: #64ffda;
+            box-shadow: 0 0 10px rgba(100, 255, 218, 0.5);
+        }
+        
+        .button-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+            margin-bottom: 10px;
+        }
+        
+        input[type="range"] {
+            width: 100%;
+            margin: 10px 0;
+            height: 6px;
+            background: linear-gradient(90deg, #8b5cf6 0%, #64ffda 100%);
+            border-radius: 3px;
+            outline: none;
+            -webkit-appearance: none;
+        }
+        
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 18px;
+            height: 18px;
+            background: radial-gradient(circle, #64ffda, #8b5cf6);
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 0 10px rgba(100, 255, 218, 0.5);
+        }
+        
+        select {
+            width: 100%;
+            padding: 8px;
+            background: rgba(30, 41, 59, 0.8);
+            border: 1px solid rgba(100, 255, 218, 0.2);
+            border-radius: 6px;
+            color: #e4e9f0;
+            font-size: 12px;
+            outline: none;
+        }
+        
+        .visualization-container {
+            flex: 1;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .top-bar {
+            background: rgba(20, 27, 45, 0.95);
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid rgba(100, 255, 218, 0.2);
+        }
+        
+        .stats {
+            display: flex;
+            gap: 30px;
+        }
+        
+        .stat-item {
+            display: flex;
+            flex-direction: column;
+            cursor: help; /* NEW: Added help cursor to stats */
+        }
+        
+        .stat-label {
+            font-size: 11px;
+            color: #8892b0;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .stat-value {
+            font-size: 20px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #64ffda 0%, #8b5cf6 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        #tree-container {
+            flex: 1;
+            position: relative;
+            background: radial-gradient(ellipse at center, rgba(20, 27, 45, 0.8), transparent);
+            overflow: hidden;
+        }
+        
+        #tree-svg {
+            width: 100%;
+            height: 100%;
+        }
+        
+        .loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            display: none;
+            z-index: 1000;
+        }
+        
+        .loading-spinner {
+            width: 60px;
+            height: 60px;
+            border: 3px solid rgba(100, 255, 218, 0.1);
+            border-top: 3px solid #64ffda;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .node-info {
+            background: linear-gradient(135deg, rgba(30, 41, 59, 0.9), rgba(20, 27, 45, 0.9));
+            border-radius: 10px;
+            padding: 15px;
+            max-height: 400px;
+            overflow-y: auto;
+            display: none;
+             /* NEW: Added scrollbar styling */
+            scrollbar-width: thin;
+            scrollbar-color: #8b5cf6 rgba(30, 41, 59, 0.1);
+        }
+        .node-info::-webkit-scrollbar {
+            width: 6px;
+        }
+        .node-info::-webkit-scrollbar-track {
+            background: rgba(30, 41, 59, 0.1);
+        }
+        .node-info::-webkit-scrollbar-thumb {
+            background-color: #8b5cf6;
+            border-radius: 3px;
+        }
+
+        
+        .node-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #64ffda;
+            margin-bottom: 10px;
+        }
+        
+        .metric-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center; /* NEW: Aligned items */
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(100, 255, 218, 0.1);
+        }
+        
+        .metric-label {
+            font-size: 12px;
+            color: #8892b0;
+            cursor: help; /* NEW: Added help cursor */
+        }
+        
+        .metric-value {
+            font-size: 13px;
+            font-weight: 600;
+            color: #e4e9f0;
+        }
+        
+        .metric-bar {
+            height: 4px;
+            background: rgba(100, 255, 218, 0.1);
+            border-radius: 2px;
+            margin-top: 4px;
+            overflow: hidden;
+        }
+        
+        .metric-fill {
+            height: 100%;
+            border-radius: 2px;
+            transition: width 0.5s ease;
+        }
+        
+        .app-tag {
+            display: inline-block;
+            background: rgba(100, 255, 218, 0.1);
+            border: 1px solid rgba(100, 255, 218, 0.3);
+            border-radius: 12px;
+            padding: 3px 8px;
+            margin: 2px;
+            font-size: 10px;
+            color: #64ffda;
+        }
+        
+        .legend {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+            margin-top: 10px;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 11px;
+        }
+        
+        .legend-color {
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            box-shadow: 0 0 5px currentColor;
+        }
+        
+        .fab-container {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            z-index: 100;
+        }
+        
+        .fab {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, rgba(139, 92, 246, 0.9), rgba(100, 255, 218, 0.9));
+            border: none;
+            color: white;
+            font-size: 20px;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            transition: all 0.3s ease;
+        }
+        
+        .fab:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 20px rgba(100, 255, 218, 0.5);
+        }
+        
+        .tooltip {
+            position: absolute;
+            background: rgba(20, 27, 45, 0.98);
+            border: 1px solid rgba(100, 255, 218, 0.5);
+            border-radius: 8px;
+            padding: 10px;
+            font-size: 11px;
+            pointer-events: none;
+            z-index: 1000;
+            display: none;
+            max-width: 300px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+        }
+        
+        .search-box {
+            margin-bottom: 15px;
+        }
+        
+        .search-box input {
+            width: 100%;
+            padding: 10px;
+            background: rgba(30, 41, 59, 0.8);
+            border: 1px solid rgba(100, 255, 218, 0.2);
+            border-radius: 20px;
+            color: #e4e9f0;
+            font-size: 13px;
+            outline: none;
+        }
+        
+        .search-box input:focus {
+            border-color: #64ffda;
+            box-shadow: 0 0 15px rgba(100, 255, 218, 0.2);
+        }
+    </style>
+</head>
+<body>
+    <div class="main-container">
+        <div class="control-panel">
+            <div class="header">
+                <h1>HydroGraph Reactive Graphene Explorer</h1>
+                <div class="subtitle">Visualizing Functionalized Additive Potential</div>
+            </div>
+
+            <div class="search-box">
+                <input type="text" id="searchInput" placeholder="Search additive (COOH), app (sensors), family (nitrogen)..." list="search-suggestions">
+                <datalist id="search-suggestions"></datalist>
+            </div>
+
+            <div class="control-section">
+                <div class="section-title">
+                    About this Explorer
+                </div>
+                <p class="about-section-intro">
+                    This tool simulates the fractal combinations of additives on <strong>HydroGraph's reactive graphene</strong>. Explore how different chemical families create new materials with unique properties.
+                </p>
+                <ul class="about-section-steps">
+                    <li>Generate a data set using the controls below.</li>
+                    <li>Change layouts or color-code the nodes by property.</li>
+                    <li>Filter the graph to find top materials or applications.</li>
+                    <li>Click any node to see its detailed scientific data.</li>
+                </ul>
+            </div>
+
+
+            <div class="control-section">
+                <div class="section-title">
+                    Simulation Controls
+                    <span class="helper-tooltip" title="Generate a new fractal data set. 'Large' is more complex and may be slower.">?</span>
+                </div>
+                <div class="button-group">
+                    <button id="smallBtn" onclick="app.generateTree('small')" title="Generate a small data set (~50 nodes)">Small (50)</button>
+                    <button id="mediumBtn" onclick="app.generateTree('medium')" title="Generate a medium data set (~200 nodes)">Medium (200)</button>
+                    <button id="largeBtn" onclick="app.generateTree('large')" title="Generate a large data set (500+ nodes)">Large (500+)</button>
+                </div>
+                <label title="Set the maximum depth (levels) of the fractal tree">Tree Depth: <span id="depthValue">3</span></label>
+                <input type="range" id="depthSlider" min="2" max="6" value="3" title="Set the maximum depth (levels) of the fractal tree">
+                <label title="Set the number of child nodes (branches) for each parent node">Branching Factor: <span id="branchValue">3</span></label>
+                <input type="range" id="branchSlider" min="2" max="5" value="3" title="Set the number of child nodes (branches) for each parent node">
+                <button onclick="app.regenerateTree()" style="width: 100%; margin-top: 10px;" title="Re-build the tree using the current Depth and Branching settings">
+                    Regenerate with Current Settings
+                </button>
+            </div>
+
+            <div class="control-section">
+                 <div class="section-title">
+                    Data Layout & Shading
+                    <span class="helper-tooltip" title="Change the visual layout of the data network and how nodes are colored.">?</span>
+                </div>
+                <div class="button-group">
+                    <button id="treeBtn" onclick="app.changeLayout('tree')" class="active" title="View data as a top-down hierarchy">Tree</button>
+                    <button id="radialBtn" onclick="app.changeLayout('radial')" title="View data as a circular, radial tree">Radial</button>
+                    <button id="forceBtn" onclick="app.changeLayout('force')" title="View data as an interactive physics simulation (drag nodes)">Force</button>
+                </div>
+                <label style="margin-top: 10px;">Color by Metric:</label>
+                <select id="colorMetric" onchange="app.updateColorScheme()" title="Change the color-coding of all nodes based on the selected property">
+                    <option value="family">Chemical Family</option>
+                    <option value="bindingEnergy">Binding Energy</option>
+                    <option value="conductivity">Conductivity</option>
+                    <option value="biocompatibility">Biocompatibility</option>
+                    <option value="stability">Stability</option>
+                </select>
+            </div>
+
+            <div class="control-section">
+                <div class="section-title">
+                    Query & Analysis Filters
+                    <span class="helper-tooltip" title="Highlight nodes that match specific high-performance criteria or application areas.">?</span>
+                </div>
+                <div class="button-group">
+                    <button onclick="app.showTopPerformers('bindingEnergy')" title="Highlight the 10 nodes with the strongest binding energy (most negative eV)">Top Binding</button>
+                    <button onclick="app.showTopPerformers('conductivity')" title="Highlight the 10 nodes with the highest conductivity">Top Conductivity</button>
+                    <button onclick="app.showTopPerformers('biocompatibility')" title="Highlight the 10 nodes with the best biocompatibility">Top Biocompat</button>
+                    <button onclick="app.showTopPerformers('stability')" title="Highlight the 10 nodes with the highest stability">Top Stability</button>
+                </div>
+                <div class="button-group">
+                    <button onclick="app.showApplicationCategory('sensors')" title="Highlight all nodes with applications in Sensors or Detection">Sensors</button>
+                    <button onclick="app.showApplicationCategory('energy')" title="Highlight all nodes with applications in Energy Storage or Generation">Energy</button>
+                    <button onclick="app.showApplicationCategory('medical')" title="Highlight all nodes with Biomedical or Drug Delivery applications">Medical</button>
+                    <button onclick="app.resetFilters()" title="Remove all active filters and highlighting">Clear Filters</button>
+                </div>
+            </div>
+
+            <div class="control-section">
+                <div class="section-title">
+                    Filter by Chemical Family
+                    <span class="helper-tooltip" title="Isolate nodes belonging to a specific chemical functional group.">?</span>
+                </div>
+                <div class="button-group">
+                    <button onclick="app.filterByFamily('oxygen')" title="Show only nodes from the Oxygen family">Oxygen</button>
+                    <button onclick="app.filterByFamily('nitrogen')" title="Show only nodes from the Nitrogen family">Nitrogen</button>
+                    <button onclick="app.filterByFamily('sulfur')" title="Show only nodes from the Sulfur family">Sulfur</button>
+                    <button onclick="app.filterByFamily('phosphorus')" title="Show only nodes from the Phosphorus family">Phosphorus</button>
+                </div>
+                <div class="button-group">
+                    <button onclick="app.filterByFamily('halogen')" title="Show only nodes from the Halogen family">Halogen</button>
+                    <button onclick="app.filterByFamily('metal')" title="Show only nodes from the Metal Coordination family">Metal</button>
+                    <button onclick="app.filterByFamily('hybrid')" title="Show only nodes from the Hybrid family">Hybrid</button>
+                    <button onclick="app.resetFilters()" title="Remove family filter and show all nodes">Show All</button>
+                </div>
+            </div>
+
+            <div class="control-section node-info" id="nodeInfo">
+                <div class="node-title" id="nodeTitle" title="Detailed data for the currently selected node">Select a node</div>
+                <div class="metric-row">
+                    <span class="metric-label" title="The simplified chemical structure notation (SMILES)">Formula:</span>
+                    <span class="metric-value" id="nodeFormula">-</span>
+                </div>
+                <div class="metric-row">
+                    <span class="metric-label" title="The chemical group this additive belongs to">Family:</span>
+                    <span class="metric-value" id="nodeFamily">-</span>
+                </div>
+                <div class="metric-row">
+                    <span class="metric-label" title="Energy required to bind the additive (more negative = stronger bond)">Binding Energy:</span>
+                    <span class="metric-value" id="nodeBindingEnergy">-</span>
+                </div>
+                <div class="metric-bar">
+                    <div class="metric-fill" id="bindingEnergyBar" style="background: linear-gradient(90deg, #8b5cf6, #48cae4);"></div>
+                </div>
+                <div class="metric-row">
+                    <span class="metric-label" title="The material's relative electrical conductivity (100% = pristine graphene)">Conductivity:</span>
+                    <span class="metric-value" id="nodeConductivity">-</span>
+                </div>
+                <div class="metric-bar">
+                    <div class="metric-fill" id="conductivityBar" style="background: linear-gradient(90deg, #64ffda, #10b981);"></div>
+                </div>
+                <div class="metric-row">
+                    <span class="metric-label" title="The material's suitability for use in biological systems (higher = safer)">Biocompatibility:</span>
+                    <span class="metric-value" id="nodeBiocompat">-</span>
+                </div>
+                <div class="metric-bar">
+                    <div class="metric-fill" id="biocompatBar" style="background: linear-gradient(90deg, #a78bfa, #f472b6);"></div>
+                </div>
+                <div class="metric-row">
+                    <span class="metric-label" title="Potential real-world uses for this specific material combination">Applications:</span>
+                </div>
+                <div id="nodeApplications" style="margin-top: 5px;"></div> </div>
+
+            <div class="control-section">
+                <div class="section-title">Data Legend</div>
+                <div class="legend" id="legend">
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #ff6b6b;"></div>
+                        <span>Oxygen</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #4ecdc4;"></div>
+                        <span>Nitrogen</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #ffd93d;"></div>
+                        <span>Sulfur</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #10b981;"></div>
+                        <span>Phosphorus</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #f472b6;"></div>
+                        <span>Halogen</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #ef4444;"></div>
+                        <span>Metal</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #a78bfa;"></div>
+                        <span>Hybrid</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #64ffda;"></div>
+                        <span>Pristine</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="visualization-container">
+            <div class="top-bar">
+                <div class="stats">
+                    <div class="stat-item" title="The total number of additives (nodes) in the current simulation">
+                        <span class="stat-label">Total Nodes</span>
+                        <span class="stat-value" id="totalNodes">0</span>
+                    </div>
+                    <div class="stat-item" title="The maximum depth (number of fractal levels) of the generated tree">
+                        <span class="stat-label">Tree Depth</span>
+                        <span class="stat-value" id="currentDepth">3</span>
+                    </div>
+                    <div class="stat-item" title="Displays the currently active filter or query">
+                        <span class="stat-label">Active Filter</span>
+                        <span class="stat-value" id="activeFilter">None</span>
+                    </div>
+                </div>
+                <div class="button-group">
+                    <button onclick="app.exportData()" title="Download the current tree data as a JSON file">Export Data</button>
+                    <button onclick="app.resetView()" title="Center the view and clear all filters">Reset View</button>
+                </div>
+            </div>
+
+            <div id="tree-container">
+                <div class="loading" id="loading">
+                    <div class="loading-spinner"></div>
+                    <p style="color: #64ffda;">Generating fractal graphene tree...</p>
+                </div>
+                <svg id="tree-svg"></svg>
+            </div>
+
+            <div class="fab-container">
+                <button class="fab" onclick="app.zoomIn()" title="Zoom In">+</button>
+                <button class="fab" onclick="app.zoomOut()" title="Zoom Out">−</button>
+                <button class="fab" onclick="app.centerView()" title="Center View">⊙</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="tooltip" id="tooltip"></div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+    
+    <script>
+        // Main application object
+        const app = {
+            // State variables
+            treeData: null,
+            svg: null,
+            g: null,
+            simulation: null,
+            currentLayout: 'tree',
+            zoom: null,
+            currentDepth: 3,
+            currentBranching: 3,
+            selectedNode: null,
+            
+            // Comprehensive graphene database
+            grapheneFamilies: {
+                oxygen: {
+                    name: "Oxygen Family",
+                    color: "#ff6b6b",
+                    additives: [
+                        { name: "COOH", smiles: "C(=O)O", bindingEnergy: -3.5, conductivity: 0.3, biocompatibility: 0.85, stability: 0.7,
+                          applications: ["Cement +70% strength", "Composites", "Ion exchange", "Water treatment", "Hydrophilic coatings"] },
+                        { name: "OH", smiles: "O", bindingEnergy: -2.8, conductivity: 0.4, biocompatibility: 0.9, stability: 0.75,
+                          applications: ["Biosensors", "Drug delivery", "Hydrogels", "Biomedical coatings", "Water purification"] },
+                        { name: "C=O", smiles: "C=O", bindingEnergy: -2.2, conductivity: 0.5, biocompatibility: 0.7, stability: 0.8,
+                          applications: ["Energy storage", "Catalysis", "Gas sensors", "Photocatalysis", "Supercapacitors"] },
+                        { name: "O-epoxy", smiles: "O1CC1", bindingEnergy: -2.5, conductivity: 0.35, biocompatibility: 0.75, stability: 0.65,
+                          applications: ["Polymer composites", "Adhesives", "Crosslinking", "Epoxy resins", "Surface modification"] },
+                        { name: "CHO", smiles: "C=O", bindingEnergy: -2.3, conductivity: 0.45, biocompatibility: 0.65, stability: 0.7,
+                          applications: ["Chemical sensors", "Organic synthesis", "Aldehyde detection", "Bioconjugation"] },
+                        { name: "COOCH3", smiles: "C(=O)OC", bindingEnergy: -2.9, conductivity: 0.38, biocompatibility: 0.72, stability: 0.78,
+                          applications: ["Esterification", "Polymer grafting", "Drug loading", "Organic electronics"] }
+                    ]
+                },
+                nitrogen: {
+                    name: "Nitrogen Family",
+                    color: "#4ecdc4",
+                    additives: [
+                        { name: "NH2", smiles: "N", bindingEnergy: -2.9, conductivity: 0.7, biocompatibility: 0.95, stability: 0.8,
+                          applications: ["DNA sensors", "Transistors", "Drug delivery", "Neural interfaces", "Protein immobilization"] },
+                        { name: "NO2", smiles: "N(=O)=O", bindingEnergy: -2.4, conductivity: 0.6, biocompatibility: 0.5, stability: 0.75,
+                          applications: ["Explosives detection", "Gas sensors", "Catalysts", "Environmental monitoring"] },
+                        { name: "C≡N", smiles: "C#N", bindingEnergy: -2.1, conductivity: 0.75, biocompatibility: 0.6, stability: 0.85,
+                          applications: ["Electrochemistry", "Batteries", "Corrosion protection", "Ion sensors", "Fuel cells"] },
+                        { name: "NH3+", smiles: "[NH3+]", bindingEnergy: -3.2, conductivity: 0.8, biocompatibility: 0.7, stability: 0.65,
+                          applications: ["Ion transport", "pH buffering", "Membranes", "Antimicrobial surfaces"] },
+                        { name: "NHCO", smiles: "NC=O", bindingEnergy: -3.0, conductivity: 0.5, biocompatibility: 0.92, stability: 0.79,
+                          applications: ["Peptide conjugation", "Wound healing", "Biomedical implants", "Tissue engineering"] },
+                        { name: "N(CH3)2", smiles: "N(C)C", bindingEnergy: -2.7, conductivity: 0.55, biocompatibility: 0.88, stability: 0.77,
+                          applications: ["Gene delivery", "Cell adhesion", "Controlled release", "Smart materials"] }
+                    ]
+                },
+                sulfur: {
+                    name: "Sulfur Family",
+                    color: "#ffd93d",
+                    additives: [
+                        { name: "SH", smiles: "S", bindingEnergy: -2.3, conductivity: 0.6, biocompatibility: 0.7, stability: 0.75,
+                          applications: ["Heavy metal detection", "Gold binding", "Self-assembly", "Protein anchoring"] },
+                        { name: "SO3H", smiles: "S(=O)(=O)O", bindingEnergy: -3.8, conductivity: 0.85, biocompatibility: 0.6, stability: 0.7,
+                          applications: ["Fuel cells", "Proton exchange", "Solid acid catalysts", "Water splitting"] },
+                        { name: "SO2", smiles: "S(=O)=O", bindingEnergy: -2.7, conductivity: 0.55, biocompatibility: 0.65, stability: 0.8,
+                          applications: ["Gas sensors", "Environmental remediation", "SO2 detection", "Air purification"] },
+                        { name: "S-S", smiles: "SS", bindingEnergy: -2.0, conductivity: 0.5, biocompatibility: 0.75, stability: 0.85,
+                          applications: ["Self-healing materials", "Redox batteries", "Polymer crosslinking", "Smart materials"] }
+                    ]
+                },
+                phosphorus: {
+                    name: "Phosphorus Family",
+                    color: "#10b981",
+                    additives: [
+                        { name: "PO3H2", smiles: "P(=O)(O)O", bindingEnergy: -3.4, conductivity: 0.7, biocompatibility: 0.85, stability: 0.8,
+                          applications: ["Flame retardants", "Bone tissue", "Ion exchange", "Proton conductors"] },
+                        { name: "P(OH)2", smiles: "P(O)O", bindingEnergy: -3.1, conductivity: 0.58, biocompatibility: 0.82, stability: 0.77,
+                          applications: ["Membranes", "Water treatment", "Catalysis", "Corrosion inhibitors"] },
+                        { name: "PO4H2-", smiles: "[O-]P(=O)(O)O", bindingEnergy: -3.6, conductivity: 0.75, biocompatibility: 0.9, stability: 0.75,
+                          applications: ["Biomineralization", "Bone implants", "Dental materials", "Bioceramics"] }
+                    ]
+                },
+                halogen: {
+                    name: "Halogen Family",
+                    color: "#f472b6",
+                    additives: [
+                        { name: "F", smiles: "F", bindingEnergy: -2.0, conductivity: 0.3, biocompatibility: 0.6, stability: 0.9,
+                          applications: ["Hydrophobic coatings", "Electronics passivation", "Anti-fouling", "Chemical resistance"] },
+                        { name: "Cl", smiles: "Cl", bindingEnergy: -1.8, conductivity: 0.35, biocompatibility: 0.55, stability: 0.85,
+                          applications: ["Antimicrobial", "Water disinfection", "Chemical sensors", "Halogenated polymers"] },
+                        { name: "CF3", smiles: "C(F)(F)F", bindingEnergy: -2.4, conductivity: 0.25, biocompatibility: 0.65, stability: 0.95,
+                          applications: ["Superhydrophobic", "Low surface energy", "Fluoropolymers", "Protective coatings"] }
+                    ]
+                },
+                metal: {
+                    name: "Metal Coordination",
+                    color: "#ef4444",
+                    additives: [
+                        { name: "Fe-N4", smiles: "[Fe]N4", bindingEnergy: -4.0, conductivity: 0.9, biocompatibility: 0.7, stability: 0.8,
+                          applications: ["Oxygen reduction", "Fuel cells", "Catalysis", "Magnetic materials", "Sensors"] },
+                        { name: "Cu-N2", smiles: "[Cu]N2", bindingEnergy: -3.5, conductivity: 0.95, biocompatibility: 0.6, stability: 0.75,
+                          applications: ["CO2 reduction", "Antibacterial", "Electronics", "Thermal management"] },
+                        { name: "Pt-Cl2", smiles: "[Pt](Cl)Cl", bindingEnergy: -4.5, conductivity: 0.98, biocompatibility: 0.5, stability: 0.85,
+                          applications: ["Hydrogen evolution", "Chemotherapy", "Catalysis", "Fuel cells"] }
+                    ]
+                },
+                hybrid: {
+                    name: "Hybrid Family",
+                    color: "#a78bfa",
+                    additives: [
+                        { name: "COOH-NH2", smiles: "C(=O)ON", bindingEnergy: -3.7, conductivity: 0.45, biocompatibility: 0.88, stability: 0.72,
+                          applications: ["Smart materials", "pH-responsive", "Dual sensors", "Bioconjugation"] },
+                        { name: "OH-NH2", smiles: "ON", bindingEnergy: -3.0, conductivity: 0.5, biocompatibility: 0.93, stability: 0.76,
+                          applications: ["Biocompatible materials", "Cell culture", "Tissue scaffolds", "Hydrogels"] },
+                        { name: "SH-COOH", smiles: "SC(=O)O", bindingEnergy: -3.4, conductivity: 0.55, biocompatibility: 0.75, stability: 0.74,
+                          applications: ["Metal binding", "Environmental cleanup", "Bioremediation", "Heavy metal sensors"] },
+                        { name: "B(OH)2", smiles: "B(O)O", bindingEnergy: -3.1, conductivity: 0.4, biocompatibility: 0.78, stability: 0.8,
+                          applications: ["Glucose sensors", "Drug delivery", "Smart polymers", "pH sensors"] }
+                    ]
+                }
+            },
+
+            // Initialize the application
+            init() {
+                console.log('Initializing Graphene Fractal Explorer...');
+                
+                if (typeof d3 === 'undefined') {
+                    alert('Error: D3.js library failed to load. Please refresh the page.');
+                    return;
+                }
+                
+                this.initializeVisualization();
+                this.setupEventListeners();
+                this.populateSearchSuggestions(); // NEW: Call the function to build the datalist
+                this.generateTree('medium');
+                
+                console.log('Initialization complete');
+            },
+
+            // Set up event listeners
+            setupEventListeners() {
+                // Slider events
+                document.getElementById('depthSlider').addEventListener('input', (e) => {
+                    document.getElementById('depthValue').textContent = e.target.value;
+                    this.currentDepth = parseInt(e.target.value);
+                });
+                
+                document.getElementById('branchSlider').addEventListener('input', (e) => {
+                    document.getElementById('branchValue').textContent = e.target.value;
+                    this.currentBranching = parseInt(e.target.value);
+                });
+                
+                // Search functionality
+                document.getElementById('searchInput').addEventListener('input', (e) => {
+                    this.searchNodes(e.target.value);
+                });
+            },
+
+            // NEW: Function to populate the search <datalist>
+            populateSearchSuggestions() {
+                const suggestions = new Set();
+                
+                // Loop through all data to extract searchable terms
+                Object.values(this.grapheneFamilies).forEach(family => {
+                    suggestions.add(family.name); // Add family name
+                    suggestions.add(family.name.replace(" Family", "").replace(" Coordination", "")); // Add short name
+                    
+                    family.additives.forEach(additive => {
+                        suggestions.add(additive.name); // Add additive name (e.g., "COOH")
+                        additive.applications.forEach(app => {
+                            suggestions.add(app); // Add each full application string
+                            
+                            // Add common keywords
+                            if (app.toLowerCase().includes('sensor')) suggestions.add("Sensors");
+                            if (app.toLowerCase().includes('energy')) suggestions.add("Energy");
+                            if (app.toLowerCase().includes('batter')) suggestions.add("Batteries");
+                            if (app.toLowerCase().includes('cataly')) suggestions.add("Catalysis");
+                            if (app.toLowerCase().includes('bio')) suggestions.add("Biomedical");
+                            if (app.toLowerCase().includes('drug')) suggestions.add("Drug Delivery");
+                            if (app.toLowerCase().includes('water')) suggestions.add("Water Treatment");
+                            if (app.toLowerCase().includes('composite')) suggestions.add("Composites");
+                        });
+                    });
+                });
+
+                const datalist = document.getElementById('search-suggestions');
+                datalist.innerHTML = ''; // Clear existing
+                
+                // Sort suggestions alphabetically and add them as options
+                [...suggestions].sort().forEach(item => {
+                    const option = document.createElement('option');
+                    option.value = item;
+                    datalist.appendChild(option);
+                });
+            },
+
+            // Initialize D3 visualization
+            initializeVisualization() {
+                const container = document.getElementById('tree-container');
+                const width = container.clientWidth;
+                const height = container.clientHeight;
+
+                this.svg = d3.select('#tree-svg')
+                    .attr('width', width)
+                    .attr('height', height);
+
+                this.g = this.svg.append('g');
+
+                // Add zoom behavior
+                this.zoom = d3.zoom()
+                    .scaleExtent([0.1, 10])
+                    .on('zoom', (event) => {
+                        this.g.attr('transform', event.transform);
+                    });
+
+                this.svg.call(this.zoom);
+            },
+
+            // Generate tree with specified size
+            generateTree(size) {
+                const loading = document.getElementById('loading');
+                loading.style.display = 'block';
+
+                setTimeout(() => {
+                    let depth, branches;
+                    
+                    switch(size) {
+                        case 'small':
+                            depth = 2; branches = 2; break;
+                        case 'large':
+                            depth = 4; branches = 4; break;
+                        default: // medium
+                            depth = 3; branches = 3;
+                    }
+                    
+                    // Update sliders
+                    document.getElementById('depthSlider').value = depth;
+                    document.getElementById('depthValue').textContent = depth;
+                    document.getElementById('branchSlider').value = branches;
+                    document.getElementById('branchValue').textContent = branches;
+                    
+                    this.currentDepth = depth;
+                    this.currentBranching = branches;
+                    
+                    this.treeData = this.createFractalTree(depth, branches);
+                    this.updateVisualization();
+                    
+                    loading.style.display = 'none';
+                }, 100);
+            },
+
+            // Regenerate tree with current settings
+            regenerateTree() {
+                const loading = document.getElementById('loading');
+                loading.style.display = 'block';
+
+                setTimeout(() => {
+                    this.treeData = this.createFractalTree(this.currentDepth, this.currentBranching);
+                    this.updateVisualization();
+                    loading.style.display = 'none';
+                }, 100);
+            },
+
+            // Create fractal tree structure
+            createFractalTree(maxDepth, branchingFactor) {
+                const root = {
+                    id: 0,
+                    name: "Pristine Graphene",
+                    smiles: "C=C",
+                    bindingEnergy: 0,
+                    conductivity: 1.0,
+                    biocompatibility: 0.5,
+                    stability: 1.0,
+                    applications: ["Base material", "Electronics", "Composites"],
+                    family: "root",
+                    color: "#64ffda",
+                    depth: 0,
+                    children: []
+                };
+
+                let nodeId = 1;
+                const families = Object.keys(this.grapheneFamilies);
+
+                const addChildren = (parent, currentDepth) => {
+                    if (currentDepth >= maxDepth) return;
+
+                    const numChildren = currentDepth === 0 ? 
+                        Math.min(branchingFactor, families.length) : branchingFactor;
+
+                    for (let i = 0; i < numChildren; i++) {
+                        let familyKey;
+                        
+                        if (currentDepth === 0) {
+                            familyKey = families[i % families.length];
+                        } else {
+                            // 70% chance to stay in same family (fractal self-similarity)
+                            if (Math.random() < 0.7 && parent.family !== 'root' && parent.family !== 'hybrid') {
+                                familyKey = parent.family;
+                            } else {
+                                familyKey = families[Math.floor(Math.random() * families.length)];
+                            }
+                        }
+
+                        const family = this.grapheneFamilies[familyKey];
+                        const additive = family.additives[Math.floor(Math.random() * family.additives.length)];
+
+                        const child = {
+                            id: nodeId++,
+                            name: additive.name,
+                            smiles: additive.smiles,
+                            bindingEnergy: additive.bindingEnergy + (Math.random() - 0.5) * 0.3,
+                            conductivity: Math.max(0, Math.min(1, additive.conductivity + (Math.random() - 0.5) * 0.1)),
+                            biocompatibility: Math.max(0, Math.min(1, additive.biocompatibility + (Math.random() - 0.5) * 0.1)),
+                            stability: Math.max(0, Math.min(1, additive.stability + (Math.random() - 0.5) * 0.1)),
+                            applications: additive.applications || [],
+                            family: familyKey,
+                            familyName: family.name,
+                            color: family.color,
+                            depth: currentDepth + 1,
+                            children: []
+                        };
+
+                        parent.children.push(child);
+                        addChildren(child, currentDepth + 1);
+                    }
+                };
+
+                addChildren(root, 0);
+
+                // Update stats
+                const totalNodes = this.countNodes(root);
+                document.getElementById('totalNodes').textContent = totalNodes;
+                document.getElementById('currentDepth').textContent = maxDepth;
+
+                return root;
+            },
+
+            // Count nodes in tree
+            countNodes(node) {
+                let count = 1;
+                if (node.children && node.children.length > 0) {
+                    node.children.forEach(child => {
+                        count += this.countNodes(child);
+                    });
+                }
+                return count;
+            },
+
+            // Update visualization
+            updateVisualization() {
+                this.g.selectAll('*').remove();
+
+                switch(this.currentLayout) {
+                    case 'tree':
+                        this.renderTreeLayout();
+                        break;
+                    case 'radial':
+                        this.renderRadialLayout();
+                        break;
+                    case 'force':
+                        this.renderForceLayout();
+                        break;
+                }
+            },
+
+            // Render tree layout
+            renderTreeLayout() {
+                const container = document.getElementById('tree-container');
+                const width = container.clientWidth;
+                const height = container.clientHeight;
+
+                const treeLayout = d3.tree()
+                    .size([width - 100, height - 100]);
+
+                const root = d3.hierarchy(this.treeData);
+                const treeNodes = treeLayout(root);
+
+                // Draw links
+                const links = this.g.selectAll('.link')
+                    .data(treeNodes.links())
+                    .enter().append('path')
+                    .attr('class', 'link')
+                    .attr('d', d3.linkVertical()
+                        .x(d => d.x + 50)
+                        .y(d => d.y + 50))
+                    .attr('fill', 'none')
+                    .attr('stroke', d => d.target.data.color || '#64ffda')
+                    .attr('stroke-width', d => Math.max(1, 3 - d.target.depth * 0.5))
+                    .attr('opacity', 0.6);
+
+                // Draw nodes
+                const nodes = this.g.selectAll('.node')
+                    .data(treeNodes.descendants())
+                    .enter().append('g')
+                    .attr('class', 'node')
+                    .attr('transform', d => `translate(${d.x + 50},${d.y + 50})`);
+
+                nodes.append('circle')
+                    .attr('r', d => d.depth === 0 ? 12 : Math.max(6, 10 - d.depth))
+                    .attr('fill', d => d.data.color || '#64ffda')
+                    .attr('stroke', '#fff')
+                    .attr('stroke-width', 2)
+                    .style('cursor', 'pointer')
+                    .on('click', (event, d) => this.selectNode(d.data))
+                    .on('mouseover', (event, d) => this.showTooltip(event, d.data))
+                    .on('mouseout', () => this.hideTooltip());
+
+                nodes.append('text')
+                    .attr('dy', d => d.depth === 0 ? -18 : -12)
+                    .attr('text-anchor', 'middle')
+                    .text(d => d.data.name)
+                    .style('font-size', d => d.depth === 0 ? '13px' : '10px')
+                    .style('fill', '#e4e9f0')
+                    .style('font-weight', d => d.depth === 0 ? 'bold' : 'normal')
+                    .style('pointer-events', 'none');
+            },
+
+            // Render radial layout
+            renderRadialLayout() {
+                const container = document.getElementById('tree-container');
+                const width = container.clientWidth;
+                const height = container.clientHeight;
+                const radius = Math.min(width, height) / 2 - 100;
+
+                const treeLayout = d3.tree()
+                    .size([2 * Math.PI, radius])
+                    .separation((a, b) => (a.parent == b.parent ? 1 : 2) / a.depth);
+
+                const root = d3.hierarchy(this.treeData);
+                const treeNodes = treeLayout(root);
+
+                const centerX = width / 2;
+                const centerY = height / 2;
+
+                // Draw links
+                const links = this.g.selectAll('.link')
+                    .data(treeNodes.links())
+                    .enter().append('path')
+                    .attr('class', 'link')
+                    .attr('d', d3.linkRadial()
+                        .angle(d => d.x)
+                        .radius(d => d.y))
+                    .attr('transform', `translate(${centerX},${centerY})`)
+                    .attr('fill', 'none')
+                    .attr('stroke', d => d.target.data.color || '#64ffda')
+                    .attr('stroke-width', d => Math.max(1, 3 - d.target.depth * 0.5))
+                    .attr('opacity', 0.6);
+
+                // Draw nodes
+                const nodes = this.g.selectAll('.node')
+                    .data(treeNodes.descendants())
+                    .enter().append('g')
+                    .attr('class', 'node')
+                    .attr('transform', d => 
+                        `translate(${centerX + d.y * Math.cos(d.x - Math.PI / 2)},${centerY + d.y * Math.sin(d.x - Math.PI / 2)})`);
+
+                nodes.append('circle')
+                    .attr('r', d => d.depth === 0 ? 12 : Math.max(6, 10 - d.depth))
+                    .attr('fill', d => d.data.color || '#64ffda')
+                    .attr('stroke', '#fff')
+                    .attr('stroke-width', 2)
+                    .style('cursor', 'pointer')
+                    .on('click', (event, d) => this.selectNode(d.data))
+                    .on('mouseover', (event, d) => this.showTooltip(event, d.data))
+                    .on('mouseout', () => this.hideTooltip());
+
+                nodes.append('text')
+                    .attr('dy', d => d.depth === 0 ? -18 : -12)
+                    .attr('text-anchor', 'middle')
+                    .text(d => d.data.name)
+                    .style('font-size', d => d.depth === 0 ? '13px' : '10px')
+                    .style('fill', '#e4e9f0')
+                    .style('font-weight', d => d.depth === 0 ? 'bold' : 'normal')
+                    .style('pointer-events', 'none');
+            },
+
+            // Render force-directed layout
+            renderForceLayout() {
+                const container = document.getElementById('tree-container');
+                const width = container.clientWidth;
+                const height = container.clientHeight;
+
+                const root = d3.hierarchy(this.treeData);
+                const nodes = root.descendants();
+                const links = root.links();
+
+                this.simulation = d3.forceSimulation(nodes)
+                    .force('link', d3.forceLink(links).distance(50).strength(1))
+                    .force('charge', d3.forceManyBody().strength(-300))
+                    .force('center', d3.forceCenter(width / 2, height / 2))
+                    .force('collision', d3.forceCollide().radius(20));
+
+                const link = this.g.selectAll('.link')
+                    .data(links)
+                    .enter().append('line')
+                    .attr('class', 'link')
+                    .attr('stroke', d => d.target.data.color || '#64ffda')
+                    .attr('stroke-width', 2)
+                    .attr('opacity', 0.6);
+
+                const node = this.g.selectAll('.node')
+                    .data(nodes)
+                    .enter().append('g')
+                    .attr('class', 'node')
+                    .call(d3.drag()
+                        .on('start', (event, d) => this.dragstarted(event, d))
+                        .on('drag', (event, d) => this.dragged(event, d))
+                        .on('end', (event, d) => this.dragended(event, d)));
+
+                node.append('circle')
+                    .attr('r', d => d.depth === 0 ? 12 : Math.max(6, 10 - d.depth))
+                    .attr('fill', d => d.data.color || '#64ffda')
+                    .attr('stroke', '#fff')
+                    .attr('stroke-width', 2)
+                    .style('cursor', 'pointer')
+                    .on('click', (event, d) => this.selectNode(d.data))
+                    .on('mouseover', (event, d) => this.showTooltip(event, d.data))
+                    .on('mouseout', () => this.hideTooltip());
+
+                node.append('text')
+                    .attr('dy', -12)
+                    .attr('text-anchor', 'middle')
+                    .text(d => d.data.name)
+                    .style('font-size', '10px')
+                    .style('fill', '#e4e9f0')
+                    .style('pointer-events', 'none');
+
+                this.simulation.on('tick', () => {
+                    link
+                        .attr('x1', d => d.source.x)
+                        .attr('y1', d => d.source.y)
+                        .attr('x2', d => d.target.x)
+                        .attr('y2', d => d.target.y);
+
+                    node
+                        .attr('transform', d => `translate(${d.x},${d.y})`);
+                });
+            },
+
+            // Drag functions for force layout
+            dragstarted(event, d) {
+                if (!event.active) this.simulation.alphaTarget(0.3).restart();
+                d.fx = d.x;
+                d.fy = d.y;
+            },
+
+            dragged(event, d) {
+                d.fx = event.x;
+                d.fy = event.y;
+            },
+
+            dragended(event, d) {
+                if (!event.active) this.simulation.alphaTarget(0);
+                d.fx = null;
+                d.fy = null;
+            },
+
+            // Select and display node information
+            selectNode(nodeData) {
+                this.selectedNode = nodeData;
+                
+                document.getElementById('nodeInfo').style.display = 'block';
+                document.getElementById('nodeTitle').textContent = nodeData.name;
+                document.getElementById('nodeFormula').textContent = nodeData.smiles || '-';
+                document.getElementById('nodeFamily').textContent = nodeData.familyName || nodeData.family || '-';
+                document.getElementById('nodeBindingEnergy').textContent = 
+                    nodeData.bindingEnergy ? `${nodeData.bindingEnergy.toFixed(2)} eV` : '0 eV';
+                document.getElementById('nodeConductivity').textContent = 
+                    `${(nodeData.conductivity * 100).toFixed(0)}%`;
+                document.getElementById('nodeBiocompat').textContent = 
+                    `${(nodeData.biocompatibility * 100).toFixed(0)}%`;
+
+                // Update progress bars
+                document.getElementById('bindingEnergyBar').style.width = 
+                    `${Math.min(100, Math.abs(nodeData.bindingEnergy) / 5 * 100)}%`;
+                document.getElementById('conductivityBar').style.width = 
+                    `${nodeData.conductivity * 100}%`;
+                document.getElementById('biocompatBar').style.width = 
+                    `${nodeData.biocompatibility * 100}%`;
+
+                // Update applications
+                const appsContainer = document.getElementById('nodeApplications');
+                appsContainer.innerHTML = '';
+                if (nodeData.applications && nodeData.applications.length > 0) {
+                    nodeData.applications.forEach(appText => {
+                        const tag = document.createElement('span');
+                        tag.className = 'app-tag';
+                        tag.textContent = appText;
+                        tag.title = appText; // NEW: Add tooltip to the tag itself
+                        appsContainer.appendChild(tag);
+                    });
+                } else {
+                     const noAppTag = document.createElement('span');
+                     noAppTag.style.fontSize = '12px';
+                     noAppTag.style.color = '#8892b0';
+                     noAppTag.textContent = 'No specific applications listed.';
+                     appsContainer.appendChild(noAppTag);
+                }
+
+                // Highlight selected node
+                this.g.selectAll('.node circle')
+                    .transition()
+                    .duration(300)
+                    .attr('opacity', function(d) {
+                        const currentNode = d.data || d;
+                        return currentNode.id === nodeData.id ? 1 : 0.3; // MODIFIED: Check by unique ID
+                    })
+                    .attr('stroke-width', function(d) {
+                        const currentNode = d.data || d;
+                        return currentNode.id === nodeData.id ? 4 : 2; // MODIFIED: Check by unique ID
+                    });
+            },
+
+            // Show tooltip
+            showTooltip(event, nodeData) {
+                const tooltip = document.getElementById('tooltip');
+                const apps = nodeData.applications ? nodeData.applications.slice(0, 3).join(', ') : 'None';
+                
+                tooltip.innerHTML = `
+                    <strong>${nodeData.name}</strong> (${nodeData.familyName || nodeData.family})<br>
+                    Binding: ${nodeData.bindingEnergy ? nodeData.bindingEnergy.toFixed(2) : '0'} eV<br>
+                    Conductivity: ${(nodeData.conductivity * 100).toFixed(0)}%<br>
+                    Biocompat: ${(nodeData.biocompatibility * 100).toFixed(0)}%<br>
+                    Top Apps: ${apps}${nodeData.applications && nodeData.applications.length > 3 ? '...' : ''}
+                `;
+                
+                tooltip.style.left = `${event.pageX + 15}px`;
+                tooltip.style.top = `${event.pageY + 15}px`;
+                tooltip.style.display = 'block';
+            },
+
+            hideTooltip() {
+                document.getElementById('tooltip').style.display = 'none';
+            },
+
+            // Change layout
+            changeLayout(layout) {
+                this.currentLayout = layout;
+                
+                // Update button states
+                ['tree', 'radial', 'force'].forEach(l => {
+                    const btn = document.getElementById(`${l}Btn`);
+                    if (l === layout) {
+                        btn.classList.add('active');
+                    } else {
+                        btn.classList.remove('active');
+                    }
+                });
+                
+                if (this.simulation) {
+                    this.simulation.stop();
+                }
+                
+                this.updateVisualization();
+            },
+
+            // Filter by family
+            filterByFamily(family) {
+                const familyData = this.grapheneFamilies[family];
+                if (!familyData) return;
+                
+                document.getElementById('activeFilter').textContent = familyData.name;
+                
+                this.g.selectAll('.node circle')
+                    .transition()
+                    .duration(300)
+                    .attr('opacity', function(d) {
+                        const node = d.data || d;
+                        return node.family === family || node.family === 'root' ? 1 : 0.1;
+                    })
+                    .attr('r', function(d) {
+                        const node = d.data || d;
+                        if (node.family === family && node.family !== 'root') {
+                            return d.depth === 0 ? 14 : Math.max(8, 12 - d.depth);
+                        }
+                        return d.depth === 0 ? 12 : Math.max(6, 10 - d.depth);
+                    });
+                
+                this.g.selectAll('.link, line')
+                    .transition()
+                    .duration(300)
+                    .attr('opacity', d => (d.target.data.family === family) ? 0.6 : 0.05); // MODIFIED: Filter links too
+            },
+
+            // Show top performers
+            showTopPerformers(metric) {
+                const allNodes = [];
+                const collectNodes = (node) => {
+                    if (node.family !== 'root') {
+                        allNodes.push(node);
+                    }
+                    if (node.children) {
+                        node.children.forEach(collectNodes);
+                    }
+                };
+                collectNodes(this.treeData);
+                
+                // Sort by metric
+                allNodes.sort((a, b) => {
+                    if (metric === 'bindingEnergy') {
+                        return a[metric] - b[metric]; // More negative is better
+                    }
+                    return b[metric] - a[metric]; // Higher is better
+                });
+                
+                const topNodeIds = allNodes.slice(0, 10).map(n => n.id); // Get IDs of top nodes
+                
+                document.getElementById('activeFilter').textContent = `Top ${metric}`;
+                
+                this.g.selectAll('.node circle')
+                    .transition()
+                    .duration(500)
+                    .attr('opacity', function(d) {
+                        const node = d.data || d;
+                        return topNodeIds.includes(node.id) || node.family === 'root' ? 1 : 0.1;
+                    })
+                    .attr('r', function(d) {
+                        const node = d.data || d;
+                        if (topNodeIds.includes(node.id)) {
+                            const rank = topNodeIds.indexOf(node.id);
+                            return 15 - rank * 0.5;
+                        }
+                        return d.depth === 0 ? 12 : Math.max(6, 10 - d.depth);
+                    });
+            },
+
+            // Show application category
+            showApplicationCategory(category) {
+                const keywords = {
+                    'sensors': ['sensor', 'detection', 'monitoring'],
+                    'energy': ['energy', 'battery', 'fuel cell', 'supercapacitor', 'solar', 'splitting'],
+                    'medical': ['bio', 'medical', 'drug', 'tissue', 'implant', 'healing', 'dna', 'protein', 'dental']
+                };
+                
+                const categoryName = category.charAt(0).toUpperCase() + category.slice(1);
+                document.getElementById('activeFilter').textContent = `${categoryName} Apps`;
+                
+                const relevantNodeIds = new Set();
+                const checkNode = (node) => {
+                     if (node.family !== 'root') {
+                         const hasApp = node.applications && node.applications.some(app => 
+                            keywords[category].some(keyword => 
+                                app.toLowerCase().includes(keyword)
+                            )
+                        );
+                        if(hasApp) relevantNodeIds.add(node.id);
+                     }
+                     if(node.children) node.children.forEach(checkNode);
+                }
+                checkNode(this.treeData);
+
+
+                this.g.selectAll('.node circle')
+                    .transition()
+                    .duration(300)
+                    .attr('opacity', function(d) {
+                        const node = d.data || d;
+                        if (node.family === 'root') return 1;
+                        return relevantNodeIds.has(node.id) ? 1 : 0.1;
+                    });
+            },
+
+            // Update color scheme
+            updateColorScheme() {
+                const metric = document.getElementById('colorMetric').value;
+                
+                this.g.selectAll('.node circle')
+                    .transition()
+                    .duration(500)
+                    .attr('fill', function(d) {
+                        const node = d.data || d;
+                        
+                        if (node.family === 'root') return '#64ffda';
+                        
+                        if (metric === 'family') {
+                            return node.color || '#64ffda';
+                        }
+                        
+                        let value;
+                        switch(metric) {
+                            case 'bindingEnergy':
+                                value = Math.min(1, Math.max(0, Math.abs(node.bindingEnergy) / 5)); // Normalize 0 to 5eV range
+                                return d3.interpolateViridis(value); // Viridis is good for data
+                            case 'conductivity':
+                                return d3.interpolatePlasma(node.conductivity); // Plasma: low=dark, high=yellow
+                            case 'biocompatibility':
+                                return d3.interpolateRdYlGn(node.biocompatibility); // Red-Yellow-Green is intuitive
+                            case 'stability':
+                                return d3.interpolateCividis(node.stability); // Cividis is perceptually uniform
+                            default:
+                                return node.color || '#64ffda';
+                        }
+                    });
+                
+                this.updateLegend(metric);
+            },
+
+            // Update legend based on metric
+            updateLegend(metric) {
+                const legend = document.getElementById('legend');
+                legend.innerHTML = ''; // Clear legend
+
+                if (metric === 'family') {
+                    // Show family colors
+                    Object.keys(this.grapheneFamilies).forEach(key => {
+                        const family = this.grapheneFamilies[key];
+                        const item = document.createElement('div');
+                        item.className = 'legend-item';
+                        item.innerHTML = `
+                            <div class="legend-color" style="background: ${family.color};"></div>
+                            <span>${family.name.replace(' Family', '').replace(' Coordination', '')}</span>
+                        `;
+                        legend.appendChild(item);
+                    });
+                    const pristineItem = document.createElement('div');
+                    pristineItem.className = 'legend-item';
+                    pristineItem.innerHTML = `
+                        <div class="legend-color" style="background: #64ffda;"></div>
+                        <span>Pristine</span>
+                    `;
+                    legend.appendChild(pristineItem);
+
+                } else {
+                    // Show metric gradient (More robust gradient representation)
+                    const colorScales = {
+                        bindingEnergy: d3.interpolateViridis,
+                        conductivity: d3.interpolatePlasma,
+                        biocompatibility: d3.interpolateRdYlGn,
+                        stability: d3.interpolateCividis
+                    };
+                    const labels = {
+                        bindingEnergy: ['Weak', 'Strong'],
+                        conductivity: ['Low', 'High'],
+                        biocompatibility: ['Poor', 'Excellent'],
+                        stability: ['Low', 'High']
+                    }
+                    
+                    const scale = colorScales[metric];
+                    const labelPair = labels[metric];
+
+                    // Create gradient bar
+                    const gradientBar = document.createElement('div');
+                    gradientBar.style.gridColumn = '1 / -1'; // Span both columns
+                    gradientBar.style.height = '14px';
+                    gradientBar.style.borderRadius = '7px';
+                    gradientBar.style.background = `linear-gradient(to right, ${scale(0)}, ${scale(0.25)}, ${scale(0.5)}, ${scale(0.75)}, ${scale(1)})`;
+                    
+                    const labelRow = document.createElement('div');
+                    labelRow.style.gridColumn = '1 / -1';
+                    labelRow.style.display = 'flex';
+                    labelRow.style.justifyContent = 'space-between';
+                    labelRow.style.fontSize = '10px';
+                    labelRow.style.color = '#8892b0';
+                    labelRow.innerHTML = `<span>${labelPair[0]}</span><span>${labelPair[1]}</span>`;
+
+                    legend.appendChild(gradientBar);
+                    legend.appendChild(labelRow);
+                }
+            },
+
+            // Search nodes
+            searchNodes(searchTerm) {
+                const term = searchTerm.toLowerCase().trim(); // NEW: Added trim()
+                
+                if (!term) {
+                    this.resetFilters();
+                    return;
+                }
+                
+                document.getElementById('activeFilter').textContent = `Search: ${searchTerm}`; // NEW: Show search term in filter status
+
+                const matchingNodeIds = new Set();
+                const checkNode = (node) => {
+                     const nameMatch = node.name && node.name.toLowerCase().includes(term);
+                     const familyNameMatch = node.familyName && node.familyName.toLowerCase().includes(term);
+                     const familyKeyMatch = node.family && node.family.toLowerCase().includes(term);
+                     const appMatch = node.applications && node.applications.some(app => 
+                         app.toLowerCase().includes(term)
+                     );
+
+                     if (nameMatch || familyNameMatch || familyKeyMatch || appMatch) {
+                         matchingNodeIds.add(node.id);
+                     }
+                     if(node.children) node.children.forEach(checkNode);
+                }
+                checkNode(this.treeData);
+
+                this.g.selectAll('.node circle')
+                    .transition()
+                    .duration(300)
+                    .attr('opacity', function(d) {
+                        const node = d.data || d;
+                        if (node.family === 'root') return 1; // Always show root
+                        return matchingNodeIds.has(node.id) ? 1 : 0.1;
+                    });
+            },
+
+            // Reset all filters
+            resetFilters() {
+                document.getElementById('activeFilter').textContent = 'None';
+                document.getElementById('searchInput').value = ''; // NEW: Clear search input
+                
+                this.g.selectAll('.node circle')
+                    .transition()
+                    .duration(300)
+                    .attr('opacity', 1)
+                    .attr('r', d => {
+                        return d.depth === 0 ? 12 : Math.max(6, 10 - d.depth);
+                    })
+                    .attr('stroke-width', 2);
+                
+                this.g.selectAll('.link, line')
+                    .transition()
+                    .duration(300)
+                    .attr('opacity', 0.6);
+            },
+
+            // Zoom controls
+            zoomIn() {
+                this.svg.transition().duration(300).call(this.zoom.scaleBy, 1.3);
+            },
+
+            zoomOut() {
+                this.svg.transition().duration(300).call(this.zoom.scaleBy, 0.7);
+            },
+
+            centerView() {
+                // MODIFIED: Added reset to layout center for tree/radial
+                const container = document.getElementById('tree-container');
+                const width = container.clientWidth;
+                const height = container.clientHeight;
+                let transform = d3.zoomIdentity;
+
+                if(this.currentLayout === 'force'){
+                     transform = d3.zoomIdentity.translate(0, 0).scale(1);
+                }
+                // Recenter tree/radial layouts properly (they are offset in the 'g' element)
+                // Note: The simple d3.zoomIdentity works fine for the force layout which uses forceCenter.
+                // The tree/radial layouts are manually translated so zoomIdentity is correct.
+                
+                this.svg.transition().duration(750).call(
+                    this.zoom.transform,
+                    transform
+                );
+            },
+
+            resetView() {
+                this.centerView();
+                this.resetFilters();
+            },
+
+            // Export data
+            exportData() {
+                const data = {
+                    metadata: {
+                        project: "HydroGraph Reactive Graphene Explorer",
+                        generated: new Date().toISOString(),
+                        totalNodes: this.countNodes(this.treeData),
+                        depth: this.currentDepth,
+                        branching: this.currentBranching,
+                        layout: this.currentLayout
+                    },
+                    tree: this.treeData
+                };
+                
+                const json = JSON.stringify(data, null, 2);
+                const blob = new Blob([json], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `graphene-tree-data-${Date.now()}.json`;
+                document.body.appendChild(a); // Append for Firefox compatibility
+                a.click();
+                document.body.removeChild(a); // Clean up
+                URL.revokeObjectURL(url);
+                
+                // Changed alert to a console log, alerts are disruptive
+                console.log('Data exported successfully!');
+            }
+        };
+
+        // Initialize when DOM is ready
+        document.addEventListener('DOMContentLoaded', () => {
+            app.init();
+        });
+    </script>
+</body>
+</html>
