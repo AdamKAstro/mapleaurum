@@ -45,7 +45,7 @@ const GrapheneExplorerPage: React.FC = () => {
           src="/hydrograph/HydroGraphRGExplorer.html"
           title="HydroGraph Reactive Graphene Explorer"
           style={iframeStyle}
-          sandbox="allow-scripts allow-same-origin" 
+          sandbox="allow-scripts" 
         />
       </div>
     </>
