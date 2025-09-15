@@ -1,8 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8"> <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>HydroGraph Reactive Graphene Explorer</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -27,17 +26,12 @@
             padding: 20px;
             overflow-y: auto;
             box-shadow: 5px 0 20px rgba(0, 0, 0, 0.3);
-            /* Added scrollbar styling for a consistent look */
             scrollbar-width: thin;
             scrollbar-color: #64ffda rgba(30, 41, 59, 0.6);
         }
 
-        .control-panel::-webkit-scrollbar {
-            width: 8px;
-        }
-        .control-panel::-webkit-scrollbar-track {
-            background: rgba(30, 41, 59, 0.6);
-        }
+        .control-panel::-webkit-scrollbar { width: 8px; }
+        .control-panel::-webkit-scrollbar-track { background: rgba(30, 41, 59, 0.6); }
         .control-panel::-webkit-scrollbar-thumb {
             background-color: #64ffda;
             border-radius: 4px;
@@ -59,10 +53,7 @@
             margin-bottom: 8px;
         }
         
-        .subtitle {
-            color: #8892b0;
-            font-size: 13px;
-        }
+        .subtitle { color: #8892b0; font-size: 13px; }
         
         .control-section {
             background: rgba(30, 41, 59, 0.6);
@@ -71,8 +62,19 @@
             margin-bottom: 15px;
             border: 1px solid rgba(100, 255, 218, 0.1);
         }
+
+        .control-section label {
+            display: block;
+            font-size: 12px;
+            color: #b0c0d8;
+            margin: 8px 0;
+            cursor: pointer;
+        }
+        .control-section label input {
+            margin-right: 8px;
+            accent-color: #64ffda;
+        }
         
-        /* NEW: Helper icon style for contextual tooltips */
         .helper-tooltip {
             display: inline-block;
             margin-left: 8px;
@@ -93,20 +95,14 @@
             border-color: #64ffda;
         }
 
-        /* NEW: Style for the "About" section */
         .about-section-intro {
             font-size: 13px;
             color: #e4e9f0;
             margin-bottom: 12px;
             line-height: 1.5;
         }
-        .about-section-intro strong {
-            color: #64ffda;
-        }
-        .about-section-steps {
-            list-style: none;
-            padding-left: 0;
-        }
+        .about-section-intro strong { color: #64ffda; }
+        .about-section-steps { list-style: none; padding-left: 0; }
         .about-section-steps li {
             position: relative;
             padding-left: 25px;
@@ -115,6 +111,7 @@
             margin-bottom: 8px;
             line-height: 1.4;
         }
+        /* Using the checkmark for consistency */
         .about-section-steps li::before {
             content: '✓';
             position: absolute;
@@ -124,7 +121,6 @@
             font-weight: bold;
             font-size: 14px;
         }
-
 
         .section-title {
             font-size: 14px;
@@ -136,11 +132,7 @@
             gap: 8px;
         }
         
-        .section-title::before {
-            content: '◆';
-            color: #8b5cf6;
-            font-size: 10px;
-        }
+        .section-title::before { content: '◆'; color: #8b5cf6; font-size: 10px; }
         
         button {
             padding: 8px 12px;
@@ -166,12 +158,7 @@
             box-shadow: 0 0 10px rgba(100, 255, 218, 0.5);
         }
         
-        .button-group {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 4px;
-            margin-bottom: 10px;
-        }
+        .button-group { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 10px; }
         
         input[type="range"] {
             width: 100%;
@@ -204,12 +191,7 @@
             outline: none;
         }
         
-        .visualization-container {
-            flex: 1;
-            position: relative;
-            display: flex;
-            flex-direction: column;
-        }
+        .visualization-container { flex: 1; position: relative; display: flex; flex-direction: column; }
         
         .top-bar {
             background: rgba(20, 27, 45, 0.95);
@@ -220,16 +202,9 @@
             border-bottom: 1px solid rgba(100, 255, 218, 0.2);
         }
         
-        .stats {
-            display: flex;
-            gap: 30px;
-        }
+        .stats { display: flex; gap: 30px; }
         
-        .stat-item {
-            display: flex;
-            flex-direction: column;
-            cursor: help; /* NEW: Added help cursor to stats */
-        }
+        .stat-item { display: flex; flex-direction: column; cursor: help; }
         
         .stat-label {
             font-size: 11px;
@@ -253,10 +228,7 @@
             overflow: hidden;
         }
         
-        #tree-svg {
-            width: 100%;
-            height: 100%;
-        }
+        #tree-svg { width: 100%; height: 100%; }
         
         .loading {
             position: absolute;
@@ -290,20 +262,12 @@
             max-height: 400px;
             overflow-y: auto;
             display: none;
-             /* NEW: Added scrollbar styling */
             scrollbar-width: thin;
             scrollbar-color: #8b5cf6 rgba(30, 41, 59, 0.1);
         }
-        .node-info::-webkit-scrollbar {
-            width: 6px;
-        }
-        .node-info::-webkit-scrollbar-track {
-            background: rgba(30, 41, 59, 0.1);
-        }
-        .node-info::-webkit-scrollbar-thumb {
-            background-color: #8b5cf6;
-            border-radius: 3px;
-        }
+        .node-info::-webkit-scrollbar { width: 6px; }
+        .node-info::-webkit-scrollbar-track { background: rgba(30, 41, 59, 0.1); }
+        .node-info::-webkit-scrollbar-thumb { background-color: #8b5cf6; border-radius: 3px; }
 
         
         .node-title {
@@ -316,22 +280,14 @@
         .metric-row {
             display: flex;
             justify-content: space-between;
-            align-items: center; /* NEW: Aligned items */
+            align-items: center;
             padding: 8px 0;
             border-bottom: 1px solid rgba(100, 255, 218, 0.1);
         }
         
-        .metric-label {
-            font-size: 12px;
-            color: #8892b0;
-            cursor: help; /* NEW: Added help cursor */
-        }
+        .metric-label { font-size: 12px; color: #8892b0; cursor: help; }
         
-        .metric-value {
-            font-size: 13px;
-            font-weight: 600;
-            color: #e4e9f0;
-        }
+        .metric-value { font-size: 13px; font-weight: 600; color: #e4e9f0; }
         
         .metric-bar {
             height: 4px;
@@ -341,11 +297,7 @@
             overflow: hidden;
         }
         
-        .metric-fill {
-            height: 100%;
-            border-radius: 2px;
-            transition: width 0.5s ease;
-        }
+        .metric-fill { height: 100%; border-radius: 2px; transition: width 0.5s ease; }
         
         .app-tag {
             display: inline-block;
@@ -365,12 +317,7 @@
             margin-top: 10px;
         }
         
-        .legend-item {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            font-size: 11px;
-        }
+        .legend-item { display: flex; align-items: center; gap: 6px; font-size: 11px; }
         
         .legend-color {
             width: 14px;
@@ -421,9 +368,7 @@
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
         }
         
-        .search-box {
-            margin-bottom: 15px;
-        }
+        .search-box { margin-bottom: 15px; }
         
         .search-box input {
             width: 100%;
@@ -451,25 +396,9 @@
             </div>
 
             <div class="search-box">
-                <input type="text" id="searchInput" placeholder="Search additive (COOH), app (sensors), family (nitrogen)..." list="search-suggestions">
+                <input type="text" id="searchInput" placeholder="Search: high conductivity sensor -metal ORR..." list="search-suggestions">
                 <datalist id="search-suggestions"></datalist>
             </div>
-
-            <div class="control-section">
-                <div class="section-title">
-                    About this Explorer
-                </div>
-                <p class="about-section-intro">
-                    This tool simulates the fractal combinations of additives on <strong>HydroGraph's reactive graphene</strong>. Explore how different chemical families create new materials with unique properties.
-                </p>
-                <ul class="about-section-steps">
-                    <li>Generate a data set using the controls below.</li>
-                    <li>Change layouts or color-code the nodes by property.</li>
-                    <li>Filter the graph to find top materials or applications.</li>
-                    <li>Click any node to see its detailed scientific data.</li>
-                </ul>
-            </div>
-
 
             <div class="control-section">
                 <div class="section-title">
@@ -491,6 +420,31 @@
             </div>
 
             <div class="control-section">
+                <div class="section-title">
+                    Realism Settings
+                    <span class="helper-tooltip" title="Apply scientific principles to the simulation. Changes apply on 'Regenerate'.">?</span>
+                </div>
+                <label>
+                    <input type="checkbox" id="saturationEffects" checked> 
+                    Saturation Effects (same group diminishing)
+                </label>
+                <label>
+                    <input type="checkbox" id="stericHindrance" checked>
+                    Steric Hindrance (bulky group interference)
+                </label>
+                <label>
+                    <input type="checkbox" id="distanceDecay" checked>
+                    Distance Decay (further = weaker)
+                </label>
+                <label>Coverage Model:</label>
+                <select id="coverageModel">
+                    <option value="sparse">Sparse (<2%)</option>
+                    <option value="typical" selected>Typical (2-5%)</option>
+                    <option value="dense">Dense (>5%)</option>
+                </select>
+            </div>
+
+            <div class="control-section">
                  <div class="section-title">
                     Data Layout & Shading
                     <span class="helper-tooltip" title="Change the visual layout of the data network and how nodes are colored.">?</span>
@@ -507,6 +461,8 @@
                     <option value="conductivity">Conductivity</option>
                     <option value="biocompatibility">Biocompatibility</option>
                     <option value="stability">Stability</option>
+                    <option value="practicalityScore">Synthesizability</option>
+                    <option value="commercialPotential">Commercial Potential</option>
                 </select>
             </div>
 
@@ -559,21 +515,21 @@
                     <span class="metric-value" id="nodeFamily">-</span>
                 </div>
                 <div class="metric-row">
-                    <span class="metric-label" title="Energy required to bind the additive (more negative = stronger bond)">Binding Energy:</span>
+                    <span class="metric-label" title="CUMULATIVE Energy required to bind the additive (more negative = stronger bond)">Binding Energy:</span>
                     <span class="metric-value" id="nodeBindingEnergy">-</span>
                 </div>
                 <div class="metric-bar">
                     <div class="metric-fill" id="bindingEnergyBar" style="background: linear-gradient(90deg, #8b5cf6, #48cae4);"></div>
                 </div>
                 <div class="metric-row">
-                    <span class="metric-label" title="The material's relative electrical conductivity (100% = pristine graphene)">Conductivity:</span>
+                    <span class="metric-label" title="CUMULATIVE material's relative electrical conductivity (100% = pristine)">Conductivity:</span>
                     <span class="metric-value" id="nodeConductivity">-</span>
                 </div>
                 <div class="metric-bar">
                     <div class="metric-fill" id="conductivityBar" style="background: linear-gradient(90deg, #64ffda, #10b981);"></div>
                 </div>
                 <div class="metric-row">
-                    <span class="metric-label" title="The material's suitability for use in biological systems (higher = safer)">Biocompatibility:</span>
+                    <span class="metric-label" title="CUMULATIVE material's suitability for use in biological systems (higher = safer)">Biocompatibility:</span>
                     <span class="metric-value" id="nodeBiocompat">-</span>
                 </div>
                 <div class="metric-bar">
@@ -582,48 +538,34 @@
                 <div class="metric-row">
                     <span class="metric-label" title="Potential real-world uses for this specific material combination">Applications:</span>
                 </div>
-                <div id="nodeApplications" style="margin-top: 5px;"></div> </div>
+                <div id="nodeApplications" style="margin-top: 5px;"></div> 
+            </div>
 
             <div class="control-section">
                 <div class="section-title">Data Legend</div>
-                <div class="legend" id="legend">
-                    <div class="legend-item">
-                        <div class="legend-color" style="background: #ff6b6b;"></div>
-                        <span>Oxygen</span>
-                    </div>
-                    <div class="legend-item">
-                        <div class="legend-color" style="background: #4ecdc4;"></div>
-                        <span>Nitrogen</span>
-                    </div>
-                    <div class="legend-item">
-                        <div class="legend-color" style="background: #ffd93d;"></div>
-                        <span>Sulfur</span>
-                    </div>
-                    <div class="legend-item">
-                        <div class="legend-color" style="background: #10b981;"></div>
-                        <span>Phosphorus</span>
-                    </div>
-                    <div class="legend-item">
-                        <div class="legend-color" style="background: #f472b6;"></div>
-                        <span>Halogen</span>
-                    </div>
-                    <div class="legend-item">
-                        <div class="legend-color" style="background: #ef4444;"></div>
-                        <span>Metal</span>
-                    </div>
-                    <div class="legend-item">
-                        <div class="legend-color" style="background: #a78bfa;"></div>
-                        <span>Hybrid</span>
-                    </div>
-                    <div class="legend-item">
-                        <div class="legend-color" style="background: #64ffda;"></div>
-                        <span>Pristine</span>
-                    </div>
-                </div>
-            </div>
-        </div>
+                <div class="legend" id="legend"></div> </div>
 
-        <div class="visualization-container">
+            <div class="control-section" id="methodology-section">
+                <div class="section-title">
+                    About This Simulation
+                    <span class="helper-tooltip" title="This data is not static; it is a cumulative scientific model that calculates properties for each new material.">?</span>
+                </div>
+                <p class="about-section-intro">
+                    This tool runs a <strong>cumulative fractal simulation</strong>. Unlike a simple database, each node's properties are calculated based on its parent and a set of scientific rules.
+                </p>
+                <ul class="about-section-steps">
+                    <li><strong>Fractal Generation:</strong> New nodes have a 70% probability of staying in the same chemical family, modeling realistic reaction pathways.</li>
+                    <li><strong>Cumulative Properties:</strong> Binding Energy is <strong>additive</strong> (chains get stronger), while Conductivity is <strong>multiplicative</strong> (each new group adds defects, reducing conductivity).</li>
+                    <li><strong>Saturation Effects:</strong> Attaching the same group (e.g., COOH onto COOH) has diminishing returns, modeling occupied reaction sites.</li>
+                    <li><strong>Distance Decay:</strong> Groups added at deeper levels (further from the graphene plane) have less impact on base properties.</li>
+                    <li><strong>Steric Hindrance:</strong> Bulky groups (like SO3H) are modeled to physically interfere with subsequent reactions, reducing their effectiveness.</li>
+                    <li><strong>Synergy Score (⚡):</strong> Favorable chemical pairs (like acid-base COOH+NH2) get a "synergy" boost, resulting in a much higher modeled Stability.</li>
+                    <li><strong>Practicality Score:</strong> A modeled score (0-1) of how "easy" it is to synthesize a specific functional chain, with deeper complexity becoming exponentially harder.</li>
+                    <li><strong>Commercial Potential:</strong> A final weighted metric combining stability, conductivity, practicality, and other factors to estimate the node's overall value.</li>
+                </ul>
+            </div>
+
+        </div> <div class="visualization-container">
             <div class="top-bar">
                 <div class="stats">
                     <div class="stat-item" title="The total number of additives (nodes) in the current simulation">
@@ -648,7 +590,7 @@
             <div id="tree-container">
                 <div class="loading" id="loading">
                     <div class="loading-spinner"></div>
-                    <p style="color: #64ffda;">Generating fractal graphene tree...</p>
+                    <p style="color: #64ffda;">Generating scientific fractal model...</p>
                 </div>
                 <svg id="tree-svg"></svg>
             </div>
@@ -666,986 +608,1666 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
     
     <script>
-        // Main application object
-        const app = {
-            // State variables
-            treeData: null,
-            svg: null,
-            g: null,
-            simulation: null,
-            currentLayout: 'tree',
-            zoom: null,
-            currentDepth: 3,
-            currentBranching: 3,
-            selectedNode: null,
+    //==============================================================
+    // 1. ADVANCED SEMANTIC SEARCH INFRASTRUCTURE (GLOBAL)
+    // These MUST be defined before the 'const app' object.
+    // This fixes the 'unexpected token: keyword const' error.
+    //==============================================================
+
+    // --- 1a. Hierarchical Application Ontology ---
+    const applicationOntology = {
+        energy: {
+            storage: {
+                batteries: ['lithium-ion', 'solid-state', 'anode', 'cathode', 'SEI layer'],
+                supercapacitors: ['EDLC', 'pseudocapacitor', 'energy density', 'power density'],
+                hydrogen: ['storage', 'spillover', 'MOF composite', 'gravimetric capacity']
+            },
+            conversion: {
+                fuelCells: ['PEM', 'SOFC', 'ORR', 'HER', 'proton exchange', 'catalyst'],
+                solar: ['photovoltaic', 'DSSC', 'perovskite', 'charge transport', 'work function'],
+                thermoelectric: ['Seebeck', 'ZT value', 'thermal conductivity', 'power factor']
+            },
+            transmission: ['conductor', 'cable', 'grid', 'power line', 'EMI shielding']
+        },
+        medical: {
+            therapeutics: {
+                drugDelivery: ['targeted', 'controlled release', 'pH-responsive', 'carrier', 'loading'],
+                cancer: ['photothermal', 'photodynamic', 'chemotherapy', 'tumor targeting'],
+                antimicrobial: ['antibacterial', 'antiviral', 'antifungal', 'biofilm', 'resistance']
+            },
+            diagnostics: {
+                biosensors: ['glucose', 'DNA', 'protein', 'pathogen', 'biomarker', 'LOD'],
+                imaging: ['MRI contrast', 'fluorescence', 'CT', 'photoacoustic', 'NIR'],
+                labOnChip: ['microfluidic', 'POC', 'ELISA', 'immunoassay', 'lateral flow']
+            },
+            regenerative: {
+                tissueEng: ['scaffold', 'stem cell', 'differentiation', 'ECM', 'bioprinting'],
+                implants: ['osseointegration', 'biocompatible', 'bone', 'dental', 'orthopedic'],
+                woundHealing: ['bandage', 'antimicrobial', 'healing', 'dressing', 'chronic wounds']
+            }
+        },
+        environmental: {
+            remediation: {
+                water: ['filtration', 'desalination', 'heavy metal', 'adsorption', 'membrane'],
+                air: ['CO2 capture', 'VOC', 'particulate', 'photocatalysis', 'air filter'],
+                soil: ['bioremediation', 'pesticide', 'contamination', 'phytoremediation']
+            },
+            monitoring: {
+                sensors: ['gas sensor', 'water quality', 'pollution', 'environmental', 'IoT'],
+                indicators: ['pH', 'temperature', 'humidity', 'chemical', 'biological']
+            }
+        },
+        construction: {
+            concrete: ['cement', 'strength', 'durability', 'crack resistance', 'self-healing'],
+            coatings: ['anticorrosion', 'protective', 'barrier', 'weathering', 'UV resistant'],
+            composites: ['fiber', 'matrix', 'reinforcement', 'lightweight', 'structural']
+        },
+        electronics: {
+            devices: ['transistor', 'FET', 'diode', 'memristor', 'flexible', 'printed'],
+            sensors: ['strain', 'pressure', 'touch', 'temperature', 'wearable', 'IoT'],
+            energy: ['transparent conductor', 'electrode', 'interconnect', 'heat spreader']
+        }
+    };
+
+    // Create inverse index for fast lookup (term -> category path)
+    const applicationIndex = {};
+    function buildApplicationIndex() {
+        function indexTerms(obj, path = []) {
+            for (const [key, value] of Object.entries(obj)) {
+                const newPath = [...path, key];
+                // Index the key itself
+                const keyLower = key.toLowerCase();
+                if (!applicationIndex[keyLower]) applicationIndex[keyLower] = [];
+                applicationIndex[keyLower].push(newPath);
+
+                if (Array.isArray(value)) {
+                    // Leaf node - index all terms
+                    value.forEach(term => {
+                        const termLower = term.toLowerCase();
+                        if (!applicationIndex[termLower]) {
+                            applicationIndex[termLower] = [];
+                        }
+                        applicationIndex[termLower].push(newPath);
+                    });
+                } else if (typeof value === 'object' && value !== null) {
+                    // Recurse deeper
+                    indexTerms(value, newPath);
+                }
+            }
+        }
+        indexTerms(applicationOntology);
+        console.log("Application Ontology Index built.");
+    }
+
+    // --- 1b. Smart Synonym & Abbreviation Handling ---
+    const synonymDatabase = {
+        // Technical abbreviations
+        'orr': ['oxygen reduction reaction', 'oxygen reduction'],
+        'her': ['hydrogen evolution reaction', 'hydrogen evolution'],
+        'pem': ['proton exchange membrane', 'polymer electrolyte membrane'],
+        'edlc': ['electric double layer capacitor', 'supercapacitor'],
+        'lod': ['limit of detection', 'detection limit'],
+        'poc': ['point of care', 'point-of-care'],
+        'fet': ['field effect transistor', 'field-effect transistor'],
+        // Common variations
+        'bio': ['biological', 'biomedical', 'biomaterial'],
+        'nano': ['nanoscale', 'nanostructured', 'nanomaterial'],
+        'composite': ['composites', 'nanocomposite', 'hybrid material'],
+        'sensor': ['sensors', 'sensing', 'detector', 'detection'],
+        'battery': ['batteries', 'cell', 'energy storage'],
+        // Chemical terms
+        'graphene': ['graphene oxide', 'reduced graphene', 'functionalized graphene'],
+        'carbon': ['carbon-based', 'carbonaceous', 'carbon material'],
+        'metal': ['metallic', 'metal-based', 'metallized'],
+        // Property descriptors
+        'conductive': ['conductor', 'conducting', 'conductivity', 'electrical'],
+        'resistant': ['resistance', 'proof', 'protective', 'barrier'],
+        'compatible': ['compatibility', 'biocompatible', 'cytocompatible']
+    };
+
+    // Expand search terms with synonyms
+    function expandSearchTerms(term) {
+        const termLower = term.toLowerCase();
+        const expanded = new Set([termLower]);
+        
+        // Check if term IS a key or IS IN a value
+        for (const [key, synonyms] of Object.entries(synonymDatabase)) {
+            if (key === termLower) {
+                synonyms.forEach(syn => expanded.add(syn.toLowerCase()));
+            }
+            if (synonyms.some(syn => syn.toLowerCase() === termLower)) {
+                expanded.add(key.toLowerCase());
+                synonyms.forEach(syn => expanded.add(syn.toLowerCase()));
+            }
+        }
+        
+        // Add stem variations (simple stemming)
+        const stem = termLower.replace(/ing$|ed$|s$|er$|est$|tion$|ment$/, '');
+        if (stem.length > 3 && stem !== termLower) expanded.add(stem);
+        
+        return Array.from(expanded);
+    }
+
+    // --- 1c. Fuzzy Matching & Typo Tolerance ---
+    // Levenshtein distance for typo tolerance
+    function levenshteinDistance(str1 = "", str2 = "") {
+        const matrix = [];
+        for (let i = 0; i <= str2.length; i++) { matrix[i] = [i]; }
+        for (let j = 0; j <= str1.length; j++) { matrix[0][j] = j; }
+        for (let i = 1; i <= str2.length; i++) {
+            for (let j = 1; j <= str1.length; j++) {
+                if (str2.charAt(i - 1) === str1.charAt(j - 1)) {
+                    matrix[i][j] = matrix[i - 1][j - 1];
+                } else {
+                    matrix[i][j] = Math.min(
+                        matrix[i - 1][j - 1] + 1, // substitution
+                        matrix[i][j - 1] + 1,    // insertion
+                        matrix[i - 1][j] + 1     // deletion
+                    );
+                }
+            }
+        }
+        return matrix[str2.length][str1.length];
+    }
+
+    // Fuzzy search with threshold
+    function fuzzyMatch(searchTerm, target, threshold = 2) {
+        if (!searchTerm || !target) return false;
+        const distance = levenshteinDistance(searchTerm.toLowerCase(), target.toLowerCase());
+        return distance <= threshold;
+    }
+
+    // --- 1d. Relevance Scoring System ---
+    // Score how relevant a node is to search terms (Context added by app.searchNodes)
+    function calculateRelevanceScore(node, searchTerms) {
+        let score = 0;
+        const termWeights = {};
+        
+        (searchTerms || []).forEach(term => {
+            // Exact match in name: highest weight
+            if (node.name && node.name.toLowerCase().includes(term)) {
+                score += 10;
+                termWeights[term] = 10;
+            }
             
-            // Comprehensive graphene database
-            grapheneFamilies: {
-                oxygen: {
-                    name: "Oxygen Family",
-                    color: "#ff6b6b",
-                    additives: [
-                        { name: "COOH", smiles: "C(=O)O", bindingEnergy: -3.5, conductivity: 0.3, biocompatibility: 0.85, stability: 0.7,
-                          applications: ["Cement +70% strength", "Composites", "Ion exchange", "Water treatment", "Hydrophilic coatings"] },
-                        { name: "OH", smiles: "O", bindingEnergy: -2.8, conductivity: 0.4, biocompatibility: 0.9, stability: 0.75,
-                          applications: ["Biosensors", "Drug delivery", "Hydrogels", "Biomedical coatings", "Water purification"] },
-                        { name: "C=O", smiles: "C=O", bindingEnergy: -2.2, conductivity: 0.5, biocompatibility: 0.7, stability: 0.8,
-                          applications: ["Energy storage", "Catalysis", "Gas sensors", "Photocatalysis", "Supercapacitors"] },
-                        { name: "O-epoxy", smiles: "O1CC1", bindingEnergy: -2.5, conductivity: 0.35, biocompatibility: 0.75, stability: 0.65,
-                          applications: ["Polymer composites", "Adhesives", "Crosslinking", "Epoxy resins", "Surface modification"] },
-                        { name: "CHO", smiles: "C=O", bindingEnergy: -2.3, conductivity: 0.45, biocompatibility: 0.65, stability: 0.7,
-                          applications: ["Chemical sensors", "Organic synthesis", "Aldehyde detection", "Bioconjugation"] },
-                        { name: "COOCH3", smiles: "C(=O)OC", bindingEnergy: -2.9, conductivity: 0.38, biocompatibility: 0.72, stability: 0.78,
-                          applications: ["Esterification", "Polymer grafting", "Drug loading", "Organic electronics"] }
-                    ]
-                },
-                nitrogen: {
-                    name: "Nitrogen Family",
-                    color: "#4ecdc4",
-                    additives: [
-                        { name: "NH2", smiles: "N", bindingEnergy: -2.9, conductivity: 0.7, biocompatibility: 0.95, stability: 0.8,
-                          applications: ["DNA sensors", "Transistors", "Drug delivery", "Neural interfaces", "Protein immobilization"] },
-                        { name: "NO2", smiles: "N(=O)=O", bindingEnergy: -2.4, conductivity: 0.6, biocompatibility: 0.5, stability: 0.75,
-                          applications: ["Explosives detection", "Gas sensors", "Catalysts", "Environmental monitoring"] },
-                        { name: "C≡N", smiles: "C#N", bindingEnergy: -2.1, conductivity: 0.75, biocompatibility: 0.6, stability: 0.85,
-                          applications: ["Electrochemistry", "Batteries", "Corrosion protection", "Ion sensors", "Fuel cells"] },
-                        { name: "NH3+", smiles: "[NH3+]", bindingEnergy: -3.2, conductivity: 0.8, biocompatibility: 0.7, stability: 0.65,
-                          applications: ["Ion transport", "pH buffering", "Membranes", "Antimicrobial surfaces"] },
-                        { name: "NHCO", smiles: "NC=O", bindingEnergy: -3.0, conductivity: 0.5, biocompatibility: 0.92, stability: 0.79,
-                          applications: ["Peptide conjugation", "Wound healing", "Biomedical implants", "Tissue engineering"] },
-                        { name: "N(CH3)2", smiles: "N(C)C", bindingEnergy: -2.7, conductivity: 0.55, biocompatibility: 0.88, stability: 0.77,
-                          applications: ["Gene delivery", "Cell adhesion", "Controlled release", "Smart materials"] }
-                    ]
-                },
-                sulfur: {
-                    name: "Sulfur Family",
-                    color: "#ffd93d",
-                    additives: [
-                        { name: "SH", smiles: "S", bindingEnergy: -2.3, conductivity: 0.6, biocompatibility: 0.7, stability: 0.75,
-                          applications: ["Heavy metal detection", "Gold binding", "Self-assembly", "Protein anchoring"] },
-                        { name: "SO3H", smiles: "S(=O)(=O)O", bindingEnergy: -3.8, conductivity: 0.85, biocompatibility: 0.6, stability: 0.7,
-                          applications: ["Fuel cells", "Proton exchange", "Solid acid catalysts", "Water splitting"] },
-                        { name: "SO2", smiles: "S(=O)=O", bindingEnergy: -2.7, conductivity: 0.55, biocompatibility: 0.65, stability: 0.8,
-                          applications: ["Gas sensors", "Environmental remediation", "SO2 detection", "Air purification"] },
-                        { name: "S-S", smiles: "SS", bindingEnergy: -2.0, conductivity: 0.5, biocompatibility: 0.75, stability: 0.85,
-                          applications: ["Self-healing materials", "Redox batteries", "Polymer crosslinking", "Smart materials"] }
-                    ]
-                },
-                phosphorus: {
-                    name: "Phosphorus Family",
-                    color: "#10b981",
-                    additives: [
-                        { name: "PO3H2", smiles: "P(=O)(O)O", bindingEnergy: -3.4, conductivity: 0.7, biocompatibility: 0.85, stability: 0.8,
-                          applications: ["Flame retardants", "Bone tissue", "Ion exchange", "Proton conductors"] },
-                        { name: "P(OH)2", smiles: "P(O)O", bindingEnergy: -3.1, conductivity: 0.58, biocompatibility: 0.82, stability: 0.77,
-                          applications: ["Membranes", "Water treatment", "Catalysis", "Corrosion inhibitors"] },
-                        { name: "PO4H2-", smiles: "[O-]P(=O)(O)O", bindingEnergy: -3.6, conductivity: 0.75, biocompatibility: 0.9, stability: 0.75,
-                          applications: ["Biomineralization", "Bone implants", "Dental materials", "Bioceramics"] }
-                    ]
-                },
-                halogen: {
-                    name: "Halogen Family",
-                    color: "#f472b6",
-                    additives: [
-                        { name: "F", smiles: "F", bindingEnergy: -2.0, conductivity: 0.3, biocompatibility: 0.6, stability: 0.9,
-                          applications: ["Hydrophobic coatings", "Electronics passivation", "Anti-fouling", "Chemical resistance"] },
-                        { name: "Cl", smiles: "Cl", bindingEnergy: -1.8, conductivity: 0.35, biocompatibility: 0.55, stability: 0.85,
-                          applications: ["Antimicrobial", "Water disinfection", "Chemical sensors", "Halogenated polymers"] },
-                        { name: "CF3", smiles: "C(F)(F)F", bindingEnergy: -2.4, conductivity: 0.25, biocompatibility: 0.65, stability: 0.95,
-                          applications: ["Superhydrophobic", "Low surface energy", "Fluoropolymers", "Protective coatings"] }
-                    ]
-                },
-                metal: {
-                    name: "Metal Coordination",
-                    color: "#ef4444",
-                    additives: [
-                        { name: "Fe-N4", smiles: "[Fe]N4", bindingEnergy: -4.0, conductivity: 0.9, biocompatibility: 0.7, stability: 0.8,
-                          applications: ["Oxygen reduction", "Fuel cells", "Catalysis", "Magnetic materials", "Sensors"] },
-                        { name: "Cu-N2", smiles: "[Cu]N2", bindingEnergy: -3.5, conductivity: 0.95, biocompatibility: 0.6, stability: 0.75,
-                          applications: ["CO2 reduction", "Antibacterial", "Electronics", "Thermal management"] },
-                        { name: "Pt-Cl2", smiles: "[Pt](Cl)Cl", bindingEnergy: -4.5, conductivity: 0.98, biocompatibility: 0.5, stability: 0.85,
-                          applications: ["Hydrogen evolution", "Chemotherapy", "Catalysis", "Fuel cells"] }
-                    ]
-                },
-                hybrid: {
-                    name: "Hybrid Family",
-                    color: "#a78bfa",
-                    additives: [
-                        { name: "COOH-NH2", smiles: "C(=O)ON", bindingEnergy: -3.7, conductivity: 0.45, biocompatibility: 0.88, stability: 0.72,
-                          applications: ["Smart materials", "pH-responsive", "Dual sensors", "Bioconjugation"] },
-                        { name: "OH-NH2", smiles: "ON", bindingEnergy: -3.0, conductivity: 0.5, biocompatibility: 0.93, stability: 0.76,
-                          applications: ["Biocompatible materials", "Cell culture", "Tissue scaffolds", "Hydrogels"] },
-                        { name: "SH-COOH", smiles: "SC(=O)O", bindingEnergy: -3.4, conductivity: 0.55, biocompatibility: 0.75, stability: 0.74,
-                          applications: ["Metal binding", "Environmental cleanup", "Bioremediation", "Heavy metal sensors"] },
-                        { name: "B(OH)2", smiles: "B(O)O", bindingEnergy: -3.1, conductivity: 0.4, biocompatibility: 0.78, stability: 0.8,
-                          applications: ["Glucose sensors", "Drug delivery", "Smart polymers", "pH sensors"] }
-                    ]
-                }
-            },
-
-            // Initialize the application
-            init() {
-                console.log('Initializing Graphene Fractal Explorer...');
-                
-                if (typeof d3 === 'undefined') {
-                    alert('Error: D3.js library failed to load. Please refresh the page.');
-                    return;
-                }
-                
-                this.initializeVisualization();
-                this.setupEventListeners();
-                this.populateSearchSuggestions(); // NEW: Call the function to build the datalist
-                this.generateTree('medium');
-                
-                console.log('Initialization complete');
-            },
-
-            // Set up event listeners
-            setupEventListeners() {
-                // Slider events
-                document.getElementById('depthSlider').addEventListener('input', (e) => {
-                    document.getElementById('depthValue').textContent = e.target.value;
-                    this.currentDepth = parseInt(e.target.value);
-                });
-                
-                document.getElementById('branchSlider').addEventListener('input', (e) => {
-                    document.getElementById('branchValue').textContent = e.target.value;
-                    this.currentBranching = parseInt(e.target.value);
-                });
-                
-                // Search functionality
-                document.getElementById('searchInput').addEventListener('input', (e) => {
-                    this.searchNodes(e.target.value);
-                });
-            },
-
-            // NEW: Function to populate the search <datalist>
-            populateSearchSuggestions() {
-                const suggestions = new Set();
-                
-                // Loop through all data to extract searchable terms
-                Object.values(this.grapheneFamilies).forEach(family => {
-                    suggestions.add(family.name); // Add family name
-                    suggestions.add(family.name.replace(" Family", "").replace(" Coordination", "")); // Add short name
+            // Match in chemical family
+            if (node.family && node.family.toLowerCase().includes(term)) {
+                score += 7;
+                termWeights[term] = Math.max(termWeights[term] || 0, 7);
+            }
+            
+            // Match in applications
+            if (node.applications) {
+                node.applications.forEach(appText => {
+                    const appLower = appText.toLowerCase();
+                    if (appLower.includes(term)) {
+                        score += 5;
+                        termWeights[term] = Math.max(termWeights[term] || 0, 5);
+                    }
                     
-                    family.additives.forEach(additive => {
-                        suggestions.add(additive.name); // Add additive name (e.g., "COOH")
-                        additive.applications.forEach(app => {
-                            suggestions.add(app); // Add each full application string
-                            
-                            // Add common keywords
-                            if (app.toLowerCase().includes('sensor')) suggestions.add("Sensors");
-                            if (app.toLowerCase().includes('energy')) suggestions.add("Energy");
-                            if (app.toLowerCase().includes('batter')) suggestions.add("Batteries");
-                            if (app.toLowerCase().includes('cataly')) suggestions.add("Catalysis");
-                            if (app.toLowerCase().includes('bio')) suggestions.add("Biomedical");
-                            if (app.toLowerCase().includes('drug')) suggestions.add("Drug Delivery");
-                            if (app.toLowerCase().includes('water')) suggestions.add("Water Treatment");
-                            if (app.toLowerCase().includes('composite')) suggestions.add("Composites");
+                    // Check against ontology (using the index we built)
+                    const ontologyPaths = applicationIndex[term] || [];
+                    ontologyPaths.forEach(path => {
+                        // If this app text includes the *specific term* the path maps to
+                        if (path.length > 0 && appLower.includes(path[path.length - 1])) {
+                            score += 4; // Ontology match
+                        }
+                    });
+                });
+            }
+            
+            // Fuzzy match bonus (lower weight) - applied once per term
+            if (!termWeights[term]) { // Only if no exact match found yet
+                if (fuzzyMatch(term, node.name, 1) || (node.family && fuzzyMatch(term, node.family, 1))) {
+                    score += 1;
+                    termWeights[term] = 1;
+                }
+            }
+        });
+        
+        // Diversity bonus (matches multiple different terms)
+        const matchedTerms = Object.keys(termWeights).length;
+        score += matchedTerms * 2;
+        
+        // Depth penalty (deeper nodes are more complex/less primary)
+        score *= Math.pow(0.95, node.depth || 0);
+        
+        return score;
+    }
+
+    // --- 1e. Advanced Query Parser ---
+    class QueryParser {
+        constructor() {
+            this.propertyKeywords = {
+                // Map synonyms to the actual property name in the data
+                conductivity: ['conductive', 'conductor', 'electrical', 'conducting', 'conductivity'],
+                bindingEnergy: ['binding', 'adhesion', 'attachment', 'bonding', 'bindingenergy'],
+                biocompatibility: ['biocompatible', 'bio-friendly', 'non-toxic', 'cytocompatible', 'biocompatibility'],
+                stability: ['stable', 'durable', 'robust', 'long-lasting', 'stability'],
+                practicalityScore: ['practical', 'easy', 'synthesizable', 'practicalityscore'],
+                commercialPotential: ['commercial', 'potential', 'valuable', 'commercialpotential']
+            };
+            
+            this.modifiers = {
+                high: (val) => val > 0.7,
+                low: (val) => val < 0.3,
+                medium: (val) => val >= 0.3 && val <= 0.7,
+                excellent: (val) => val > 0.85,
+                poor: (val) => val < 0.2,
+                strong: (val) => val < -3.5, // Special case for binding energy (more negative)
+                weak: (val) => val > -1.5     // Special case for binding energy
+            };
+        }
+        
+        parse(query) {
+            const result = {
+                terms: [],
+                properties: [],
+                applications: [],
+                exclude: [],
+                expandedTerms: []
+            };
+            
+            // Handle quoted phrases
+            const phrases = query.match(/"([^"]+)"/g) || [];
+            phrases.forEach(phrase => {
+                result.terms.push(phrase.replace(/"/g, '').toLowerCase());
+                query = query.replace(phrase, '');
+            });
+            
+            // Handle exclusions (terms with -)
+            const exclusions = query.match(/-(\w+)/g) || [];
+            exclusions.forEach(exc => {
+                result.exclude.push(exc.substring(1).toLowerCase());
+                query = query.replace(exc, '');
+            });
+            
+            // Parse property filters
+            const words = query.toLowerCase().split(/\s+/).filter(w => w.length > 0);
+            for (let i = 0; i < words.length; i++) {
+                const word = words[i];
+                
+                // Check for modifier + property pattern
+                if (this.modifiers[word] && i + 1 < words.length) {
+                    const nextWord = words[i + 1];
+                    for (const [propName, keywords] of Object.entries(this.propertyKeywords)) {
+                        if (keywords.includes(nextWord)) {
+                            result.properties.push({
+                                property: propName, // The actual data key
+                                modifier: word,
+                                test: this.modifiers[word] // The test function
+                            });
+                            words[i] = ''; // Remove from terms
+                            words[i + 1] = '';
+                            i++; // Skip next word
+                            break;
+                        }
+                    }
+                }
+            }
+            
+            // Remaining words are search terms
+            words.filter(w => w && w.length > 1).forEach(term => {
+                result.terms.push(term);
+                
+                // Check application ontology
+                if (applicationIndex[term]) {
+                    result.applications.push(...applicationIndex[term]);
+                }
+            });
+            
+            // Expand terms with synonyms
+            const allTerms = new Set();
+            result.terms.forEach(term => {
+                expandSearchTerms(term).forEach(t => allTerms.add(t));
+            });
+            result.expandedTerms = Array.from(allTerms);
+            
+            return result;
+        }
+    }
+
+
+    //==============================================================
+    // 2. MAIN APPLICATION OBJECT
+    //==============================================================
+    const app = {
+        // State variables
+        treeData: null,
+        svg: null,
+        g: null,
+        simulation: null,
+        currentLayout: 'tree',
+        zoom: null,
+        currentDepth: 3,
+        currentBranching: 3,
+        selectedNode: null,
+        lastSearchQuery: '', // For learning system
+        
+        // --- 2a. Comprehensive graphene database (Base values for simulation) ---
+        grapheneFamilies: {
+            oxygen: {
+                name: "Oxygen Family",
+                color: "#ff6b6b",
+                additives: [
+                    { name: "COOH", smiles: "C(=O)O", bindingEnergy: -3.5, conductivity: 0.3, biocompatibility: 0.85, stability: 0.7,
+                      applications: ["Cement +70% strength", "Composites", "Ion exchange", "Water treatment", "Hydrophilic coatings"] },
+                    { name: "OH", smiles: "O", bindingEnergy: -2.8, conductivity: 0.4, biocompatibility: 0.9, stability: 0.75,
+                      applications: ["Biosensors", "Drug delivery", "Hydrogels", "Biomedical coatings", "Water purification"] },
+                    { name: "C=O", smiles: "C=O", bindingEnergy: -2.2, conductivity: 0.5, biocompatibility: 0.7, stability: 0.8,
+                      applications: ["Energy storage", "Catalysis", "Gas sensors", "Photocatalysis", "Supercapacitors"] },
+                    { name: "O-epoxy", smiles: "O1CC1", bindingEnergy: -2.5, conductivity: 0.35, biocompatibility: 0.75, stability: 0.65,
+                      applications: ["Polymer composites", "Adhesives", "Crosslinking", "Epoxy resins", "Surface modification"] },
+                    { name: "CHO", smiles: "C=O", bindingEnergy: -2.3, conductivity: 0.45, biocompatibility: 0.65, stability: 0.7,
+                      applications: ["Chemical sensors", "Organic synthesis", "Aldehyde detection", "Bioconjugation"] },
+                    { name: "COOCH3", smiles: "C(=O)OC", bindingEnergy: -2.9, conductivity: 0.38, biocompatibility: 0.72, stability: 0.78,
+                      applications: ["Esterification", "Polymer grafting", "Drug loading", "Organic electronics"] }
+                ]
+            },
+            nitrogen: {
+                name: "Nitrogen Family",
+                color: "#4ecdc4",
+                additives: [
+                    { name: "NH2", smiles: "N", bindingEnergy: -2.9, conductivity: 0.7, biocompatibility: 0.95, stability: 0.8,
+                      applications: ["DNA sensors", "Transistors", "Drug delivery", "Neural interfaces", "Protein immobilization"] },
+                    { name: "NO2", smiles: "N(=O)=O", bindingEnergy: -2.4, conductivity: 0.6, biocompatibility: 0.5, stability: 0.75,
+                      applications: ["Explosives detection", "Gas sensors", "Catalysts", "Environmental monitoring"] },
+                    { name: "C≡N", smiles: "C#N", bindingEnergy: -2.1, conductivity: 0.75, biocompatibility: 0.6, stability: 0.85,
+                      applications: ["Electrochemistry", "Batteries", "Corrosion protection", "Ion sensors", "Fuel cells"] },
+                    { name: "NH3+", smiles: "[NH3+]", bindingEnergy: -3.2, conductivity: 0.8, biocompatibility: 0.7, stability: 0.65,
+                      applications: ["Ion transport", "pH buffering", "Membranes", "Antimicrobial surfaces"] },
+                    { name: "NHCO", smiles: "NC=O", bindingEnergy: -3.0, conductivity: 0.5, biocompatibility: 0.92, stability: 0.79,
+                      applications: ["Peptide conjugation", "Wound healing", "Biomedical implants", "Tissue engineering"] },
+                    { name: "N(CH3)2", smiles: "N(C)C", bindingEnergy: -2.7, conductivity: 0.55, biocompatibility: 0.88, stability: 0.77,
+                      applications: ["Gene delivery", "Cell adhesion", "Controlled release", "Smart materials"] }
+                ]
+            },
+            sulfur: {
+                name: "Sulfur Family",
+                color: "#ffd93d",
+                additives: [
+                    { name: "SH", smiles: "S", bindingEnergy: -2.3, conductivity: 0.6, biocompatibility: 0.7, stability: 0.75,
+                      applications: ["Heavy metal detection", "Gold binding", "Self-assembly", "Protein anchoring"] },
+                    { name: "SO3H", smiles: "S(=O)(=O)O", bindingEnergy: -3.8, conductivity: 0.85, biocompatibility: 0.6, stability: 0.7,
+                      applications: ["Fuel cells", "Proton exchange", "Solid acid catalysts", "Water splitting"] },
+                    { name: "SO2", smiles: "S(=O)=O", bindingEnergy: -2.7, conductivity: 0.55, biocompatibility: 0.65, stability: 0.8,
+                      applications: ["Gas sensors", "Environmental remediation", "SO2 detection", "Air purification"] },
+                    { name: "S-S", smiles: "SS", bindingEnergy: -2.0, conductivity: 0.5, biocompatibility: 0.75, stability: 0.85,
+                      applications: ["Self-healing materials", "Redox batteries", "Polymer crosslinking", "Smart materials"] }
+                ]
+            },
+            phosphorus: {
+                name: "Phosphorus Family",
+                color: "#10b981",
+                additives: [
+                    { name: "PO3H2", smiles: "P(=O)(O)O", bindingEnergy: -3.4, conductivity: 0.7, biocompatibility: 0.85, stability: 0.8,
+                      applications: ["Flame retardants", "Bone tissue", "Ion exchange", "Proton conductors"] },
+                    { name: "P(OH)2", smiles: "P(O)O", bindingEnergy: -3.1, conductivity: 0.58, biocompatibility: 0.82, stability: 0.77,
+                      applications: ["Membranes", "Water treatment", "Catalysis", "Corrosion inhibitors"] },
+                    { name: "PO4H2-", smiles: "[O-]P(=O)(O)O", bindingEnergy: -3.6, conductivity: 0.75, biocompatibility: 0.9, stability: 0.75,
+                      applications: ["Biomineralization", "Bone implants", "Dental materials", "Bioceramics"] }
+                ]
+            },
+            halogen: {
+                name: "Halogen Family",
+                color: "#f472b6",
+                additives: [
+                    { name: "F", smiles: "F", bindingEnergy: -2.0, conductivity: 0.3, biocompatibility: 0.6, stability: 0.9,
+                      applications: ["Hydrophobic coatings", "Electronics passivation", "Anti-fouling", "Chemical resistance"] },
+                    { name: "Cl", smiles: "Cl", bindingEnergy: -1.8, conductivity: 0.35, biocompatibility: 0.55, stability: 0.85,
+                      applications: ["Antimicrobial", "Water disinfection", "Chemical sensors", "Halogenated polymers"] },
+                    { name: "CF3", smiles: "C(F)(F)F", bindingEnergy: -2.4, conductivity: 0.25, biocompatibility: 0.65, stability: 0.95,
+                      applications: ["Superhydrophobic", "Low surface energy", "Fluoropolymers", "Protective coatings"] }
+                ]
+            },
+            metal: {
+                name: "Metal Coordination",
+                color: "#ef4444",
+                additives: [
+                    { name: "Fe-N4", smiles: "[Fe]N4", bindingEnergy: -4.0, conductivity: 0.9, biocompatibility: 0.7, stability: 0.8,
+                      applications: ["Oxygen reduction", "Fuel cells", "Catalysis", "Magnetic materials", "Sensors"] },
+                    { name: "Cu-N2", smiles: "[Cu]N2", bindingEnergy: -3.5, conductivity: 0.95, biocompatibility: 0.6, stability: 0.75,
+                      applications: ["CO2 reduction", "Antibacterial", "Electronics", "Thermal management"] },
+                    { name: "Pt-Cl2", smiles: "[Pt](Cl)Cl", bindingEnergy: -4.5, conductivity: 0.98, biocompatibility: 0.5, stability: 0.85,
+                      applications: ["Hydrogen evolution", "Chemotherapy", "Catalysis", "Fuel cells"] }
+                ]
+            },
+            hybrid: {
+                name: "Hybrid Family",
+                color: "#a78bfa",
+                additives: [
+                    { name: "COOH-NH2", smiles: "C(=O)ON", bindingEnergy: -3.7, conductivity: 0.45, biocompatibility: 0.88, stability: 0.72,
+                      applications: ["Smart materials", "pH-responsive", "Dual sensors", "Bioconjugation"] },
+                    { name: "OH-NH2", smiles: "ON", bindingEnergy: -3.0, conductivity: 0.5, biocompatibility: 0.93, stability: 0.76,
+                      applications: ["Biocompatible materials", "Cell culture", "Tissue scaffolds", "Hydrogels"] },
+                    { name: "SH-COOH", smiles: "SC(=O)O", bindingEnergy: -3.4, conductivity: 0.55, biocompatibility: 0.75, stability: 0.74,
+                      applications: ["Metal binding", "Environmental cleanup", "Bioremediation", "Heavy metal sensors"] },
+                    { name: "B(OH)2", smiles: "B(O)O", bindingEnergy: -3.1, conductivity: 0.4, biocompatibility: 0.78, stability: 0.8,
+                      applications: ["Glucose sensors", "Drug delivery", "Smart polymers", "pH sensors"] }
+                ]
+            }
+        },
+
+        // --- 2b. NEW: Search History & Learning System ---
+        searchHistory: {
+            queries: [],
+            clickedResults: new Map(), // query -> Map<node.id, count>
+            
+            recordSearch(query, results) {
+                if (!query.trim()) return;
+                this.queries.push({
+                    query: query,
+                    timestamp: Date.now(),
+                    resultCount: results.length
+                });
+                // Limit history size
+                if (this.queries.length > 100) this.queries.shift();
+            },
+            
+            recordClick(query, node) {
+                if (!query.trim() || !node) return;
+                
+                if (!this.clickedResults.has(query)) {
+                    this.clickedResults.set(query, new Map());
+                }
+                const queryClicks = this.clickedResults.get(query);
+                const newCount = (queryClicks.get(node.id) || 0) + 1;
+                queryClicks.set(node.id, newCount);
+            },
+            
+            // Boost relevance for previously clicked results
+            getClickBoost(query, node) {
+                if (!query.trim()) return 0;
+                
+                // Find similar past queries
+                const similarQueries = this.queries.filter(q => 
+                    levenshteinDistance(q.query, query) < 3); // Typo tolerance
+                
+                // Add exact current query just in case
+                similarQueries.push({ query: query }); 
+                
+                let boost = 0;
+                similarQueries.forEach(q => {
+                    const clicked = this.clickedResults.get(q.query);
+                    if (clicked && clicked.has(node.id)) {
+                        boost += 5 * clicked.get(node.id); // More clicks = more boost
+                    }
+                });
+                return boost;
+            }
+        },
+
+        // --- 3. APPLICATION INITIALIZATION & CORE FUNCTIONS ---
+
+        // Initialize the application
+        init() {
+            console.log('Initializing Graphene Fractal Explorer...');
+            
+            // CRITICAL FIX: Build the static search index ONCE on load
+            buildApplicationIndex();
+            
+            if (typeof d3 === 'undefined') {
+                alert('Error: D3.js library failed to load. Please refresh the page.');
+                return;
+            }
+            
+            this.initializeVisualization();
+            this.setupEventListeners();
+            // CRITICAL FIX: REMOVED populateSearchSuggestions() from here. It now runs AFTER generateTree.
+            this.generateTree('medium');
+            this.updateLegend('family'); // Initialize legend
+            
+            console.log('Initialization complete');
+        },
+
+        // Set up event listeners
+        setupEventListeners() {
+            // Slider events
+            document.getElementById('depthSlider').addEventListener('input', (e) => {
+                document.getElementById('depthValue').textContent = e.target.value;
+                this.currentDepth = parseInt(e.target.value);
+            });
+            
+            document.getElementById('branchSlider').addEventListener('input', (e) => {
+                document.getElementById('branchValue').textContent = e.target.value;
+                this.currentBranching = parseInt(e.target.value);
+            });
+            
+            // Search functionality (points to NEW semantic search)
+            document.getElementById('searchInput').addEventListener('input', (e) => {
+                this.searchNodes(e.target.value);
+            });
+        },
+
+        // REPLACED: Function to populate search <datalist> from LIVE TREE DATA
+        populateSearchSuggestions() {
+            const suggestions = new Set();
+            
+            // Collect all unique terms from the generated tree
+            const collectTerms = (node) => {
+                if (node.name) suggestions.add(node.name);
+                if (node.family) suggestions.add(node.family);
+                if (node.applications) {
+                    node.applications.forEach(appText => {
+                        // Add full app string
+                        suggestions.add(appText);
+                        // Add individual words
+                        appText.split(/\s+/).forEach(word => {
+                            if (word.length > 3) suggestions.add(word.toLowerCase());
                         });
                     });
+                }
+                if (node.children) node.children.forEach(collectTerms);
+            };
+            
+            if (this.treeData) {
+                collectTerms(this.treeData);
+            }
+            
+            // Add common smart queries
+            const commonQueries = [
+                'high conductivity sensor',
+                'biocompatible coating',
+                'fuel cell catalyst',
+                'drug delivery',
+                'cement strength',
+                'strong binding',
+                'excellent stability'
+            ];
+            commonQueries.forEach(q => suggestions.add(q));
+
+            const datalist = document.getElementById('search-suggestions');
+            datalist.innerHTML = ''; // Clear existing
+            
+            // Sort suggestions and add them as options
+            [...suggestions].sort().forEach(item => {
+                const option = document.createElement('option');
+                option.value = item;
+                datalist.appendChild(option);
+            });
+        },
+
+        // Initialize D3 visualization
+        initializeVisualization() {
+            const container = document.getElementById('tree-container');
+            const width = container.clientWidth;
+            const height = container.clientHeight;
+
+            this.svg = d3.select('#tree-svg')
+                .attr('width', width)
+                .attr('height', height);
+
+            this.g = this.svg.append('g');
+
+            // Add zoom behavior
+            this.zoom = d3.zoom()
+                .scaleExtent([0.1, 10])
+                .on('zoom', (event) => {
+                    this.g.attr('transform', event.transform);
                 });
 
-                const datalist = document.getElementById('search-suggestions');
-                datalist.innerHTML = ''; // Clear existing
+            this.svg.call(this.zoom);
+        },
+
+        // Generate tree with specified size
+        generateTree(size) {
+            const loading = document.getElementById('loading');
+            loading.style.display = 'block';
+
+            setTimeout(() => {
+                let depth, branches;
                 
-                // Sort suggestions alphabetically and add them as options
-                [...suggestions].sort().forEach(item => {
-                    const option = document.createElement('option');
-                    option.value = item;
-                    datalist.appendChild(option);
-                });
-            },
-
-            // Initialize D3 visualization
-            initializeVisualization() {
-                const container = document.getElementById('tree-container');
-                const width = container.clientWidth;
-                const height = container.clientHeight;
-
-                this.svg = d3.select('#tree-svg')
-                    .attr('width', width)
-                    .attr('height', height);
-
-                this.g = this.svg.append('g');
-
-                // Add zoom behavior
-                this.zoom = d3.zoom()
-                    .scaleExtent([0.1, 10])
-                    .on('zoom', (event) => {
-                        this.g.attr('transform', event.transform);
-                    });
-
-                this.svg.call(this.zoom);
-            },
-
-            // Generate tree with specified size
-            generateTree(size) {
-                const loading = document.getElementById('loading');
-                loading.style.display = 'block';
-
-                setTimeout(() => {
-                    let depth, branches;
-                    
-                    switch(size) {
-                        case 'small':
-                            depth = 2; branches = 2; break;
-                        case 'large':
-                            depth = 4; branches = 4; break;
-                        default: // medium
-                            depth = 3; branches = 3;
-                    }
-                    
-                    // Update sliders
-                    document.getElementById('depthSlider').value = depth;
-                    document.getElementById('depthValue').textContent = depth;
-                    document.getElementById('branchSlider').value = branches;
-                    document.getElementById('branchValue').textContent = branches;
-                    
-                    this.currentDepth = depth;
-                    this.currentBranching = branches;
-                    
-                    this.treeData = this.createFractalTree(depth, branches);
-                    this.updateVisualization();
-                    
-                    loading.style.display = 'none';
-                }, 100);
-            },
-
-            // Regenerate tree with current settings
-            regenerateTree() {
-                const loading = document.getElementById('loading');
-                loading.style.display = 'block';
-
-                setTimeout(() => {
-                    this.treeData = this.createFractalTree(this.currentDepth, this.currentBranching);
-                    this.updateVisualization();
-                    loading.style.display = 'none';
-                }, 100);
-            },
-
-            // Create fractal tree structure
-            createFractalTree(maxDepth, branchingFactor) {
-                const root = {
-                    id: 0,
-                    name: "Pristine Graphene",
-                    smiles: "C=C",
-                    bindingEnergy: 0,
-                    conductivity: 1.0,
-                    biocompatibility: 0.5,
-                    stability: 1.0,
-                    applications: ["Base material", "Electronics", "Composites"],
-                    family: "root",
-                    color: "#64ffda",
-                    depth: 0,
-                    children: []
-                };
-
-                let nodeId = 1;
-                const families = Object.keys(this.grapheneFamilies);
-
-                const addChildren = (parent, currentDepth) => {
-                    if (currentDepth >= maxDepth) return;
-
-                    const numChildren = currentDepth === 0 ? 
-                        Math.min(branchingFactor, families.length) : branchingFactor;
-
-                    for (let i = 0; i < numChildren; i++) {
-                        let familyKey;
-                        
-                        if (currentDepth === 0) {
-                            familyKey = families[i % families.length];
-                        } else {
-                            // 70% chance to stay in same family (fractal self-similarity)
-                            if (Math.random() < 0.7 && parent.family !== 'root' && parent.family !== 'hybrid') {
-                                familyKey = parent.family;
-                            } else {
-                                familyKey = families[Math.floor(Math.random() * families.length)];
-                            }
-                        }
-
-                        const family = this.grapheneFamilies[familyKey];
-                        const additive = family.additives[Math.floor(Math.random() * family.additives.length)];
-
-                        const child = {
-                            id: nodeId++,
-                            name: additive.name,
-                            smiles: additive.smiles,
-                            bindingEnergy: additive.bindingEnergy + (Math.random() - 0.5) * 0.3,
-                            conductivity: Math.max(0, Math.min(1, additive.conductivity + (Math.random() - 0.5) * 0.1)),
-                            biocompatibility: Math.max(0, Math.min(1, additive.biocompatibility + (Math.random() - 0.5) * 0.1)),
-                            stability: Math.max(0, Math.min(1, additive.stability + (Math.random() - 0.5) * 0.1)),
-                            applications: additive.applications || [],
-                            family: familyKey,
-                            familyName: family.name,
-                            color: family.color,
-                            depth: currentDepth + 1,
-                            children: []
-                        };
-
-                        parent.children.push(child);
-                        addChildren(child, currentDepth + 1);
-                    }
-                };
-
-                addChildren(root, 0);
-
-                // Update stats
-                const totalNodes = this.countNodes(root);
-                document.getElementById('totalNodes').textContent = totalNodes;
-                document.getElementById('currentDepth').textContent = maxDepth;
-
-                return root;
-            },
-
-            // Count nodes in tree
-            countNodes(node) {
-                let count = 1;
-                if (node.children && node.children.length > 0) {
-                    node.children.forEach(child => {
-                        count += this.countNodes(child);
-                    });
-                }
-                return count;
-            },
-
-            // Update visualization
-            updateVisualization() {
-                this.g.selectAll('*').remove();
-
-                switch(this.currentLayout) {
-                    case 'tree':
-                        this.renderTreeLayout();
-                        break;
-                    case 'radial':
-                        this.renderRadialLayout();
-                        break;
-                    case 'force':
-                        this.renderForceLayout();
-                        break;
-                }
-            },
-
-            // Render tree layout
-            renderTreeLayout() {
-                const container = document.getElementById('tree-container');
-                const width = container.clientWidth;
-                const height = container.clientHeight;
-
-                const treeLayout = d3.tree()
-                    .size([width - 100, height - 100]);
-
-                const root = d3.hierarchy(this.treeData);
-                const treeNodes = treeLayout(root);
-
-                // Draw links
-                const links = this.g.selectAll('.link')
-                    .data(treeNodes.links())
-                    .enter().append('path')
-                    .attr('class', 'link')
-                    .attr('d', d3.linkVertical()
-                        .x(d => d.x + 50)
-                        .y(d => d.y + 50))
-                    .attr('fill', 'none')
-                    .attr('stroke', d => d.target.data.color || '#64ffda')
-                    .attr('stroke-width', d => Math.max(1, 3 - d.target.depth * 0.5))
-                    .attr('opacity', 0.6);
-
-                // Draw nodes
-                const nodes = this.g.selectAll('.node')
-                    .data(treeNodes.descendants())
-                    .enter().append('g')
-                    .attr('class', 'node')
-                    .attr('transform', d => `translate(${d.x + 50},${d.y + 50})`);
-
-                nodes.append('circle')
-                    .attr('r', d => d.depth === 0 ? 12 : Math.max(6, 10 - d.depth))
-                    .attr('fill', d => d.data.color || '#64ffda')
-                    .attr('stroke', '#fff')
-                    .attr('stroke-width', 2)
-                    .style('cursor', 'pointer')
-                    .on('click', (event, d) => this.selectNode(d.data))
-                    .on('mouseover', (event, d) => this.showTooltip(event, d.data))
-                    .on('mouseout', () => this.hideTooltip());
-
-                nodes.append('text')
-                    .attr('dy', d => d.depth === 0 ? -18 : -12)
-                    .attr('text-anchor', 'middle')
-                    .text(d => d.data.name)
-                    .style('font-size', d => d.depth === 0 ? '13px' : '10px')
-                    .style('fill', '#e4e9f0')
-                    .style('font-weight', d => d.depth === 0 ? 'bold' : 'normal')
-                    .style('pointer-events', 'none');
-            },
-
-            // Render radial layout
-            renderRadialLayout() {
-                const container = document.getElementById('tree-container');
-                const width = container.clientWidth;
-                const height = container.clientHeight;
-                const radius = Math.min(width, height) / 2 - 100;
-
-                const treeLayout = d3.tree()
-                    .size([2 * Math.PI, radius])
-                    .separation((a, b) => (a.parent == b.parent ? 1 : 2) / a.depth);
-
-                const root = d3.hierarchy(this.treeData);
-                const treeNodes = treeLayout(root);
-
-                const centerX = width / 2;
-                const centerY = height / 2;
-
-                // Draw links
-                const links = this.g.selectAll('.link')
-                    .data(treeNodes.links())
-                    .enter().append('path')
-                    .attr('class', 'link')
-                    .attr('d', d3.linkRadial()
-                        .angle(d => d.x)
-                        .radius(d => d.y))
-                    .attr('transform', `translate(${centerX},${centerY})`)
-                    .attr('fill', 'none')
-                    .attr('stroke', d => d.target.data.color || '#64ffda')
-                    .attr('stroke-width', d => Math.max(1, 3 - d.target.depth * 0.5))
-                    .attr('opacity', 0.6);
-
-                // Draw nodes
-                const nodes = this.g.selectAll('.node')
-                    .data(treeNodes.descendants())
-                    .enter().append('g')
-                    .attr('class', 'node')
-                    .attr('transform', d => 
-                        `translate(${centerX + d.y * Math.cos(d.x - Math.PI / 2)},${centerY + d.y * Math.sin(d.x - Math.PI / 2)})`);
-
-                nodes.append('circle')
-                    .attr('r', d => d.depth === 0 ? 12 : Math.max(6, 10 - d.depth))
-                    .attr('fill', d => d.data.color || '#64ffda')
-                    .attr('stroke', '#fff')
-                    .attr('stroke-width', 2)
-                    .style('cursor', 'pointer')
-                    .on('click', (event, d) => this.selectNode(d.data))
-                    .on('mouseover', (event, d) => this.showTooltip(event, d.data))
-                    .on('mouseout', () => this.hideTooltip());
-
-                nodes.append('text')
-                    .attr('dy', d => d.depth === 0 ? -18 : -12)
-                    .attr('text-anchor', 'middle')
-                    .text(d => d.data.name)
-                    .style('font-size', d => d.depth === 0 ? '13px' : '10px')
-                    .style('fill', '#e4e9f0')
-                    .style('font-weight', d => d.depth === 0 ? 'bold' : 'normal')
-                    .style('pointer-events', 'none');
-            },
-
-            // Render force-directed layout
-            renderForceLayout() {
-                const container = document.getElementById('tree-container');
-                const width = container.clientWidth;
-                const height = container.clientHeight;
-
-                const root = d3.hierarchy(this.treeData);
-                const nodes = root.descendants();
-                const links = root.links();
-
-                this.simulation = d3.forceSimulation(nodes)
-                    .force('link', d3.forceLink(links).distance(50).strength(1))
-                    .force('charge', d3.forceManyBody().strength(-300))
-                    .force('center', d3.forceCenter(width / 2, height / 2))
-                    .force('collision', d3.forceCollide().radius(20));
-
-                const link = this.g.selectAll('.link')
-                    .data(links)
-                    .enter().append('line')
-                    .attr('class', 'link')
-                    .attr('stroke', d => d.target.data.color || '#64ffda')
-                    .attr('stroke-width', 2)
-                    .attr('opacity', 0.6);
-
-                const node = this.g.selectAll('.node')
-                    .data(nodes)
-                    .enter().append('g')
-                    .attr('class', 'node')
-                    .call(d3.drag()
-                        .on('start', (event, d) => this.dragstarted(event, d))
-                        .on('drag', (event, d) => this.dragged(event, d))
-                        .on('end', (event, d) => this.dragended(event, d)));
-
-                node.append('circle')
-                    .attr('r', d => d.depth === 0 ? 12 : Math.max(6, 10 - d.depth))
-                    .attr('fill', d => d.data.color || '#64ffda')
-                    .attr('stroke', '#fff')
-                    .attr('stroke-width', 2)
-                    .style('cursor', 'pointer')
-                    .on('click', (event, d) => this.selectNode(d.data))
-                    .on('mouseover', (event, d) => this.showTooltip(event, d.data))
-                    .on('mouseout', () => this.hideTooltip());
-
-                node.append('text')
-                    .attr('dy', -12)
-                    .attr('text-anchor', 'middle')
-                    .text(d => d.data.name)
-                    .style('font-size', '10px')
-                    .style('fill', '#e4e9f0')
-                    .style('pointer-events', 'none');
-
-                this.simulation.on('tick', () => {
-                    link
-                        .attr('x1', d => d.source.x)
-                        .attr('y1', d => d.source.y)
-                        .attr('x2', d => d.target.x)
-                        .attr('y2', d => d.target.y);
-
-                    node
-                        .attr('transform', d => `translate(${d.x},${d.y})`);
-                });
-            },
-
-            // Drag functions for force layout
-            dragstarted(event, d) {
-                if (!event.active) this.simulation.alphaTarget(0.3).restart();
-                d.fx = d.x;
-                d.fy = d.y;
-            },
-
-            dragged(event, d) {
-                d.fx = event.x;
-                d.fy = event.y;
-            },
-
-            dragended(event, d) {
-                if (!event.active) this.simulation.alphaTarget(0);
-                d.fx = null;
-                d.fy = null;
-            },
-
-            // Select and display node information
-            selectNode(nodeData) {
-                this.selectedNode = nodeData;
-                
-                document.getElementById('nodeInfo').style.display = 'block';
-                document.getElementById('nodeTitle').textContent = nodeData.name;
-                document.getElementById('nodeFormula').textContent = nodeData.smiles || '-';
-                document.getElementById('nodeFamily').textContent = nodeData.familyName || nodeData.family || '-';
-                document.getElementById('nodeBindingEnergy').textContent = 
-                    nodeData.bindingEnergy ? `${nodeData.bindingEnergy.toFixed(2)} eV` : '0 eV';
-                document.getElementById('nodeConductivity').textContent = 
-                    `${(nodeData.conductivity * 100).toFixed(0)}%`;
-                document.getElementById('nodeBiocompat').textContent = 
-                    `${(nodeData.biocompatibility * 100).toFixed(0)}%`;
-
-                // Update progress bars
-                document.getElementById('bindingEnergyBar').style.width = 
-                    `${Math.min(100, Math.abs(nodeData.bindingEnergy) / 5 * 100)}%`;
-                document.getElementById('conductivityBar').style.width = 
-                    `${nodeData.conductivity * 100}%`;
-                document.getElementById('biocompatBar').style.width = 
-                    `${nodeData.biocompatibility * 100}%`;
-
-                // Update applications
-                const appsContainer = document.getElementById('nodeApplications');
-                appsContainer.innerHTML = '';
-                if (nodeData.applications && nodeData.applications.length > 0) {
-                    nodeData.applications.forEach(appText => {
-                        const tag = document.createElement('span');
-                        tag.className = 'app-tag';
-                        tag.textContent = appText;
-                        tag.title = appText; // NEW: Add tooltip to the tag itself
-                        appsContainer.appendChild(tag);
-                    });
-                } else {
-                     const noAppTag = document.createElement('span');
-                     noAppTag.style.fontSize = '12px';
-                     noAppTag.style.color = '#8892b0';
-                     noAppTag.textContent = 'No specific applications listed.';
-                     appsContainer.appendChild(noAppTag);
-                }
-
-                // Highlight selected node
-                this.g.selectAll('.node circle')
-                    .transition()
-                    .duration(300)
-                    .attr('opacity', function(d) {
-                        const currentNode = d.data || d;
-                        return currentNode.id === nodeData.id ? 1 : 0.3; // MODIFIED: Check by unique ID
-                    })
-                    .attr('stroke-width', function(d) {
-                        const currentNode = d.data || d;
-                        return currentNode.id === nodeData.id ? 4 : 2; // MODIFIED: Check by unique ID
-                    });
-            },
-
-            // Show tooltip
-            showTooltip(event, nodeData) {
-                const tooltip = document.getElementById('tooltip');
-                const apps = nodeData.applications ? nodeData.applications.slice(0, 3).join(', ') : 'None';
-                
-                tooltip.innerHTML = `
-                    <strong>${nodeData.name}</strong> (${nodeData.familyName || nodeData.family})<br>
-                    Binding: ${nodeData.bindingEnergy ? nodeData.bindingEnergy.toFixed(2) : '0'} eV<br>
-                    Conductivity: ${(nodeData.conductivity * 100).toFixed(0)}%<br>
-                    Biocompat: ${(nodeData.biocompatibility * 100).toFixed(0)}%<br>
-                    Top Apps: ${apps}${nodeData.applications && nodeData.applications.length > 3 ? '...' : ''}
-                `;
-                
-                tooltip.style.left = `${event.pageX + 15}px`;
-                tooltip.style.top = `${event.pageY + 15}px`;
-                tooltip.style.display = 'block';
-            },
-
-            hideTooltip() {
-                document.getElementById('tooltip').style.display = 'none';
-            },
-
-            // Change layout
-            changeLayout(layout) {
-                this.currentLayout = layout;
-                
-                // Update button states
-                ['tree', 'radial', 'force'].forEach(l => {
-                    const btn = document.getElementById(`${l}Btn`);
-                    if (l === layout) {
-                        btn.classList.add('active');
-                    } else {
-                        btn.classList.remove('active');
-                    }
-                });
-                
-                if (this.simulation) {
-                    this.simulation.stop();
+                switch(size) {
+                    case 'small': depth = 3; branches = 2; break;
+                    case 'large': depth = 5; branches = 3; break;
+                    default: // medium
+                        depth = 4; branches = 3;
                 }
                 
+                document.getElementById('depthSlider').value = depth;
+                document.getElementById('depthValue').textContent = depth;
+                document.getElementById('branchSlider').value = branches;
+                document.getElementById('branchValue').textContent = branches;
+                
+                this.currentDepth = depth;
+                this.currentBranching = branches;
+                
+                this.treeData = this.createFractalTree(depth, branches);
                 this.updateVisualization();
-            },
+                this.populateSearchSuggestions(); // CRITICAL FIX: Generate suggestions AFTER tree exists
+                
+                loading.style.display = 'none';
+            }, 100);
+        },
 
-            // Filter by family
-            filterByFamily(family) {
-                const familyData = this.grapheneFamilies[family];
-                if (!familyData) return;
-                
-                document.getElementById('activeFilter').textContent = familyData.name;
-                
-                this.g.selectAll('.node circle')
-                    .transition()
-                    .duration(300)
-                    .attr('opacity', function(d) {
-                        const node = d.data || d;
-                        return node.family === family || node.family === 'root' ? 1 : 0.1;
-                    })
-                    .attr('r', function(d) {
-                        const node = d.data || d;
-                        if (node.family === family && node.family !== 'root') {
-                            return d.depth === 0 ? 14 : Math.max(8, 12 - d.depth);
+        // Regenerate tree with current settings
+        regenerateTree() {
+            const loading = document.getElementById('loading');
+            loading.style.display = 'block';
+
+            setTimeout(() => {
+                this.treeData = this.createFractalTree(this.currentDepth, this.currentBranching);
+                this.updateVisualization();
+                this.populateSearchSuggestions(); // CRITICAL FIX: Regenerate suggestions too
+                loading.style.display = 'none';
+            }, 100);
+        },
+
+        // --- 4. NEW SCIENTIFIC SIMULATION ENGINE ---
+
+        // REPLACED: Updated createFractalTree function with scientific accuracy
+        createFractalTree(maxDepth, branchingFactor) {
+            const root = {
+                id: 0,
+                name: "Pristine Graphene",
+                smiles: "C=C",
+                bindingEnergy: 0,
+                conductivity: 1.0,
+                biocompatibility: 0.5,
+                stability: 1.0,
+                applications: ["Base material", "Electronics", "Composites"],
+                family: "root",
+                color: "#64ffda",
+                depth: 0,
+                functionalPath: [],
+                coveragePercent: 0,
+                children: []
+            };
+
+            let nodeId = 1;
+            const families = Object.keys(this.grapheneFamilies);
+
+            const addChildren = (parent, currentDepth) => {
+                if (currentDepth >= maxDepth) return;
+
+                // Read realism settings from checkboxes
+                const useSaturation = document.getElementById('saturationEffects').checked;
+                const useSterics = document.getElementById('stericHindrance').checked;
+                const useDistance = document.getElementById('distanceDecay').checked;
+
+                const numChildren = currentDepth === 0 ? 
+                    Math.min(branchingFactor, families.length) : branchingFactor;
+
+                for (let i = 0; i < numChildren; i++) {
+                    let familyKey;
+                    
+                    // Existing family selection logic...
+                    if (currentDepth === 0) {
+                        // Prioritize COOH/Oxygen for first level, reflecting HydroGraph process
+                        if (i === 0 && families.includes('oxygen')) {
+                            familyKey = 'oxygen';
+                        } else {
+                            familyKey = families[i % families.length];
                         }
-                        return d.depth === 0 ? 12 : Math.max(6, 10 - d.depth);
-                    });
-                
-                this.g.selectAll('.link, line')
-                    .transition()
-                    .duration(300)
-                    .attr('opacity', d => (d.target.data.family === family) ? 0.6 : 0.05); // MODIFIED: Filter links too
-            },
-
-            // Show top performers
-            showTopPerformers(metric) {
-                const allNodes = [];
-                const collectNodes = (node) => {
-                    if (node.family !== 'root') {
-                        allNodes.push(node);
-                    }
-                    if (node.children) {
-                        node.children.forEach(collectNodes);
-                    }
-                };
-                collectNodes(this.treeData);
-                
-                // Sort by metric
-                allNodes.sort((a, b) => {
-                    if (metric === 'bindingEnergy') {
-                        return a[metric] - b[metric]; // More negative is better
-                    }
-                    return b[metric] - a[metric]; // Higher is better
-                });
-                
-                const topNodeIds = allNodes.slice(0, 10).map(n => n.id); // Get IDs of top nodes
-                
-                document.getElementById('activeFilter').textContent = `Top ${metric}`;
-                
-                this.g.selectAll('.node circle')
-                    .transition()
-                    .duration(500)
-                    .attr('opacity', function(d) {
-                        const node = d.data || d;
-                        return topNodeIds.includes(node.id) || node.family === 'root' ? 1 : 0.1;
-                    })
-                    .attr('r', function(d) {
-                        const node = d.data || d;
-                        if (topNodeIds.includes(node.id)) {
-                            const rank = topNodeIds.indexOf(node.id);
-                            return 15 - rank * 0.5;
+                    } else {
+                        // 70% chance to stay in same family (fractal self-similarity)
+                        if (Math.random() < 0.7 && parent.family !== 'root' && parent.family !== 'hybrid') {
+                            familyKey = parent.family;
+                        } else {
+                            familyKey = families[Math.floor(Math.random() * families.length)];
                         }
-                        return d.depth === 0 ? 12 : Math.max(6, 10 - d.depth);
-                    });
-            },
+                    }
 
-            // Show application category
-            showApplicationCategory(category) {
-                const keywords = {
-                    'sensors': ['sensor', 'detection', 'monitoring'],
-                    'energy': ['energy', 'battery', 'fuel cell', 'supercapacitor', 'solar', 'splitting'],
-                    'medical': ['bio', 'medical', 'drug', 'tissue', 'implant', 'healing', 'dna', 'protein', 'dental']
-                };
-                
-                const categoryName = category.charAt(0).toUpperCase() + category.slice(1);
-                document.getElementById('activeFilter').textContent = `${categoryName} Apps`;
-                
-                const relevantNodeIds = new Set();
-                const checkNode = (node) => {
-                     if (node.family !== 'root') {
-                         const hasApp = node.applications && node.applications.some(app => 
-                            keywords[category].some(keyword => 
-                                app.toLowerCase().includes(keyword)
-                            )
-                        );
-                        if(hasApp) relevantNodeIds.add(node.id);
-                     }
-                     if(node.children) node.children.forEach(checkNode);
+                    const family = this.grapheneFamilies[familyKey];
+                    const additive = family.additives[Math.floor(Math.random() * family.additives.length)];
+
+                    // --- SCIENTIFIC CALCULATIONS START ---
+                    
+                    const pathCount = parent.functionalPath.filter(g => g === additive.name).length;
+                    const saturationFactor = useSaturation ? Math.pow(0.7, pathCount) : 1.0; // 70% effectiveness each repeat
+                    
+                    const distanceFactor = useDistance ? Math.pow(0.85, currentDepth) : 1.0; // 85% effectiveness per level
+                    
+                    const estimatedCoverage = (currentDepth + 1) * 0.8; // ~0.8% per functionalization step
+                    const coverageFactor = Math.max(0.3, 1 - estimatedCoverage * 0.05); // Drops effectiveness above 5%
+                    
+                    const parentBulkiness = this.getBulkiness(parent.name);
+                    const additiveBulkiness = this.getBulkiness(additive.name);
+                    const stericFactor = useSterics ? (1 - (parentBulkiness * additiveBulkiness * 0.1)) : 1.0;
+                    
+                    const electronicFactor = this.getElectronicCoupling(parent.name, additive.name);
+
+                    const child = {
+                        id: nodeId++,
+                        name: additive.name,
+                        smiles: additive.smiles,
+                        
+                        // BINDING ENERGY: Accumulates but with diminishing returns
+                        bindingEnergy: parent.bindingEnergy + 
+                            (additive.bindingEnergy * saturationFactor * distanceFactor * stericFactor),
+                        
+                        // CONDUCTIVITY: Multiplicative degradation (each group disrupts sp2 network)
+                        conductivity: Math.max(0.05, // Minimum 5% conductivity
+                            parent.conductivity * (0.4 + additive.conductivity * 0.6) * // Weighted retention
+                            Math.max(0.5, coverageFactor)), // Coverage penalty
+                        
+                        // BIOCOMPATIBILITY: Weighted average, new outer layer dominates
+                        biocompatibility: currentDepth === 0 ? 
+                            additive.biocompatibility : // First layer IS the material
+                            (parent.biocompatibility * 0.3 + additive.biocompatibility * 0.7), // Outer layer (70%) dominates inner (30%)
+                        
+                        // STABILITY: Limited by the *weakest link* in the chain, with a synergy buffer
+                        stability: Math.max(0.3, // Floor
+                            Math.min(parent.stability, additive.stability) * (0.9 + 0.1 * electronicFactor)), // Synergy can boost the weakest link
+                        
+                        applications: this.mergeApplications(parent.applications, additive.applications, currentDepth),
+                        family: familyKey,
+                        familyName: family.name,
+                        color: family.color,
+                        depth: currentDepth + 1,
+                        functionalPath: [...parent.functionalPath, additive.name],
+                        coveragePercent: estimatedCoverage,
+                        
+                        // New scientific metrics
+                        diversityScore: this.calculateDiversity([...parent.functionalPath, additive.name]),
+                        synergyScore: electronicFactor,
+                        practicalityScore: this.getPracticalityScore(additive.name, currentDepth),
+                        
+                        children: []
+                    };
+
+                    // Add variance based on real experimental uncertainty (replaces old jitter)
+                    child.bindingEnergy += (Math.random() - 0.5) * 0.2; // ±0.1 eV experimental error
+                    child.conductivity *= (0.95 + Math.random() * 0.1); // ±5% measurement variance
+                    child.biocompatibility = Math.max(0, Math.min(1, child.biocompatibility * (0.95 + Math.random() * 0.1)));
+                    child.stability = Math.max(0, Math.min(1, child.stability * (0.95 + Math.random() * 0.1)));
+
+                    parent.children.push(child);
+                    addChildren(child, currentDepth + 1);
                 }
-                checkNode(this.treeData);
+            };
+
+            addChildren(root, 0);
+
+            // Calculate global metrics POST-generation
+            this.calculateTreeMetrics(root);
+
+            // Update stats
+            const totalNodes = this.countNodes(root);
+            document.getElementById('totalNodes').textContent = totalNodes;
+            document.getElementById('currentDepth').textContent = maxDepth;
+
+            return root;
+        },
+
+        // --- 4b. NEW: Helper functions for scientific calcs (must be inside 'app' object) ---
+        getBulkiness(groupName) {
+            const bulkiness = {
+                'H': 0.1, 'F': 0.2, 'OH': 0.3, 'NH2': 0.3,
+                'CH3': 0.5, 'COOH': 0.7, 'SO3H': 0.8,
+                'PO3H2': 0.9, 'CF3': 0.6, 'Fe-N4': 0.8,
+                'Pristine Graphene': 0, 'C=O': 0.4, 'O-epoxy': 0.4
+            };
+            return bulkiness[groupName] || 0.5; // Default for others
+        },
+
+        getElectronicCoupling(group1, group2) {
+            // 1.0 = neutral, > 1.0 = synergy, < 1.0 = opposition
+            if (!group1 || !group2 || group1 === "Pristine Graphene") return 1.0;
+            const key = [group1, group2].sort().join('-');
+            const coupling = {
+                'COOH-NH2': 1.3,     // Zwitterionic stabilization
+                'COOH-COOH': 0.7,    // Repulsion
+                'NH2-NH2': 0.8,      // Mild repulsion
+                'COOH-OH': 1.1,      // H-bonding
+                'NH2-SO3H': 1.4,     // Strong ionic
+                'Fe-N4-OH': 1.2,     // Coordination synergy (assuming O)
+                'F-OH': 0.6,         // Opposing polarity
+            };
+            return coupling[key] || 1.0; // Default no interaction
+        },
+
+        calculateDiversity(path) {
+            const unique = new Set(path).size;
+            const total = path.length;
+            return total > 0 ? (unique / total) : 1; // 1 = 100% diversity
+        },
+
+        getPracticalityScore(groupName, depth) {
+            // Normalized 0-1 (higher is easier)
+            const basePracticality = {
+                'OH': 0.95,     // Easy - from graphene oxide
+                'COOH': 0.95,   // Easy - natural in HydroGraph process
+                'NH2': 0.8,     // Moderate - amination
+                'F': 0.7,       // Harder - requires F2 or XeF2
+                'PO3H2': 0.6,   // Difficult - multistep
+                'Fe-N4': 0.4,   // Very difficult - controlled coordination
+            };
+            const score = basePracticality[groupName] || 0.5;
+            // Deeper functionalizations are exponentially harder
+            return Math.max(0.1, score * Math.pow(0.8, depth)); // Floor at 0.1
+        },
+
+        mergeApplications(parentApps, additiveApps, depth) {
+            if (depth === 0) return additiveApps || [];
+            
+            // Combine, but deeper groups contribute less to applications
+            const combined = new Set(parentApps);
+            (additiveApps || []).forEach(appText => {
+                // Core properties (bulk) are always relevant
+                const appLower = appText.toLowerCase();
+                if (depth <= 2 || appLower.includes('composite') || appLower.includes('coating') || appLower.includes('strength')) {
+                    combined.add(appText);
+                } else if (depth <= 3 && Math.random() < 0.3) {
+                    // Deeper, more specific apps are less likely to express
+                    combined.add(appText);
+                }
+            });
+            return Array.from(combined).slice(0, 5); // Limit to 5 most relevant
+        },
+
+        calculateTreeMetrics(node) {
+            // Recursively calculate final composite metrics
+            node.effectiveFunctionalization = (node.coveragePercent || 0) * (node.practicalityScore || 0);
+            
+            // Weighted score for commercial viability
+            node.commercialPotential = (
+                Math.min(1, Math.abs(node.bindingEnergy / 4)) * 0.3 + // Normalized to 4eV
+                node.conductivity * 0.2 +
+                node.biocompatibility * 0.2 +
+                node.stability * 0.2 +
+                (node.practicalityScore || 0) * 0.1 // Practicality is a factor!
+            ); // Already normalized since inputs are 0-1
+            
+            if (node.children) {
+                node.children.forEach(child => this.calculateTreeMetrics(child));
+            }
+        },
+
+        // --- 5. VISUALIZATION & D3 RENDERING ---
+
+        // Count nodes in tree
+        countNodes(node) {
+            let count = 1;
+            if (node.children && node.children.length > 0) {
+                node.children.forEach(child => {
+                    count += this.countNodes(child);
+                });
+            }
+            return count;
+        },
+
+        // Update visualization
+        updateVisualization() {
+            this.g.selectAll('*').remove(); // Clear previous render
+
+            if (!this.treeData) return;
+
+            switch(this.currentLayout) {
+                case 'tree': this.renderTreeLayout(); break;
+                case 'radial': this.renderRadialLayout(); break;
+                case 'force': this.renderForceLayout(); break;
+            }
+            this.updateColorScheme(); // Apply current color scheme
+        },
+
+        // Render tree layout
+        renderTreeLayout() {
+            const container = document.getElementById('tree-container');
+            const width = container.clientWidth;
+            const height = container.clientHeight;
+
+            const treeLayout = d3.tree().size([width - 100, height - 100]);
+            const root = d3.hierarchy(this.treeData);
+            const treeNodes = treeLayout(root);
+
+            // Draw links
+            this.g.selectAll('.link')
+                .data(treeNodes.links())
+                .enter().append('path')
+                .attr('class', 'link')
+                .attr('d', d3.linkVertical().x(d => d.x + 50).y(d => d.y + 50))
+                .attr('fill', 'none')
+                .attr('stroke', d => d.target.data.color || '#64ffda')
+                .attr('stroke-width', d => Math.max(1, 3 - d.target.depth * 0.5))
+                .attr('opacity', 0.6);
+
+            // Draw nodes
+            const nodes = this.g.selectAll('.node')
+                .data(treeNodes.descendants())
+                .enter().append('g')
+                .attr('class', 'node')
+                .attr('transform', d => `translate(${d.x + 50},${d.y + 50})`);
+
+            // MODIFIED CIRCLE LOGIC
+            nodes.append('circle')
+                .attr('r', d => {
+                    const baseSize = d.depth === 0 ? 12 : 8;
+                    const potential = d.data.commercialPotential || 0.5; // Default if undefined
+                    return baseSize * (0.5 + potential);
+                })
+                .attr('fill', d => { // Base fill (will be overridden by updateColorScheme)
+                    const color = d.data.color || '#64ffda';
+                    const practicality = d.data.practicalityScore || 1.0; // Default if undefined
+                    return d3.color(color).darker(2 - (2 * practicality));
+                })
+                .attr('stroke', '#fff')
+                .attr('stroke-width', d => {
+                    const diversity = d.data.diversityScore || 0; // Default if undefined
+                    return 2 + diversity * 2;
+                })
+                .style('cursor', 'pointer')
+                .on('click', (event, d) => this.selectNode(d.data))
+                .on('mouseover', (event, d) => this.showTooltip(event, d.data))
+                .on('mouseout', () => this.hideTooltip());
+
+            // MODIFIED TEXT (MOVED BELOW)
+            nodes.append('text')
+                .attr('dy', d => d.depth === 0 ? 24 : 20) // Positioned below node
+                .attr('text-anchor', 'middle')
+                .text(d => d.data.name)
+                .style('font-size', d => d.depth === 0 ? '13px' : '10px')
+                .style('fill', '#e4e9f0')
+                .style('font-weight', d => d.depth === 0 ? 'bold' : 'normal')
+                .style('pointer-events', 'none');
+            
+            // NEW SYNERGY BADGE (ABOVE)
+            nodes.filter(d => (d.data.synergyScore || 0) > 1.2)
+                .append('text')
+                .attr('class', 'synergy-badge')
+                .attr('dy', d => d.depth === 0 ? -22 : -18) // Positioned above node
+                .attr('text-anchor', 'middle')
+                .text('⚡')
+                .style('fill', '#ffd700')
+                .style('font-size', '12px')
+                .style('pointer-events', 'none');
+        },
+
+        // Render radial layout
+        renderRadialLayout() {
+            const container = document.getElementById('tree-container');
+            const width = container.clientWidth;
+            const height = container.clientHeight;
+            const radius = Math.min(width, height) / 2 - 100;
+
+            const treeLayout = d3.tree()
+                .size([2 * Math.PI, radius])
+                .separation((a, b) => (a.parent == b.parent ? 1 : 2) / a.depth);
+
+            const root = d3.hierarchy(this.treeData);
+            const treeNodes = treeLayout(root);
+            const centerX = width / 2;
+            const centerY = height / 2;
+
+            // Links
+            this.g.selectAll('.link')
+                .data(treeNodes.links())
+                .enter().append('path')
+                .attr('class', 'link')
+                .attr('d', d3.linkRadial().angle(d => d.x).radius(d => d.y))
+                .attr('transform', `translate(${centerX},${centerY})`)
+                .attr('fill', 'none')
+                .attr('stroke', d => d.target.data.color || '#64ffda')
+                .attr('stroke-width', d => Math.max(1, 3 - d.target.depth * 0.5))
+                .attr('opacity', 0.6);
+
+            // Nodes
+            const nodes = this.g.selectAll('.node')
+                .data(treeNodes.descendants())
+                .enter().append('g')
+                .attr('class', 'node')
+                .attr('transform', d => `translate(${centerX + d.y * Math.cos(d.x - Math.PI / 2)},${centerY + d.y * Math.sin(d.x - Math.PI / 2)})`);
+
+            // MODIFIED CIRCLE LOGIC
+            nodes.append('circle')
+                .attr('r', d => {
+                    const baseSize = d.depth === 0 ? 12 : 8;
+                    const potential = d.data.commercialPotential || 0.5;
+                    return baseSize * (0.5 + potential);
+                })
+                .attr('fill', d => {
+                    const color = d.data.color || '#64ffda';
+                    const practicality = d.data.practicalityScore || 1.0;
+                    return d3.color(color).darker(2 - (2 * practicality));
+                })
+                .attr('stroke', '#fff')
+                .attr('stroke-width', d => {
+                    const diversity = d.data.diversityScore || 0;
+                    return 2 + diversity * 2;
+                })
+                .style('cursor', 'pointer')
+                .on('click', (event, d) => this.selectNode(d.data))
+                .on('mouseover', (event, d) => this.showTooltip(event, d.data))
+                .on('mouseout', () => this.hideTooltip());
+
+            // MODIFIED TEXT (MOVED "OUTWARD")
+            nodes.append('text')
+                .attr('dy', d => d.depth === 0 ? 24 : 20) // Positioned "outward" from node
+                .attr('text-anchor', 'middle')
+                .text(d => d.data.name)
+                .style('font-size', d => d.depth === 0 ? '13px' : '10px')
+                .style('fill', '#e4e9f0')
+                .style('font-weight', d => d.depth === 0 ? 'bold' : 'normal')
+                .style('pointer-events', 'none');
+
+            // NEW SYNERGY BADGE (ABOVE/INWARD)
+            nodes.filter(d => (d.data.synergyScore || 0) > 1.2)
+                .append('text')
+                .attr('class', 'synergy-badge')
+                .attr('dy', d => d.depth === 0 ? -22 : -18) // Positioned "inward" from node
+                .attr('text-anchor', 'middle')
+                .text('⚡')
+                .style('fill', '#ffd700')
+                .style('font-size', '12px')
+                .style('pointer-events', 'none');
+        },
+
+        // Render force-directed layout
+        renderForceLayout() {
+            const container = document.getElementById('tree-container');
+            const width = container.clientWidth;
+            const height = container.clientHeight;
+
+            const root = d3.hierarchy(this.treeData);
+            const nodesData = root.descendants();
+            const linksData = root.links();
+
+            this.simulation = d3.forceSimulation(nodesData)
+                .force('link', d3.forceLink(linksData).id(d => d.id).distance(50).strength(1))
+                .force('charge', d3.forceManyBody().strength(-300))
+                .force('center', d3.forceCenter(width / 2, height / 2))
+                .force('collision', d3.forceCollide().radius(20));
+
+            const link = this.g.selectAll('.link')
+                .data(linksData)
+                .enter().append('line')
+                .attr('class', 'link')
+                .attr('stroke', d => d.target.data.color || '#64ffda')
+                .attr('stroke-width', 2)
+                .attr('opacity', 0.6);
+
+            const node = this.g.selectAll('.node')
+                .data(nodesData)
+                .enter().append('g')
+                .attr('class', 'node')
+                .call(d3.drag()
+                    .on('start', (event, d) => this.dragstarted(event, d))
+                    .on('drag', (event, d) => this.dragged(event, d))
+                    .on('end', (event, d) => this.dragended(event, d)));
+
+            // MODIFIED CIRCLE LOGIC
+            node.append('circle')
+                .attr('r', d => {
+                    const baseSize = d.depth === 0 ? 12 : 8;
+                    const potential = d.data.commercialPotential || 0.5;
+                    return baseSize * (0.5 + potential);
+                })
+                .attr('fill', d => {
+                    const color = d.data.color || '#64ffda';
+                    const practicality = d.data.practicalityScore || 1.0;
+                    return d3.color(color).darker(2 - (2 * practicality));
+                })
+                .attr('stroke', '#fff')
+                .attr('stroke-width', d => {
+                    const diversity = d.data.diversityScore || 0;
+                    return 2 + diversity * 2;
+                })
+                .style('cursor', 'pointer')
+                .on('click', (event, d) => this.selectNode(d.data))
+                .on('mouseover', (event, d) => this.showTooltip(event, d.data))
+                .on('mouseout', () => this.hideTooltip());
+
+            // MODIFIED TEXT (MOVED BELOW)
+            node.append('text')
+                .attr('dy', 20) // Position below node
+                .attr('text-anchor', 'middle')
+                .text(d => d.data.name)
+                .style('font-size', '10px')
+                .style('fill', '#e4e9f0')
+                .style('pointer-events', 'none');
+
+            // NEW SYNERGY BADGE (ABOVE)
+            node.filter(d => (d.data.synergyScore || 0) > 1.2)
+                .append('text')
+                .attr('class', 'synergy-badge')
+                .attr('dy', -18) // Positioned above node
+                .attr('text-anchor', 'middle')
+                .text('⚡')
+                .style('fill', '#ffd700')
+                .style('font-size', '12px')
+                .style('pointer-events', 'none');
+
+            // Simulation tick function
+            this.simulation.on('tick', () => {
+                link
+                    .attr('x1', d => d.source.x)
+                    .attr('y1', d => d.source.y)
+                    .attr('x2', d => d.target.x)
+                    .attr('y2', d => d.target.y);
+                node.attr('transform', d => `translate(${d.x},${d.y})`);
+            });
+        },
+
+        // Drag functions for force layout
+        dragstarted(event, d) {
+            if (!event.active) this.simulation.alphaTarget(0.3).restart();
+            d.fx = d.x;
+            d.fy = d.y;
+        },
+        dragged(event, d) {
+            d.fx = event.x;
+            d.fy = event.y;
+        },
+        dragended(event, d) {
+            if (!event.active) this.simulation.alphaTarget(0);
+            d.fx = null;
+            d.fy = null;
+        },
+
+        // --- 6. UI INTERACTION & INFO DISPLAY ---
+
+        // MODIFIED: Select and display node information (and record click)
+        selectNode(nodeData) {
+            // LEARNING SYSTEM HOOK: Record this click against the last search query
+            this.searchHistory.recordClick(this.lastSearchQuery, nodeData);
+            
+            this.selectedNode = nodeData;
+            
+            document.getElementById('nodeInfo').style.display = 'block';
+            document.getElementById('nodeTitle').textContent = nodeData.name;
+            document.getElementById('nodeFormula').textContent = nodeData.smiles || '-';
+            document.getElementById('nodeFamily').textContent = nodeData.familyName || nodeData.family || '-';
+            document.getElementById('nodeBindingEnergy').textContent = 
+                nodeData.bindingEnergy ? `${nodeData.bindingEnergy.toFixed(2)} eV` : '0 eV';
+            document.getElementById('nodeConductivity').textContent = 
+                `${(nodeData.conductivity * 100).toFixed(0)}%`;
+            document.getElementById('nodeBiocompat').textContent = 
+                `${(nodeData.biocompatibility * 100).toFixed(0)}%`;
+
+            // Update progress bars (MODIFIED to use new total binding energy range)
+            // Assumes a practical max cumulative binding of ~-20eV for normalization
+            document.getElementById('bindingEnergyBar').style.width = 
+                `${Math.min(100, Math.abs(nodeData.bindingEnergy) / 20 * 100)}%`;
+            document.getElementById('conductivityBar').style.width = 
+                `${(nodeData.conductivity || 0) * 100}%`;
+            document.getElementById('biocompatBar').style.width = 
+                `${(nodeData.biocompatibility || 0) * 100}%`;
+
+            // Update applications
+            const appsContainer = document.getElementById('nodeApplications');
+            appsContainer.innerHTML = '';
+            if (nodeData.applications && nodeData.applications.length > 0) {
+                nodeData.applications.forEach(appText => {
+                    const tag = document.createElement('span');
+                    tag.className = 'app-tag';
+                    tag.textContent = appText;
+                    tag.title = appText; // Add tooltip to the tag itself
+                    appsContainer.appendChild(tag);
+                });
+            } else {
+                 const noAppTag = document.createElement('span');
+                 noAppTag.style.fontSize = '12px';
+                 noAppTag.style.color = '#8892b0';
+                 noAppTag.textContent = 'No specific applications listed.';
+                 appsContainer.appendChild(noAppTag);
+            }
+
+            // Highlight selected node (using new logic)
+            this.g.selectAll('.node circle')
+                .transition()
+                .duration(300)
+                .style('stroke', function(d) {
+                    const currentNode = d.data || d;
+                    return currentNode.id === nodeData.id ? '#FFD700' : '#fff'; // Highlight selected with gold
+                })
+                .style('stroke-width', function(d) {
+                    const currentNode = d.data || d;
+                    const baseStroke = 2 + (currentNode.diversityScore || 0) * 2;
+                    return currentNode.id === nodeData.id ? baseStroke + 2 : baseStroke;
+                });
+        },
+
+        showTooltip(event, nodeData) {
+            if (!nodeData) return;
+            const tooltip = document.getElementById('tooltip');
+
+            // Build the HTML using standard string concatenation for clarity and parser safety
+            let html = '';
+            html += '<strong style="color: ' + (nodeData.color || '#64ffda') + '; font-size: 13px;">' + nodeData.name + ' (L' + nodeData.depth + ')</strong><br>';
+            html += '<span style="font-size: 10px; color: #8892b0;">' + (nodeData.functionalPath ? nodeData.functionalPath.join(' &rarr; ') : nodeData.family) + '</span>';
+            html += '<hr style="border-color: rgba(100,255,218,0.1); margin: 4px 0;">';
+            html += '<strong>Commercial Potential:</strong> ' + ((nodeData.commercialPotential || 0) * 100).toFixed(0) + '%<br>';
+            html += '<strong>Synthesizability:</strong> ' + ((nodeData.practicalityScore || 0) * 100).toFixed(0) + '%<br>';
+            html += '<strong>Conductivity:</strong> ' + ((nodeData.conductivity || 0) * 100).toFixed(0) + '%<br>';
+            html += '<strong>Binding Energy:</strong> ' + (nodeData.bindingEnergy || 0).toFixed(2) + ' eV<br>';
+            html += '<strong>Diversity:</strong> ' + ((nodeData.diversityScore || 0) * 100).toFixed(0) + '%';
+
+            tooltip.innerHTML = html; // Assign the completed, safe string
+            
+            // These are separate JavaScript commands
+            tooltip.style.left = event.pageX + 15 + 'px';
+            tooltip.style.top = event.pageY + 15 + 'px';
+            tooltip.style.display = 'block';
+        },
 
 
-                this.g.selectAll('.node circle')
-                    .transition()
-                    .duration(300)
-                    .attr('opacity', function(d) {
-                        const node = d.data || d;
-                        if (node.family === 'root') return 1;
-                        return relevantNodeIds.has(node.id) ? 1 : 0.1;
-                    });
-            },
+        hideTooltip() {
+            document.getElementById('tooltip').style.display = 'none';
+        },
 
-            // Update color scheme
-            updateColorScheme() {
-                const metric = document.getElementById('colorMetric').value;
-                
-                this.g.selectAll('.node circle')
-                    .transition()
-                    .duration(500)
-                    .attr('fill', function(d) {
-                        const node = d.data || d;
+        // Change layout
+        changeLayout(layout) {
+            this.currentLayout = layout;
+            
+            ['tree', 'radial', 'force'].forEach(l => {
+                const btn = document.getElementById(`${l}Btn`);
+                btn.classList.toggle('active', l === layout);
+            });
+            
+            if (this.simulation) {
+                this.simulation.stop();
+            }
+            this.updateVisualization();
+            this.centerView(); // Recenter on layout change
+        },
+
+        // --- 7. FILTERING & ANALYSIS FUNCTIONS ---
+
+        // Filter by family (Simple Filter)
+        filterByFamily(family) {
+            const familyData = this.grapheneFamilies[family];
+            if (!familyData) return;
+            
+            document.getElementById('activeFilter').textContent = familyData.name;
+            document.getElementById('searchInput').value = family; // Put in search bar
+            
+            this.g.selectAll('.node circle')
+                .transition()
+                .duration(300)
+                .attr('opacity', function(d) {
+                    const node = d.data || d;
+                    return node.family === family || node.family === 'root' ? 1 : 0.1;
+                });
+            
+            this.g.selectAll('.link, line')
+                .transition()
+                .duration(300)
+                .attr('opacity', d => (d.target.data.family === family) ? 0.6 : 0.05);
+        },
+
+        // Show top performers (Metric Filter)
+        showTopPerformers(metric) {
+            const allNodes = [];
+            const collectNodes = (node) => {
+                if (node.family !== 'root') allNodes.push(node);
+                if (node.children) node.children.forEach(collectNodes);
+            };
+            if(this.treeData) collectNodes(this.treeData);
+            
+            // Sort by metric
+            allNodes.sort((a, b) => {
+                if (metric === 'bindingEnergy') {
+                    return (a[metric] || 0) - (b[metric] || 0); // More negative is better
+                }
+                return (b[metric] || 0) - (a[metric] || 0); // Higher is better
+            });
+            
+            const topNodeIds = new Set(allNodes.slice(0, 10).map(n => n.id));
+            
+            document.getElementById('activeFilter').textContent = `Top 10 ${metric}`;
+            document.getElementById('searchInput').value = `high ${metric}`;
+            
+            this.g.selectAll('.node circle')
+                .transition()
+                .duration(500)
+                .attr('opacity', function(d) {
+                    const node = d.data || d;
+                    return topNodeIds.has(node.id) || node.family === 'root' ? 1 : 0.1;
+                })
+                .attr('r', function(d) { // Make top performers pop
+                    const node = d.data || d;
+                    const baseSize = d.depth === 0 ? 12 : 8;
+                    const potential = node.commercialPotential || 0.5;
+                    const baseR = baseSize * (0.5 + potential);
+                    return topNodeIds.has(node.id) ? baseR * 1.5 : baseR;
+                });
+        },
+
+        // Show application category (Ontology Filter)
+        showApplicationCategory(categoryKey) {
+            // Use the semantic search engine to run this query
+            document.getElementById('searchInput').value = categoryKey;
+            this.searchNodes(categoryKey);
+        },
+
+        // Update color scheme (MODIFIED for new metrics AND gradient fix)
+        updateColorScheme() {
+            const metric = document.getElementById('colorMetric').value;
+            
+            this.g.selectAll('.node circle')
+                .transition()
+                .duration(500)
+                .attr('fill', (d) => { 
+                    const node = d.data || d;
+                    if (!node) return '#fff';
+                    
+                    if (node.family === 'root') return '#64ffda';
+                    
+                    let value;
+                    switch(metric) {
+                        case 'family':
+                            // Re-apply practicality shading
+                            const color = node.color || '#64ffda';
+                            const practicality = node.practicalityScore || 1.0;
+                            return d3.color(color).darker(2 - (2 * practicality));
+                        case 'bindingEnergy':
+                            value = Math.min(1, Math.max(0, Math.abs(node.bindingEnergy) / 20)); // Normalize 0 to 20eV range
+                            return d3.interpolateViridis(value);
+                        case 'conductivity':
+                            return d3.interpolatePlasma(node.conductivity);
+                        case 'biocompatibility':
+                            return d3.interpolateRdYlGn(node.biocompatibility);
+                        case 'stability':
+                            return d3.interpolateCividis(node.stability);
+                        case 'practicalityScore': // NEW
+                            return d3.interpolateRdYlGn(node.practicalityScore); // Red(hard) to Green(easy)
                         
-                        if (node.family === 'root') return '#64ffda';
-                        
-                        if (metric === 'family') {
+                        case 'commercialPotential': // NEW RE-NORMALIZED LOGIC
+                            // Assume the "interesting" data range is between 50% and 80%
+                            const minPotential = 0.5;
+                            const maxPotential = 0.8;
+                            // Stretch this range to fill the 0.0 - 1.0 color spectrum
+                            let normValue = (node.commercialPotential - minPotential) / (maxPotential - minPotential);
+                            value = Math.max(0, Math.min(1, normValue)); // Clamp between 0 and 1
+                            return d3.interpolateInferno(value); // Use the full Inferno scale
+
+                        default:
                             return node.color || '#64ffda';
-                        }
-                        
-                        let value;
-                        switch(metric) {
-                            case 'bindingEnergy':
-                                value = Math.min(1, Math.max(0, Math.abs(node.bindingEnergy) / 5)); // Normalize 0 to 5eV range
-                                return d3.interpolateViridis(value); // Viridis is good for data
-                            case 'conductivity':
-                                return d3.interpolatePlasma(node.conductivity); // Plasma: low=dark, high=yellow
-                            case 'biocompatibility':
-                                return d3.interpolateRdYlGn(node.biocompatibility); // Red-Yellow-Green is intuitive
-                            case 'stability':
-                                return d3.interpolateCividis(node.stability); // Cividis is perceptually uniform
-                            default:
-                                return node.color || '#64ffda';
-                        }
-                    });
-                
-                this.updateLegend(metric);
-            },
+                    }
+                });
+            
+            this.updateLegend(metric);
+        },
 
-            // Update legend based on metric
-            updateLegend(metric) {
-                const legend = document.getElementById('legend');
-                legend.innerHTML = ''; // Clear legend
+        // Update legend based on metric (MODIFIED for new metrics AND gradient fix)
+        updateLegend(metric) {
+            const legend = document.getElementById('legend');
+            legend.innerHTML = ''; // Clear legend
 
-                if (metric === 'family') {
-                    // Show family colors
-                    Object.keys(this.grapheneFamilies).forEach(key => {
-                        const family = this.grapheneFamilies[key];
-                        const item = document.createElement('div');
-                        item.className = 'legend-item';
-                        item.innerHTML = `
+            if (metric === 'family') {
+                Object.keys(this.grapheneFamilies).forEach(key => {
+                    const family = this.grapheneFamilies[key];
+                    legend.innerHTML += `
+                        <div class="legend-item">
                             <div class="legend-color" style="background: ${family.color};"></div>
                             <span>${family.name.replace(' Family', '').replace(' Coordination', '')}</span>
-                        `;
-                        legend.appendChild(item);
-                    });
-                    const pristineItem = document.createElement('div');
-                    pristineItem.className = 'legend-item';
-                    pristineItem.innerHTML = `
+                        </div>`;
+                });
+                legend.innerHTML += `
+                    <div class="legend-item">
                         <div class="legend-color" style="background: #64ffda;"></div>
                         <span>Pristine</span>
-                    `;
-                    legend.appendChild(pristineItem);
+                    </div>`;
+            } else {
+                // Show metric gradient
+                const scales = {
+                    bindingEnergy: { scale: d3.interpolateViridis, labels: ['Weak (0eV)', 'Strong (20eV+)'] },
+                    conductivity: { scale: d3.interpolatePlasma, labels: ['Insulator', 'Conductive'] },
+                    biocompatibility: { scale: d3.interpolateRdYlGn, labels: ['Toxic', 'Biocompatible'] },
+                    stability: { scale: d3.interpolateCividis, labels: ['Unstable', 'Stable'] },
+                    practicalityScore: { scale: d3.interpolateRdYlGn, labels: ['Impractical', 'Synthesizable'] },
+                    commercialPotential: { scale: d3.interpolateInferno, labels: ['~50%', '80%+'] } // FIXED LABEL
+                };
+                const spec = scales[metric];
+                if (!spec) return; // Failsafe
 
+                const { scale, labels } = spec;
+                
+                const gradientColors = d3.range(0, 1.01, 0.25).map(t => scale(t));
+                legend.innerHTML = `
+                    <div style="grid-column: 1 / -1; height: 14px; border-radius: 7px; background: linear-gradient(to right, ${gradientColors.join(',')});"></div>
+                    <div style="grid-column: 1 / -1; display: flex; justify-content: space-between; font-size: 10px; color: #8892b0;">
+                        <span>${labels[0]}</span>
+                        <span>${labels[1]}</span>
+                    </div>
+                `;
+            }
+        },
+
+        // --- 8. NEW SEMANTIC SEARCH IMPLEMENTATION ---
+
+        // REPLACED: Enhanced search function with relevance ranking
+        searchNodes(searchQuery) {
+            // Store query for learning
+            this.lastSearchQuery = searchQuery.toLowerCase().trim();
+            
+            const parser = new QueryParser();
+            const parsed = parser.parse(this.lastSearchQuery);
+            
+            if (!this.lastSearchQuery) {
+                this.resetFilters();
+                return;
+            }
+            
+            // Calculate relevance scores for all nodes
+            const nodeScores = new Map();
+            
+            const calculateScores = (node) => {
+                let isExcluded = false;
+                // 1. Check exclusions
+                if (parsed.exclude.length > 0) {
+                    const nodeText = `${node.name.toLowerCase()} ${node.family.toLowerCase()} ${(node.applications || []).join(' ').toLowerCase()}`;
+                    isExcluded = parsed.exclude.some(exc => nodeText.includes(exc));
+                }
+                if (isExcluded) {
+                    nodeScores.set(node, 0);
                 } else {
-                    // Show metric gradient (More robust gradient representation)
-                    const colorScales = {
-                        bindingEnergy: d3.interpolateViridis,
-                        conductivity: d3.interpolatePlasma,
-                        biocompatibility: d3.interpolateRdYlGn,
-                        stability: d3.interpolateCividis
-                    };
-                    const labels = {
-                        bindingEnergy: ['Weak', 'Strong'],
-                        conductivity: ['Low', 'High'],
-                        biocompatibility: ['Poor', 'Excellent'],
-                        stability: ['Low', 'High']
+                    // 2. Calculate base relevance score
+                    let score = calculateRelevanceScore(node, parsed.expandedTerms);
+                    
+                    // 3. Apply property filters (Hard filters/boosts)
+                    let propertyMatch = true;
+                    if (parsed.properties.length > 0) {
+                        propertyMatch = parsed.properties.every(prop => {
+                           return prop.test(node[prop.property]);
+                        });
+
+                        if (propertyMatch) {
+                            score += 10 * parsed.properties.length; // Boost for matching all properties
+                        }
+                    }
+
+                    // If it fails a hard property filter, it's not a match.
+                    if (!propertyMatch) {
+                        score = 0;
+                    } 
+                    // If it matches properties but has no matching text terms, it's still a match (if no text was entered)
+                    else if (propertyMatch && parsed.properties.length > 0 && score === 0 && parsed.expandedTerms.length === 0) {
+                        score = 10; // Base score for just matching properties
+                    } 
+                    // If text was entered but didn't match, it's not a result (unless property match is all that matters)
+                    else if (score === 0 && parsed.expandedTerms.length > 0 && parsed.properties.length === 0) {
+                        score = 0; // Requires text match if text was provided (and no properties were)
                     }
                     
-                    const scale = colorScales[metric];
-                    const labelPair = labels[metric];
-
-                    // Create gradient bar
-                    const gradientBar = document.createElement('div');
-                    gradientBar.style.gridColumn = '1 / -1'; // Span both columns
-                    gradientBar.style.height = '14px';
-                    gradientBar.style.borderRadius = '7px';
-                    gradientBar.style.background = `linear-gradient(to right, ${scale(0)}, ${scale(0.25)}, ${scale(0.5)}, ${scale(0.75)}, ${scale(1)})`;
+                    // 4. Apply learning boost
+                    if (score > 0) {
+                        const clickBoost = this.searchHistory.getClickBoost(this.lastSearchQuery, node);
+                        score += clickBoost;
+                    }
                     
-                    const labelRow = document.createElement('div');
-                    labelRow.style.gridColumn = '1 / -1';
-                    labelRow.style.display = 'flex';
-                    labelRow.style.justifyContent = 'space-between';
-                    labelRow.style.fontSize = '10px';
-                    labelRow.style.color = '#8892b0';
-                    labelRow.innerHTML = `<span>${labelPair[0]}</span><span>${labelPair[1]}</span>`;
-
-                    legend.appendChild(gradientBar);
-                    legend.appendChild(labelRow);
-                }
-            },
-
-            // Search nodes
-            searchNodes(searchTerm) {
-                const term = searchTerm.toLowerCase().trim(); // NEW: Added trim()
-                
-                if (!term) {
-                    this.resetFilters();
-                    return;
+                    nodeScores.set(node, score);
                 }
                 
-                document.getElementById('activeFilter').textContent = `Search: ${searchTerm}`; // NEW: Show search term in filter status
-
-                const matchingNodeIds = new Set();
-                const checkNode = (node) => {
-                     const nameMatch = node.name && node.name.toLowerCase().includes(term);
-                     const familyNameMatch = node.familyName && node.familyName.toLowerCase().includes(term);
-                     const familyKeyMatch = node.family && node.family.toLowerCase().includes(term);
-                     const appMatch = node.applications && node.applications.some(app => 
-                         app.toLowerCase().includes(term)
-                     );
-
-                     if (nameMatch || familyNameMatch || familyKeyMatch || appMatch) {
-                         matchingNodeIds.add(node.id);
-                     }
-                     if(node.children) node.children.forEach(checkNode);
+                if (node.children) {
+                    node.children.forEach(calculateScores);
                 }
-                checkNode(this.treeData);
+            };
+            
+            if (this.treeData) calculateScores(this.treeData);
+            
+            // Get threshold for visibility (top 30% of scores, or any score > 0)
+            const scores = Array.from(nodeScores.values()).filter(s => s > 0);
+            scores.sort((a, b) => b - a);
+            const threshold = scores.length > 0 ? (scores[Math.floor(scores.length * 0.3)] || 1) : 1;
+            const maxScore = scores.length > 0 ? scores[0] : threshold;
+            
+            // Record this search
+            this.searchHistory.recordSearch(this.lastSearchQuery, scores);
 
-                this.g.selectAll('.node circle')
-                    .transition()
-                    .duration(300)
-                    .attr('opacity', function(d) {
-                        const node = d.data || d;
-                        if (node.family === 'root') return 1; // Always show root
-                        return matchingNodeIds.has(node.id) ? 1 : 0.1;
-                    });
-            },
+            // Update visualization with relevance-based opacity and sizing
+            this.g.selectAll('.node circle')
+                .transition()
+                .duration(300)
+                .attr('opacity', (d) => {
+                    const node = d.data || d;
+                    const score = nodeScores.get(node) || 0;
+                    if (node.family === 'root') return 1.0;
+                    if (score === 0) return 0.05;
+                    // Scale opacity from 0.2 to 1.0 based on score vs threshold
+                    const scoreRatio = Math.min(1, score / (threshold + 0.1));
+                    return 0.2 + (scoreRatio * 0.8);
+                })
+                .attr('r', (d) => {
+                    const node = d.data || d;
+                    const score = nodeScores.get(node) || 0;
+                    const baseSize = d.depth === 0 ? 12 : 8;
+                    const potential = node.commercialPotential || 0.5;
+                    const baseR = baseSize * (0.5 + potential);
 
-            // Reset all filters
-            resetFilters() {
-                document.getElementById('activeFilter').textContent = 'None';
-                document.getElementById('searchInput').value = ''; // NEW: Clear search input
-                
-                this.g.selectAll('.node circle')
-                    .transition()
-                    .duration(300)
-                    .attr('opacity', 1)
-                    .attr('r', d => {
-                        return d.depth === 0 ? 12 : Math.max(6, 10 - d.depth);
-                    })
-                    .attr('stroke-width', 2);
-                
-                this.g.selectAll('.link, line')
-                    .transition()
-                    .duration(300)
-                    .attr('opacity', 0.6);
-            },
+                    if (score > 0 && maxScore > 0) {
+                        // Size by relevance score relative to max
+                        return baseR * (1 + Math.min(1, score / maxScore));
+                    }
+                    return baseR;
+                });
+            
+            // Update filter label with smart summary
+            const summary = this.generateSearchSummary(parsed, scores.length);
+            document.getElementById('activeFilter').textContent = summary;
+        },
 
-            // Zoom controls
-            zoomIn() {
-                this.svg.transition().duration(300).call(this.zoom.scaleBy, 1.3);
-            },
-
-            zoomOut() {
-                this.svg.transition().duration(300).call(this.zoom.scaleBy, 0.7);
-            },
-
-            centerView() {
-                // MODIFIED: Added reset to layout center for tree/radial
-                const container = document.getElementById('tree-container');
-                const width = container.clientWidth;
-                const height = container.clientHeight;
-                let transform = d3.zoomIdentity;
-
-                if(this.currentLayout === 'force'){
-                     transform = d3.zoomIdentity.translate(0, 0).scale(1);
-                }
-                // Recenter tree/radial layouts properly (they are offset in the 'g' element)
-                // Note: The simple d3.zoomIdentity works fine for the force layout which uses forceCenter.
-                // The tree/radial layouts are manually translated so zoomIdentity is correct.
-                
-                this.svg.transition().duration(750).call(
-                    this.zoom.transform,
-                    transform
-                );
-            },
-
-            resetView() {
-                this.centerView();
-                this.resetFilters();
-            },
-
-            // Export data
-            exportData() {
-                const data = {
-                    metadata: {
-                        project: "HydroGraph Reactive Graphene Explorer",
-                        generated: new Date().toISOString(),
-                        totalNodes: this.countNodes(this.treeData),
-                        depth: this.currentDepth,
-                        branching: this.currentBranching,
-                        layout: this.currentLayout
-                    },
-                    tree: this.treeData
-                };
-                
-                const json = JSON.stringify(data, null, 2);
-                const blob = new Blob([json], { type: 'application/json' });
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = `graphene-tree-data-${Date.now()}.json`;
-                document.body.appendChild(a); // Append for Firefox compatibility
-                a.click();
-                document.body.removeChild(a); // Clean up
-                URL.revokeObjectURL(url);
-                
-                // Changed alert to a console log, alerts are disruptive
-                console.log('Data exported successfully!');
+        // NEW: Generate human-readable search summary
+        generateSearchSummary(parsed, resultCount) {
+            const parts = [];
+            
+            if (parsed.properties.length > 0) {
+                const propDesc = parsed.properties.map(p => 
+                    `${p.modifier} ${p.property}`).join(', ');
+                parts.push(propDesc);
             }
-        };
+            
+            if (parsed.applications.length > 0) {
+                // Get unique top-level categories
+                const apps = [...new Set(parsed.applications.map(a_path => a_path[0]))].join('/');
+                parts.push(apps);
+            }
+            
+            if (parsed.terms.length > 0) {
+                parts.push(parsed.terms.slice(0, 2).join(', ')); // Only basic terms, not expanded
+            }
+            
+            if (parsed.exclude.length > 0) {
+                parts.push(`NOT ${parsed.exclude.join('/')}`);
+            }
+            
+            const summaryText = parts.join(' + ') || 'Search';
+            return `${summaryText} (${resultCount} results)`;
+        },
 
-        // Initialize when DOM is ready
-        document.addEventListener('DOMContentLoaded', () => {
-            app.init();
-        });
+        // Reset all filters
+        resetFilters() {
+            document.getElementById('activeFilter').textContent = 'None';
+            document.getElementById('searchInput').value = '';
+            this.lastSearchQuery = ''; // Clear search memory
+            
+            // Reset all visual attributes to their data-driven defaults
+            this.g.selectAll('.node circle')
+                .transition()
+                .duration(300)
+                .attr('opacity', 1)
+                .attr('r', d => {
+                    const baseSize = d.depth === 0 ? 12 : 8;
+                    const potential = (d.data || d).commercialPotential || 0.5;
+                    return baseSize * (0.5 + potential);
+                })
+                .attr('stroke', '#fff')
+                .attr('stroke-width', d => {
+                    const diversity = (d.data || d).diversityScore || 0;
+                    return 2 + diversity * 2;
+                });
+            
+            this.g.selectAll('.link, line')
+                .transition()
+                .duration(300)
+                .attr('opacity', 0.6);
+        },
+
+        // --- 9. VIEW CONTROLS & EXPORT ---
+
+        // Zoom controls
+        zoomIn() {
+            this.svg.transition().duration(300).call(this.zoom.scaleBy, 1.3);
+        },
+        zoomOut() {
+            this.svg.transition().duration(300).call(this.zoom.scaleBy, 0.7);
+        },
+
+        // Center view
+        centerView() {
+            const container = document.getElementById('tree-container');
+            const width = container.clientWidth;
+            const height = container.clientHeight;
+            let transform = d3.zoomIdentity;
+            
+            // Force layout is centered at 0,0 relative to its center force.
+            // Tree/Radial are manually translated, so resetting to identity works.
+            if (this.currentLayout === 'force') {
+                 transform = d3.zoomIdentity.translate(0, 0).scale(1);
+            }
+
+            this.svg.transition().duration(750).call(
+                this.zoom.transform,
+                transform
+            );
+        },
+
+        // Reset view and filters
+        resetView() {
+            this.centerView();
+            this.resetFilters();
+        },
+
+        // Export data
+        exportData() {
+            const data = {
+                metadata: {
+                    project: "HydroGraph Reactive Graphene Explorer",
+                    generated: new Date().toISOString(),
+                    totalNodes: this.countNodes(this.treeData),
+                    depth: this.currentDepth,
+                    branching: this.currentBranching,
+                    layout: this.currentLayout
+                },
+                tree: this.treeData // Export the full simulated tree
+            };
+            
+            const json = JSON.stringify(data, (key, value) => {
+                // Clean up circular references for JSON (D3 adds parent links which we don't want)
+                if (key === 'parent' || key === 'target' || key === 'source') return undefined;
+                return value;
+            }, 2);
+            
+            const blob = new Blob([json], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `graphene-simulation-data-${Date.now()}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            console.log('Data exported successfully!');
+        }
+    }; // END OF CONST APP OBJECT
+
+    //==============================================================
+    // 3. APP INITIALIZER (Must come AFTER 'const app' definition)
+    //==============================================================
+    document.addEventListener('DOMContentLoaded', () => {
+        app.init();
+    });
     </script>
 </body>
 </html>
