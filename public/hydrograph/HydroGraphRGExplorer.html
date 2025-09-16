@@ -1,7 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8"> <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8"> 
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>HydroGraph Reactive Graphene Explorer</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -111,7 +112,6 @@
             margin-bottom: 8px;
             line-height: 1.4;
         }
-        /* Using the checkmark for consistency */
         .about-section-steps li::before {
             content: '✓';
             position: absolute;
@@ -310,6 +310,17 @@
             color: #64ffda;
         }
         
+        .market-tag {
+            display: inline-block;
+            background: rgba(255, 215, 0, 0.1);
+            border: 1px solid rgba(255, 215, 0, 0.3);
+            border-radius: 12px;
+            padding: 3px 8px;
+            margin: 2px;
+            font-size: 10px;
+            color: #ffd700;
+        }
+        
         .legend {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
@@ -384,6 +395,41 @@
         .search-box input:focus {
             border-color: #64ffda;
             box-shadow: 0 0 15px rgba(100, 255, 218, 0.2);
+        }
+
+        /* Styles for Gold List */
+        #goldList {
+            background: rgba(30, 41, 59, 0.8);
+            border: 2px solid #ffd700;
+        }
+        #goldList table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 11px;
+        }
+        #goldList th, #goldList td {
+            padding: 6px;
+            text-align: left;
+            border-bottom: 1px solid rgba(255, 215, 0, 0.2);
+        }
+        #goldList th {
+            color: #ffd700;
+            font-weight: bold;
+        }
+        #goldList td {
+            vertical-align: top;
+        }
+        .gold-rank {
+            font-weight: bold;
+            color: #ffd700;
+        }
+        .combo-path {
+            color: #64ffda;
+            font-size: 10px;
+        }
+        .market-list {
+            font-size: 10px;
+            color: #8892b0;
         }
     </style>
 </head>
@@ -463,6 +509,8 @@
                     <option value="stability">Stability</option>
                     <option value="practicalityScore">Synthesizability</option>
                     <option value="commercialPotential">Commercial Potential</option>
+                    <option value="goldScore">Gold Score</option>
+                    <option value="marketPotential">Market Potential ($B)</option>
                 </select>
             </div>
 
@@ -483,6 +531,10 @@
                     <button onclick="app.showApplicationCategory('medical')" title="Highlight all nodes with Biomedical or Drug Delivery applications">Medical</button>
                     <button onclick="app.resetFilters()" title="Remove all active filters and highlighting">Clear Filters</button>
                 </div>
+                <div class="button-group">
+                    <button onclick="app.showGoldList()" title="Show top 'Gold' combos by refined score (stability + practicality + untapped markets)">Gold Rush 🏆</button>
+                    <button onclick="app.showMarketOpportunities()" title="Show biggest market opportunities">Market Map 💰</button>
+                </div>
             </div>
 
             <div class="control-section">
@@ -500,6 +552,9 @@
                     <button onclick="app.filterByFamily('halogen')" title="Show only nodes from the Halogen family">Halogen</button>
                     <button onclick="app.filterByFamily('metal')" title="Show only nodes from the Metal Coordination family">Metal</button>
                     <button onclick="app.filterByFamily('hybrid')" title="Show only nodes from the Hybrid family">Hybrid</button>
+                    <button onclick="app.filterByFamily('boron')" title="Show only nodes from the Boron family">Boron</button>
+                    <button onclick="app.filterByFamily('silicon')" title="Show only nodes from the Silicon family">Silicon</button>
+                    <button onclick="app.filterByFamily('alkyl')" title="Show only nodes from the Alkyl/Organic family">Alkyl</button>
                     <button onclick="app.resetFilters()" title="Remove family filter and show all nodes">Show All</button>
                 </div>
             </div>
@@ -536,14 +591,35 @@
                     <div class="metric-fill" id="biocompatBar" style="background: linear-gradient(90deg, #a78bfa, #f472b6);"></div>
                 </div>
                 <div class="metric-row">
+                    <span class="metric-label" title="Gold Score - combines stability, practicality, and untapped market potential">Gold Score:</span>
+                    <span class="metric-value" id="nodeGoldScore">-</span>
+                </div>
+                <div class="metric-bar">
+                    <div class="metric-fill" id="goldScoreBar" style="background: linear-gradient(90deg, #f59e0b, #ffd700);"></div>
+                </div>
+                <div class="metric-row">
+                    <span class="metric-label" title="Total addressable market potential in billions USD">Market Potential:</span>
+                    <span class="metric-value" id="nodeMarketPotential">-</span>
+                </div>
+                <div class="metric-row">
                     <span class="metric-label" title="Potential real-world uses for this specific material combination">Applications:</span>
                 </div>
-                <div id="nodeApplications" style="margin-top: 5px;"></div> 
+                <div id="nodeApplications" style="margin-top: 5px;"></div>
+                <div class="metric-row" style="margin-top: 10px;">
+                    <span class="metric-label" title="Market opportunities and sectors">Target Markets:</span>
+                </div>
+                <div id="nodeMarkets" style="margin-top: 5px;"></div>
+            </div>
+
+            <div class="control-section" id="goldList" style="display: none;">
+                <div class="section-title">Top Gold Combos 🏆</div>
+                <div id="goldTable"></div>
             </div>
 
             <div class="control-section">
                 <div class="section-title">Data Legend</div>
-                <div class="legend" id="legend"></div> </div>
+                <div class="legend" id="legend"></div>
+            </div>
 
             <div class="control-section" id="methodology-section">
                 <div class="section-title">
@@ -562,6 +638,8 @@
                     <li><strong>Synergy Score (⚡):</strong> Favorable chemical pairs (like acid-base COOH+NH2) get a "synergy" boost, resulting in a much higher modeled Stability.</li>
                     <li><strong>Practicality Score:</strong> A modeled score (0-1) of how "easy" it is to synthesize a specific functional chain, with deeper complexity becoming exponentially harder.</li>
                     <li><strong>Commercial Potential:</strong> A final weighted metric combining stability, conductivity, practicality, and other factors to estimate the node's overall value.</li>
+                    <li><strong>Gold Score:</strong> Refined potential emphasizing high stability, practicality, and untapped markets via first-principles inference.</li>
+                    <li><strong>Market Inference:</strong> Uses first-principles rules to identify untapped opportunities based on material properties.</li>
                 </ul>
             </div>
 
@@ -583,6 +661,7 @@
                 </div>
                 <div class="button-group">
                     <button onclick="app.exportData()" title="Download the current tree data as a JSON file">Export Data</button>
+                    <button onclick="app.exportCSV()" title="Download Gold List as CSV">Export CSV</button>
                     <button onclick="app.resetView()" title="Center the view and clear all filters">Reset View</button>
                 </div>
             </div>
@@ -610,8 +689,6 @@
     <script>
     //==============================================================
     // 1. ADVANCED SEMANTIC SEARCH INFRASTRUCTURE (GLOBAL)
-    // These MUST be defined before the 'const app' object.
-    // This fixes the 'unexpected token: keyword const' error.
     //==============================================================
 
     // --- 1a. Hierarchical Application Ontology ---
@@ -669,19 +746,17 @@
         }
     };
 
-    // Create inverse index for fast lookup (term -> category path)
+    // Create inverse index for fast lookup
     const applicationIndex = {};
     function buildApplicationIndex() {
         function indexTerms(obj, path = []) {
             for (const [key, value] of Object.entries(obj)) {
                 const newPath = [...path, key];
-                // Index the key itself
                 const keyLower = key.toLowerCase();
                 if (!applicationIndex[keyLower]) applicationIndex[keyLower] = [];
                 applicationIndex[keyLower].push(newPath);
 
                 if (Array.isArray(value)) {
-                    // Leaf node - index all terms
                     value.forEach(term => {
                         const termLower = term.toLowerCase();
                         if (!applicationIndex[termLower]) {
@@ -690,7 +765,6 @@
                         applicationIndex[termLower].push(newPath);
                     });
                 } else if (typeof value === 'object' && value !== null) {
-                    // Recurse deeper
                     indexTerms(value, newPath);
                 }
             }
@@ -701,7 +775,6 @@
 
     // --- 1b. Smart Synonym & Abbreviation Handling ---
     const synonymDatabase = {
-        // Technical abbreviations
         'orr': ['oxygen reduction reaction', 'oxygen reduction'],
         'her': ['hydrogen evolution reaction', 'hydrogen evolution'],
         'pem': ['proton exchange membrane', 'polymer electrolyte membrane'],
@@ -709,17 +782,14 @@
         'lod': ['limit of detection', 'detection limit'],
         'poc': ['point of care', 'point-of-care'],
         'fet': ['field effect transistor', 'field-effect transistor'],
-        // Common variations
         'bio': ['biological', 'biomedical', 'biomaterial'],
         'nano': ['nanoscale', 'nanostructured', 'nanomaterial'],
         'composite': ['composites', 'nanocomposite', 'hybrid material'],
         'sensor': ['sensors', 'sensing', 'detector', 'detection'],
         'battery': ['batteries', 'cell', 'energy storage'],
-        // Chemical terms
         'graphene': ['graphene oxide', 'reduced graphene', 'functionalized graphene'],
         'carbon': ['carbon-based', 'carbonaceous', 'carbon material'],
         'metal': ['metallic', 'metal-based', 'metallized'],
-        // Property descriptors
         'conductive': ['conductor', 'conducting', 'conductivity', 'electrical'],
         'resistant': ['resistance', 'proof', 'protective', 'barrier'],
         'compatible': ['compatibility', 'biocompatible', 'cytocompatible']
@@ -730,7 +800,6 @@
         const termLower = term.toLowerCase();
         const expanded = new Set([termLower]);
         
-        // Check if term IS a key or IS IN a value
         for (const [key, synonyms] of Object.entries(synonymDatabase)) {
             if (key === termLower) {
                 synonyms.forEach(syn => expanded.add(syn.toLowerCase()));
@@ -741,7 +810,6 @@
             }
         }
         
-        // Add stem variations (simple stemming)
         const stem = termLower.replace(/ing$|ed$|s$|er$|est$|tion$|ment$/, '');
         if (stem.length > 3 && stem !== termLower) expanded.add(stem);
         
@@ -749,7 +817,6 @@
     }
 
     // --- 1c. Fuzzy Matching & Typo Tolerance ---
-    // Levenshtein distance for typo tolerance
     function levenshteinDistance(str1 = "", str2 = "") {
         const matrix = [];
         for (let i = 0; i <= str2.length; i++) { matrix[i] = [i]; }
@@ -760,9 +827,9 @@
                     matrix[i][j] = matrix[i - 1][j - 1];
                 } else {
                     matrix[i][j] = Math.min(
-                        matrix[i - 1][j - 1] + 1, // substitution
-                        matrix[i][j - 1] + 1,    // insertion
-                        matrix[i - 1][j] + 1     // deletion
+                        matrix[i - 1][j - 1] + 1,
+                        matrix[i][j - 1] + 1,
+                        matrix[i - 1][j] + 1
                     );
                 }
             }
@@ -770,7 +837,6 @@
         return matrix[str2.length][str1.length];
     }
 
-    // Fuzzy search with threshold
     function fuzzyMatch(searchTerm, target, threshold = 2) {
         if (!searchTerm || !target) return false;
         const distance = levenshteinDistance(searchTerm.toLowerCase(), target.toLowerCase());
@@ -778,25 +844,21 @@
     }
 
     // --- 1d. Relevance Scoring System ---
-    // Score how relevant a node is to search terms (Context added by app.searchNodes)
     function calculateRelevanceScore(node, searchTerms) {
         let score = 0;
         const termWeights = {};
         
         (searchTerms || []).forEach(term => {
-            // Exact match in name: highest weight
             if (node.name && node.name.toLowerCase().includes(term)) {
                 score += 10;
                 termWeights[term] = 10;
             }
             
-            // Match in chemical family
             if (node.family && node.family.toLowerCase().includes(term)) {
                 score += 7;
                 termWeights[term] = Math.max(termWeights[term] || 0, 7);
             }
             
-            // Match in applications
             if (node.applications) {
                 node.applications.forEach(appText => {
                     const appLower = appText.toLowerCase();
@@ -805,19 +867,16 @@
                         termWeights[term] = Math.max(termWeights[term] || 0, 5);
                     }
                     
-                    // Check against ontology (using the index we built)
                     const ontologyPaths = applicationIndex[term] || [];
                     ontologyPaths.forEach(path => {
-                        // If this app text includes the *specific term* the path maps to
                         if (path.length > 0 && appLower.includes(path[path.length - 1])) {
-                            score += 4; // Ontology match
+                            score += 4;
                         }
                     });
                 });
             }
             
-            // Fuzzy match bonus (lower weight) - applied once per term
-            if (!termWeights[term]) { // Only if no exact match found yet
+            if (!termWeights[term]) {
                 if (fuzzyMatch(term, node.name, 1) || (node.family && fuzzyMatch(term, node.family, 1))) {
                     score += 1;
                     termWeights[term] = 1;
@@ -825,11 +884,8 @@
             }
         });
         
-        // Diversity bonus (matches multiple different terms)
         const matchedTerms = Object.keys(termWeights).length;
         score += matchedTerms * 2;
-        
-        // Depth penalty (deeper nodes are more complex/less primary)
         score *= Math.pow(0.95, node.depth || 0);
         
         return score;
@@ -839,7 +895,6 @@
     class QueryParser {
         constructor() {
             this.propertyKeywords = {
-                // Map synonyms to the actual property name in the data
                 conductivity: ['conductive', 'conductor', 'electrical', 'conducting', 'conductivity'],
                 bindingEnergy: ['binding', 'adhesion', 'attachment', 'bonding', 'bindingenergy'],
                 biocompatibility: ['biocompatible', 'bio-friendly', 'non-toxic', 'cytocompatible', 'biocompatibility'],
@@ -854,8 +909,8 @@
                 medium: (val) => val >= 0.3 && val <= 0.7,
                 excellent: (val) => val > 0.85,
                 poor: (val) => val < 0.2,
-                strong: (val) => val < -3.5, // Special case for binding energy (more negative)
-                weak: (val) => val > -1.5     // Special case for binding energy
+                strong: (val) => val < -3.5,
+                weak: (val) => val > -1.5
             };
         }
         
@@ -868,55 +923,48 @@
                 expandedTerms: []
             };
             
-            // Handle quoted phrases
             const phrases = query.match(/"([^"]+)"/g) || [];
             phrases.forEach(phrase => {
                 result.terms.push(phrase.replace(/"/g, '').toLowerCase());
                 query = query.replace(phrase, '');
             });
             
-            // Handle exclusions (terms with -)
             const exclusions = query.match(/-(\w+)/g) || [];
             exclusions.forEach(exc => {
                 result.exclude.push(exc.substring(1).toLowerCase());
                 query = query.replace(exc, '');
             });
             
-            // Parse property filters
             const words = query.toLowerCase().split(/\s+/).filter(w => w.length > 0);
             for (let i = 0; i < words.length; i++) {
                 const word = words[i];
                 
-                // Check for modifier + property pattern
                 if (this.modifiers[word] && i + 1 < words.length) {
                     const nextWord = words[i + 1];
                     for (const [propName, keywords] of Object.entries(this.propertyKeywords)) {
                         if (keywords.includes(nextWord)) {
                             result.properties.push({
-                                property: propName, // The actual data key
+                                property: propName,
                                 modifier: word,
-                                test: this.modifiers[word] // The test function
+                                test: this.modifiers[word]
                             });
-                            words[i] = ''; // Remove from terms
+                            words[i] = '';
                             words[i + 1] = '';
-                            i++; // Skip next word
+                            i++;
                             break;
                         }
                     }
                 }
             }
             
-            // Remaining words are search terms
             words.filter(w => w && w.length > 1).forEach(term => {
                 result.terms.push(term);
                 
-                // Check application ontology
                 if (applicationIndex[term]) {
                     result.applications.push(...applicationIndex[term]);
                 }
             });
             
-            // Expand terms with synonyms
             const allTerms = new Set();
             result.terms.forEach(term => {
                 expandSearchTerms(term).forEach(t => allTerms.add(t));
@@ -926,7 +974,6 @@
             return result;
         }
     }
-
 
     //==============================================================
     // 2. MAIN APPLICATION OBJECT
@@ -942,7 +989,7 @@
         currentDepth: 3,
         currentBranching: 3,
         selectedNode: null,
-        lastSearchQuery: '', // For learning system
+        lastSearchQuery: '',
         
         // --- 2a. Comprehensive graphene database (Base values for simulation) ---
         grapheneFamilies: {
@@ -961,7 +1008,11 @@
                     { name: "CHO", smiles: "C=O", bindingEnergy: -2.3, conductivity: 0.45, biocompatibility: 0.65, stability: 0.7,
                       applications: ["Chemical sensors", "Organic synthesis", "Aldehyde detection", "Bioconjugation"] },
                     { name: "COOCH3", smiles: "C(=O)OC", bindingEnergy: -2.9, conductivity: 0.38, biocompatibility: 0.72, stability: 0.78,
-                      applications: ["Esterification", "Polymer grafting", "Drug loading", "Organic electronics"] }
+                      applications: ["Esterification", "Polymer grafting", "Drug loading", "Organic electronics"] },
+                    { name: "Peroxide", smiles: "OO", bindingEnergy: -2.6, conductivity: 0.35, biocompatibility: 0.8, stability: 0.7,
+                      applications: ["Water remediation membranes", "Hydrogels", "Oxidative catalysis"] },
+                    { name: "Ether", smiles: "COC", bindingEnergy: -2.1, conductivity: 0.45, biocompatibility: 0.85, stability: 0.75,
+                      applications: ["Flexible coatings", "Polymer blends", "Gas separation"] }
                 ]
             },
             nitrogen: {
@@ -979,7 +1030,11 @@
                     { name: "NHCO", smiles: "NC=O", bindingEnergy: -3.0, conductivity: 0.5, biocompatibility: 0.92, stability: 0.79,
                       applications: ["Peptide conjugation", "Wound healing", "Biomedical implants", "Tissue engineering"] },
                     { name: "N(CH3)2", smiles: "N(C)C", bindingEnergy: -2.7, conductivity: 0.55, biocompatibility: 0.88, stability: 0.77,
-                      applications: ["Gene delivery", "Cell adhesion", "Controlled release", "Smart materials"] }
+                      applications: ["Gene delivery", "Cell adhesion", "Controlled release", "Smart materials"] },
+                    { name: "Pyridine-N", smiles: "n1ccccc1", bindingEnergy: -2.5, conductivity: 0.7, biocompatibility: 0.85, stability: 0.8,
+                      applications: ["DNA biosensors", "Catalysis", "Electronics"] },
+                    { name: "Imidazole", smiles: "c1cnc[nH]1", bindingEnergy: -3.0, conductivity: 0.65, biocompatibility: 0.9, stability: 0.82,
+                      applications: ["Metal coordination", "pH sensors", "Bioconjugation"] }
                 ]
             },
             sulfur: {
@@ -1045,13 +1100,49 @@
                     { name: "B(OH)2", smiles: "B(O)O", bindingEnergy: -3.1, conductivity: 0.4, biocompatibility: 0.78, stability: 0.8,
                       applications: ["Glucose sensors", "Drug delivery", "Smart polymers", "pH sensors"] }
                 ]
+            },
+            boron: {
+                name: "Boron Family",
+                color: "#8b5cf6",
+                additives: [
+                    { name: "B(OH)2", smiles: "B(O)O", bindingEnergy: -2.8, conductivity: 0.85, biocompatibility: 0.75, stability: 0.85,
+                      applications: ["p-type semiconductors", "Thermoelectrics ZT boost", "Catalysis"] },
+                    { name: "B-N", smiles: "BN", bindingEnergy: -3.2, conductivity: 0.9, biocompatibility: 0.7, stability: 0.9,
+                      applications: ["FET transistors", "Insulating layers", "High-temp electronics"] },
+                    { name: "BC3", smiles: "BC3", bindingEnergy: -2.1, conductivity: 0.95, biocompatibility: 0.8, stability: 0.88,
+                      applications: ["Bandgap engineering", "Solar cells", "Sensors"] }
+                ]
+            },
+            silicon: {
+                name: "Silicon Family",
+                color: "#06b6d4",
+                additives: [
+                    { name: "SiH3", smiles: "Si", bindingEnergy: -2.4, conductivity: 0.7, biocompatibility: 0.8, stability: 0.8,
+                      applications: ["Li-ion anodes", "Hybrids", "Solar perovskites"] },
+                    { name: "SiO2", smiles: "O=[Si]=O", bindingEnergy: -3.1, conductivity: 0.6, biocompatibility: 0.85, stability: 0.85,
+                      applications: ["Protective coatings", "Membranes", "Composites"] },
+                    { name: "Si-Ph", smiles: "C[Si]", bindingEnergy: -2.7, conductivity: 0.75, biocompatibility: 0.75, stability: 0.82,
+                      applications: ["Organic electronics", "Batteries", "Sensors"] }
+                ]
+            },
+            alkyl: {
+                name: "Alkyl/Organic Family",
+                color: "#f59e0b",
+                additives: [
+                    { name: "CH3", smiles: "C", bindingEnergy: -1.5, conductivity: 0.8, biocompatibility: 0.85, stability: 0.75,
+                      applications: ["Hydrophobic coatings", "Anti-fouling", "Polymers"] },
+                    { name: "C6H5", smiles: "c1ccccc1", bindingEnergy: -2.0, conductivity: 0.85, biocompatibility: 0.8, stability: 0.8,
+                      applications: ["Organics grafting", "Drug delivery", "Electronics"] },
+                    { name: "PEG", smiles: "OCCO", bindingEnergy: -2.2, conductivity: 0.7, biocompatibility: 0.95, stability: 0.78,
+                      applications: ["Solubilization", "Implants", "Coatings"] }
+                ]
             }
         },
 
-        // --- 2b. NEW: Search History & Learning System ---
+        // --- 2b. Search History & Learning System ---
         searchHistory: {
             queries: [],
-            clickedResults: new Map(), // query -> Map<node.id, count>
+            clickedResults: new Map(),
             
             recordSearch(query, results) {
                 if (!query.trim()) return;
@@ -1060,7 +1151,6 @@
                     timestamp: Date.now(),
                     resultCount: results.length
                 });
-                // Limit history size
                 if (this.queries.length > 100) this.queries.shift();
             },
             
@@ -1075,22 +1165,19 @@
                 queryClicks.set(node.id, newCount);
             },
             
-            // Boost relevance for previously clicked results
             getClickBoost(query, node) {
                 if (!query.trim()) return 0;
                 
-                // Find similar past queries
                 const similarQueries = this.queries.filter(q => 
-                    levenshteinDistance(q.query, query) < 3); // Typo tolerance
+                    levenshteinDistance(q.query, query) < 3);
                 
-                // Add exact current query just in case
                 similarQueries.push({ query: query }); 
                 
                 let boost = 0;
                 similarQueries.forEach(q => {
                     const clicked = this.clickedResults.get(q.query);
                     if (clicked && clicked.has(node.id)) {
-                        boost += 5 * clicked.get(node.id); // More clicks = more boost
+                        boost += 5 * clicked.get(node.id);
                     }
                 });
                 return boost;
@@ -1099,12 +1186,10 @@
 
         // --- 3. APPLICATION INITIALIZATION & CORE FUNCTIONS ---
 
-        // Initialize the application
         init() {
             console.log('Initializing Graphene Fractal Explorer...');
             
-            // CRITICAL FIX: Build the static search index ONCE on load
-            buildApplicationIndex();
+            buildApplicationIndex(); // CRITICAL: Build index on load
             
             if (typeof d3 === 'undefined') {
                 alert('Error: D3.js library failed to load. Please refresh the page.');
@@ -1113,16 +1198,13 @@
             
             this.initializeVisualization();
             this.setupEventListeners();
-            // CRITICAL FIX: REMOVED populateSearchSuggestions() from here. It now runs AFTER generateTree.
-            this.generateTree('medium');
-            this.updateLegend('family'); // Initialize legend
+            this.generateTree('medium'); // CRITICAL: This now creates data AND calls populateSearchSuggestions
+            this.updateLegend('family');
             
             console.log('Initialization complete');
         },
 
-        // Set up event listeners
         setupEventListeners() {
-            // Slider events
             document.getElementById('depthSlider').addEventListener('input', (e) => {
                 document.getElementById('depthValue').textContent = e.target.value;
                 this.currentDepth = parseInt(e.target.value);
@@ -1133,25 +1215,20 @@
                 this.currentBranching = parseInt(e.target.value);
             });
             
-            // Search functionality (points to NEW semantic search)
             document.getElementById('searchInput').addEventListener('input', (e) => {
                 this.searchNodes(e.target.value);
             });
         },
 
-        // REPLACED: Function to populate search <datalist> from LIVE TREE DATA
         populateSearchSuggestions() {
             const suggestions = new Set();
             
-            // Collect all unique terms from the generated tree
             const collectTerms = (node) => {
                 if (node.name) suggestions.add(node.name);
                 if (node.family) suggestions.add(node.family);
                 if (node.applications) {
                     node.applications.forEach(appText => {
-                        // Add full app string
                         suggestions.add(appText);
-                        // Add individual words
                         appText.split(/\s+/).forEach(word => {
                             if (word.length > 3) suggestions.add(word.toLowerCase());
                         });
@@ -1164,7 +1241,6 @@
                 collectTerms(this.treeData);
             }
             
-            // Add common smart queries
             const commonQueries = [
                 'high conductivity sensor',
                 'biocompatible coating',
@@ -1172,14 +1248,16 @@
                 'drug delivery',
                 'cement strength',
                 'strong binding',
-                'excellent stability'
+                'excellent stability',
+                'untapped market',
+                'easy synthesis',
+                '$50B opportunity'
             ];
             commonQueries.forEach(q => suggestions.add(q));
 
             const datalist = document.getElementById('search-suggestions');
-            datalist.innerHTML = ''; // Clear existing
+            datalist.innerHTML = '';
             
-            // Sort suggestions and add them as options
             [...suggestions].sort().forEach(item => {
                 const option = document.createElement('option');
                 option.value = item;
@@ -1187,7 +1265,6 @@
             });
         },
 
-        // Initialize D3 visualization
         initializeVisualization() {
             const container = document.getElementById('tree-container');
             const width = container.clientWidth;
@@ -1199,7 +1276,6 @@
 
             this.g = this.svg.append('g');
 
-            // Add zoom behavior
             this.zoom = d3.zoom()
                 .scaleExtent([0.1, 10])
                 .on('zoom', (event) => {
@@ -1209,7 +1285,6 @@
             this.svg.call(this.zoom);
         },
 
-        // Generate tree with specified size
         generateTree(size) {
             const loading = document.getElementById('loading');
             loading.style.display = 'block';
@@ -1220,8 +1295,7 @@
                 switch(size) {
                     case 'small': depth = 3; branches = 2; break;
                     case 'large': depth = 5; branches = 3; break;
-                    default: // medium
-                        depth = 4; branches = 3;
+                    default: depth = 4; branches = 3;
                 }
                 
                 document.getElementById('depthSlider').value = depth;
@@ -1234,13 +1308,12 @@
                 
                 this.treeData = this.createFractalTree(depth, branches);
                 this.updateVisualization();
-                this.populateSearchSuggestions(); // CRITICAL FIX: Generate suggestions AFTER tree exists
+                this.populateSearchSuggestions(); // CRITICAL: Run AFTER tree is built
                 
                 loading.style.display = 'none';
             }, 100);
         },
 
-        // Regenerate tree with current settings
         regenerateTree() {
             const loading = document.getElementById('loading');
             loading.style.display = 'block';
@@ -1248,14 +1321,13 @@
             setTimeout(() => {
                 this.treeData = this.createFractalTree(this.currentDepth, this.currentBranching);
                 this.updateVisualization();
-                this.populateSearchSuggestions(); // CRITICAL FIX: Regenerate suggestions too
+                this.populateSearchSuggestions(); // CRITICAL: Run AFTER tree is built
                 loading.style.display = 'none';
             }, 100);
         },
 
         // --- 4. NEW SCIENTIFIC SIMULATION ENGINE ---
 
-        // REPLACED: Updated createFractalTree function with scientific accuracy
         createFractalTree(maxDepth, branchingFactor) {
             const root = {
                 id: 0,
@@ -1280,7 +1352,6 @@
             const addChildren = (parent, currentDepth) => {
                 if (currentDepth >= maxDepth) return;
 
-                // Read realism settings from checkboxes
                 const useSaturation = document.getElementById('saturationEffects').checked;
                 const useSterics = document.getElementById('stericHindrance').checked;
                 const useDistance = document.getElementById('distanceDecay').checked;
@@ -1291,16 +1362,13 @@
                 for (let i = 0; i < numChildren; i++) {
                     let familyKey;
                     
-                    // Existing family selection logic...
                     if (currentDepth === 0) {
-                        // Prioritize COOH/Oxygen for first level, reflecting HydroGraph process
                         if (i === 0 && families.includes('oxygen')) {
                             familyKey = 'oxygen';
                         } else {
                             familyKey = families[i % families.length];
                         }
                     } else {
-                        // 70% chance to stay in same family (fractal self-similarity)
                         if (Math.random() < 0.7 && parent.family !== 'root' && parent.family !== 'hybrid') {
                             familyKey = parent.family;
                         } else {
@@ -1311,64 +1379,49 @@
                     const family = this.grapheneFamilies[familyKey];
                     const additive = family.additives[Math.floor(Math.random() * family.additives.length)];
 
-                    // --- SCIENTIFIC CALCULATIONS START ---
-                    
+                    // Scientific calculations
                     const pathCount = parent.functionalPath.filter(g => g === additive.name).length;
-                    const saturationFactor = useSaturation ? Math.pow(0.7, pathCount) : 1.0; // 70% effectiveness each repeat
-                    
-                    const distanceFactor = useDistance ? Math.pow(0.85, currentDepth) : 1.0; // 85% effectiveness per level
-                    
-                    const estimatedCoverage = (currentDepth + 1) * 0.8; // ~0.8% per functionalization step
-                    const coverageFactor = Math.max(0.3, 1 - estimatedCoverage * 0.05); // Drops effectiveness above 5%
-                    
+                    const saturationFactor = useSaturation ? Math.pow(0.7, pathCount) : 1.0;
+                    const distanceFactor = useDistance ? Math.pow(0.85, currentDepth) : 1.0;
+                    const estimatedCoverage = (currentDepth + 1) * 0.8;
+                    const coverageFactor = Math.max(0.3, 1 - estimatedCoverage * 0.05);
                     const parentBulkiness = this.getBulkiness(parent.name);
                     const additiveBulkiness = this.getBulkiness(additive.name);
                     const stericFactor = useSterics ? (1 - (parentBulkiness * additiveBulkiness * 0.1)) : 1.0;
-                    
                     const electronicFactor = this.getElectronicCoupling(parent.name, additive.name);
 
                     const child = {
                         id: nodeId++,
                         name: additive.name,
                         smiles: additive.smiles,
-                        
-                        // BINDING ENERGY: Accumulates but with diminishing returns
                         bindingEnergy: parent.bindingEnergy + 
                             (additive.bindingEnergy * saturationFactor * distanceFactor * stericFactor),
-                        
-                        // CONDUCTIVITY: Multiplicative degradation (each group disrupts sp2 network)
-                        conductivity: Math.max(0.05, // Minimum 5% conductivity
-                            parent.conductivity * (0.4 + additive.conductivity * 0.6) * // Weighted retention
-                            Math.max(0.5, coverageFactor)), // Coverage penalty
-                        
-                        // BIOCOMPATIBILITY: Weighted average, new outer layer dominates
+                        conductivity: Math.max(0.05, 
+                            parent.conductivity * (0.4 + additive.conductivity * 0.6) * Math.max(0.5, coverageFactor)),
                         biocompatibility: currentDepth === 0 ? 
-                            additive.biocompatibility : // First layer IS the material
-                            (parent.biocompatibility * 0.3 + additive.biocompatibility * 0.7), // Outer layer (70%) dominates inner (30%)
-                        
-                        // STABILITY: Limited by the *weakest link* in the chain, with a synergy buffer
-                        stability: Math.max(0.3, // Floor
-                            Math.min(parent.stability, additive.stability) * (0.9 + 0.1 * electronicFactor)), // Synergy can boost the weakest link
-                        
-                        applications: this.mergeApplications(parent.applications, additive.applications, currentDepth),
+                            additive.biocompatibility : 
+                            (parent.biocompatibility * 0.3 + additive.biocompatibility * 0.7),
+                        stability: Math.max(0.3, 
+                            Math.min(parent.stability, additive.stability) * (0.9 + 0.1 * electronicFactor)),
+                        applications: [], // Will be populated by mergeApplications
                         family: familyKey,
                         familyName: family.name,
                         color: family.color,
                         depth: currentDepth + 1,
                         functionalPath: [...parent.functionalPath, additive.name],
                         coveragePercent: estimatedCoverage,
-                        
-                        // New scientific metrics
                         diversityScore: this.calculateDiversity([...parent.functionalPath, additive.name]),
                         synergyScore: electronicFactor,
                         practicalityScore: this.getPracticalityScore(additive.name, currentDepth),
-                        
                         children: []
                     };
+                    
+                    // Assign applications (must happen after child object exists for inference rules)
+                    child.applications = this.mergeApplications(parent.applications, additive.applications, currentDepth, child);
 
-                    // Add variance based on real experimental uncertainty (replaces old jitter)
-                    child.bindingEnergy += (Math.random() - 0.5) * 0.2; // ±0.1 eV experimental error
-                    child.conductivity *= (0.95 + Math.random() * 0.1); // ±5% measurement variance
+                    // Add experimental variance
+                    child.bindingEnergy += (Math.random() - 0.5) * 0.2;
+                    child.conductivity *= (0.95 + Math.random() * 0.1);
                     child.biocompatibility = Math.max(0, Math.min(1, child.biocompatibility * (0.95 + Math.random() * 0.1)));
                     child.stability = Math.max(0, Math.min(1, child.stability * (0.95 + Math.random() * 0.1)));
 
@@ -1378,11 +1431,8 @@
             };
 
             addChildren(root, 0);
+            this.calculateTreeMetrics(root); // Calculate Gold Scores and Markets for entire tree
 
-            // Calculate global metrics POST-generation
-            this.calculateTreeMetrics(root);
-
-            // Update stats
             const totalNodes = this.countNodes(root);
             document.getElementById('totalNodes').textContent = totalNodes;
             document.getElementById('currentDepth').textContent = maxDepth;
@@ -1390,7 +1440,7 @@
             return root;
         },
 
-        // --- 4b. NEW: Helper functions for scientific calcs (must be inside 'app' object) ---
+        // --- 4b. NEW: Scientific/Business Helper Functions ---
         getBulkiness(groupName) {
             const bulkiness = {
                 'H': 0.1, 'F': 0.2, 'OH': 0.3, 'NH2': 0.3,
@@ -1398,85 +1448,290 @@
                 'PO3H2': 0.9, 'CF3': 0.6, 'Fe-N4': 0.8,
                 'Pristine Graphene': 0, 'C=O': 0.4, 'O-epoxy': 0.4
             };
-            return bulkiness[groupName] || 0.5; // Default for others
+            return bulkiness[groupName] || 0.5;
         },
 
         getElectronicCoupling(group1, group2) {
-            // 1.0 = neutral, > 1.0 = synergy, < 1.0 = opposition
             if (!group1 || !group2 || group1 === "Pristine Graphene") return 1.0;
             const key = [group1, group2].sort().join('-');
             const coupling = {
-                'COOH-NH2': 1.3,     // Zwitterionic stabilization
-                'COOH-COOH': 0.7,    // Repulsion
-                'NH2-NH2': 0.8,      // Mild repulsion
-                'COOH-OH': 1.1,      // H-bonding
-                'NH2-SO3H': 1.4,     // Strong ionic
-                'Fe-N4-OH': 1.2,     // Coordination synergy (assuming O)
-                'F-OH': 0.6,         // Opposing polarity
+                'COOH-NH2': 1.3,
+                'COOH-COOH': 0.7,
+                'NH2-NH2': 0.8,
+                'COOH-OH': 1.1,
+                'NH2-SO3H': 1.4,
+                'Fe-N4-OH': 1.2,
+                'F-OH': 0.6,
             };
-            return coupling[key] || 1.0; // Default no interaction
+            return coupling[key] || 1.0;
         },
 
         calculateDiversity(path) {
             const unique = new Set(path).size;
             const total = path.length;
-            return total > 0 ? (unique / total) : 1; // 1 = 100% diversity
+            return total > 0 ? (unique / total) : 1;
         },
 
         getPracticalityScore(groupName, depth) {
-            // Normalized 0-1 (higher is easier)
             const basePracticality = {
-                'OH': 0.95,     // Easy - from graphene oxide
-                'COOH': 0.95,   // Easy - natural in HydroGraph process
-                'NH2': 0.8,     // Moderate - amination
-                'F': 0.7,       // Harder - requires F2 or XeF2
-                'PO3H2': 0.6,   // Difficult - multistep
-                'Fe-N4': 0.4,   // Very difficult - controlled coordination
+                'OH': 0.95,
+                'COOH': 0.95,
+                'NH2': 0.8,
+                'F': 0.7,
+                'PO3H2': 0.6,
+                'Fe-N4': 0.4,
             };
             const score = basePracticality[groupName] || 0.5;
-            // Deeper functionalizations are exponentially harder
-            return Math.max(0.1, score * Math.pow(0.8, depth)); // Floor at 0.1
+            return Math.max(0.1, score * Math.pow(0.8, depth));
         },
 
-        mergeApplications(parentApps, additiveApps, depth) {
+        mergeApplications(parentApps, additiveApps, depth, node) {
             if (depth === 0) return additiveApps || [];
             
-            // Combine, but deeper groups contribute less to applications
-            const combined = new Set(parentApps);
-            (additiveApps || []).forEach(appText => {
-                // Core properties (bulk) are always relevant
-                const appLower = appText.toLowerCase();
+            let combined = new Set(parentApps || []);
+            (additiveApps || []).forEach(app => {
+                const appLower = app.toLowerCase();
                 if (depth <= 2 || appLower.includes('composite') || appLower.includes('coating') || appLower.includes('strength')) {
-                    combined.add(appText);
+                    combined.add(app);
                 } else if (depth <= 3 && Math.random() < 0.3) {
-                    // Deeper, more specific apps are less likely to express
-                    combined.add(appText);
+                    combined.add(app);
                 }
             });
-            return Array.from(combined).slice(0, 5); // Limit to 5 most relevant
+
+            // First-principles inference
+            if (node) {
+                const inferences = this.inferApplications(node);
+                inferences.forEach(app => combined.add(app));
+            }
+
+            return Array.from(combined).slice(0, 10);
         },
 
+
+// ============== inferApplications function ==============
+
+        inferApplications(node) {
+            const rules = {
+                'highConduct_stable': { 
+                    cond: node.conductivity > 0.8 && node.stability > 0.8, 
+                    apps: ['6G antennas ($50B untapped)', 'Energy-harvesting IoT ($10B)', 'Quantum computing interconnects ($30B)'] 
+                },
+                'bioEasy': { 
+                    cond: node.biocompatibility > 0.9 && node.practicalityScore > 0.8, 
+                    apps: ['Precision agriculture sensors ($10B)', 'Food safety monitors ($15B)', 'Neural implants ($25B untapped)'] 
+                },
+                'strongAnchor': { 
+                    cond: node.bindingEnergy < -5 && node.practicalityScore > 0.7, 
+                    apps: ['CO₂ capture membranes ($30B green)', 'Instant desal filters ($20B water)', 'Space habitat coatings ($40B untapped)'] 
+                },
+                'resilientHybrid': { 
+                    cond: node.diversityScore > 0.7 && node.stability > 0.8, 
+                    apps: ['Earthquake-resistant infra ($15B)', 'Self-healing materials ($25B)', 'Extreme weather coatings ($20B)'] 
+                },
+                'flexBio': { 
+                    cond: node.conductivity > 0.7 && node.biocompatibility > 0.8, 
+                    apps: ['Wearable health monitors ($40B)', 'e-Skin robotics ($35B untapped)', 'Bio-integrated electronics ($50B)'] 
+                },
+                'ultraStable': {
+                    cond: node.stability > 0.9 && node.conductivity > 0.6,
+                    apps: ['Nuclear reactor components ($20B)', 'Deep space electronics ($30B untapped)', 'Hypersonic vehicle skins ($25B)']
+                },
+                'easyDrop': {
+                    cond: node.practicalityScore > 0.85 && node.stability > 0.7,
+                    apps: ['Retrofit legacy plastics (+4x life, $50B)', 'Drop-in cement additive ($30B)', 'Paint upgrade ($20B coatings)']
+                },
+                'greenChem': {
+                    cond: node.biocompatibility > 0.85 && !node.name.includes('F') && !node.name.includes('Cl'),
+                    apps: ['Green chemistry catalyst ($15B)', 'Biodegradable electronics ($20B)', 'Sustainable textiles ($25B)']
+                },
+                'energyHarvest': {
+                    cond: node.conductivity > 0.75 && node.stability > 0.75,
+                    apps: ['Piezoelectric roads ($30B)', 'Wave energy harvesters ($20B)', 'Vibration sensors ($15B IoT)']
+                },
+                'smartResponsive': {
+                    cond: node.synergyScore > 1.2 && node.biocompatibility > 0.7,
+                    apps: ['Smart drug delivery ($40B pharma)', 'Responsive textiles ($15B)', 'Adaptive prosthetics ($20B)']
+                }
+            };
+            
+            let inferred = [];
+            Object.values(rules).forEach(rule => { 
+                if (rule.cond) {
+                    rule.apps.forEach(app => {
+                        if (!inferred.some(existing => existing.includes(app.split('(')[0].trim()))) {
+                            inferred.push(app);
+                        }
+                    });
+                } 
+            });
+            
+            // Legacy upgrade special case
+            if (node.stability > 0.8 && node.practicalityScore > 0.7) {
+                inferred.push('Legacy material upgrade: +50% performance ($100B total addressable)');
+            }
+            
+            // FALLBACK: If no rules matched, generate generic market applications based on properties
+            if (inferred.length === 0) {
+                if (node.conductivity > 0.7) {
+                    inferred.push(`High-performance electronics ($${Math.round(node.conductivity * 50)}B market)`);
+                }
+                if (node.biocompatibility > 0.8) {
+                    inferred.push(`Biomedical applications ($${Math.round(node.biocompatibility * 40)}B market)`);
+                }
+                if (node.stability > 0.8) {
+                    inferred.push(`Durable coatings ($${Math.round(node.stability * 30)}B market)`);
+                }
+                if (node.bindingEnergy < -3) {
+                    inferred.push(`Strong adhesives ($${Math.round(Math.abs(node.bindingEnergy) * 8)}B market)`);
+                }
+                
+                // Ultimate fallback
+                if (inferred.length === 0) {
+                    inferred.push(`Specialty materials ($${Math.max(5, Math.round(node.commercialPotential * 20))}B market)`);
+                }
+            }
+            
+            return inferred.slice(0, 5);
+        },
+
+
         calculateTreeMetrics(node) {
-            // Recursively calculate final composite metrics
             node.effectiveFunctionalization = (node.coveragePercent || 0) * (node.practicalityScore || 0);
             
-            // Weighted score for commercial viability
             node.commercialPotential = (
-                Math.min(1, Math.abs(node.bindingEnergy / 4)) * 0.3 + // Normalized to 4eV
+                Math.min(1, Math.abs(node.bindingEnergy / 4)) * 0.3 +
                 node.conductivity * 0.2 +
                 node.biocompatibility * 0.2 +
                 node.stability * 0.2 +
-                (node.practicalityScore || 0) * 0.1 // Practicality is a factor!
-            ); // Already normalized since inputs are 0-1
+                (node.practicalityScore || 0) * 0.1
+            );
+            
+            // Gold Score
+            const untappedMultiplier = (node.applications || []).some(app => 
+                app.includes('untapped') || app.includes(')')) ? 1.5 : 1.0;
+            node.goldScore = node.commercialPotential * (node.stability * node.practicalityScore * node.practicalityScore) * untappedMultiplier;
+            
+            // Extract market potential
+            node.marketPotential = this.extractMarketPotential(node.applications || [], node);
             
             if (node.children) {
                 node.children.forEach(child => this.calculateTreeMetrics(child));
             }
         },
 
+        // Estimation engine for Market Potential
+        extractMarketPotential(applications, node) {
+            let totalMarket = 0;
+            let hasExplicitMarket = false;
+            
+            // First try to extract explicit market values
+            applications.forEach(app => {
+                const match = app.match(/\$(\d+)B/);
+                if (match) {
+                    totalMarket += parseInt(match[1]);
+                    hasExplicitMarket = true;
+                }
+            });
+            
+            // If no explicit market value found, estimate based on application categories
+            if (!hasExplicitMarket && applications.length > 0) {
+                const baseMarkets = {
+                    // Energy & Infrastructure - Revolutionary potential
+                    'cement': 25, 'concrete': 25, 'composites': 45, 'coatings': 20,
+                    'energy storage': 60, 'batteries': 80, 'fuel cells': 45, 'supercapacitors': 35,
+                    'solar': 55, 'catalysis': 40, 'photocatalysis': 25,
+                    'power': 50, 'grid': 45, 'transmission': 35,
+                    
+                    // Medical & Biotech - Game-changing applications
+                    'biosensors': 40, 'drug delivery': 75, 'medical': 55, 'biomedical': 55,
+                    'tissue': 35, 'implants': 45, 'wound': 20, 'antimicrobial': 30,
+                    'diagnostics': 45, 'cancer': 100, 'neural': 60,
+                    'regenerative': 50, 'therapeutic': 65, 'biomarker': 35,
+                    
+                    // Electronics & Computing - Next-gen tech
+                    'sensors': 35, 'transistors': 40, 'electronics': 70, 'flexible': 45,
+                    'gas sensor': 25, 'detection': 30, 'monitoring': 25,
+                    'quantum': 85, 'computing': 75, 'memory': 50,
+                    'wearable': 40, 'iot': 55, '5g': 60, '6g': 90,
+                    
+                    // Environmental - Critical global needs
+                    'water': 50, 'filtration': 35, 'purification': 40, 'remediation': 30,
+                    'environmental': 35, 'air': 25, 'membrane': 40,
+                    'co2': 65, 'carbon capture': 70, 'climate': 80,
+                    'desalination': 45, 'desal': 45,
+                    
+                    // Materials & Chemicals - Platform technologies
+                    'polymer': 30, 'adhesives': 20, 'crosslinking': 15, 'grafting': 15,
+                    'corrosion': 25, 'protective': 20, 'hydrophobic': 15, 'hydrophilic': 15,
+                    'flame retardant': 20, 'self-healing': 35, 'smart materials': 45,
+                    'nano': 40, 'advanced materials': 55,
+                    
+                    // Aerospace & Defense - High-value applications
+                    'aerospace': 60, 'space': 70, 'defense': 50, 'military': 45,
+                    'hypersonic': 40, 'satellite': 35, 'rocket': 30,
+                    
+                    // Agriculture & Food - Emerging markets
+                    'agriculture': 40, 'food': 35, 'crop': 25, 'pesticide': 20,
+                    'precision agriculture': 30, 'agri': 25,
+                    
+                    // Generic multipliers for transformative tech
+                    'revolutionary': 2.5, 'breakthrough': 2.2, 'advanced': 1.8, 
+                    'next-gen': 2.0, 'novel': 1.7, 'innovative': 1.6,
+                    'untapped': 2.8, 'emerging': 2.3, 'disruptive': 2.6
+                };
+                
+                // Calculate market based on application keywords
+                applications.forEach(app => {
+                    const appLower = app.toLowerCase();
+                    let appMarket = 10; // Base market for any application
+                    
+                    // Check for specific market categories
+                    for (const [keyword, value] of Object.entries(baseMarkets)) {
+                        if (appLower.includes(keyword)) {
+                            if (typeof value === 'number' && value > 3) { // This is a category value
+                                appMarket = Math.max(appMarket, value);
+                            }
+                        }
+                    }
+                    
+                    // Apply multipliers for transformative potential
+                    for (const [keyword, multiplier] of Object.entries(baseMarkets)) {
+                        if (typeof multiplier === 'number' && multiplier <= 3 && appLower.includes(keyword)) { // This is a multiplier
+                            appMarket *= multiplier;
+                        }
+                    }
+                    
+                    totalMarket += Math.round(appMarket);
+                });
+                
+                // Scale based on node properties
+                if (node) {
+                    // Quality multiplier emphasizing revolutionary potential
+                    const qualityMultiplier = 
+                        Math.pow(node.stability || 0.5, 0.7) *                         Math.pow(node.practicalityScore || 0.5, 0.5) *                         Math.pow(Math.max(node.conductivity || 0.5, node.biocompatibility || 0.5), 0.8);
+                    
+                    totalMarket = Math.round(totalMarket * (0.8 + qualityMultiplier * 1.2));
+                    
+                    // Modest bonus for diverse functionalization
+                    if (node.diversityScore > 0.7) {
+                        totalMarket = Math.round(totalMarket * 1.1);
+                    }
+                    
+                    // Bonus for high-performance materials
+                    if (node.conductivity > 0.8 || node.stability > 0.85) {
+                        totalMarket = Math.round(totalMarket * 1.25);
+                    }
+                    
+                    // Ensure minimum market for any functional material
+                    totalMarket = Math.max(0.25, totalMarket); // 250M minimum
+                }
+            }
+            
+            return Math.round(totalMarket); // Return a rounded integer (since we sum in billions)
+        },
+
         // --- 5. VISUALIZATION & D3 RENDERING ---
 
-        // Count nodes in tree
         countNodes(node) {
             let count = 1;
             if (node.children && node.children.length > 0) {
@@ -1487,9 +1742,8 @@
             return count;
         },
 
-        // Update visualization
         updateVisualization() {
-            this.g.selectAll('*').remove(); // Clear previous render
+            this.g.selectAll('*').remove();
 
             if (!this.treeData) return;
 
@@ -1498,10 +1752,9 @@
                 case 'radial': this.renderRadialLayout(); break;
                 case 'force': this.renderForceLayout(); break;
             }
-            this.updateColorScheme(); // Apply current color scheme
+            this.updateColorScheme();
         },
 
-        // Render tree layout
         renderTreeLayout() {
             const container = document.getElementById('tree-container');
             const width = container.clientWidth;
@@ -1529,21 +1782,20 @@
                 .attr('class', 'node')
                 .attr('transform', d => `translate(${d.x + 50},${d.y + 50})`);
 
-            // MODIFIED CIRCLE LOGIC
             nodes.append('circle')
                 .attr('r', d => {
                     const baseSize = d.depth === 0 ? 12 : 8;
-                    const potential = d.data.commercialPotential || 0.5; // Default if undefined
+                    const potential = d.data.commercialPotential || 0.5;
                     return baseSize * (0.5 + potential);
                 })
-                .attr('fill', d => { // Base fill (will be overridden by updateColorScheme)
+                .attr('fill', d => {
                     const color = d.data.color || '#64ffda';
-                    const practicality = d.data.practicalityScore || 1.0; // Default if undefined
+                    const practicality = d.data.practicalityScore || 1.0;
                     return d3.color(color).darker(2 - (2 * practicality));
                 })
                 .attr('stroke', '#fff')
                 .attr('stroke-width', d => {
-                    const diversity = d.data.diversityScore || 0; // Default if undefined
+                    const diversity = d.data.diversityScore || 0;
                     return 2 + diversity * 2;
                 })
                 .style('cursor', 'pointer')
@@ -1551,29 +1803,57 @@
                 .on('mouseover', (event, d) => this.showTooltip(event, d.data))
                 .on('mouseout', () => this.hideTooltip());
 
-            // MODIFIED TEXT (MOVED BELOW)
             nodes.append('text')
-                .attr('dy', d => d.depth === 0 ? 24 : 20) // Positioned below node
+                .attr('dy', d => d.depth === 0 ? 24 : 20)
                 .attr('text-anchor', 'middle')
+                .attr('transform', d => {
+                    // Rotate labels at deep levels to prevent overlap
+                    if (d.depth >= 3) {
+                        const angle = d.depth % 2 === 0 ? -45 : 45;
+                        const offset = d.depth % 2 === 0 ? -5 : 5;
+                        return `rotate(${angle}) translate(0, ${offset})`;
+                    }
+                    return '';
+                })
                 .text(d => d.data.name)
-                .style('font-size', d => d.depth === 0 ? '13px' : '10px')
+                .style('font-size', d => {
+                    // Smaller text at deeper levels
+                    if (d.depth === 0) return '13px';
+                    if (d.depth >= 4) return '8px';
+                    if (d.depth >= 3) return '9px';
+                    return '10px';
+                })
                 .style('fill', '#e4e9f0')
                 .style('font-weight', d => d.depth === 0 ? 'bold' : 'normal')
-                .style('pointer-events', 'none');
-            
-            // NEW SYNERGY BADGE (ABOVE)
+                .style('pointer-events', 'none')
+                .style('opacity', d => d.depth >= 4 ? 0.8 : 1);
+			
+	
+
+            // Synergy badge
             nodes.filter(d => (d.data.synergyScore || 0) > 1.2)
                 .append('text')
                 .attr('class', 'synergy-badge')
-                .attr('dy', d => d.depth === 0 ? -22 : -18) // Positioned above node
+                .attr('dy', d => d.depth === 0 ? -22 : -18)
                 .attr('text-anchor', 'middle')
                 .text('⚡')
                 .style('fill', '#ffd700')
                 .style('font-size', '12px')
                 .style('pointer-events', 'none');
+
+            // Gold badge for high gold score
+            nodes.filter(d => (d.data.goldScore || 0) > 0.5)
+                .append('text')
+                .attr('class', 'gold-badge')
+                .attr('dy', d => d.depth === 0 ? -22 : -18)
+                .attr('dx', 15)
+                .attr('text-anchor', 'middle')
+                .text('💎')
+                .style('fill', '#ffd700')
+                .style('font-size', '10px')
+                .style('pointer-events', 'none');
         },
 
-        // Render radial layout
         renderRadialLayout() {
             const container = document.getElementById('tree-container');
             const width = container.clientWidth;
@@ -1608,7 +1888,6 @@
                 .attr('class', 'node')
                 .attr('transform', d => `translate(${centerX + d.y * Math.cos(d.x - Math.PI / 2)},${centerY + d.y * Math.sin(d.x - Math.PI / 2)})`);
 
-            // MODIFIED CIRCLE LOGIC
             nodes.append('circle')
                 .attr('r', d => {
                     const baseSize = d.depth === 0 ? 12 : 8;
@@ -1630,29 +1909,54 @@
                 .on('mouseover', (event, d) => this.showTooltip(event, d.data))
                 .on('mouseout', () => this.hideTooltip());
 
-            // MODIFIED TEXT (MOVED "OUTWARD")
             nodes.append('text')
-                .attr('dy', d => d.depth === 0 ? 24 : 20) // Positioned "outward" from node
+                .attr('dy', d => d.depth === 0 ? 24 : 20)
                 .attr('text-anchor', 'middle')
+                .attr('transform', d => {
+                    // Rotate labels at deep levels to prevent overlap
+                    if (d.depth >= 3) {
+                        // For radial, rotate based on position
+                        const angle = (d.x * 180 / Math.PI - 90) % 360;
+                        const rotation = angle > 90 && angle < 270 ? angle + 180 : angle;
+                        return `rotate(${rotation})`;
+                    }
+                    return '';
+                })
                 .text(d => d.data.name)
-                .style('font-size', d => d.depth === 0 ? '13px' : '10px')
+                .style('font-size', d => {
+                    if (d.depth === 0) return '13px';
+                    if (d.depth >= 4) return '8px';
+                    if (d.depth >= 3) return '9px';
+                    return '10px';
+                })
                 .style('fill', '#e4e9f0')
                 .style('font-weight', d => d.depth === 0 ? 'bold' : 'normal')
-                .style('pointer-events', 'none');
+                .style('pointer-events', 'none')
+                .style('opacity', d => d.depth >= 4 ? 0.8 : 1);
 
-            // NEW SYNERGY BADGE (ABOVE/INWARD)
+            // Badges
             nodes.filter(d => (d.data.synergyScore || 0) > 1.2)
                 .append('text')
                 .attr('class', 'synergy-badge')
-                .attr('dy', d => d.depth === 0 ? -22 : -18) // Positioned "inward" from node
+                .attr('dy', d => d.depth === 0 ? -22 : -18)
                 .attr('text-anchor', 'middle')
                 .text('⚡')
                 .style('fill', '#ffd700')
                 .style('font-size', '12px')
                 .style('pointer-events', 'none');
+
+            nodes.filter(d => (d.data.goldScore || 0) > 0.5)
+                .append('text')
+                .attr('class', 'gold-badge')
+                .attr('dy', d => d.depth === 0 ? -22 : -18)
+                .attr('dx', 15)
+                .attr('text-anchor', 'middle')
+                .text('💎')
+                .style('fill', '#ffd700')
+                .style('font-size', '10px')
+                .style('pointer-events', 'none');
         },
 
-        // Render force-directed layout
         renderForceLayout() {
             const container = document.getElementById('tree-container');
             const width = container.clientWidth;
@@ -1685,7 +1989,6 @@
                     .on('drag', (event, d) => this.dragged(event, d))
                     .on('end', (event, d) => this.dragended(event, d)));
 
-            // MODIFIED CIRCLE LOGIC
             node.append('circle')
                 .attr('r', d => {
                     const baseSize = d.depth === 0 ? 12 : 8;
@@ -1707,27 +2010,36 @@
                 .on('mouseover', (event, d) => this.showTooltip(event, d.data))
                 .on('mouseout', () => this.hideTooltip());
 
-            // MODIFIED TEXT (MOVED BELOW)
             node.append('text')
-                .attr('dy', 20) // Position below node
+                .attr('dy', 20)
                 .attr('text-anchor', 'middle')
                 .text(d => d.data.name)
                 .style('font-size', '10px')
                 .style('fill', '#e4e9f0')
                 .style('pointer-events', 'none');
 
-            // NEW SYNERGY BADGE (ABOVE)
+            // Badges
             node.filter(d => (d.data.synergyScore || 0) > 1.2)
                 .append('text')
                 .attr('class', 'synergy-badge')
-                .attr('dy', -18) // Positioned above node
+                .attr('dy', -18)
                 .attr('text-anchor', 'middle')
                 .text('⚡')
                 .style('fill', '#ffd700')
                 .style('font-size', '12px')
                 .style('pointer-events', 'none');
 
-            // Simulation tick function
+            node.filter(d => (d.data.goldScore || 0) > 0.5)
+                .append('text')
+                .attr('class', 'gold-badge')
+                .attr('dy', -18)
+                .attr('dx', 15)
+                .attr('text-anchor', 'middle')
+                .text('💎')
+                .style('fill', '#ffd700')
+                .style('font-size', '10px')
+                .style('pointer-events', 'none');
+
             this.simulation.on('tick', () => {
                 link
                     .attr('x1', d => d.source.x)
@@ -1738,16 +2050,17 @@
             });
         },
 
-        // Drag functions for force layout
         dragstarted(event, d) {
             if (!event.active) this.simulation.alphaTarget(0.3).restart();
             d.fx = d.x;
             d.fy = d.y;
         },
+        
         dragged(event, d) {
             d.fx = event.x;
             d.fy = event.y;
         },
+        
         dragended(event, d) {
             if (!event.active) this.simulation.alphaTarget(0);
             d.fx = null;
@@ -1756,16 +2069,18 @@
 
         // --- 6. UI INTERACTION & INFO DISPLAY ---
 
-        // MODIFIED: Select and display node information (and record click)
         selectNode(nodeData) {
-            // LEARNING SYSTEM HOOK: Record this click against the last search query
             this.searchHistory.recordClick(this.lastSearchQuery, nodeData);
             
             this.selectedNode = nodeData;
             
             document.getElementById('nodeInfo').style.display = 'block';
             document.getElementById('nodeTitle').textContent = nodeData.name;
-            document.getElementById('nodeFormula').textContent = nodeData.smiles || '-';
+					
+			document.getElementById('nodeFormula').textContent = nodeData.functionalPath && nodeData.functionalPath.length > 0 
+				? nodeData.functionalPath.join(' → ') 
+				: nodeData.name;
+				
             document.getElementById('nodeFamily').textContent = nodeData.familyName || nodeData.family || '-';
             document.getElementById('nodeBindingEnergy').textContent = 
                 nodeData.bindingEnergy ? `${nodeData.bindingEnergy.toFixed(2)} eV` : '0 eV';
@@ -1773,25 +2088,31 @@
                 `${(nodeData.conductivity * 100).toFixed(0)}%`;
             document.getElementById('nodeBiocompat').textContent = 
                 `${(nodeData.biocompatibility * 100).toFixed(0)}%`;
+            document.getElementById('nodeGoldScore').textContent = 
+                `${((nodeData.goldScore || 0) * 100).toFixed(0)}%`;
+            document.getElementById('nodeMarketPotential').textContent = 
+                nodeData.marketPotential ? `$${nodeData.marketPotential}B` : '$0B';
 
-            // Update progress bars (MODIFIED to use new total binding energy range)
-            // Assumes a practical max cumulative binding of ~-20eV for normalization
+            // Update progress bars
             document.getElementById('bindingEnergyBar').style.width = 
                 `${Math.min(100, Math.abs(nodeData.bindingEnergy) / 20 * 100)}%`;
             document.getElementById('conductivityBar').style.width = 
                 `${(nodeData.conductivity || 0) * 100}%`;
             document.getElementById('biocompatBar').style.width = 
                 `${(nodeData.biocompatibility || 0) * 100}%`;
+            document.getElementById('goldScoreBar').style.width = 
+                `${(nodeData.goldScore || 0) * 100}%`;
 
             // Update applications
             const appsContainer = document.getElementById('nodeApplications');
             appsContainer.innerHTML = '';
             if (nodeData.applications && nodeData.applications.length > 0) {
                 nodeData.applications.forEach(appText => {
+                    if (appText.includes(')')) return; // Hide market apps from this view
                     const tag = document.createElement('span');
                     tag.className = 'app-tag';
                     tag.textContent = appText;
-                    tag.title = appText; // Add tooltip to the tag itself
+                    tag.title = appText;
                     appsContainer.appendChild(tag);
                 });
             } else {
@@ -1802,13 +2123,25 @@
                  appsContainer.appendChild(noAppTag);
             }
 
-            // Highlight selected node (using new logic)
+            // Update markets
+            const marketsContainer = document.getElementById('nodeMarkets');
+            marketsContainer.innerHTML = '';
+            const markets = this.extractMarkets(nodeData.applications || []);
+            markets.forEach(market => {
+                const tag = document.createElement('span');
+                tag.className = 'market-tag';
+                tag.textContent = market;
+                tag.title = market;
+                marketsContainer.appendChild(tag);
+            });
+
+            // Highlight selected node
             this.g.selectAll('.node circle')
                 .transition()
                 .duration(300)
                 .style('stroke', function(d) {
                     const currentNode = d.data || d;
-                    return currentNode.id === nodeData.id ? '#FFD700' : '#fff'; // Highlight selected with gold
+                    return currentNode.id === nodeData.id ? '#FFD700' : '#fff';
                 })
                 .style('stroke-width', function(d) {
                     const currentNode = d.data || d;
@@ -1817,35 +2150,44 @@
                 });
         },
 
+        extractMarkets(applications) {
+            const markets = new Set();
+            applications.forEach(app => {
+                if (app.includes('(')) { // All inferred market apps have parens
+                    const marketName = app.replace(/\s*\([^)]+\)/, ''); // Remove the value part
+                    markets.add(marketName);
+                }
+            });
+            return Array.from(markets);
+        },
+
+        // FIXED: Replaced template literal with safe string concatenation
         showTooltip(event, nodeData) {
             if (!nodeData) return;
             const tooltip = document.getElementById('tooltip');
 
-            // Build the HTML using standard string concatenation for clarity and parser safety
             let html = '';
             html += '<strong style="color: ' + (nodeData.color || '#64ffda') + '; font-size: 13px;">' + nodeData.name + ' (L' + nodeData.depth + ')</strong><br>';
-            html += '<span style="font-size: 10px; color: #8892b0;">' + (nodeData.functionalPath ? nodeData.functionalPath.join(' &rarr; ') : nodeData.family) + '</span>';
+            html += '<span style="font-size: 10px; color: #8892b0;">' + (nodeData.functionalPath ? nodeData.functionalPath.join(' → ') : nodeData.family) + '</span>';
             html += '<hr style="border-color: rgba(100,255,218,0.1); margin: 4px 0;">';
+            html += '<strong>Gold Score:</strong> ' + ((nodeData.goldScore || 0) * 100).toFixed(0) + '%<br>';
+            html += '<strong>Market Potential:</strong> $' + (nodeData.marketPotential || 0) + 'B<br>'; // <-- THIS LINE IS NOW FIXED
             html += '<strong>Commercial Potential:</strong> ' + ((nodeData.commercialPotential || 0) * 100).toFixed(0) + '%<br>';
             html += '<strong>Synthesizability:</strong> ' + ((nodeData.practicalityScore || 0) * 100).toFixed(0) + '%<br>';
             html += '<strong>Conductivity:</strong> ' + ((nodeData.conductivity || 0) * 100).toFixed(0) + '%<br>';
             html += '<strong>Binding Energy:</strong> ' + (nodeData.bindingEnergy || 0).toFixed(2) + ' eV<br>';
             html += '<strong>Diversity:</strong> ' + ((nodeData.diversityScore || 0) * 100).toFixed(0) + '%';
 
-            tooltip.innerHTML = html; // Assign the completed, safe string
-            
-            // These are separate JavaScript commands
+            tooltip.innerHTML = html;
             tooltip.style.left = event.pageX + 15 + 'px';
             tooltip.style.top = event.pageY + 15 + 'px';
             tooltip.style.display = 'block';
         },
 
-
         hideTooltip() {
             document.getElementById('tooltip').style.display = 'none';
         },
 
-        // Change layout
         changeLayout(layout) {
             this.currentLayout = layout;
             
@@ -1858,18 +2200,17 @@
                 this.simulation.stop();
             }
             this.updateVisualization();
-            this.centerView(); // Recenter on layout change
+            this.centerView();
         },
 
         // --- 7. FILTERING & ANALYSIS FUNCTIONS ---
 
-        // Filter by family (Simple Filter)
         filterByFamily(family) {
             const familyData = this.grapheneFamilies[family];
             if (!familyData) return;
             
             document.getElementById('activeFilter').textContent = familyData.name;
-            document.getElementById('searchInput').value = family; // Put in search bar
+            document.getElementById('searchInput').value = family;
             
             this.g.selectAll('.node circle')
                 .transition()
@@ -1885,7 +2226,6 @@
                 .attr('opacity', d => (d.target.data.family === family) ? 0.6 : 0.05);
         },
 
-        // Show top performers (Metric Filter)
         showTopPerformers(metric) {
             const allNodes = [];
             const collectNodes = (node) => {
@@ -1894,12 +2234,11 @@
             };
             if(this.treeData) collectNodes(this.treeData);
             
-            // Sort by metric
             allNodes.sort((a, b) => {
                 if (metric === 'bindingEnergy') {
-                    return (a[metric] || 0) - (b[metric] || 0); // More negative is better
+                    return (a[metric] || 0) - (b[metric] || 0);
                 }
-                return (b[metric] || 0) - (a[metric] || 0); // Higher is better
+                return (b[metric] || 0) - (a[metric] || 0);
             });
             
             const topNodeIds = new Set(allNodes.slice(0, 10).map(n => n.id));
@@ -1914,7 +2253,7 @@
                     const node = d.data || d;
                     return topNodeIds.has(node.id) || node.family === 'root' ? 1 : 0.1;
                 })
-                .attr('r', function(d) { // Make top performers pop
+                .attr('r', function(d) {
                     const node = d.data || d;
                     const baseSize = d.depth === 0 ? 12 : 8;
                     const potential = node.commercialPotential || 0.5;
@@ -1923,14 +2262,147 @@
                 });
         },
 
-        // Show application category (Ontology Filter)
         showApplicationCategory(categoryKey) {
-            // Use the semantic search engine to run this query
             document.getElementById('searchInput').value = categoryKey;
             this.searchNodes(categoryKey);
         },
 
-        // Update color scheme (MODIFIED for new metrics AND gradient fix)
+        // NEW: Show Gold List
+        showGoldList() {
+            if (!this.treeData) return;
+            
+            const allNodes = [];
+            const collectNodes = (node) => {
+                if (node.family !== 'root') allNodes.push(node);
+                if (node.children) node.children.forEach(collectNodes);
+            };
+            collectNodes(this.treeData);
+            
+            allNodes.sort((a, b) => (b.goldScore || 0) - (a.goldScore || 0));
+            const top10 = allNodes.slice(0, 10);
+            
+            let html = '<table>';
+            html += '<tr><th>Rank</th><th>Combo</th><th>Gold Score</th><th>Market</th><th>Key Features</th></tr>';
+            
+            top10.forEach((n, i) => {
+                const combo = n.functionalPath.join(' → ');
+                const score = (n.goldScore * 100).toFixed(0) + '%';
+                const market = '$' + (n.marketPotential || 0) + 'B'; // <-- THIS LINE IS NOW FIXED
+                
+                // Extract key features
+                const features = [];
+                if (n.stability > 0.8) features.push('High Stability');
+                if (n.practicalityScore > 0.7) features.push('Easy Synth');
+                if (n.conductivity > 0.7) features.push('Conductive');
+                if (n.biocompatibility > 0.8) features.push('Biocompatible');
+                
+                const topApps = n.applications
+                    .filter(app => app.includes('(') || app.includes('untapped'))
+                    .slice(0, 2)
+                    .map(app => {
+                        const cleanApp = app.replace(/\([^)]+\)/, '').trim();
+                        return `<div class="market-list">• ${cleanApp}</div>`;
+                    })
+                    .join('');
+                
+                html += `<tr>
+                    <td class="gold-rank">#${i + 1}</td>
+                    <td><div class="combo-path">${combo}</div></td>
+                    <td>${score}</td>
+                    <td>${market}</td>
+                    <td>${features.join(', ')}<br>${topApps}</td>
+                </tr>`;
+            });
+            html += '</table>';
+            
+            document.getElementById('goldTable').innerHTML = html;
+            document.getElementById('goldList').style.display = 'block';
+            
+            // Highlight top10 in viz
+            const topIds = new Set(top10.map(n => n.id));
+            this.g.selectAll('.node circle')
+                .transition().duration(500)
+                .attr('opacity', d => topIds.has((d.data || d).id) || (d.data || d).family === 'root' ? 1 : 0.2)
+                .attr('r', d => {
+                    const node = d.data || d;
+                    const baseSize = node.depth === 0 ? 12 : 8;
+                    const potential = node.commercialPotential || 0.5;
+                    const baseR = baseSize * (0.5 + potential);
+                    return topIds.has(node.id) ? baseR * 1.2 : baseR;
+                })
+                .attr('stroke', d => topIds.has((d.data || d).id) ? '#ffd700' : '#fff');
+            
+            document.getElementById('activeFilter').textContent = 'Gold Rush Mode';
+        },
+
+        // NEW: Show Market Opportunities
+        showMarketOpportunities() {
+            if (!this.treeData) return;
+            
+            const marketMap = new Map();
+            
+            const collectMarkets = (node) => {
+                if (node.marketPotential > 0) {
+                    node.applications.forEach(app => {
+                        const match = app.match(/([^(]+)\s*\(\$(\d+)B[^)]*\)/);
+                        if (match) {
+                            const sector = match[1].trim();
+                            const value = parseInt(match[2]);
+                            if (!marketMap.has(sector)) {
+                                marketMap.set(sector, { value: value, nodes: [] });
+                            }
+                            marketMap.get(sector).nodes.push(node);
+                        }
+                    });
+                }
+                if (node.children) node.children.forEach(collectMarkets);
+            };
+            
+            if (this.treeData) collectMarkets(this.treeData);
+            
+            const sortedMarkets = Array.from(marketMap.entries())
+                .sort((a, b) => b[1].value - a[1].value)
+                .slice(0, 15);
+            
+            let html = '<table>';
+            html += '<tr><th>Market Opportunity</th><th>Size</th><th>Top Combos</th></tr>';
+            
+            sortedMarkets.forEach(([sector, data]) => {
+                const topNodes = data.nodes
+                    .sort((a, b) => (b.goldScore || 0) - (a.goldScore || 0))
+                    .slice(0, 3);
+                
+                const combos = topNodes.map(n => 
+                    `<div class="combo-path">${n.functionalPath.slice(-2).join('→')}</div>`
+                ).join('');
+                
+                html += `<tr>
+                    <td>${sector}</td>
+                    <td class="gold-rank">${data.value}B</td>
+                    <td>${combos}</td>
+                </tr>`;
+            });
+            html += '</table>';
+            
+            document.getElementById('goldTable').innerHTML = html;
+            document.getElementById('goldList').style.display = 'block';
+            document.getElementById('activeFilter').textContent = 'Market Opportunities';
+            
+            // Highlight nodes with high market potential
+            this.g.selectAll('.node circle')
+                .transition().duration(500)
+                .attr('opacity', d => {
+                    const node = d.data || d;
+                    return (node.marketPotential || 0) > 20 ? 1 : 0.2;
+                })
+                .attr('r', d => {
+                    const node = d.data || d;
+                    const baseSize = node.depth === 0 ? 12 : 8;
+                    const marketScale = Math.min(2, 1 + (node.marketPotential || 0) / 100);
+                    return baseSize * marketScale;
+                });
+        },
+
         updateColorScheme() {
             const metric = document.getElementById('colorMetric').value;
             
@@ -1946,12 +2418,11 @@
                     let value;
                     switch(metric) {
                         case 'family':
-                            // Re-apply practicality shading
                             const color = node.color || '#64ffda';
                             const practicality = node.practicalityScore || 1.0;
                             return d3.color(color).darker(2 - (2 * practicality));
                         case 'bindingEnergy':
-                            value = Math.min(1, Math.max(0, Math.abs(node.bindingEnergy) / 20)); // Normalize 0 to 20eV range
+                            value = Math.min(1, Math.max(0, Math.abs(node.bindingEnergy) / 20));
                             return d3.interpolateViridis(value);
                         case 'conductivity':
                             return d3.interpolatePlasma(node.conductivity);
@@ -1959,18 +2430,19 @@
                             return d3.interpolateRdYlGn(node.biocompatibility);
                         case 'stability':
                             return d3.interpolateCividis(node.stability);
-                        case 'practicalityScore': // NEW
-                            return d3.interpolateRdYlGn(node.practicalityScore); // Red(hard) to Green(easy)
-                        
-                        case 'commercialPotential': // NEW RE-NORMALIZED LOGIC
-                            // Assume the "interesting" data range is between 50% and 80%
+                        case 'practicalityScore':
+                            return d3.interpolateRdYlGn(node.practicalityScore);
+                        case 'commercialPotential':
                             const minPotential = 0.5;
                             const maxPotential = 0.8;
-                            // Stretch this range to fill the 0.0 - 1.0 color spectrum
                             let normValue = (node.commercialPotential - minPotential) / (maxPotential - minPotential);
-                            value = Math.max(0, Math.min(1, normValue)); // Clamp between 0 and 1
-                            return d3.interpolateInferno(value); // Use the full Inferno scale
-
+                            value = Math.max(0, Math.min(1, normValue));
+                            return d3.interpolateInferno(value);
+                        case 'goldScore':
+                            return d3.interpolateOrRd(node.goldScore || 0);
+                        case 'marketPotential':
+                            value = Math.min(1, (node.marketPotential || 0) / 100);
+                            return d3.interpolateRdYlGn(value);
                         default:
                             return node.color || '#64ffda';
                     }
@@ -1979,10 +2451,9 @@
             this.updateLegend(metric);
         },
 
-        // Update legend based on metric (MODIFIED for new metrics AND gradient fix)
         updateLegend(metric) {
             const legend = document.getElementById('legend');
-            legend.innerHTML = ''; // Clear legend
+            legend.innerHTML = '';
 
             if (metric === 'family') {
                 Object.keys(this.grapheneFamilies).forEach(key => {
@@ -1999,17 +2470,18 @@
                         <span>Pristine</span>
                     </div>`;
             } else {
-                // Show metric gradient
                 const scales = {
                     bindingEnergy: { scale: d3.interpolateViridis, labels: ['Weak (0eV)', 'Strong (20eV+)'] },
                     conductivity: { scale: d3.interpolatePlasma, labels: ['Insulator', 'Conductive'] },
                     biocompatibility: { scale: d3.interpolateRdYlGn, labels: ['Toxic', 'Biocompatible'] },
                     stability: { scale: d3.interpolateCividis, labels: ['Unstable', 'Stable'] },
                     practicalityScore: { scale: d3.interpolateRdYlGn, labels: ['Impractical', 'Synthesizable'] },
-                    commercialPotential: { scale: d3.interpolateInferno, labels: ['~50%', '80%+'] } // FIXED LABEL
+                    commercialPotential: { scale: d3.interpolateInferno, labels: ['~50%', '80%+'] },
+                    goldScore: { scale: d3.interpolateOrRd, labels: ['Low', 'High Gold'] },
+                    marketPotential: { scale: d3.interpolateRdYlGn, labels: ['$0B', '$100B+'] }
                 };
                 const spec = scales[metric];
-                if (!spec) return; // Failsafe
+                if (!spec) return;
 
                 const { scale, labels } = spec;
                 
@@ -2024,11 +2496,9 @@
             }
         },
 
-        // --- 8. NEW SEMANTIC SEARCH IMPLEMENTATION ---
+        // --- 8. SEARCH IMPLEMENTATION ---
 
-        // REPLACED: Enhanced search function with relevance ranking
         searchNodes(searchQuery) {
-            // Store query for learning
             this.lastSearchQuery = searchQuery.toLowerCase().trim();
             
             const parser = new QueryParser();
@@ -2039,12 +2509,10 @@
                 return;
             }
             
-            // Calculate relevance scores for all nodes
             const nodeScores = new Map();
             
             const calculateScores = (node) => {
                 let isExcluded = false;
-                // 1. Check exclusions
                 if (parsed.exclude.length > 0) {
                     const nodeText = `${node.name.toLowerCase()} ${node.family.toLowerCase()} ${(node.applications || []).join(' ').toLowerCase()}`;
                     isExcluded = parsed.exclude.some(exc => nodeText.includes(exc));
@@ -2052,10 +2520,8 @@
                 if (isExcluded) {
                     nodeScores.set(node, 0);
                 } else {
-                    // 2. Calculate base relevance score
                     let score = calculateRelevanceScore(node, parsed.expandedTerms);
                     
-                    // 3. Apply property filters (Hard filters/boosts)
                     let propertyMatch = true;
                     if (parsed.properties.length > 0) {
                         propertyMatch = parsed.properties.every(prop => {
@@ -2063,24 +2529,18 @@
                         });
 
                         if (propertyMatch) {
-                            score += 10 * parsed.properties.length; // Boost for matching all properties
+                            score += 10 * parsed.properties.length;
                         }
                     }
 
-                    // If it fails a hard property filter, it's not a match.
                     if (!propertyMatch) {
                         score = 0;
-                    } 
-                    // If it matches properties but has no matching text terms, it's still a match (if no text was entered)
-                    else if (propertyMatch && parsed.properties.length > 0 && score === 0 && parsed.expandedTerms.length === 0) {
-                        score = 10; // Base score for just matching properties
-                    } 
-                    // If text was entered but didn't match, it's not a result (unless property match is all that matters)
-                    else if (score === 0 && parsed.expandedTerms.length > 0 && parsed.properties.length === 0) {
-                        score = 0; // Requires text match if text was provided (and no properties were)
+                    } else if (propertyMatch && parsed.properties.length > 0 && score === 0 && parsed.expandedTerms.length === 0) {
+                        score = 10;
+                    } else if (score === 0 && parsed.expandedTerms.length > 0 && parsed.properties.length === 0) {
+                        score = 0;
                     }
                     
-                    // 4. Apply learning boost
                     if (score > 0) {
                         const clickBoost = this.searchHistory.getClickBoost(this.lastSearchQuery, node);
                         score += clickBoost;
@@ -2096,16 +2556,13 @@
             
             if (this.treeData) calculateScores(this.treeData);
             
-            // Get threshold for visibility (top 30% of scores, or any score > 0)
             const scores = Array.from(nodeScores.values()).filter(s => s > 0);
             scores.sort((a, b) => b - a);
             const threshold = scores.length > 0 ? (scores[Math.floor(scores.length * 0.3)] || 1) : 1;
             const maxScore = scores.length > 0 ? scores[0] : threshold;
             
-            // Record this search
             this.searchHistory.recordSearch(this.lastSearchQuery, scores);
 
-            // Update visualization with relevance-based opacity and sizing
             this.g.selectAll('.node circle')
                 .transition()
                 .duration(300)
@@ -2114,7 +2571,6 @@
                     const score = nodeScores.get(node) || 0;
                     if (node.family === 'root') return 1.0;
                     if (score === 0) return 0.05;
-                    // Scale opacity from 0.2 to 1.0 based on score vs threshold
                     const scoreRatio = Math.min(1, score / (threshold + 0.1));
                     return 0.2 + (scoreRatio * 0.8);
                 })
@@ -2126,18 +2582,15 @@
                     const baseR = baseSize * (0.5 + potential);
 
                     if (score > 0 && maxScore > 0) {
-                        // Size by relevance score relative to max
                         return baseR * (1 + Math.min(1, score / maxScore));
                     }
                     return baseR;
                 });
             
-            // Update filter label with smart summary
             const summary = this.generateSearchSummary(parsed, scores.length);
             document.getElementById('activeFilter').textContent = summary;
         },
 
-        // NEW: Generate human-readable search summary
         generateSearchSummary(parsed, resultCount) {
             const parts = [];
             
@@ -2148,13 +2601,12 @@
             }
             
             if (parsed.applications.length > 0) {
-                // Get unique top-level categories
                 const apps = [...new Set(parsed.applications.map(a_path => a_path[0]))].join('/');
                 parts.push(apps);
             }
             
             if (parsed.terms.length > 0) {
-                parts.push(parsed.terms.slice(0, 2).join(', ')); // Only basic terms, not expanded
+                parts.push(parsed.terms.slice(0, 2).join(', '));
             }
             
             if (parsed.exclude.length > 0) {
@@ -2165,13 +2617,12 @@
             return `${summaryText} (${resultCount} results)`;
         },
 
-        // Reset all filters
         resetFilters() {
             document.getElementById('activeFilter').textContent = 'None';
             document.getElementById('searchInput').value = '';
-            this.lastSearchQuery = ''; // Clear search memory
+            document.getElementById('goldList').style.display = 'none';
+            this.lastSearchQuery = '';
             
-            // Reset all visual attributes to their data-driven defaults
             this.g.selectAll('.node circle')
                 .transition()
                 .duration(300)
@@ -2195,7 +2646,6 @@
 
         // --- 9. VIEW CONTROLS & EXPORT ---
 
-        // Zoom controls
         zoomIn() {
             this.svg.transition().duration(300).call(this.zoom.scaleBy, 1.3);
         },
@@ -2203,15 +2653,12 @@
             this.svg.transition().duration(300).call(this.zoom.scaleBy, 0.7);
         },
 
-        // Center view
         centerView() {
             const container = document.getElementById('tree-container');
             const width = container.clientWidth;
             const height = container.clientHeight;
             let transform = d3.zoomIdentity;
             
-            // Force layout is centered at 0,0 relative to its center force.
-            // Tree/Radial are manually translated, so resetting to identity works.
             if (this.currentLayout === 'force') {
                  transform = d3.zoomIdentity.translate(0, 0).scale(1);
             }
@@ -2222,13 +2669,11 @@
             );
         },
 
-        // Reset view and filters
         resetView() {
             this.centerView();
             this.resetFilters();
         },
 
-        // Export data
         exportData() {
             const data = {
                 metadata: {
@@ -2237,13 +2682,13 @@
                     totalNodes: this.countNodes(this.treeData),
                     depth: this.currentDepth,
                     branching: this.currentBranching,
-                    layout: this.currentLayout
+                    layout: this.currentLayout,
+                    version: "3.02"
                 },
-                tree: this.treeData // Export the full simulated tree
+                tree: this.treeData
             };
             
             const json = JSON.stringify(data, (key, value) => {
-                // Clean up circular references for JSON (D3 adds parent links which we don't want)
                 if (key === 'parent' || key === 'target' || key === 'source') return undefined;
                 return value;
             }, 2);
@@ -2252,18 +2697,73 @@
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = `graphene-simulation-data-${Date.now()}.json`;
+            a.download = `graphene-gold-data-${Date.now()}.json`;
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
             URL.revokeObjectURL(url);
             
             console.log('Data exported successfully!');
+        },
+
+        exportCSV() {
+            if (!this.treeData) return;
+            
+            const allNodes = [];
+            const collectNodes = (node) => {
+                if (node.family !== 'root') allNodes.push(node);
+                if (node.children) node.children.forEach(collectNodes);
+            };
+            collectNodes(this.treeData);
+            
+            allNodes.sort((a, b) => (b.goldScore || 0) - (a.goldScore || 0));
+            const top50 = allNodes.slice(0, 50);
+            
+            let csv = 'Rank,Combination,Gold Score (%),Market Potential ($B),Stability,Practicality,Conductivity (%),Biocompatibility (%),Top Application 1,Top Application 2,Chemical Family\n';
+            
+            top50.forEach((node, index) => {
+                const combo = node.functionalPath.join(' -> ');
+                const goldScore = ((node.goldScore || 0) * 100).toFixed(1);
+                const market = node.marketPotential || 0;
+                const stability = (node.stability * 100).toFixed(1);
+                const practicality = (node.practicalityScore * 100).toFixed(1);
+                const conductivity = (node.conductivity * 100).toFixed(1);
+                const biocompat = (node.biocompatibility * 100).toFixed(1);
+  
+                const apps = node.applications
+                    .filter(app => app.includes('(') || app.includes('untapped'))
+                    .slice(0, 2)
+                    .map(app => '"' + app.replace(/"/g, '""') + '"'); // Escape quotes
+                
+                // If no market apps found, include regular applications
+                if (apps.length === 0 && node.applications.length > 0) {
+                    node.applications.slice(0, 2).forEach(app => {
+                        apps.push('"' + app.replace(/"/g, '""') + '"');
+                    });
+                }
+                
+                while (apps.length < 2) apps.push('""');
+                
+				
+                csv += `${index + 1},"${combo}",${goldScore},${market},${stability},${practicality},${conductivity},${biocompat},${apps[0]},${apps[1]},"${node.familyName || node.family}"\n`;
+            });
+            
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `hydrograph-gold-list-${Date.now()}.csv`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            console.log('CSV exported successfully!');
         }
-    }; // END OF CONST APP OBJECT
+    }; // END OF APP OBJECT
 
     //==============================================================
-    // 3. APP INITIALIZER (Must come AFTER 'const app' definition)
+    // 3. APP INITIALIZER
     //==============================================================
     document.addEventListener('DOMContentLoaded', () => {
         app.init();
