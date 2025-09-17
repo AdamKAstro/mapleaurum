@@ -457,9 +457,9 @@
                     <button id="largeBtn" onclick="app.generateTree('large')" title="Generate a large data set (500+ nodes)">Large (500+)</button>
                 </div>
                 <label title="Set the maximum depth (levels) of the fractal tree">Tree Depth: <span id="depthValue">3</span></label>
-                <input type="range" id="depthSlider" min="2" max="6" value="3" title="Set the maximum depth (levels) of the fractal tree">
+                <input type="range" id="depthSlider" min="2" max="5" value="3" title="Set the maximum depth (levels) of the fractal tree">
                 <label title="Set the number of child nodes (branches) for each parent node">Branching Factor: <span id="branchValue">3</span></label>
-                <input type="range" id="branchSlider" min="2" max="5" value="3" title="Set the number of child nodes (branches) for each parent node">
+                <input type="range" id="branchSlider" min="2" max="8" value="3" title="Set the number of child nodes (branches) for each parent node">
                 <button onclick="app.regenerateTree()" style="width: 100%; margin-top: 10px;" title="Re-build the tree using the current Depth and Branching settings">
                     Regenerate with Current Settings
                 </button>
@@ -990,154 +990,256 @@
         currentBranching: 3,
         selectedNode: null,
         lastSearchQuery: '',
-        
-        // --- 2a. Comprehensive graphene database (Base values for simulation) ---
-        grapheneFamilies: {
-            oxygen: {
-                name: "Oxygen Family",
-                color: "#ff6b6b",
-                additives: [
-                    { name: "COOH", smiles: "C(=O)O", bindingEnergy: -3.5, conductivity: 0.3, biocompatibility: 0.85, stability: 0.7,
-                      applications: ["Cement +70% strength", "Composites", "Ion exchange", "Water treatment", "Hydrophilic coatings"] },
-                    { name: "OH", smiles: "O", bindingEnergy: -2.8, conductivity: 0.4, biocompatibility: 0.9, stability: 0.75,
-                      applications: ["Biosensors", "Drug delivery", "Hydrogels", "Biomedical coatings", "Water purification"] },
-                    { name: "C=O", smiles: "C=O", bindingEnergy: -2.2, conductivity: 0.5, biocompatibility: 0.7, stability: 0.8,
-                      applications: ["Energy storage", "Catalysis", "Gas sensors", "Photocatalysis", "Supercapacitors"] },
-                    { name: "O-epoxy", smiles: "O1CC1", bindingEnergy: -2.5, conductivity: 0.35, biocompatibility: 0.75, stability: 0.65,
-                      applications: ["Polymer composites", "Adhesives", "Crosslinking", "Epoxy resins", "Surface modification"] },
-                    { name: "CHO", smiles: "C=O", bindingEnergy: -2.3, conductivity: 0.45, biocompatibility: 0.65, stability: 0.7,
-                      applications: ["Chemical sensors", "Organic synthesis", "Aldehyde detection", "Bioconjugation"] },
-                    { name: "COOCH3", smiles: "C(=O)OC", bindingEnergy: -2.9, conductivity: 0.38, biocompatibility: 0.72, stability: 0.78,
-                      applications: ["Esterification", "Polymer grafting", "Drug loading", "Organic electronics"] },
-                    { name: "Peroxide", smiles: "OO", bindingEnergy: -2.6, conductivity: 0.35, biocompatibility: 0.8, stability: 0.7,
-                      applications: ["Water remediation membranes", "Hydrogels", "Oxidative catalysis"] },
-                    { name: "Ether", smiles: "COC", bindingEnergy: -2.1, conductivity: 0.45, biocompatibility: 0.85, stability: 0.75,
-                      applications: ["Flexible coatings", "Polymer blends", "Gas separation"] }
-                ]
-            },
-            nitrogen: {
-                name: "Nitrogen Family",
-                color: "#4ecdc4",
-                additives: [
-                    { name: "NH2", smiles: "N", bindingEnergy: -2.9, conductivity: 0.7, biocompatibility: 0.95, stability: 0.8,
-                      applications: ["DNA sensors", "Transistors", "Drug delivery", "Neural interfaces", "Protein immobilization"] },
-                    { name: "NO2", smiles: "N(=O)=O", bindingEnergy: -2.4, conductivity: 0.6, biocompatibility: 0.5, stability: 0.75,
-                      applications: ["Explosives detection", "Gas sensors", "Catalysts", "Environmental monitoring"] },
-                    { name: "C≡N", smiles: "C#N", bindingEnergy: -2.1, conductivity: 0.75, biocompatibility: 0.6, stability: 0.85,
-                      applications: ["Electrochemistry", "Batteries", "Corrosion protection", "Ion sensors", "Fuel cells"] },
-                    { name: "NH3+", smiles: "[NH3+]", bindingEnergy: -3.2, conductivity: 0.8, biocompatibility: 0.7, stability: 0.65,
-                      applications: ["Ion transport", "pH buffering", "Membranes", "Antimicrobial surfaces"] },
-                    { name: "NHCO", smiles: "NC=O", bindingEnergy: -3.0, conductivity: 0.5, biocompatibility: 0.92, stability: 0.79,
-                      applications: ["Peptide conjugation", "Wound healing", "Biomedical implants", "Tissue engineering"] },
-                    { name: "N(CH3)2", smiles: "N(C)C", bindingEnergy: -2.7, conductivity: 0.55, biocompatibility: 0.88, stability: 0.77,
-                      applications: ["Gene delivery", "Cell adhesion", "Controlled release", "Smart materials"] },
-                    { name: "Pyridine-N", smiles: "n1ccccc1", bindingEnergy: -2.5, conductivity: 0.7, biocompatibility: 0.85, stability: 0.8,
-                      applications: ["DNA biosensors", "Catalysis", "Electronics"] },
-                    { name: "Imidazole", smiles: "c1cnc[nH]1", bindingEnergy: -3.0, conductivity: 0.65, biocompatibility: 0.9, stability: 0.82,
-                      applications: ["Metal coordination", "pH sensors", "Bioconjugation"] }
-                ]
-            },
-            sulfur: {
-                name: "Sulfur Family",
-                color: "#ffd93d",
-                additives: [
-                    { name: "SH", smiles: "S", bindingEnergy: -2.3, conductivity: 0.6, biocompatibility: 0.7, stability: 0.75,
-                      applications: ["Heavy metal detection", "Gold binding", "Self-assembly", "Protein anchoring"] },
-                    { name: "SO3H", smiles: "S(=O)(=O)O", bindingEnergy: -3.8, conductivity: 0.85, biocompatibility: 0.6, stability: 0.7,
-                      applications: ["Fuel cells", "Proton exchange", "Solid acid catalysts", "Water splitting"] },
-                    { name: "SO2", smiles: "S(=O)=O", bindingEnergy: -2.7, conductivity: 0.55, biocompatibility: 0.65, stability: 0.8,
-                      applications: ["Gas sensors", "Environmental remediation", "SO2 detection", "Air purification"] },
-                    { name: "S-S", smiles: "SS", bindingEnergy: -2.0, conductivity: 0.5, biocompatibility: 0.75, stability: 0.85,
-                      applications: ["Self-healing materials", "Redox batteries", "Polymer crosslinking", "Smart materials"] }
-                ]
-            },
-            phosphorus: {
-                name: "Phosphorus Family",
-                color: "#10b981",
-                additives: [
-                    { name: "PO3H2", smiles: "P(=O)(O)O", bindingEnergy: -3.4, conductivity: 0.7, biocompatibility: 0.85, stability: 0.8,
-                      applications: ["Flame retardants", "Bone tissue", "Ion exchange", "Proton conductors"] },
-                    { name: "P(OH)2", smiles: "P(O)O", bindingEnergy: -3.1, conductivity: 0.58, biocompatibility: 0.82, stability: 0.77,
-                      applications: ["Membranes", "Water treatment", "Catalysis", "Corrosion inhibitors"] },
-                    { name: "PO4H2-", smiles: "[O-]P(=O)(O)O", bindingEnergy: -3.6, conductivity: 0.75, biocompatibility: 0.9, stability: 0.75,
-                      applications: ["Biomineralization", "Bone implants", "Dental materials", "Bioceramics"] }
-                ]
-            },
-            halogen: {
-                name: "Halogen Family",
-                color: "#f472b6",
-                additives: [
-                    { name: "F", smiles: "F", bindingEnergy: -2.0, conductivity: 0.3, biocompatibility: 0.6, stability: 0.9,
-                      applications: ["Hydrophobic coatings", "Electronics passivation", "Anti-fouling", "Chemical resistance"] },
-                    { name: "Cl", smiles: "Cl", bindingEnergy: -1.8, conductivity: 0.35, biocompatibility: 0.55, stability: 0.85,
-                      applications: ["Antimicrobial", "Water disinfection", "Chemical sensors", "Halogenated polymers"] },
-                    { name: "CF3", smiles: "C(F)(F)F", bindingEnergy: -2.4, conductivity: 0.25, biocompatibility: 0.65, stability: 0.95,
-                      applications: ["Superhydrophobic", "Low surface energy", "Fluoropolymers", "Protective coatings"] }
-                ]
-            },
-            metal: {
-                name: "Metal Coordination",
-                color: "#ef4444",
-                additives: [
-                    { name: "Fe-N4", smiles: "[Fe]N4", bindingEnergy: -4.0, conductivity: 0.9, biocompatibility: 0.7, stability: 0.8,
-                      applications: ["Oxygen reduction", "Fuel cells", "Catalysis", "Magnetic materials", "Sensors"] },
-                    { name: "Cu-N2", smiles: "[Cu]N2", bindingEnergy: -3.5, conductivity: 0.95, biocompatibility: 0.6, stability: 0.75,
-                      applications: ["CO2 reduction", "Antibacterial", "Electronics", "Thermal management"] },
-                    { name: "Pt-Cl2", smiles: "[Pt](Cl)Cl", bindingEnergy: -4.5, conductivity: 0.98, biocompatibility: 0.5, stability: 0.85,
-                      applications: ["Hydrogen evolution", "Chemotherapy", "Catalysis", "Fuel cells"] }
-                ]
-            },
-            hybrid: {
-                name: "Hybrid Family",
-                color: "#a78bfa",
-                additives: [
-                    { name: "COOH-NH2", smiles: "C(=O)ON", bindingEnergy: -3.7, conductivity: 0.45, biocompatibility: 0.88, stability: 0.72,
-                      applications: ["Smart materials", "pH-responsive", "Dual sensors", "Bioconjugation"] },
-                    { name: "OH-NH2", smiles: "ON", bindingEnergy: -3.0, conductivity: 0.5, biocompatibility: 0.93, stability: 0.76,
-                      applications: ["Biocompatible materials", "Cell culture", "Tissue scaffolds", "Hydrogels"] },
-                    { name: "SH-COOH", smiles: "SC(=O)O", bindingEnergy: -3.4, conductivity: 0.55, biocompatibility: 0.75, stability: 0.74,
-                      applications: ["Metal binding", "Environmental cleanup", "Bioremediation", "Heavy metal sensors"] },
-                    { name: "B(OH)2", smiles: "B(O)O", bindingEnergy: -3.1, conductivity: 0.4, biocompatibility: 0.78, stability: 0.8,
-                      applications: ["Glucose sensors", "Drug delivery", "Smart polymers", "pH sensors"] }
-                ]
-            },
-            boron: {
-                name: "Boron Family",
-                color: "#8b5cf6",
-                additives: [
-                    { name: "B(OH)2", smiles: "B(O)O", bindingEnergy: -2.8, conductivity: 0.85, biocompatibility: 0.75, stability: 0.85,
-                      applications: ["p-type semiconductors", "Thermoelectrics ZT boost", "Catalysis"] },
-                    { name: "B-N", smiles: "BN", bindingEnergy: -3.2, conductivity: 0.9, biocompatibility: 0.7, stability: 0.9,
-                      applications: ["FET transistors", "Insulating layers", "High-temp electronics"] },
-                    { name: "BC3", smiles: "BC3", bindingEnergy: -2.1, conductivity: 0.95, biocompatibility: 0.8, stability: 0.88,
-                      applications: ["Bandgap engineering", "Solar cells", "Sensors"] }
-                ]
-            },
-            silicon: {
-                name: "Silicon Family",
-                color: "#06b6d4",
-                additives: [
-                    { name: "SiH3", smiles: "Si", bindingEnergy: -2.4, conductivity: 0.7, biocompatibility: 0.8, stability: 0.8,
-                      applications: ["Li-ion anodes", "Hybrids", "Solar perovskites"] },
-                    { name: "SiO2", smiles: "O=[Si]=O", bindingEnergy: -3.1, conductivity: 0.6, biocompatibility: 0.85, stability: 0.85,
-                      applications: ["Protective coatings", "Membranes", "Composites"] },
-                    { name: "Si-Ph", smiles: "C[Si]", bindingEnergy: -2.7, conductivity: 0.75, biocompatibility: 0.75, stability: 0.82,
-                      applications: ["Organic electronics", "Batteries", "Sensors"] }
-                ]
-            },
-            alkyl: {
-                name: "Alkyl/Organic Family",
-                color: "#f59e0b",
-                additives: [
-                    { name: "CH3", smiles: "C", bindingEnergy: -1.5, conductivity: 0.8, biocompatibility: 0.85, stability: 0.75,
-                      applications: ["Hydrophobic coatings", "Anti-fouling", "Polymers"] },
-                    { name: "C6H5", smiles: "c1ccccc1", bindingEnergy: -2.0, conductivity: 0.85, biocompatibility: 0.8, stability: 0.8,
-                      applications: ["Organics grafting", "Drug delivery", "Electronics"] },
-                    { name: "PEG", smiles: "OCCO", bindingEnergy: -2.2, conductivity: 0.7, biocompatibility: 0.95, stability: 0.78,
-                      applications: ["Solubilization", "Implants", "Coatings"] }
-                ]
-            }
-        },
+				
+		// --- 2a. Comprehensive graphene database (Base values for simulation) ---
+		grapheneFamilies: {
+			oxygen: {
+				name: "Oxygen Family",
+				color: "#ff6b6b",
+				additives: [
+					{ name: "COOH", smiles: "C(=O)O", bindingEnergy: -3.5, conductivity: 0.3, biocompatibility: 0.85, stability: 0.7,
+					  applications: ["Cement +70% strength", "Composites", "Ion exchange", "Water treatment", "Hydrophilic coatings"] },
+					{ name: "OH", smiles: "O", bindingEnergy: -2.8, conductivity: 0.4, biocompatibility: 0.9, stability: 0.75,
+					  applications: ["Biosensors", "Drug delivery", "Hydrogels", "Biomedical coatings", "Water purification"] },
+					{ name: "C=O", smiles: "C=O", bindingEnergy: -2.2, conductivity: 0.5, biocompatibility: 0.7, stability: 0.8,
+					  applications: ["Energy storage", "Catalysis", "Gas sensors", "Photocatalysis", "Supercapacitors"] },
+					{ name: "O-epoxy", smiles: "O1CC1", bindingEnergy: -2.5, conductivity: 0.35, biocompatibility: 0.75, stability: 0.65,
+					  applications: ["Polymer composites", "Adhesives", "Crosslinking", "Epoxy resins", "Surface modification"] },
+					{ name: "CHO", smiles: "C=O", bindingEnergy: -2.3, conductivity: 0.45, biocompatibility: 0.65, stability: 0.7,
+					  applications: ["Chemical sensors", "Organic synthesis", "Aldehyde detection", "Bioconjugation"] },
+					{ name: "COOCH3", smiles: "C(=O)OC", bindingEnergy: -2.9, conductivity: 0.38, biocompatibility: 0.72, stability: 0.78,
+					  applications: ["Esterification", "Polymer grafting", "Drug loading", "Organic electronics"] },
+					{ name: "Peroxide", smiles: "OO", bindingEnergy: -2.6, conductivity: 0.35, biocompatibility: 0.8, stability: 0.7,
+					  applications: ["Water remediation membranes", "Hydrogels", "Oxidative catalysis"] },
+					{ name: "Ether", smiles: "COC", bindingEnergy: -2.1, conductivity: 0.45, biocompatibility: 0.85, stability: 0.75,
+					  applications: ["Flexible coatings", "Polymer blends", "Gas separation"] },
+					// NEW LIT-BACKED: From 2025 Nature on LDH decoration for PU toughness
+					{ name: "ZnAl-LDH-O", smiles: "[Zn]1O[Al](O[Zn]1)(O)O", bindingEnergy: -3.6, conductivity: 0.55, biocompatibility: 0.82, stability: 0.88,
+					  applications: ["Toughened coatings", "Corrosion barriers", "Construction composites ($25B)"] },
+					// NEW LIT-BACKED: Benzenesulfonic from 2024 ACS for PEMs
+					{ name: "Ph-SO3", smiles: "c1ccccc1S(=O)(=O)O", bindingEnergy: -3.3, conductivity: 0.4, biocompatibility: 0.75, stability: 0.85,
+					  applications: ["Proton membranes", "Fuel cells", "Ion transport ($45B)"] },
+					// NEW SPECULATIVE: H-density flat bands from 2025 RSC DFT
+					{ name: "H-O-hybrid", smiles: "CO", bindingEnergy: -2.4, conductivity: 0.65, biocompatibility: 0.85, stability: 0.82,
+					  applications: ["Flat-band electronics", "Quantum sensors", "Untapped valleytronics ($60B)"] },
+					// NEW SPECULATIVE: Ammonia-O from 2025 exfoliation principles
+					{ name: "NH2-O", smiles: "NO", bindingEnergy: -3.0, conductivity: 0.5, biocompatibility: 0.88, stability: 0.8,
+					  applications: ["Exfoliation aids", "Dispersion enhancers", "Green processing ($15B)"] },
+					// NEW LIT-BACKED: Peroxide variant from IL/GO lubes 2023-25 ACS
+					{ name: "ROO", smiles: "CO O", bindingEnergy: -2.7, conductivity: 0.4, biocompatibility: 0.78, stability: 0.72,
+					  applications: ["Lubricant additives", "Tribology", "Low-friction coatings ($20B)"] },
+					// NEW SPECULATIVE: Epoxy-dimer for denser coverage
+					{ name: "Epoxy-dimer", smiles: "O1CC1OCC2CO2", bindingEnergy: -2.8, conductivity: 0.35, biocompatibility: 0.7, stability: 0.78,
+					  applications: ["Dense crosslinking", "Adhesives upgrade", "Self-healing infra ($25B)"] }
+				]
+			},
+			nitrogen: {
+				name: "Nitrogen Family",
+				color: "#4ecdc4",
+				additives: [
+					{ name: "NH2", smiles: "N", bindingEnergy: -2.9, conductivity: 0.7, biocompatibility: 0.95, stability: 0.8,
+					  applications: ["DNA sensors", "Transistors", "Drug delivery", "Neural interfaces", "Protein immobilization"] },
+					{ name: "NO2", smiles: "N(=O)=O", bindingEnergy: -2.4, conductivity: 0.6, biocompatibility: 0.5, stability: 0.75,
+					  applications: ["Explosives detection", "Gas sensors", "Catalysts", "Environmental monitoring"] },
+					{ name: "C≡N", smiles: "C#N", bindingEnergy: -2.1, conductivity: 0.75, biocompatibility: 0.6, stability: 0.85,
+					  applications: ["Electrochemistry", "Batteries", "Corrosion protection", "Ion sensors", "Fuel cells"] },
+					{ name: "NH3+", smiles: "[NH3+]", bindingEnergy: -3.2, conductivity: 0.8, biocompatibility: 0.7, stability: 0.65,
+					  applications: ["Ion transport", "pH buffering", "Membranes", "Antimicrobial surfaces"] },
+					{ name: "NHCO", smiles: "NC=O", bindingEnergy: -3.0, conductivity: 0.5, biocompatibility: 0.92, stability: 0.79,
+					  applications: ["Peptide conjugation", "Wound healing", "Biomedical implants", "Tissue engineering"] },
+					{ name: "N(CH3)2", smiles: "N(C)C", bindingEnergy: -2.7, conductivity: 0.55, biocompatibility: 0.88, stability: 0.77,
+					  applications: ["Gene delivery", "Cell adhesion", "Controlled release", "Smart materials"] },
+					{ name: "Pyridine-N", smiles: "n1ccccc1", bindingEnergy: -2.5, conductivity: 0.7, biocompatibility: 0.85, stability: 0.8,
+					  applications: ["DNA biosensors", "Catalysis", "Electronics"] },
+					{ name: "Imidazole", smiles: "c1cnc[nH]1", bindingEnergy: -3.0, conductivity: 0.65, biocompatibility: 0.9, stability: 0.82,
+					  applications: ["Metal coordination", "pH sensors", "Bioconjugation"] },
+					// NEW LIT-BACKED: Azido from CuAAC membranes 2025 ACS
+					{ name: "Azido", smiles: "[N-]=[N+]=N", bindingEnergy: -2.6, conductivity: 0.75, biocompatibility: 0.90, stability: 0.78,
+					  applications: ["Click membranes", "Bio-conjugation", "Neural diagnostics ($25B)"] },
+					// NEW SPECULATIVE: Peptide-loop from bio-mimic DFT
+					{ name: "Peptide-loop", smiles: "NC1CCNC1=O", bindingEnergy: -2.9, conductivity: 0.65, biocompatibility: 0.98, stability: 0.85,
+					  applications: ["Enzyme mimics", "Synthetic biology", "Regenerative scaffolds ($45B)"] },
+					// NEW LIT-BACKED: Ammonia-N from 2025 Nature exfoliation
+					{ name: "NH3", smiles: "N", bindingEnergy: -2.5, conductivity: 0.7, biocompatibility: 0.92, stability: 0.8,
+					  applications: ["Exfoliation", "Dispersion", "Environmental sensors ($35B)"] },
+					// NEW SPECULATIVE: N-flatband from 2025 RSC H-N hybrids
+					{ name: "N-H-flat", smiles: "N", bindingEnergy: -2.7, conductivity: 0.85, biocompatibility: 0.88, stability: 0.83,
+					  applications: ["Quantum flat bands", "Valleytronics", "Computing interconnects ($75B)"] },
+					// NEW LIT-BACKED: NO variant from gas sensors 2024
+					{ name: "NO", smiles: "N=O", bindingEnergy: -2.3, conductivity: 0.6, biocompatibility: 0.7, stability: 0.76,
+					  applications: ["Gas detection", "NOx remediation", "Air quality IoT ($25B)"] }
+				]
+			},
+			sulfur: {
+				name: "Sulfur Family",
+				color: "#ffd93d",
+				additives: [
+					{ name: "SH", smiles: "S", bindingEnergy: -2.3, conductivity: 0.6, biocompatibility: 0.7, stability: 0.75,
+					  applications: ["Heavy metal detection", "Gold binding", "Self-assembly", "Protein anchoring"] },
+					{ name: "SO3H", smiles: "S(=O)(=O)O", bindingEnergy: -3.8, conductivity: 0.85, biocompatibility: 0.6, stability: 0.7,
+					  applications: ["Fuel cells", "Proton exchange", "Solid acid catalysts", "Water splitting"] },
+					{ name: "SO2", smiles: "S(=O)=O", bindingEnergy: -2.7, conductivity: 0.55, biocompatibility: 0.65, stability: 0.8,
+					  applications: ["Gas sensors", "Environmental remediation", "SO2 detection", "Air purification"] },
+					{ name: "S-S", smiles: "SS", bindingEnergy: -2.0, conductivity: 0.5, biocompatibility: 0.75, stability: 0.85,
+					  applications: ["Self-healing materials", "Redox batteries", "Polymer crosslinking", "Smart materials"] },
+					// NEW LIT-BACKED: Thiol-ene from UV coatings 2025
+					{ name: "Thiol-ene", smiles: "C=CCS", bindingEnergy: -2.8, conductivity: 0.65, biocompatibility: 0.70, stability: 0.85,
+					  applications: ["UV-crosslink", "Self-healing", "Coatings ($20B)"] },
+					// NEW LIT-BACKED: Gold-thiolate from SERS 2025 ACS
+					{ name: "Gold-thiolate", smiles: "[Au]SC", bindingEnergy: -2.7, conductivity: 0.90, biocompatibility: 0.75, stability: 0.82,
+					  applications: ["Plasmonic SERS", "Antibacterial", "Sensors ($35B)"] },
+					// NEW SPECULATIVE: S-metal cluster from DFT CO adsorbers
+					{ name: "S-M-cluster", smiles: "S[Fe]", bindingEnergy: -3.5, conductivity: 0.8, biocompatibility: 0.68, stability: 0.84,
+					  applications: ["CO capture", "Gas remediation", "Environmental ($70B)"] }
+				]
+			},
+			phosphorus: {
+				name: "Phosphorus Family",
+				color: "#10b981",
+				additives: [
+					{ name: "PO3H2", smiles: "P(=O)(O)O", bindingEnergy: -3.4, conductivity: 0.7, biocompatibility: 0.85, stability: 0.8,
+					  applications: ["Flame retardants", "Bone tissue", "Ion exchange", "Proton conductors"] },
+					{ name: "P(OH)2", smiles: "P(O)O", bindingEnergy: -3.1, conductivity: 0.58, biocompatibility: 0.82, stability: 0.77,
+					  applications: ["Membranes", "Water treatment", "Catalysis", "Corrosion inhibitors"] },
+					{ name: "PO4H2-", smiles: "[O-]P(=O)(O)O", bindingEnergy: -3.6, conductivity: 0.75, biocompatibility: 0.9, stability: 0.75,
+					  applications: ["Biomineralization", "Bone implants", "Dental materials", "Bioceramics"] },
+					// NEW LIT-BACKED: P-retardant variant from PLA composites 2025 ACS
+					{ name: "P-N-retard", smiles: "P(=O)(N)O", bindingEnergy: -3.5, conductivity: 0.68, biocompatibility: 0.84, stability: 0.81,
+					  applications: ["Flame-retardant polymers", "Composites", "Safety materials ($20B)"] },
+					// NEW SPECULATIVE: P-cage from DFT pores
+					{ name: "P-oxa-cage", smiles: "P1OCCO1", bindingEnergy: -3.7, conductivity: 0.6, biocompatibility: 0.8, stability: 0.86,
+					  applications: ["Molecular sieves", "Desalination", "Water filtration ($45B)"] }
+				]
+			},
+			halogen: {
+				name: "Halogen Family",
+				color: "#f472b6",
+				additives: [
+					{ name: "F", smiles: "F", bindingEnergy: -2.0, conductivity: 0.3, biocompatibility: 0.6, stability: 0.9,
+					  applications: ["Hydrophobic coatings", "Electronics passivation", "Anti-fouling", "Chemical resistance"] },
+					{ name: "Cl", smiles: "Cl", bindingEnergy: -1.8, conductivity: 0.35, biocompatibility: 0.55, stability: 0.85,
+					  applications: ["Antimicrobial", "Water disinfection", "Chemical sensors", "Halogenated polymers"] },
+					{ name: "CF3", smiles: "C(F)(F)F", bindingEnergy: -2.4, conductivity: 0.25, biocompatibility: 0.65, stability: 0.95,
+					  applications: ["Superhydrophobic", "Low surface energy", "Fluoropolymers", "Protective coatings"] },
+					// NEW SPECULATIVE: Br for spin-orbit from Rashba principles
+					{ name: "Br", smiles: "Br", bindingEnergy: -2.2, conductivity: 0.4, biocompatibility: 0.58, stability: 0.88,
+					  applications: ["Spin-orbit tuning", "Quantum devices", "Valley filters ($60B)"] },
+					// NEW LIT-BACKED: I-variant from passivation 2024
+					{ name: "I", smiles: "I", bindingEnergy: -2.1, conductivity: 0.45, biocompatibility: 0.6, stability: 0.87,
+					  applications: ["Passivation layers", "Solar perovskites", "Energy conversion ($55B)"] }
+				]
+			},
+			metal: {
+				name: "Metal Coordination",
+				color: "#ef4444",
+				additives: [
+					{ name: "Fe-N4", smiles: "[Fe]N4", bindingEnergy: -4.0, conductivity: 0.9, biocompatibility: 0.7, stability: 0.8,
+					  applications: ["Oxygen reduction", "Fuel cells", "Catalysis", "Magnetic materials", "Sensors"] },
+					{ name: "Cu-N2", smiles: "[Cu]N2", bindingEnergy: -3.5, conductivity: 0.95, biocompatibility: 0.6, stability: 0.75,
+					  applications: ["CO2 reduction", "Antibacterial", "Electronics", "Thermal management"] },
+					{ name: "Pt-Cl2", smiles: "[Pt](Cl)Cl", bindingEnergy: -4.5, conductivity: 0.98, biocompatibility: 0.5, stability: 0.85,
+					  applications: ["Hydrogen evolution", "Chemotherapy", "Catalysis", "Fuel cells"] },
+					// NEW LIT-BACKED: ZnAl from 2025 Nature LDH
+					{ name: "ZnAl", smiles: "[Zn][Al]", bindingEnergy: -3.9, conductivity: 0.85, biocompatibility: 0.75, stability: 0.82,
+					  applications: ["LDH hybrids", "Tough composites", "Construction ($25B)"] },
+					// NEW LIT-BACKED: Li-O from DFT anodes 2025
+					{ name: "Li-O", smiles: "[Li]OC(=O)", bindingEnergy: -3.8, conductivity: 0.92, biocompatibility: 0.65, stability: 0.80,
+					  applications: ["SEI layers", "Li-ion anodes", "Batteries ($80B)"] },
+					// NEW SPECULATIVE: Ferrocene-ene from redox DFT
+					{ name: "Ferrocene-ene", smiles: "C1=CC=C(C=C1)[Fe]2(C=CC=C2)C=CC", bindingEnergy: -3.5, conductivity: 0.85, biocompatibility: 0.70, stability: 0.88,
+					  applications: ["Redox memristors", "Neuromorphic", "Computing ($30B)"] },
+					// NEW LIT-BACKED: Metal-CO from 2025 DFT adsorbers
+					{ name: "Fe-CO", smiles: "[Fe]C=O", bindingEnergy: -4.2, conductivity: 0.88, biocompatibility: 0.68, stability: 0.79,
+					  applications: ["CO sensors", "Gas capture", "Remediation ($70B)"] }
+				]
+			},
+			hybrid: {
+				name: "Hybrid Family",
+				color: "#a78bfa",
+				additives: [
+					{ name: "COOH-NH2", smiles: "C(=O)ON", bindingEnergy: -3.7, conductivity: 0.45, biocompatibility: 0.88, stability: 0.72,
+					  applications: ["Smart materials", "pH-responsive", "Dual sensors", "Bioconjugation"] },
+					{ name: "OH-NH2", smiles: "ON", bindingEnergy: -3.0, conductivity: 0.5, biocompatibility: 0.93, stability: 0.76,
+					  applications: ["Biocompatible materials", "Cell culture", "Tissue scaffolds", "Hydrogels"] },
+					{ name: "SH-COOH", smiles: "SC(=O)O", bindingEnergy: -3.4, conductivity: 0.55, biocompatibility: 0.75, stability: 0.74,
+					  applications: ["Metal binding", "Environmental cleanup", "Bioremediation", "Heavy metal sensors"] },
+					{ name: "B(OH)2", smiles: "B(O)O", bindingEnergy: -3.1, conductivity: 0.4, biocompatibility: 0.78, stability: 0.8,
+					  applications: ["Glucose sensors", "Drug delivery", "Smart polymers", "pH sensors"] },
+					// NEW LIT-BACKED: Porphyrin-azide simplified from PDT 2025
+					{ name: "Porphyrin-azide", smiles: "c1cc2c(c(c1)N3C=C(C(=C3c4ccc(cc4)N5C=C(C(=C5c6ccc(cc6)N7C=C(C(=C7c8ccc(cc8)N9C=CC(=C9C=C)C=C)C=C)C=C)C=C)C=C)C=C", bindingEnergy: -3.2, conductivity: 0.70, biocompatibility: 0.95, stability: 0.85,
+					  applications: ["NIR imaging", "PDT cancer", "Bio-diagnostics ($40B)"] },
+					// NEW SPECULATIVE: ML-azine from gen-chem 2025
+					{ name: "ML-pore azine", smiles: "C1=NN=C(C=N1)C2=NN=C(C=N2)C=3C=NN=C(C=N3)", bindingEnergy: -3.4, conductivity: 0.75, biocompatibility: 0.80, stability: 0.87,
+					  applications: ["Sub-nm pores", "Precision desal", "Filtration ($30B)"] },
+					// NEW LIT-BACKED: O-N from mixed membranes 2025 ACS
+					{ name: "O-N-membrane", smiles: "ON", bindingEnergy: -3.1, conductivity: 0.55, biocompatibility: 0.85, stability: 0.78,
+					  applications: ["Mixed-matrix", "CO2 separation", "Gas membranes ($65B)"] },
+					// NEW SPECULATIVE: Hybrid-flat from bilayer DFT
+					{ name: "MXene-hybrid", smiles: "C[Ti]", bindingEnergy: -3.6, conductivity: 0.82, biocompatibility: 0.72, stability: 0.84,
+					  applications: ["Bilayer electronics", "Flexible devices", "Wearables ($40B)"] }
+				]
+			},
+			boron: {
+				name: "Boron Family",
+				color: "#8b5cf6",
+				additives: [
+					{ name: "B(OH)2", smiles: "B(O)O", bindingEnergy: -2.8, conductivity: 0.85, biocompatibility: 0.75, stability: 0.85,
+					  applications: ["p-type semiconductors", "Thermoelectrics ZT boost", "Catalysis"] },
+					{ name: "B-N", smiles: "BN", bindingEnergy: -3.2, conductivity: 0.9, biocompatibility: 0.7, stability: 0.9,
+					  applications: ["FET transistors", "Insulating layers", "High-temp electronics"] },
+					{ name: "BC3", smiles: "BC3", bindingEnergy: -2.1, conductivity: 0.95, biocompatibility: 0.8, stability: 0.88,
+					  applications: ["Bandgap engineering", "Solar cells", "Sensors"] },
+					// NEW LIT-BACKED: Boraphenalenyl from 2024 JACS
+					{ name: "Boraphenalenyl", smiles: "B1C=CC=C2C1=CC=C3C2=CC=C3", bindingEnergy: -3.0, conductivity: 0.88, biocompatibility: 0.75, stability: 0.90,
+					  applications: ["Redox energy", "Thermoelectrics", "ZT boost ($10B)"] },
+					// NEW SPECULATIVE: Rashba-B from spin-orbit DFT
+					{ name: "Rashba-split B", smiles: "BCl", bindingEnergy: -3.1, conductivity: 0.95, biocompatibility: 0.70, stability: 0.88,
+					  applications: ["Spin-orbit filters", "Quantum valleytronics", "Devices ($60B)"] },
+					// NEW LIT-BACKED: B-H from flat-band 2025
+					{ name: "B-H", smiles: "B", bindingEnergy: -2.6, conductivity: 0.9, biocompatibility: 0.78, stability: 0.86,
+					  applications: ["Flat-band doping", "Optoelectronics", "Solar ($55B)"] }
+				]
+			},
+			silicon: {
+				name: "Silicon Family",
+				color: "#06b6d4",
+				additives: [
+					{ name: "SiH3", smiles: "Si", bindingEnergy: -2.4, conductivity: 0.7, biocompatibility: 0.8, stability: 0.8,
+					  applications: ["Li-ion anodes", "Hybrids", "Solar perovskites"] },
+					{ name: "SiO2", smiles: "O=[Si]=O", bindingEnergy: -3.1, conductivity: 0.6, biocompatibility: 0.85, stability: 0.85,
+					  applications: ["Protective coatings", "Membranes", "Composites"] },
+					{ name: "Si-Ph", smiles: "C[Si]", bindingEnergy: -2.7, conductivity: 0.75, biocompatibility: 0.75, stability: 0.82,
+					  applications: ["Organic electronics", "Batteries", "Sensors"] },
+					// NEW SPECULATIVE: Silazane from thermal links
+					{ name: "Silazane", smiles: "[SiH2]NH", bindingEnergy: -2.9, conductivity: 0.80, biocompatibility: 0.80, stability: 0.92,
+					  applications: ["Thermal crosslinks", "Hypersonics", "Aerospace ($25B)"] },
+					// NEW LIT-BACKED: Si-halogen from passivation 2024
+					{ name: "Si-Cl", smiles: "Cl[Si]", bindingEnergy: -2.8, conductivity: 0.72, biocompatibility: 0.7, stability: 0.83,
+					  applications: ["Passivation", "Electronics", "Flexible FETs ($45B)"] }
+				]
+			},
+			alkyl: {
+				name: "Alkyl/Organic Family",
+				color: "#f59e0b",
+				additives: [
+					{ name: "CH3", smiles: "C", bindingEnergy: -1.5, conductivity: 0.8, biocompatibility: 0.85, stability: 0.75,
+					  applications: ["Hydrophobic coatings", "Anti-fouling", "Polymers"] },
+					{ name: "C6H5", smiles: "c1ccccc1", bindingEnergy: -2.0, conductivity: 0.85, biocompatibility: 0.8, stability: 0.8,
+					  applications: ["Organics grafting", "Drug delivery", "Electronics"] },
+					{ name: "PEG", smiles: "OCCO", bindingEnergy: -2.2, conductivity: 0.7, biocompatibility: 0.95, stability: 0.78,
+					  applications: ["Solubilization", "Implants", "Coatings"] },
+					// NEW SPECULATIVE: Dendrimer-tail from shielding
+					{ name: "Dendrimer-tail", smiles: "CC(C)C(C)C(C)C", bindingEnergy: -2.5, conductivity: 0.82, biocompatibility: 0.85, stability: 0.91,
+					  applications: ["Steric shields", "Plastic upgrades", "Composites ($25B)"] },
+					// NEW LIT-BACKED: Alkyl-polymer from PLA 2025
+					{ name: "Alkyl-PLA", smiles: "CCOC(=O)C", bindingEnergy: -2.3, conductivity: 0.75, biocompatibility: 0.9, stability: 0.8,
+					  applications: ["Biodegradable resins", "3D printing", "Medical devices ($55B)"] },
+					// NEW SPECULATIVE: Alkyl-dend from fractal principles
+					{ name: "C-dend", smiles: "CC(C)(C)C", bindingEnergy: -2.4, conductivity: 0.78, biocompatibility: 0.82, stability: 0.89,
+					  applications: ["Fractal shielding", "Lightweight composites", "Structural ($45B)"] }
+				]
+			}
+		},
 
         // --- 2b. Search History & Learning System ---
         searchHistory: {
@@ -1349,86 +1451,100 @@
             let nodeId = 1;
             const families = Object.keys(this.grapheneFamilies);
 
-            const addChildren = (parent, currentDepth) => {
-                if (currentDepth >= maxDepth) return;
 
-                const useSaturation = document.getElementById('saturationEffects').checked;
-                const useSterics = document.getElementById('stericHindrance').checked;
-                const useDistance = document.getElementById('distanceDecay').checked;
+			const addChildren = (parent, currentDepth) => {
+				if (currentDepth >= maxDepth) return;
 
-                const numChildren = currentDepth === 0 ? 
-                    Math.min(branchingFactor, families.length) : branchingFactor;
+				const useSaturation = document.getElementById('saturationEffects').checked;
+				const useSterics = document.getElementById('stericHindrance').checked;
+				const useDistance = document.getElementById('distanceDecay').checked;
 
-                for (let i = 0; i < numChildren; i++) {
-                    let familyKey;
-                    
-                    if (currentDepth === 0) {
-                        if (i === 0 && families.includes('oxygen')) {
-                            familyKey = 'oxygen';
-                        } else {
-                            familyKey = families[i % families.length];
-                        }
-                    } else {
-                        if (Math.random() < 0.7 && parent.family !== 'root' && parent.family !== 'hybrid') {
-                            familyKey = parent.family;
-                        } else {
-                            familyKey = families[Math.floor(Math.random() * families.length)];
-                        }
-                    }
+				const numChildren = currentDepth === 0 ?
+					Math.min(branchingFactor, families.length) : branchingFactor;
 
-                    const family = this.grapheneFamilies[familyKey];
-                    const additive = family.additives[Math.floor(Math.random() * family.additives.length)];
+				for (let i = 0; i < numChildren; i++) {
+					let familyKey;
 
-                    // Scientific calculations
-                    const pathCount = parent.functionalPath.filter(g => g === additive.name).length;
-                    const saturationFactor = useSaturation ? Math.pow(0.7, pathCount) : 1.0;
-                    const distanceFactor = useDistance ? Math.pow(0.85, currentDepth) : 1.0;
-                    const estimatedCoverage = (currentDepth + 1) * 0.8;
-                    const coverageFactor = Math.max(0.3, 1 - estimatedCoverage * 0.05);
-                    const parentBulkiness = this.getBulkiness(parent.name);
-                    const additiveBulkiness = this.getBulkiness(additive.name);
-                    const stericFactor = useSterics ? (1 - (parentBulkiness * additiveBulkiness * 0.1)) : 1.0;
-                    const electronicFactor = this.getElectronicCoupling(parent.name, additive.name);
+					if (currentDepth === 0) {
+						if (i === 0 && families.includes('oxygen')) {
+							familyKey = 'oxygen';
+						} else {
+							familyKey = families[i % families.length];
+						}
+					} else {
+						if (Math.random() < 0.7 && parent.family !== 'root' && parent.family !== 'hybrid') {
+							familyKey = parent.family;
+						} else {
+							familyKey = families[Math.floor(Math.random() * families.length)];
+						}
+					}
 
-                    const child = {
-                        id: nodeId++,
-                        name: additive.name,
-                        smiles: additive.smiles,
-                        bindingEnergy: parent.bindingEnergy + 
-                            (additive.bindingEnergy * saturationFactor * distanceFactor * stericFactor),
-                        conductivity: Math.max(0.05, 
-                            parent.conductivity * (0.4 + additive.conductivity * 0.6) * Math.max(0.5, coverageFactor)),
-                        biocompatibility: currentDepth === 0 ? 
-                            additive.biocompatibility : 
-                            (parent.biocompatibility * 0.3 + additive.biocompatibility * 0.7),
-                        stability: Math.max(0.3, 
-                            Math.min(parent.stability, additive.stability) * (0.9 + 0.1 * electronicFactor)),
-                        applications: [], // Will be populated by mergeApplications
-                        family: familyKey,
-                        familyName: family.name,
-                        color: family.color,
-                        depth: currentDepth + 1,
-                        functionalPath: [...parent.functionalPath, additive.name],
-                        coveragePercent: estimatedCoverage,
-                        diversityScore: this.calculateDiversity([...parent.functionalPath, additive.name]),
-                        synergyScore: electronicFactor,
-                        practicalityScore: this.getPracticalityScore(additive.name, currentDepth),
-                        children: []
-                    };
-                    
-                    // Assign applications (must happen after child object exists for inference rules)
-                    child.applications = this.mergeApplications(parent.applications, additive.applications, currentDepth, child);
+					const family = this.grapheneFamilies[familyKey];
+					const additive = family.additives[Math.floor(Math.random() * family.additives.length)];
 
-                    // Add experimental variance
-                    child.bindingEnergy += (Math.random() - 0.5) * 0.2;
-                    child.conductivity *= (0.95 + Math.random() * 0.1);
-                    child.biocompatibility = Math.max(0, Math.min(1, child.biocompatibility * (0.95 + Math.random() * 0.1)));
-                    child.stability = Math.max(0, Math.min(1, child.stability * (0.95 + Math.random() * 0.1)));
+					// Scientific calculations
+					const pathCount = parent.functionalPath.filter(g => g === additive.name).length;
+					// CORRECTED: Use 'let' for reassignable variables
+					let saturationFactor = useSaturation ? Math.pow(0.7, pathCount) : 1.0;
+					let stericFactor = useSterics ? (1 - (this.getBulkiness(parent.name) * this.getBulkiness(additive.name) * 0.1)) : 1.0;
 
-                    parent.children.push(child);
-                    addChildren(child, currentDepth + 1);
-                }
-            };
+					// Prevent chemically impossible same-group-twice
+					if (parent.name === additive.name) {
+						saturationFactor *= 0.3;
+					}
+
+					// Penalize unrealistic combinations requiring external materials
+					if ((parent.family === 'metal' && additive.family === 'metal') ||
+						parent.name.includes('MXene') || parent.name.includes('Gold')) {
+						saturationFactor *= 0.5;
+						stericFactor *= 0.7;
+					}
+
+					const distanceFactor = useDistance ? Math.pow(0.85, currentDepth) : 1.0;
+					const estimatedCoverage = (currentDepth + 1) * 0.8;
+					const coverageFactor = Math.max(0.3, 1 - estimatedCoverage * 0.05);
+					const electronicFactor = this.getElectronicCoupling(parent.name, additive.name);
+
+					const child = {
+						id: nodeId++,
+						name: additive.name,
+						smiles: additive.smiles,
+						bindingEnergy: parent.bindingEnergy +
+							(additive.bindingEnergy * saturationFactor * distanceFactor * stericFactor),
+						conductivity: Math.max(0.05,
+							parent.conductivity * (0.4 + additive.conductivity * 0.6) * Math.max(0.5, coverageFactor)),
+						biocompatibility: currentDepth === 0 ?
+							additive.biocompatibility :
+							(parent.biocompatibility * 0.3 + additive.biocompatibility * 0.7),
+						stability: Math.max(0.3,
+							Math.min(parent.stability, additive.stability) * (0.9 + 0.1 * electronicFactor)),
+						applications: [],
+						family: familyKey,
+						familyName: family.name,
+						color: family.color,
+						depth: currentDepth + 1,
+						functionalPath: [...parent.functionalPath, additive.name],
+						coveragePercent: estimatedCoverage,
+						diversityScore: this.calculateDiversity([...parent.functionalPath, additive.name]),
+						synergyScore: electronicFactor,
+						practicalityScore: this.getPracticalityScore(additive.name, currentDepth),
+						chemicallyValid: this.isChemicallyValid(parent, additive),
+						children: []
+					};
+
+					child.applications = this.mergeApplications(parent.applications, additive.applications, currentDepth, child);
+
+					child.bindingEnergy += (Math.random() - 0.5) * 0.2;
+					child.conductivity *= (0.95 + Math.random() * 0.1);
+					child.biocompatibility = Math.max(0, Math.min(1, child.biocompatibility * (0.95 + Math.random() * 0.1)));
+					child.stability = Math.max(0, Math.min(1, child.stability * (0.95 + Math.random() * 0.1)));
+
+					parent.children.push(child);
+					addChildren(child, currentDepth + 1);
+				}
+			};
+
+
 
             addChildren(root, 0);
             this.calculateTreeMetrics(root); // Calculate Gold Scores and Markets for entire tree
@@ -1446,10 +1562,22 @@
                 'H': 0.1, 'F': 0.2, 'OH': 0.3, 'NH2': 0.3,
                 'CH3': 0.5, 'COOH': 0.7, 'SO3H': 0.8,
                 'PO3H2': 0.9, 'CF3': 0.6, 'Fe-N4': 0.8,
-                'Pristine Graphene': 0, 'C=O': 0.4, 'O-epoxy': 0.4
+                'Pristine Graphene': 0, 'C=O': 0.4, 'O-epoxy': 0.4,
+				// NEW
+				'Guanidine': 0.6, 'Azido': 0.4, 'Thiol-ene': 0.65, 'Boraphenalenyl': 0.75, 'Li-O': 0.5,
+				'Ferrocene-ene': 0.85, 'Silazane': 0.7, 'Porphyrin-azide': 0.9, 'Gold-thiolate': 0.8, 'Penta-O': 0.55,
+				'Rashba-split B': 0.45, 'Peptide-loop': 0.7, 'ML-pore azine': 0.6, 'Dendrimer-tail': 0.95,
+				'ZnAl-LDH-O': 0.85, 'Ph-SO3': 0.7, 'H-O-hybrid': 0.3, 'NH2-O': 0.4, 'ROO': 0.5,
+				'Epoxy-dimer': 0.6, 'NH3': 0.35, 'N-H-flat': 0.3, 'NO': 0.4, 'S-M-cluster': 0.8,
+				'P-N-retard': 0.75, 'P-oxa-cage': 0.65, 'Br': 0.3, 'I': 0.35, 'ZnAl': 0.8,
+				'Fe-CO': 0.7, 'O-N-membrane': 0.5, 'MXene-hybrid': 0.75, 'B-H': 0.25,
+				'Si-Cl': 0.4, 'Alkyl-PLA': 0.6, 'C-dend': 0.9
+				
             };
             return bulkiness[groupName] || 0.5;
         },
+		
+
 
         getElectronicCoupling(group1, group2) {
             if (!group1 || !group2 || group1 === "Pristine Graphene") return 1.0;
@@ -1462,6 +1590,11 @@
                 'NH2-SO3H': 1.4,
                 'Fe-N4-OH': 1.2,
                 'F-OH': 0.6,
+				// NEW
+				'NH2-Guanidine': 1.2, 'Azido-NH2': 1.1, 'Thiol-ene-SH': 1.3, 'B-N-Boraphenalenyl': 1.4,
+				'Li-O-COOH': 1.25, 'Ferrocene-ene-Fe-N4': 1.3, 'Silazane-SiH3': 1.1, 'Porphyrin-azide-NH2': 1.2,
+				'Gold-thiolate-SH': 1.35, 'Penta-O-O-epoxy': 1.15, 'Rashba-split B-BN': 1.4, 'Peptide-loop-NHCO': 1.2,
+				'ML-pore azine-C≡N': 1.1, 'Dendrimer-tail-CH3': 0.9, 'ZnAl-LDH-O-OH': 1.2, 'Ph-SO3-SO3H': 1.1
             };
             return coupling[key] || 1.0;
         },
@@ -1480,10 +1613,41 @@
                 'F': 0.7,
                 'PO3H2': 0.6,
                 'Fe-N4': 0.4,
+				// NEW
+				'Guanidine': 0.85, 'Azido': 0.9, 'Thiol-ene': 0.88, 'Boraphenalenyl': 0.65, 'Li-O': 0.75,
+				'Ferrocene-ene': 0.7, 'Silazane': 0.8, 'Porphyrin-azide': 0.55, 'Gold-thiolate': 0.7, 'Penta-O': 0.6,
+				'Rashba-split B': 0.65, 'Peptide-loop': 0.75, 'ML-pore azine': 0.7, 'Dendrimer-tail': 0.6,
+				'ZnAl-LDH-O': 0.8, 'Ph-SO3': 0.85, 'H-O-hybrid': 0.9, 'NH2-O': 0.85, 'ROO': 0.8,
+				'Epoxy-dimer': 0.75, 'NH3': 0.95, 'N-H-flat': 0.85, 'NO': 0.8, 'S-M-cluster': 0.65,
+				'P-N-retard': 0.7, 'P-oxa-cage': 0.6, 'Br': 0.75, 'I': 0.7, 'ZnAl': 0.8,
+				'Fe-CO': 0.65, 'O-N-membrane': 0.85, 'MXene-hybrid': 0.7, 'B-H': 0.9,
+				'Si-Cl': 0.75, 'Alkyl-PLA': 0.85, 'C-dend': 0.65
+				
             };
             const score = basePracticality[groupName] || 0.5;
             return Math.max(0.1, score * Math.pow(0.8, depth));
         },
+		
+		
+		isChemicallyValid(parent, additive) {
+			// Check if this combination makes chemical sense
+			if (!parent || !additive) return true;
+			
+			// Can't add same functional group twice in a row
+			if (parent.name === additive.name) return false;
+			
+			// Thiol-ene is a reaction, not a repeatable group
+			if (parent.name === 'Thiol-ene' && additive.name === 'Thiol-ene') return false;
+			
+			// Can't add metal to metal without intermediate
+			if (parent.family === 'metal' && additive.family === 'metal') return false;
+			
+			// MXenes are substrates, not functional groups
+			if (parent.name.includes('MXene') && additive.name.includes('MXene')) return false;
+			
+			return true;
+		},
+		
 
         mergeApplications(parentApps, additiveApps, depth, node) {
             if (depth === 0) return additiveApps || [];
@@ -1551,7 +1715,27 @@
                 'smartResponsive': {
                     cond: node.synergyScore > 1.2 && node.biocompatibility > 0.7,
                     apps: ['Smart drug delivery ($40B pharma)', 'Responsive textiles ($15B)', 'Adaptive prosthetics ($20B)']
-                }
+                },
+				// NEW: Quantum for high cond/low disruption
+				'quantumValley': {
+					cond: node.conductivity > 0.9 && node.bindingEnergy > -3,
+					apps: ['Valley filters ($60B)', 'Spin-orbit devices ($50B untapped)', 'Topological insulators ($85B)']
+				},
+				// NEW: Bio-mimic for high biocompat/peptides
+				'bioMimic': {
+					cond: node.biocompatibility > 0.95 && node.diversityScore > 0.6,
+					apps: ['Enzyme mimics ($45B)', 'Synthetic biology scaffolds ($50B)', 'Tissue bioprinting ($35B)']
+				},
+				// NEW: Pore-selective for desal/high stability
+				'poreSelective': {
+					cond: node.stability > 0.85 && node.practicalityScore > 0.7,
+					apps: ['Sub-nm sieves ($30B desal)', 'Precision filtration ($40B water)', 'Gas separation ($65B)']
+				},
+				// NEW: Shielding for dend/high diversity
+				'stericShield': {
+					cond: node.diversityScore > 0.8 && node.stability > 0.85,
+					apps: ['Fractal composites ($25B)', 'Plastic retrofits ($50B)', 'Lightweight aerospace ($60B)']
+				}
             };
             
             let inferred = [];
@@ -1608,8 +1792,9 @@
             
             // Gold Score
             const untappedMultiplier = (node.applications || []).some(app => 
-                app.includes('untapped') || app.includes(')')) ? 1.5 : 1.0;
-            node.goldScore = node.commercialPotential * (node.stability * node.practicalityScore * node.practicalityScore) * untappedMultiplier;
+                app.includes('untapped') || app.includes(')')) ? 1.7 : 1.0;
+			const validityMultiplier = (node.chemicallyValid === false) ? 0.2 : 1.0;	
+            node.goldScore = node.commercialPotential * (node.stability * node.practicalityScore * node.practicalityScore) * untappedMultiplier * validityMultiplier;
             
             // Extract market potential
             node.marketPotential = this.extractMarketPotential(node.applications || [], node);
@@ -1637,7 +1822,7 @@
             if (!hasExplicitMarket && applications.length > 0) {
                 const baseMarkets = {
                     // Energy & Infrastructure - Revolutionary potential
-                    'cement': 25, 'concrete': 25, 'composites': 45, 'coatings': 20,
+                    'cement': 50, 'concrete': 250, 'construction': 45, 'composites': 60, 'coatings': 35,
                     'energy storage': 60, 'batteries': 80, 'fuel cells': 45, 'supercapacitors': 35,
                     'solar': 55, 'catalysis': 40, 'photocatalysis': 25,
                     'power': 50, 'grid': 45, 'transmission': 35,
@@ -1651,14 +1836,14 @@
                     // Electronics & Computing - Next-gen tech
                     'sensors': 35, 'transistors': 40, 'electronics': 70, 'flexible': 45,
                     'gas sensor': 25, 'detection': 30, 'monitoring': 25,
-                    'quantum': 85, 'computing': 75, 'memory': 50,
+                    'quantum': 30, 'computing': 75, 'memory': 50,
                     'wearable': 40, 'iot': 55, '5g': 60, '6g': 90,
                     
                     // Environmental - Critical global needs
-                    'water': 50, 'filtration': 35, 'purification': 40, 'remediation': 30,
+                    'water': 40, 'filtration': 35, 'purification': 40, 'remediation': 30,
                     'environmental': 35, 'air': 25, 'membrane': 40,
                     'co2': 65, 'carbon capture': 70, 'climate': 80,
-                    'desalination': 45, 'desal': 45,
+                    'desalination': 50, 'desal': 50,
                     
                     // Materials & Chemicals - Platform technologies
                     'polymer': 30, 'adhesives': 20, 'crosslinking': 15, 'grafting': 15,
@@ -1667,17 +1852,22 @@
                     'nano': 40, 'advanced materials': 55,
                     
                     // Aerospace & Defense - High-value applications
-                    'aerospace': 60, 'space': 70, 'defense': 50, 'military': 45,
+                    'aerospace': 75, 'space': 70, 'defense': 50, 'military': 45,
                     'hypersonic': 40, 'satellite': 35, 'rocket': 30,
                     
                     // Agriculture & Food - Emerging markets
                     'agriculture': 40, 'food': 35, 'crop': 25, 'pesticide': 20,
                     'precision agriculture': 30, 'agri': 25,
                     
-                    // Generic multipliers for transformative tech
-                    'revolutionary': 2.5, 'breakthrough': 2.2, 'advanced': 1.8, 
-                    'next-gen': 2.0, 'novel': 1.7, 'innovative': 1.6,
-                    'untapped': 2.8, 'emerging': 2.3, 'disruptive': 2.6
+					// Generic multipliers for transformative tech
+					'revolutionary': 1.5, 'breakthrough': 1.4, 'advanced': 1.8, 
+					'next-gen': 2.0, 'novel': 1.3, 'innovative': 1.3,
+					'untapped': 1.8, 'emerging': 1.4, 'disruptive': 1.5,
+					// NEW
+					'valleytronics': 15, 'synthetic biology': 25, 'pd t': 100, 'sers': 35, 'ldh': 1.8,
+					'spin-orbit': 12, 'flat-band': 10, 'enzyme': 45, 'sub-nm': 30, 'fractal': 25,
+					'tribology': 20, 'exfoliation': 15, 'co sensor': 70, 'bioprinting': 35,
+					'topological': 8, 'se i': 80, 'neuromorphic': 10
                 };
                 
                 // Calculate market based on application keywords
@@ -1710,7 +1900,7 @@
                     const qualityMultiplier = 
                         Math.pow(node.stability || 0.5, 0.7) *                         Math.pow(node.practicalityScore || 0.5, 0.5) *                         Math.pow(Math.max(node.conductivity || 0.5, node.biocompatibility || 0.5), 0.8);
                     
-                    totalMarket = Math.round(totalMarket * (0.8 + qualityMultiplier * 1.2));
+                    totalMarket = Math.round(totalMarket * (0.9 + qualityMultiplier * 0.45));
                     
                     // Modest bonus for diverse functionalization
                     if (node.diversityScore > 0.7) {
@@ -1719,7 +1909,7 @@
                     
                     // Bonus for high-performance materials
                     if (node.conductivity > 0.8 || node.stability > 0.85) {
-                        totalMarket = Math.round(totalMarket * 1.25);
+                        totalMarket = Math.round(totalMarket * 1.15);
                     }
                     
                     // Ensure minimum market for any functional material
@@ -1727,6 +1917,16 @@
                 }
             }
             
+			// Reality check for materials requiring partnerships
+			if (node && node.name) {
+				if (node.name.includes('Gold') || node.name.includes('MXene') || 
+					node.name.includes('ZnAl') || node.name.includes('Pt-') || 
+					node.name.includes('Cu-') || node.name.includes('Fe-N4')) {
+					// These require partnerships/external processing
+					totalMarket = Math.round(totalMarket * 0.6);
+				}
+			}
+
             return Math.round(totalMarket); // Return a rounded integer (since we sum in billions)
         },
 
