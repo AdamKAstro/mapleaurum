@@ -1,0 +1,2232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HydroGraph Strategic Analyzer</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #0a0e27 0%, #1a1f3a 50%, #0d1117 100%);
+            color: #e4e9f0;
+            overflow: hidden;
+            height: 100vh;
+        }
+        
+        .main-container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+        
+        /* Header with Global Controls */
+        .header {
+            background: rgba(20, 27, 45, 0.95);
+            border-bottom: 2px solid rgba(100, 255, 218, 0.3);
+            padding: 15px 20px;
+        }
+        
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .title {
+            font-size: 24px;
+            background: linear-gradient(135deg, #64ffda 0%, #48cae4 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .file-controls {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        
+        .file-input-wrapper {
+            position: relative;
+            overflow: hidden;
+            display: inline-block;
+        }
+        
+        .file-input-wrapper input[type=file] {
+            position: absolute;
+            left: -9999px;
+        }
+        
+        .file-input-label {
+            padding: 8px 16px;
+            background: linear-gradient(135deg, rgba(139, 92, 246, 0.2), rgba(100, 255, 218, 0.2));
+            border: 1px solid rgba(100, 255, 218, 0.3);
+            border-radius: 6px;
+            color: #e4e9f0;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 13px;
+        }
+        
+        .file-input-label:hover {
+            background: linear-gradient(135deg, rgba(139, 92, 246, 0.4), rgba(100, 255, 218, 0.4));
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(100, 255, 218, 0.3);
+        }
+        
+        .loaded-files {
+            color: #64ffda;
+            font-size: 13px;
+        }
+        
+        /* Global Controls */
+        .global-controls {
+            background: rgba(30, 41, 59, 0.6);
+            padding: 15px 20px;
+            border-bottom: 1px solid rgba(100, 255, 218, 0.2);
+            display: flex;
+            align-items: flex-start;
+            gap: 30px;
+            overflow-x: auto;
+        }
+        
+        .slider-group {
+            min-width: 150px;
+            position: relative;
+        }
+        
+        .global-param-legend {
+            flex-grow: 1;
+            margin-left: auto;
+            padding: 8px 15px;
+            background: rgba(20, 27, 45, 0.98);
+            border: 1px solid rgba(100, 255, 218, 0.3);
+            border-radius: 4px;
+            font-size: 12px;
+            color: #8892b0;
+            line-height: 1.4;
+            max-width: 400px;
+            min-height: 50px;
+            display: flex;
+            align-items: center;
+        }
+
+        .slider-label {
+            font-size: 11px;
+            color: #8892b0;
+            margin-bottom: 5px;
+            display: flex;
+            justify-content: space-between;
+        }
+        
+        .slider-value {
+            color: #64ffda;
+            font-weight: bold;
+        }
+        
+        input[type="range"] {
+            width: 100%;
+            height: 4px;
+            background: linear-gradient(90deg, #8b5cf6 0%, #64ffda 100%);
+            border-radius: 2px;
+            outline: none;
+            -webkit-appearance: none;
+        }
+        
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 14px;
+            height: 14px;
+            background: radial-gradient(circle, #64ffda, #8b5cf6);
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 0 10px rgba(100, 255, 218, 0.5);
+        }
+        
+        /* Tabs */
+        .tabs {
+            display: flex;
+            background: rgba(20, 27, 45, 0.95);
+            border-bottom: 1px solid rgba(100, 255, 218, 0.2);
+        }
+        
+        .tab {
+            padding: 12px 24px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 14px;
+            border-bottom: 2px solid transparent;
+        }
+        
+        .tab:hover {
+            background: rgba(100, 255, 218, 0.1);
+        }
+        
+        .tab.active {
+            background: rgba(100, 255, 218, 0.15);
+            border-bottom: 2px solid #64ffda;
+            color: #64ffda;
+        }
+        
+        /* Tab Content */
+        .tab-content {
+            flex: 1;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .tab-panel {
+            height: 100%;
+            display: none;
+            overflow: auto;
+            padding: 20px;
+        }
+        
+        .tab-panel.active { display: block; }
+        
+        /* Overview Tab Layout */
+        #overview-panel {
+            display: grid;
+            grid-template-rows: 60% 40%;
+            gap: 20px;
+            height: 100%;
+            padding: 20px;
+        }
+        
+        .bubble-chart-container {
+            background: rgba(20, 27, 45, 0.8);
+            border: 1px solid rgba(100, 255, 218, 0.2);
+            border-radius: 8px;
+            padding: 15px;
+            position: relative;
+        }
+        
+        .bottom-visualizations {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        
+        .viz-container {
+            background: rgba(20, 27, 45, 0.8);
+            border: 1px solid rgba(100, 255, 218, 0.2);
+            border-radius: 8px;
+            padding: 15px;
+            position: relative;
+        }
+        
+        .viz-title {
+            font-size: 13px;
+            color: #64ffda;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+        
+        /* Patent Strategy Tab */
+        #patent-panel {
+            padding: 20px;
+            height: 100%;
+        }
+        
+        .patent-container {
+            height: 100%;
+            background: rgba(20, 27, 45, 0.8);
+            border: 1px solid rgba(100, 255, 218, 0.2);
+            border-radius: 8px;
+            padding: 15px;
+            display: flex;
+        }
+        
+        .patent-main {
+            flex: 1;
+            position: relative;
+        }
+        
+        .patent-sidebar {
+            width: 300px;
+            margin-left: 20px;
+            padding: 15px;
+            background: rgba(30, 41, 59, 0.6);
+            border-radius: 8px;
+            overflow-y: auto;
+        }
+        
+        /* Portfolio Builder Tab */
+        #portfolio-panel {
+            padding: 20px;
+            height: 100%;
+            display: grid;
+            grid-template-columns: 250px 1fr 300px;
+            gap: 20px;
+        }
+        
+        .combination-palette {
+            background: rgba(20, 27, 45, 0.8);
+            border: 1px solid rgba(100, 255, 218, 0.2);
+            border-radius: 8px;
+            padding: 15px;
+            overflow-y: auto;
+        }
+        
+        .combination-item {
+            padding: 8px 12px;
+            margin: 5px 0;
+            background: rgba(100, 255, 218, 0.1);
+            border: 1px solid rgba(100, 255, 218, 0.3);
+            border-radius: 6px;
+            cursor: grab;
+            font-size: 12px;
+            transition: all 0.3s ease;
+        }
+        
+        .combination-item:hover {
+            background: rgba(100, 255, 218, 0.2);
+            transform: translateX(5px);
+        }
+        
+        .combination-item.dragging {
+            opacity: 0.5;
+            cursor: grabbing;
+        }
+        
+        .network-container {
+            background: rgba(20, 27, 45, 0.8);
+            border: 1px solid rgba(100, 255, 218, 0.2);
+            border-radius: 8px;
+            position: relative;
+            padding: 15px;
+            overflow-y: auto;
+            display: flex;
+            flex-wrap: nowrap;
+            gap: 20px;
+        }
+
+        .portfolio-group {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            min-width: 150px;
+        }
+
+        .portfolio-group-title {
+            color: #64ffda;
+            font-weight: bold;
+            font-size: 12px;
+            text-align: center;
+        }
+
+        .portfolio-node {
+            padding: 8px;
+            background: rgba(30, 41, 59, 0.8);
+            border: 1px solid rgba(100, 255, 218, 0.3);
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+            text-align: left;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .portfolio-node:hover {
+            transform: translateY(-2px);
+            border-color: #64ffda;
+        }
+
+        .portfolio-node .combo-name {
+            font-weight: bold;
+            color: #64ffda;
+            font-size: 12px;
+        }
+        
+        .portfolio-node .combo-details {
+            font-size: 10px;
+            color: #e4e9f0;
+            margin-top: 4px;
+        }
+        
+        .portfolio-node .combo-patent {
+            font-size: 10px;
+            color: #8892b0;
+            margin-top: 4px;
+        }
+        
+        .portfolio-metrics {
+            background: rgba(20, 27, 45, 0.8);
+            border: 1px solid rgba(100, 255, 218, 0.2);
+            border-radius: 8px;
+            padding: 15px;
+        }
+        
+        .metric-card {
+            background: rgba(30, 41, 59, 0.6);
+            border-radius: 6px;
+            padding: 12px;
+            margin-bottom: 12px;
+        }
+        
+        .metric-label {
+            font-size: 11px;
+            color: #8892b0;
+            text-transform: uppercase;
+        }
+        
+        .metric-value {
+            font-size: 24px;
+            font-weight: bold;
+            background: linear-gradient(135deg, #64ffda 0%, #8b5cf6 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-top: 5px;
+        }
+        
+        /* Tooltips */
+        .tooltip {
+            position: absolute;
+            background: rgba(20, 27, 45, 0.98);
+            border: 1px solid rgba(100, 255, 218, 0.5);
+            border-radius: 8px;
+            padding: 10px;
+            font-size: 11px;
+            pointer-events: none;
+            z-index: 1000;
+            display: none;
+            max-width: 300px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+        }
+        
+        /* Loading State */
+        .loading-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(10, 14, 39, 0.9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+        }
+        
+        .loading-spinner {
+            width: 60px;
+            height: 60px;
+            border: 3px solid rgba(100, 255, 218, 0.1);
+            border-top: 3px solid #64ffda;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* Patent Status Colors */
+        .patent-covered { fill: #22C55E; }
+        .patent-partial { fill: #86EFAC; }
+        .patent-potential { fill: #60A5FA; }
+        .patent-open { 
+            fill: none; /* Make fill transparent */
+            stroke: #64ffda; /* Add a stroke */
+            stroke-width: 0.5; /* Lighter stroke for open status */
+        }
+        .patent-potentially-blocked { fill: #FDE047; }
+        .patent-blocked { fill: #EF4444; }
+        
+        /* Priority Zones */
+        .zone-overlay {
+            pointer-events: none;
+        }
+        
+        .zone-file-now { fill: rgba(34, 197, 94, 0.1); stroke: #22C55E; }
+        .zone-research { fill: rgba(100, 255, 218, 0.1); stroke: #64ffda; }
+        .zone-monitor { fill: rgba(253, 224, 71, 0.1); stroke: #FDE047; }
+        .zone-avoid { fill: rgba(239, 68, 68, 0.1); stroke: #EF4444; }
+        
+        /* Buttons */
+        button {
+            padding: 8px 16px;
+            background: linear-gradient(135deg, rgba(139, 92, 246, 0.2), rgba(100, 255, 218, 0.2));
+            border: 1px solid rgba(100, 255, 218, 0.3);
+            border-radius: 6px;
+            color: #e4e9f0;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        button:hover {
+            background: linear-gradient(135deg, rgba(139, 92, 246, 0.4), rgba(100, 255, 218, 0.4));
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(100, 255, 218, 0.3);
+        }
+        
+        /* Info boxes */
+        .info-box {
+            background: rgba(100, 255, 218, 0.1);
+            border: 1px solid rgba(100, 255, 218, 0.3);
+            border-radius: 6px;
+            padding: 10px;
+            margin: 10px 0;
+            font-size: 12px;
+        }
+        
+        .recommendation {
+            background: rgba(139, 92, 246, 0.1);
+            border: 1px solid rgba(139, 92, 246, 0.3);
+            border-radius: 6px;
+            padding: 10px;
+            margin: 10px 0;
+        }
+        
+        .recommendation-title {
+            font-weight: bold;
+            color: #a78bfa;
+            margin-bottom: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="main-container">
+        <div class="header">
+            <div class="header-content">
+                <h1 class="title">HydroGraph Strategic Analyzer</h1>
+                <div class="file-controls">
+                    <div class="file-input-wrapper">
+                        <label for="csvFiles" class="file-input-label">Load CSV Files</label>
+                        <input type="file" id="csvFiles" accept=".csv" multiple>
+                    </div>
+                    <span class="loaded-files" id="fileCount">No files loaded</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="global-controls">
+            <div class="slider-group">
+                <div class="slider-label">
+                    Synthesis Scale Penalty
+                    <span class="slider-value" id="scaleValue">0.8x</span>
+                </div>
+                <input type="range" id="scaleSlider" min="0.5" max="1.0" step="0.05" value="0.8">
+            </div>
+            <div class="slider-group">
+                <div class="slider-label">
+                    Patent Cost Threshold
+                    <span class="slider-value" id="patentCostValue">$150K</span>
+                </div>
+                <input type="range" id="patentCostSlider" min="50" max="500" step="25" value="150">
+            </div>
+            <div class="slider-group">
+                <div class="slider-label">
+                    Market Penetration
+                    <span class="slider-value" id="penetrationValue">10%</span>
+                </div>
+                <input type="range" id="penetrationSlider" min="1" max="25" step="1" value="10">
+            </div>
+            <div class="slider-group">
+                <div class="slider-label">
+                    Competitor Response (mo)
+                    <span class="slider-value" id="competitorValue">18</span>
+                </div>
+                <input type="range" id="competitorSlider" min="6" max="36" step="3" value="18">
+            </div>
+            <div class="slider-group">
+                <div class="slider-label">
+                    Min Differentiation
+                    <span class="slider-value" id="differentiationValue">3x</span>
+                </div>
+                <input type="range" id="differentiationSlider" min="1.5" max="10" step="0.5" value="3">
+            </div>
+            <div class="global-param-legend" id="paramLegend">Hover over a slider to see its description.</div>
+        </div>
+        
+        <div class="tabs">
+            <div class="tab active" data-tab="overview">Strategic Overview</div>
+            <div class="tab" data-tab="patent">Patent Strategy</div>
+            <div class="tab" data-tab="portfolio">Portfolio Builder</div>
+        </div>
+        
+        <div class="tab-content">
+            <div id="overview-panel" class="tab-panel active">
+                <div class="bubble-chart-container">
+                    <div class="viz-title">Combination Performance Landscape</div>
+                    <svg id="bubbleChart"></svg>
+                </div>
+                <div class="bottom-visualizations">
+                    <div class="viz-container">
+                        <div class="viz-title">Value Flow Analysis</div>
+                        <svg id="sankeyDiagram"></svg>
+                    </div>
+                    <div class="viz-container">
+                        <div class="viz-title">Market Opportunity Map</div>
+                        <svg id="marketTreemap"></svg>
+                    </div>
+                </div>
+            </div>
+            
+            <div id="patent-panel" class="tab-panel">
+                <div class="patent-container">
+                    <div class="patent-main">
+                        <div class="viz-title">Patent Strategy Landscape</div>
+                        <svg id="patentScatter"></svg>
+                    </div>
+                    <div class="patent-sidebar">
+                        <div class="viz-title">Filing Recommendations</div>
+                        <div id="patentRecommendations"></div>
+                        <div class="viz-title" style="margin-top: 20px;">Selected Package</div>
+                        <div id="selectedPackage"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <div id="portfolio-panel" class="tab-panel">
+                <div class="combination-palette">
+                    <div class="viz-title">Available Combinations</div>
+                    <div id="combinationList"></div>
+                </div>
+                <div class="network-container">
+                    <div id="portfolioGrid"></div>
+                </div>
+                <div class="portfolio-metrics">
+                    <div class="viz-title">Portfolio Analysis</div>
+                    <div class="metric-card">
+                        <div class="metric-label">Expected Value</div>
+                        <div class="metric-value" id="portfolioValue">$0B</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-label">Risk-Adjusted Return</div>
+                        <div class="metric-value" id="portfolioRisk">0%</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-label">Time to Market</div>
+                        <div class="metric-value" id="portfolioTime">0mo</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-label">Patent Coverage</div>
+                        <div class="metric-value" id="portfolioCoverage">0%</div>
+                    </div>
+                    <svg id="spiderChart" style="width: 100%; height: 200px;"></svg>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="tooltip" id="tooltip"></div>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+    <script>
+    // Strategic Analyzer Application
+    const StrategicAnalyzer = {
+        // Data storage
+        rawData: [],
+        aggregatedData: new Map(),
+        portfolio: new Set(),
+        
+        // Global parameters
+        params: {
+            scalePenalty: 0.8,
+            patentCost: 150,
+            penetration: 0.1,
+            competitorSpeed: 18,
+            differentiation: 3
+        },
+        
+        // Color scales
+        patentColors: {
+            covered: '#22C55E',
+            partial: '#86EFAC', 
+            potential: '#60A5FA',
+            open: '#64ffda',
+            'potentially-blocked': '#FDE047',
+            blocked: '#EF4444'
+        },
+        
+        init() {
+            console.log('App initializing...');
+            this.setupEventListeners();
+            this.initVisualizations();
+        },
+        
+        setupEventListeners() {
+            console.log('Setting up event listeners...');
+            // File input
+            document.getElementById('csvFiles').addEventListener('change', (e) => {
+                this.loadCSVFiles(e.target.files);
+            });
+            
+            // Tabs
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.addEventListener('click', () => {
+                    console.log('Tab clicked:', tab.dataset.tab);
+                    
+                    // Hide all panels with inline styles
+                    document.querySelectorAll('.tab-panel').forEach(p => {
+                        p.classList.remove('active');
+                        p.style.display = 'none';
+                        console.log('Hiding panel:', p.id);
+                    });
+                    
+                    // Remove active from all tabs
+                    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                    
+                    // Add active to clicked tab
+                    tab.classList.add('active');
+                    
+                    // Show the target panel with inline styles
+                    const panelId = `${tab.dataset.tab}-panel`;
+                    const panel = document.getElementById(panelId);
+                    
+                    if (panel) {
+                        panel.classList.add('active');
+                        
+                        // Force display with inline styles based on panel type
+                        if (tab.dataset.tab === 'overview') {
+                            panel.style.display = 'grid';
+                            panel.style.gridTemplateRows = '60% 40%';
+                            panel.style.gap = '20px';
+                            panel.style.padding = '20px';
+                        } else if (tab.dataset.tab === 'portfolio') {
+                            panel.style.display = 'grid';
+                            panel.style.gridTemplateColumns = '250px 1fr 300px';
+                            panel.style.gap = '20px';
+                            panel.style.padding = '20px';
+                        } else {
+                            panel.style.display = 'block';
+                            panel.style.padding = '20px';
+                        }
+                        
+                        console.log('Showing panel:', panelId, 'with display:', panel.style.display);
+                        
+                        // Refresh visualizations on tab change if data exists
+                        if (this.aggregatedData.size > 0) {
+                            console.log('Data exists, updating visualizations for:', tab.dataset.tab);
+                            if (tab.dataset.tab === 'patent') {
+                                console.log('Updating Patent Strategy...');
+                                setTimeout(() => this.updatePatentStrategy(), 100);
+                            }
+                            if (tab.dataset.tab === 'portfolio') {
+                                console.log('Updating Portfolio Builder...');
+                                setTimeout(() => this.updatePortfolioBuilder(), 100);
+                            }
+                        } else {
+                            console.log('No data loaded yet');
+                        }
+                    } else {
+                        console.error('Panel not found:', panelId);
+                    }
+                });
+            });
+            
+            // Global sliders
+            document.getElementById('scaleSlider').addEventListener('input', (e) => {
+                this.params.scalePenalty = parseFloat(e.target.value);
+                document.getElementById('scaleValue').textContent = `${e.target.value}x`;
+                this.recalculate();
+            });
+            
+            document.getElementById('patentCostSlider').addEventListener('input', (e) => {
+                this.params.patentCost = parseInt(e.target.value);
+                document.getElementById('patentCostValue').textContent = `$${e.target.value}K`;
+                this.recalculate();
+            });
+            
+            document.getElementById('penetrationSlider').addEventListener('input', (e) => {
+                this.params.penetration = parseInt(e.target.value) / 100;
+                document.getElementById('penetrationValue').textContent = `${e.target.value}%`;
+                this.recalculate();
+            });
+            
+            document.getElementById('competitorSlider').addEventListener('input', (e) => {
+                this.params.competitorSpeed = parseInt(e.target.value);
+                document.getElementById('competitorValue').textContent = e.target.value;
+                this.recalculate();
+            });
+            
+            document.getElementById('differentiationSlider').addEventListener('input', (e) => {
+                this.params.differentiation = parseFloat(e.target.value);
+                document.getElementById('differentiationValue').textContent = `${e.target.value}x`;
+                this.recalculate();
+            });
+
+            // Slider legend logic
+            document.getElementById('scaleSlider').addEventListener('mouseover', () => this.showParamLegend('synthesis'));
+            document.getElementById('patentCostSlider').addEventListener('mouseover', () => this.showParamLegend('patentCost'));
+            document.getElementById('penetrationSlider').addEventListener('mouseover', () => this.showParamLegend('penetration'));
+            document.getElementById('competitorSlider').addEventListener('mouseover', () => this.showParamLegend('competitor'));
+            document.getElementById('differentiationSlider').addEventListener('mouseover', () => this.showParamLegend('differentiation'));
+            document.querySelector('.global-controls').addEventListener('mouseleave', () => this.hideParamLegend());
+        },
+
+        showParamLegend(param) {
+            const legendElement = document.getElementById('paramLegend');
+            switch (param) {
+                case 'synthesis':
+                    legendElement.innerHTML = '<strong>Synthesis Scale Penalty:</strong> Reduces the effective score of longer, more complex synthesis pathways. Simulates diminishing returns and increased difficulty in a multi-step process.';
+                    break;
+                case 'patentCost':
+                    legendElement.innerHTML = '<strong>Patent Cost Threshold:</strong> The estimated cost for a patent filing. A lower value makes more combinations appear viable for patenting in the Patent Strategy tab.';
+                    break;
+                case 'penetration':
+                    legendElement.innerHTML = '<strong>Market Penetration:</strong> The assumed percentage of the total addressable market that a new product can capture. Used to calculate adjusted market value.';
+                    break;
+                case 'competitor':
+                    legendElement.innerHTML = '<strong>Competitor Response (mo):</strong> The number of months estimated for a competitor to respond to a new product launch. Affects the urgency component of the Patent Priority Score.';
+                    break;
+                case 'differentiation':
+                    legendElement.innerHTML = '<strong>Min Differentiation:</strong> The minimum performance improvement multiplier required to be considered a viable product. Lowers the score for combinations that are only marginally better.';
+                    break;
+                default:
+                    legendElement.innerHTML = 'Hover over a slider to see its description.';
+                    break;
+            }
+        },
+
+        hideParamLegend() {
+            document.getElementById('paramLegend').innerHTML = 'Hover over a slider to see its description.';
+        },
+        
+        async loadCSVFiles(files) {
+            this.rawData = [];
+            let successCount = 0;
+            let errorCount = 0;
+            
+            for (const file of files) {
+                try {
+                    const text = await file.text();
+                    const lines = text.split('\n');
+                    
+                    // Detect delimiter (comma vs tab)
+                    const firstLine = lines[0];
+                    const delimiter = firstLine.includes('\t') ? '\t' : ',';
+                    
+                    const headers = firstLine.split(delimiter).map(h => h.trim());
+                    
+                    console.log(`Loading file: ${file.name}, Delimiter: "${delimiter}", Headers:`, headers);
+                    
+                    for (let i = 1; i < lines.length; i++) {
+                        if (!lines[i].trim()) continue;
+                        const values = lines[i].split(delimiter);
+                        const row = {};
+                        headers.forEach((h, idx) => {
+                            row[h.trim()] = values[idx] ? values[idx].trim() : '';
+                        });
+                        row.fileName = file.name;
+                        
+                        // Validate required fields
+                        if (row.Combination && row.Combination.trim()) {
+                            this.rawData.push(row);
+                        }
+                    }
+                    successCount++;
+                } catch (error) {
+                    console.error(`Error loading file ${file.name}:`, error);
+                    errorCount++;
+                }
+            }
+            
+            console.log(`Loaded ${successCount} files successfully, ${errorCount} errors`);
+            console.log(`Total rows loaded: ${this.rawData.length}`);
+            
+            document.getElementById('fileCount').textContent = 
+                `${successCount} files loaded (${this.rawData.length} rows)`;
+            
+            if (this.rawData.length > 0) {
+                this.aggregateData();
+                this.updateVisualizations();
+            } else {
+                alert('No valid data found in the CSV files. Please check the file format.');
+            }
+        },
+        
+        aggregateData() {
+            console.log('Aggregating data...');
+            this.aggregatedData.clear();
+            
+            this.rawData.forEach(row => {
+                let key = row.Combination;
+                if (!key || key.trim() === '') return;
+                
+                key = key.replace(/^["']|["']$/g, '').trim();
+                
+                if (!this.aggregatedData.has(key)) {
+                    this.aggregatedData.set(key, {
+                        combination: key,
+                        scores: [],
+                        markets: [],
+                        patentStatus: row['Patent Status'] || 'open',
+                        stability: [],
+                        practicality: [],
+                        conductivity: [],
+                        biocompatibility: [],
+                        applications: new Set(),
+                        families: new Set(),
+                        appearances: 0
+                    });
+                }
+                
+                const agg = this.aggregatedData.get(key);
+                agg.scores.push(parseFloat(row['Gold Score (%)']) || 0);
+                agg.markets.push(parseFloat(row['Market Potential ($B)']) || 0);
+                agg.stability.push(parseFloat(row.Stability) || 0);
+                agg.practicality.push(parseFloat(row.Practicality) || 0);
+                agg.conductivity.push(parseFloat(row['Conductivity (%)']) || 0);
+                agg.biocompatibility.push(parseFloat(row['Biocompatibility (%)']) || 0);
+                
+                if (row['Top Application 1']) agg.applications.add(row['Top Application 1']);
+                if (row['Top Application 2']) agg.applications.add(row['Top Application 2']);
+                if (row['Chemical Family']) agg.families.add(row['Chemical Family']);
+                
+                agg.appearances++;
+            });
+            
+            console.log('Aggregated data for', this.aggregatedData.size, 'unique combinations');
+            
+            this.aggregatedData.forEach(agg => {
+                agg.avgScore = d3.mean(agg.scores) || 0;
+                agg.stdScore = d3.deviation(agg.scores) || 0;
+                agg.consistency = 1 / (1 + agg.stdScore);
+                agg.avgMarket = d3.mean(agg.markets) || 0;
+                agg.avgStability = d3.mean(agg.stability) || 0;
+                agg.avgPracticality = d3.mean(agg.practicality) || 0;
+                agg.avgConductivity = d3.mean(agg.conductivity) || 0;
+                agg.avgBiocompatibility = d3.mean(agg.biocompatibility) || 0;
+                
+                agg.adjustedScore = this.calculateAdjustedScore(agg);
+                agg.adjustedMarket = agg.avgMarket * this.params.penetration;
+                agg.patentPriority = this.calculatePatentPriority(agg);
+            });
+        },
+        
+        calculateAdjustedScore(agg) {
+            if (!agg || !agg.combination) return 0;
+            
+            let score = agg.avgScore || 0;
+            const arrowMatches = agg.combination.match(/->/g);
+            const complexity = arrowMatches ? arrowMatches.length + 1 : 1;
+            score *= Math.pow(this.params.scalePenalty, complexity - 1);
+            
+            const performanceBoost = Math.max(
+                (agg.avgConductivity || 0) / 50,
+                (agg.avgStability || 0) / 50,
+                (agg.avgBiocompatibility || 0) / 50
+            );
+            
+            if (performanceBoost < this.params.differentiation) {
+                score *= (performanceBoost / this.params.differentiation);
+            }
+            
+            return Math.max(0, score);
+        },
+        
+        calculatePatentPriority(agg) {
+            let priority = 0;
+            const marketValue = agg.adjustedMarket * 1000;
+            const patentROI = marketValue / this.params.patentCost;
+            priority += Math.min(100, patentROI * 10);
+            
+            if (agg.patentStatus === 'open') priority += 30;
+            else if (agg.patentStatus === 'potential') priority += 20;
+            else if (agg.patentStatus === 'partial') priority += 10;
+            else if (agg.patentStatus === 'potentially-blocked') priority -= 20;
+            else if (agg.patentStatus === 'blocked') priority -= 50;
+            
+            const urgencyFactor = 36 / this.params.competitorSpeed;
+            priority *= urgencyFactor;
+            
+            priority *= agg.avgPracticality / 100;
+            
+            return Math.max(0, priority);
+        },
+        
+        initVisualizations() {
+            console.log('Initializing visualizations...');
+            const containers = [
+                { selector: '#bubbleChart', minHeight: 400 },
+                { selector: '#sankeyDiagram', minHeight: 250 },
+                { selector: '#marketTreemap', minHeight: 250 },
+                { selector: '#patentScatter', minHeight: 400 },
+            ];
+            
+            containers.forEach(({ selector, minHeight }) => {
+                const element = document.querySelector(selector);
+                if (element && element.parentElement) {
+                    const container = element.parentElement;
+                    const height = Math.max(minHeight, container.clientHeight - 50);
+                    const width = container.clientWidth - 30;
+                    
+                    d3.select(selector)
+                        .attr('width', width)
+                        .attr('height', height);
+                }
+            });
+            
+            this.showEmptyState();
+        },
+        
+        showEmptyState() {
+            const bubbleSvg = d3.select('#bubbleChart');
+            bubbleSvg.append('text')
+                .attr('x', 400)
+                .attr('y', 200)
+                .style('fill', '#8892b0')
+                .style('text-anchor', 'middle')
+                .style('font-size', '14px')
+                .text('Load CSV files to begin analysis...');
+            
+            const patentSvg = d3.select('#patentScatter');
+            patentSvg.append('text')
+                .attr('x', 400)
+                .attr('y', 200)
+                .style('fill', '#8892b0')
+                .style('text-anchor', 'middle')
+                .style('font-size', '14px')
+                .text('Patent strategy will appear here after loading data...');
+        },
+        
+        updateVisualizations() {
+            console.log('Updating all visualizations...');
+            if (this.aggregatedData.size === 0) {
+                console.log('No data to visualize');
+                return;
+            }
+            
+            this.updateBubbleChart();
+            this.updateSankeyDiagram();
+            this.updateMarketTreemap();
+            
+            if (document.querySelector('.tab.active').dataset.tab === 'patent') {
+                this.updatePatentStrategy();
+            }
+            if (document.querySelector('.tab.active').dataset.tab === 'portfolio') {
+                this.updatePortfolioBuilder();
+            }
+        },
+        
+        recalculate() {
+            console.log('Recalculating all data based on new parameters...');
+            if (this.aggregatedData.size > 0) {
+                this.aggregateData();
+                this.updateVisualizations();
+            }
+        },
+        
+        updateBubbleChart() {
+            console.log('Rendering Bubble Chart...');
+            const container = document.querySelector('#bubbleChart').parentElement;
+            const width = container.clientWidth - 30;
+            const height = container.clientHeight - 50;
+            
+            const svg = d3.select('#bubbleChart');
+            svg.selectAll('*').remove();
+            
+            const data = Array.from(this.aggregatedData.values());
+            
+            const xScale = d3.scaleLinear()
+                .domain([0, d3.max(data, d => d.adjustedScore) * 1.1])
+                .range([60, width - 50]);
+                
+            const yScale = d3.scaleLinear()
+                .domain([0, d3.max(data, d => d.appearances) * 1.1])
+                .range([height - 50, 50]);
+                
+            const sizeScale = d3.scaleSqrt()
+                .domain([0, d3.max(data, d => d.adjustedMarket) * 1.1])
+                .range([3, 10]);
+            
+            svg.append('g')
+                .attr('transform', `translate(0,${height - 50})`)
+                .call(d3.axisBottom(xScale).ticks(10))
+                .style('color', '#8892b0');
+                
+            svg.append('g')
+                .attr('transform', 'translate(60,0)')
+                .call(d3.axisLeft(yScale).ticks(10))
+                .style('color', '#8892b0');
+            
+            svg.append('text')
+                .attr('x', width / 2)
+                .attr('y', height - 10)
+                .style('fill', '#64ffda')
+                .style('text-anchor', 'middle')
+                .style('font-weight', 'bold')
+                .text('Adjusted Gold Score (%)');
+                
+            svg.append('text')
+                .attr('transform', 'rotate(-90)')
+                .attr('x', -height / 2)
+                .attr('y', 20)
+                .style('fill', '#64ffda')
+                .style('text-anchor', 'middle')
+                .style('font-weight', 'bold')
+                .text('Appearances Across Runs (Consistency)');
+            
+            const zones = [
+                { x: 75, y: 15, label: 'CONSISTENT WINNERS', color: '#22C55E' },
+                { x: 25, y: 15, label: 'CONSISTENT BUT WEAK', color: '#FDE047' },
+                { x: 75, y: 1, label: 'ONE-HIT WONDERS', color: '#60A5FA' },
+                { x: 25, y: 1, label: 'RARE & WEAK', color: '#EF4444' }
+            ];
+            
+            zones.forEach(zone => {
+                svg.append('text')
+                    .attr('x', xScale(zone.x))
+                    .attr('y', yScale(zone.y))
+                    .style('fill', zone.color)
+                    .style('opacity', 0.3)
+                    .style('font-size', '11px')
+                    .style('text-anchor', 'middle')
+                    .text(zone.label);
+            });
+            
+            const simulation = d3.forceSimulation(data)
+                .force('x', d3.forceX(d => xScale(d.adjustedScore)).strength(0.5))
+                .force('y', d3.forceY(d => yScale(d.appearances)).strength(0.5))
+                .force('collide', d3.forceCollide(d => sizeScale(d.adjustedMarket) + 1))
+                .stop();
+            
+            for (let i = 0; i < 120; i++) simulation.tick();
+            
+            const bubbles = svg.selectAll('.bubble')
+                .data(data)
+                .enter().append('circle')
+                .attr('class', 'bubble')
+                .attr('cx', d => {
+                    const x = d.x;
+                    const boundedX = Math.max(60 + sizeScale(d.adjustedMarket), Math.min(width - 50 - sizeScale(d.adjustedMarket), x));
+                    d.x = boundedX;
+                    return boundedX;
+                })
+                .attr('cy', d => {
+                    const y = d.y;
+                    const boundedY = Math.max(50 + sizeScale(d.adjustedMarket), Math.min(height - 50 - sizeScale(d.adjustedMarket), y));
+                    d.y = boundedY;
+                    return boundedY;
+                })
+                .attr('r', d => sizeScale(d.adjustedMarket))
+                .attr('fill', d => d.patentStatus === 'open' ? 'none' : this.patentColors[d.patentStatus] || this.patentColors.open)
+                .attr('fill-opacity', d => d.patentStatus === 'open' ? 0 : 0.7)
+                .attr('stroke', d => this.patentColors[d.patentStatus] || '#fff')
+                .attr('stroke-width', d => d.patentStatus === 'open' ? 0.5 : 1)
+                .style('cursor', 'pointer')
+                .on('mouseover', (event, d) => this.showTooltip(event, d))
+                .on('mouseout', () => this.hideTooltip())
+                .on('click', (event, d) => this.selectCombination(d));
+            
+            // Invisible circles for easier hovering on 'open' bubbles
+            svg.selectAll('.hover-target')
+                .data(data.filter(d => d.patentStatus === 'open'))
+                .enter().append('circle')
+                .attr('class', 'hover-target')
+                .attr('cx', d => d.x)
+                .attr('cy', d => d.y)
+                .attr('r', d => sizeScale(d.adjustedMarket) + 5)
+                .attr('fill', 'rgba(255, 255, 255, 0)') // Transparent fill
+                .attr('pointer-events', 'all') // Make it a clickable target
+                .on('mouseover', (event, d) => this.showTooltip(event, d))
+                .on('mouseout', () => this.hideTooltip())
+                .on('click', (event, d) => this.selectCombination(d));
+            
+            const legendData = [5, 10, 20];
+            const legend = svg.append('g')
+                .attr('transform', `translate(${width - 120}, ${height - 150})`);
+            
+            legend.append('text')
+                .attr('x', 0)
+                .attr('y', -10)
+                .style('fill', '#8892b0')
+                .style('font-size', '10px')
+                .text('Market Value ($B)');
+            
+            legendData.forEach((val, i) => {
+                legend.append('circle')
+                    .attr('cx', 0)
+                    .attr('cy', i * 25 + 10)
+                    .attr('r', sizeScale(val))
+                    .style('fill', 'none')
+                    .style('stroke', '#8892b0');
+                
+                legend.append('text')
+                    .attr('x', 20)
+                    .attr('y', i * 25 + 14)
+                    .style('fill', '#8892b0')
+                    .style('font-size', '9px')
+                    .text(`${val}B`);
+            });
+            
+            svg.append('text')
+                .attr('x', width / 2)
+                .attr('y', 35)
+                .style('fill', '#8892b0')
+                .style('text-anchor', 'middle')
+                .style('font-size', '11px')
+                .text('Click any bubble: High patent priority → Patent Strategy tab | Low priority → Portfolio Builder tab');
+            const patentLegend = svg.append('g')
+                .attr('transform', `translate(${width - 120}, 60)`);
+            
+            patentLegend.append('text')
+                .attr('x', 0)
+                .attr('y', -10)
+                .style('fill', '#8892b0')
+                .style('font-size', '10px')
+                .text('Patent Status');
+            
+            Object.entries(this.patentColors).forEach(([status, color], i) => {
+                const isHollow = status === 'open';
+                
+                patentLegend.append('circle')
+                    .attr('cx', 0)
+                    .attr('cy', i * 15 + 5)
+                    .attr('r', 5)
+                    .style('fill', isHollow ? 'none' : color)
+                    .style('stroke', color)
+                    .style('stroke-width', isHollow ? 0.5 : 1);
+                
+                patentLegend.append('text')
+                    .attr('x', 10)
+                    .attr('y', i * 15 + 8)
+                    .style('fill', '#8892b0')
+                    .style('font-size', '9px')
+                    .text(status);
+            });
+        },
+        
+        updateSankeyDiagram() {
+            const container = document.querySelector('#sankeyDiagram').parentElement;
+            const width = container.clientWidth - 30;
+            const height = container.clientHeight - 50;
+            
+            const svg = d3.select('#sankeyDiagram');
+            svg.selectAll('*').remove();
+            
+            const familyMap = new Map();
+            
+            this.aggregatedData.forEach(agg => {
+                agg.families.forEach(family => {
+                    if (!familyMap.has(family)) {
+                        familyMap.set(family, {
+                            totalMarket: 0,
+                            count: 0,
+                            combinations: []
+                        });
+                    }
+                    const data = familyMap.get(family);
+                    data.totalMarket += agg.adjustedMarket;
+                    data.count++;
+                    data.combinations.push({
+                        name: agg.combination,
+                        value: agg.adjustedMarket
+                    });
+                });
+            });
+            
+            const familyData = Array.from(familyMap.entries())
+                .map(([family, data]) => ({
+                    family: family,
+                    avgMarket: data.totalMarket / data.count,
+                    totalMarket: data.totalMarket,
+                    count: data.count,
+                    topCombo: data.combinations.sort((a, b) => b.value - a.value)[0]
+                }))
+                .sort((a, b) => b.avgMarket - a.avgMarket)
+                .slice(0, 8);
+            
+            svg.append('text')
+                .attr('x', width / 2)
+                .attr('y', 15)
+                .style('fill', '#64ffda')
+                .style('text-anchor', 'middle')
+                .style('font-size', '11px')
+                .text('Average Market Value by Chemical Family');
+            
+            const barWidth = (width - 100) / Math.min(familyData.length, 8);
+            
+            const yScale = d3.scaleLinear()
+                .domain([0, d3.max(familyData, d => d.avgMarket)])
+                .range([height - 70, 40]);
+            
+            const colorScale = d3.scaleOrdinal()
+                .domain(familyData.map(d => d.family))
+                .range(d3.schemeSet3);
+            
+            familyData.forEach((d, i) => {
+                const x = 50 + i * barWidth + barWidth / 2;
+                
+                const g = svg.append('g');
+                
+                g.append('rect')
+                    .attr('x', x - 25)
+                    .attr('y', yScale(d.avgMarket))
+                    .attr('width', 50)
+                    .attr('height', height - 70 - yScale(d.avgMarket))
+                    .attr('fill', colorScale(d.family))
+                    .attr('fill-opacity', 0.6)
+                    .attr('stroke', '#64ffda')
+                    .style('cursor', 'pointer')
+                    .on('mouseover', (event) => {
+                        const tooltip = document.getElementById('tooltip');
+                        tooltip.innerHTML = `
+                            <strong>${d.family}</strong><br>
+                            Avg Market: ${d.avgMarket.toFixed(1)}B<br>
+                            Total Combos: ${d.count}<br>
+                            Best: ${d.topCombo.name}<br>
+                            (${d.topCombo.value.toFixed(1)}B)
+                        `;
+                        tooltip.style.display = 'block';
+                        tooltip.style.left = event.pageX + 10 + 'px';
+                        tooltip.style.top = event.pageY + 10 + 'px';
+                    })
+                    .on('mouseout', () => this.hideTooltip());
+                
+                g.append('text')
+                    .attr('x', x)
+                    .attr('y', height - 50)
+                    .style('fill', '#8892b0')
+                    .style('text-anchor', 'middle')
+                    .style('font-size', '9px')
+                    .text(d.family.replace(' Family', ''));
+                
+                g.append('text')
+                    .attr('x', x)
+                    .attr('y', yScale(d.avgMarket) - 5)
+                    .style('fill', '#64ffda')
+                    .style('text-anchor', 'middle')
+                    .style('font-size', '10px')
+                    .style('font-weight', 'bold')
+                    .text(`${d.avgMarket.toFixed(1)}B`);
+                
+                g.append('text')
+                    .attr('x', x)
+                    .attr('y', yScale(d.avgMarket) + 15)
+                    .style('fill', '#fff')
+                    .style('text-anchor', 'middle')
+                    .style('font-size', '9px')
+                    .text(`n=${d.count}`);
+            });
+            
+            svg.append('g')
+                .attr('transform', 'translate(45,0)')
+                .call(d3.axisLeft(yScale).ticks(5).tickFormat(d => `${d}B`))
+                .style('color', '#8892b0')
+                .style('font-size', '9px');
+        },
+        
+        updateMarketTreemap() {
+            const container = document.querySelector('#marketTreemap').parentElement;
+            const width = container.clientWidth - 30;
+            const height = container.clientHeight - 50;
+            
+            const svg = d3.select('#marketTreemap');
+            svg.selectAll('*').remove();
+            
+            console.log('Updating Market Treemap...');
+            
+            const marketData = new Map();
+            this.aggregatedData.forEach(agg => {
+                agg.applications.forEach(app => {
+                    const market = app.split('(')[0].trim() || 'Other';
+                    if (!marketData.has(market)) {
+                        marketData.set(market, {
+                            name: market,
+                            value: 0,
+                            combinations: []
+                        });
+                    }
+                    const data = marketData.get(market);
+                    data.value += agg.adjustedMarket / agg.applications.size;
+                    data.combinations.push(agg.combination);
+                });
+            });
+            
+            console.log('Market data aggregated:', marketData.size, 'markets');
+            
+            const root = {
+                name: 'Markets',
+                children: Array.from(marketData.values())
+            };
+            
+            const treemap = d3.treemap()
+                .size([width, height - 20])
+                .padding(2)
+                .round(true);
+                
+            const hierarchyRoot = d3.hierarchy(root)
+                .sum(d => d.value)
+                .sort((a, b) => b.value - a.value);
+                
+            treemap(hierarchyRoot);
+            
+            const colorScale = d3.scaleOrdinal(d3.schemeCategory10);
+            
+            const cell = svg.selectAll('g')
+                .data(hierarchyRoot.leaves())
+                .enter().append('g')
+                .attr('transform', d => `translate(${d.x0},${d.y0})`);
+                
+            cell.append('rect')
+                .attr('width', d => d.x1 - d.x0)
+                .attr('height', d => d.y1 - d.y0)
+                .attr('fill', d => colorScale(d.data.name))
+                .attr('fill-opacity', 0.7)
+                .attr('stroke', '#64ffda')
+                .style('cursor', 'pointer')
+                .on('mouseover', (event, d) => {
+                    const tooltip = document.getElementById('tooltip');
+                    tooltip.innerHTML = `
+                        <strong>${d.data.name}</strong><br>
+                        Value: ${d.data.value.toFixed(1)}B<br>
+                        Combinations: ${d.data.combinations.length}
+                    `;
+                    tooltip.style.display = 'block';
+                    tooltip.style.left = event.pageX + 10 + 'px';
+                    tooltip.style.top = event.pageY + 10 + 'px';
+                })
+                .on('mouseout', () => this.hideTooltip());
+                
+            cell.append('text')
+                .attr('x', 4)
+                .attr('y', 14)
+                .style('fill', '#fff')
+                .style('font-size', '10px')
+                .text(d => {
+                    const width = d.x1 - d.x0;
+                    const name = d.data.name;
+                    
+                    const charLimit = Math.floor(width / 6);
+                    
+                    if (width < 30) return '';
+                    if (name.length <= charLimit) return name;
+                    return name.substring(0, charLimit - 2) + '...';
+                });
+                
+            cell.append('text')
+                .attr('x', 4)
+                .attr('y', 28)
+                .style('fill', '#64ffda')
+                .style('font-size', '9px')
+                .style('font-weight', 'bold')
+                .text(d => {
+                    const width = d.x1 - d.x0;
+                    const height = d.y1 - d.y0;
+                    if (width > 50 && height > 30) {
+                        return `${d.data.value.toFixed(1)}B`;
+                    }
+                    return '';
+                });
+        },
+        
+        updatePatentStrategy() {
+            console.log('Rendering Patent Strategy Landscape...');
+            
+            const panel = document.getElementById('patent-panel');
+            if (!panel) {
+                console.error('Patent panel not found!');
+                return;
+            }
+            
+            panel.style.display = 'block';
+            
+            const container = document.querySelector('#patentScatter').parentElement;
+            const width = Math.max(600, container.clientWidth - 30);
+            const height = Math.max(400, container.clientHeight - 50);
+            
+            console.log('Patent container dimensions:', width, height);
+            
+            const svg = d3.select('#patentScatter')
+                .attr('width', width)
+                .attr('height', height);
+            svg.selectAll('*').remove();
+            
+            svg.append('rect')
+                .attr('width', width)
+                .attr('height', height)
+                .style('fill', 'rgba(20, 27, 45, 0.8)');
+            
+            if (this.aggregatedData.size === 0) {
+                svg.append('text')
+                    .attr('x', width / 2)
+                    .attr('y', height / 2)
+                    .style('fill', '#8892b0')
+                    .style('text-anchor', 'middle')
+                    .text('No data loaded for Patent Strategy');
+                return;
+            }
+            
+            const data = Array.from(this.aggregatedData.values())
+                .filter(d => {
+                    return d.adjustedMarket >= 0 && 
+                           d.patentPriority >= 0 && 
+                           !isNaN(d.adjustedMarket) && 
+                           !isNaN(d.patentPriority) &&
+                           !isNaN(d.avgPracticality);
+                });
+            
+            console.log('Valid patent strategy data points:', data.length);
+            
+            if (data.length === 0) {
+                svg.append('text')
+                    .attr('x', width / 2)
+                    .attr('y', height / 2)
+                    .style('fill', '#8892b0')
+                    .style('text-anchor', 'middle')
+                    .text('No valid data to plot - check data quality');
+                return;
+            }
+            
+            const xMax = d3.max(data, d => d.adjustedMarket) || 10;
+            const yMax = d3.max(data, d => d.patentPriority) || 100;
+            const sizeMax = d3.max(data, d => d.avgPracticality) || 100;
+            
+            console.log('Scaling axes. xMax:', xMax.toFixed(2), 'yMax:', yMax.toFixed(2));
+            
+            const xScale = d3.scaleLinear()
+                .domain([0, xMax * 1.1])
+                .range([60, width - 60]);
+                
+            const yAxisMin = 90;
+            const yScale = d3.scaleLinear()
+                .domain([yAxisMin, yMax * 1.1])
+                .range([height - 60, 60]);
+                
+            const sizeScale = d3.scaleSqrt()
+                .domain([0, sizeMax])
+                .range([2, 12]);
+            
+            svg.append('text')
+                .attr('x', width / 2)
+                .attr('y', 30)
+                .style('fill', '#64ffda')
+                .style('text-anchor', 'middle')
+                .style('font-size', '16px')
+                .style('font-weight', 'bold')
+                .text('Patent Strategy Landscape');
+            
+            const resetG = svg.append('g')
+                .attr('transform', `translate(${width - 120}, 20)`)
+                .style('cursor', 'pointer')
+                .on('click', () => {
+                    document.getElementById('selectedPackage').innerHTML = '';
+                    svg.selectAll('.patent-point')
+                        .style('opacity', 1)
+                        .attr('stroke-width', 1);
+                });
+            
+            resetG.append('rect')
+                .attr('width', 100)
+                .attr('height', 25)
+                .attr('rx', 5)
+                .style('fill', 'rgba(239, 68, 68, 0.1)')
+                .style('stroke', '#EF4444');
+            
+            resetG.append('text')
+                .attr('x', 50)
+                .attr('y', 17)
+                .style('fill', '#EF4444')
+                .style('text-anchor', 'middle')
+                .style('font-size', '11px')
+                .text('Reset Strategy');
+            
+            const zones = [
+                { x1: 0.5, x2: 1, y1: 0.5, y2: 1, color: 'rgba(34, 197, 94, 0.1)', label: 'File Immediately' },
+                { x1: 0, x2: 0.5, y1: 0.5, y2: 1, color: 'rgba(100, 255, 218, 0.1)', label: 'Research Further' },
+                { x1: 0.5, x2: 1, y1: 0, y2: 0.5, color: 'rgba(253, 224, 71, 0.1)', label: 'Monitor' },
+                { x1: 0, x2: 0.5, y1: 0, y2: 0.5, color: 'rgba(239, 68, 68, 0.1)', label: 'Low Priority' }
+            ];
+            
+            const zoneGroup = svg.append('g');
+            
+            zones.forEach(zone => {
+                const x1 = xScale(zone.x1 * xMax);
+                const x2 = xScale(zone.x2 * xMax);
+                const y1 = yScale(Math.max(yAxisMin, zone.y1 * yMax));
+                const y2 = yScale(Math.max(yAxisMin, zone.y2 * yMax));
+                
+                zoneGroup.append('rect')
+                    .attr('x', Math.min(x1, x2))
+                    .attr('y', Math.min(y1, y2))
+                    .attr('width', Math.abs(x2 - x1))
+                    .attr('height', Math.abs(y2 - y1))
+                    .style('fill', zone.color);
+                    
+                zoneGroup.append('text')
+                    .attr('x', (x1 + x2) / 2)
+                    .attr('y', (y1 + y2) / 2)
+                    .style('fill', '#8892b0')
+                    .style('text-anchor', 'middle')
+                    .style('font-size', '12px')
+                    .text(zone.label);
+            });
+            
+            svg.append('g')
+                .attr('transform', `translate(0,${height - 60})`)
+                .call(d3.axisBottom(xScale).ticks(8).tickFormat(d => `${d}B`))
+                .style('color', '#8892b0');
+                
+            svg.append('g')
+                .attr('transform', 'translate(60,0)')
+                .call(d3.axisLeft(yScale).ticks(8))
+                .style('color', '#8892b0');
+            
+            svg.append('text')
+                .attr('x', width / 2)
+                .attr('y', height - 20)
+                .style('fill', '#64ffda')
+                .style('text-anchor', 'middle')
+                .text('Adjusted Market Value ($B)');
+                
+            svg.append('text')
+                .attr('transform', 'rotate(-90)')
+                .attr('x', -height / 2)
+                .attr('y', 20)
+                .style('fill', '#64ffda')
+                .style('text-anchor', 'middle')
+                .text('Patent Priority Score');
+            
+            const points = svg.selectAll('.patent-point')
+                .data(data)
+                .enter().append('circle')
+                .attr('class', 'patent-point')
+                .attr('cx', d => {
+                    const x = xScale(d.adjustedMarket);
+                    return x;
+                })
+                .attr('cy', d => {
+                    const y = yScale(d.patentPriority);
+                    return y;
+                })
+                .attr('r', d => {
+                    const r = sizeScale(d.avgPracticality);
+                    return Math.max(2, Math.min(12, r));
+                })
+                .attr('fill', d => d.patentStatus === 'open' ? 'none' : this.patentColors[d.patentStatus] || this.patentColors.open)
+                .attr('fill-opacity', d => d.patentStatus === 'open' ? 0 : 0.7)
+                .attr('stroke', d => this.patentColors[d.patentStatus] || '#fff')
+                .attr('stroke-width', d => d.patentStatus === 'open' ? 0.5 : 1)
+                .style('cursor', 'pointer')
+                .on('mouseover', (event, d) => this.showTooltip(event, d))
+                .on('mouseout', () => this.hideTooltip())
+                .on('click', (event, d) => this.addToPatentPackage(d));
+
+            // Invisible circles for easier hovering on 'open' bubbles
+            svg.selectAll('.hover-target')
+                .data(data.filter(d => d.patentStatus === 'open'))
+                .enter().append('circle')
+                .attr('class', 'hover-target')
+                .attr('cx', d => xScale(d.adjustedMarket))
+                .attr('cy', d => yScale(d.patentPriority))
+                .attr('r', d => sizeScale(d.avgPracticality) + 5)
+                .attr('fill', 'rgba(255, 255, 255, 0)') // Transparent fill
+                .attr('pointer-events', 'all') // Make it a clickable target
+                .on('mouseover', (event, d) => this.showTooltip(event, d))
+                .on('mouseout', () => this.hideTooltip())
+                .on('click', (event, d) => this.addToPatentPackage(d));
+            
+            console.log('Added', points.size(), 'patent points to chart');
+            
+            const legend = svg.append('g')
+                .attr('transform', `translate(${width - 150}, ${height - 200})`);
+            
+            legend.append('text')
+                .attr('x', 0)
+                .attr('y', -10)
+                .style('fill', '#8892b0')
+                .style('font-size', '11px')
+                .style('font-weight', 'bold')
+                .text('Bubble Size = Practicality');
+            
+            this.updatePatentRecommendations(data);
+        },
+        
+        updatePatentRecommendations(data) {
+            console.log('Updating patent recommendations with', data.length, 'items');
+            
+            const sorted = data.sort((a, b) => b.patentPriority - a.patentPriority);
+            const top20 = sorted.slice(0, 20);
+            
+            const container = document.getElementById('patentRecommendations');
+            container.innerHTML = '';
+            
+            const header = document.createElement('div');
+            header.className = 'info-box';
+            header.innerHTML = `
+                <strong>Filing Priority Algorithm:</strong><br>
+                <small style="color: #8892b0;">
+                • Market ROI = (Market × Penetration) / Patent Cost<br>
+                • Urgency = 36 / Competitor Response Time<br>
+                • Final Score = ROI × Urgency × Practicality × IP Freedom
+                </small>
+            `;
+            container.appendChild(header);
+            
+            const urgent = top20.filter(d => d.patentPriority > 75);
+            const high = top20.filter(d => d.patentPriority > 50 && d.patentPriority <= 75);
+            const medium = top20.filter(d => d.patentPriority > 25 && d.patentPriority <= 50);
+            const watching = top20.filter(d => d.patentPriority <= 25);
+            
+            if (urgent.length > 0) {
+                const urgentSection = document.createElement('div');
+                urgentSection.innerHTML = '<div style="color: #22C55E; font-weight: bold; margin-top: 10px;">🚨 URGENT FILINGS</div>';
+                urgent.forEach((d, i) => {
+                    const rec = document.createElement('div');
+                    rec.className = 'recommendation';
+                    rec.style.borderLeft = '3px solid #22C55E';
+                    rec.innerHTML = `
+                        <div class="recommendation-title">#${i + 1}: ${d.combination}</div>
+                        <div style="font-size: 11px; color: #8892b0;">
+                        Priority: ${d.patentPriority.toFixed(0)} | 
+                        Market: ${d.adjustedMarket.toFixed(1)}B | 
+                        Status: ${d.patentStatus}<br>
+                        <small>Est. ROI: ${((d.adjustedMarket * 1000 / this.params.patentCost) - 1).toFixed(0)}x return</small>
+                        </div>
+                    `;
+                    urgentSection.appendChild(rec);
+                });
+                container.appendChild(urgentSection);
+            }
+            
+            if (high.length > 0) {
+                const highSection = document.createElement('div');
+                highSection.innerHTML = '<div style="color: #60A5FA; font-weight: bold; margin-top: 10px;">📊 HIGH PRIORITY</div>';
+                high.forEach((d, i) => {
+                    const rec = document.createElement('div');
+                    rec.className = 'recommendation';
+                    rec.style.borderLeft = '3px solid #60A5FA';
+                    rec.innerHTML = `
+                        <div class="recommendation-title">${d.combination}</div>
+                        <div style="font-size: 11px; color: #8892b0;">
+                        Score: ${d.patentPriority.toFixed(0)} | 
+                        ${d.adjustedMarket.toFixed(1)}B | 
+                        ${d.patentStatus}
+                        </div>
+                    `;
+                    highSection.appendChild(rec);
+                });
+                container.appendChild(highSection);
+            }
+            
+            if (medium.length > 0) {
+                const medSection = document.createElement('div');
+                medSection.innerHTML = '<div style="color: #FDE047; font-weight: bold; margin-top: 10px;">🔍 RESEARCH FURTHER</div>';
+                medium.slice(0, 5).forEach(d => {
+                    const rec = document.createElement('div');
+                    rec.className = 'info-box';
+                    rec.style.borderLeft = '3px solid #FDE047';
+                    rec.innerHTML = `
+                        <small>${d.combination}: ${d.patentPriority.toFixed(0)} pts</small>
+                    `;
+                    medSection.appendChild(rec);
+                });
+                container.appendChild(medSection);
+            }
+            
+            if (watching.length > 0) {
+                const watchSection = document.createElement('div');
+                watchSection.innerHTML = '<div style="color: #8892b0; font-weight: bold; margin-top: 10px;">👁️ WATCH LIST</div>';
+                watchSection.innerHTML += `<small style="color: #8892b0;">${watching.length} items with score < 25</small>`;
+                container.appendChild(watchSection);
+            }
+        },
+        
+        addToPatentPackage(combination) {
+            console.log(`Adding ${combination.combination} to patent package...`);
+            const container = document.getElementById('selectedPackage');
+            const existing = container.querySelector(`[data-combo="${combination.combination}"]`);
+            
+            if (!existing) {
+                const item = document.createElement('div');
+                item.className = 'info-box';
+                item.dataset.combo = combination.combination;
+                item.innerHTML = `
+                    ${combination.combination}
+                    <button onclick="this.parentElement.remove()" style="float: right; padding: 2px 8px;">×</button>
+                `;
+                container.appendChild(item);
+            }
+        },
+        
+        updatePortfolioBuilder() {
+            console.log('Updating portfolio builder...');
+            
+            const data = Array.from(this.aggregatedData.values())
+                .sort((a, b) => b.adjustedScore - a.adjustedScore)
+                .slice(0, 30);
+            
+            const listContainer = document.getElementById('combinationList');
+            listContainer.innerHTML = '';
+            
+            const instructions = document.createElement('div');
+            instructions.className = 'info-box';
+            instructions.style.marginBottom = '10px';
+            instructions.innerHTML = `
+                <strong>How to Build Portfolio:</strong><br>
+                <small style="color: #8892b0;">
+                • Click or drag combinations to add<br>
+                • Double-click in network to remove<br>
+                </small>
+            `;
+            listContainer.appendChild(instructions);
+            
+            const tiers = {
+                elite: data.filter(d => d.adjustedScore > 70),
+                high: data.filter(d => d.adjustedScore > 50 && d.adjustedScore <= 70),
+                medium: data.filter(d => d.adjustedScore > 30 && d.adjustedScore <= 50),
+                exploratory: data.filter(d => d.adjustedScore <= 30)
+            };
+            
+            Object.entries(tiers).forEach(([tier, items]) => {
+                if (items.length === 0) return;
+                
+                const tierHeader = document.createElement('div');
+                tierHeader.style.color = tier === 'elite' ? '#22C55E' : 
+                                         tier === 'high' ? '#60A5FA' :
+                                         tier === 'medium' ? '#FDE047' : '#8892b0';
+                tierHeader.style.fontWeight = 'bold';
+                tierHeader.style.fontSize = '11px';
+                tierHeader.style.marginTop = '10px';
+                tierHeader.textContent = tier.toUpperCase() + ` (${items.length})`;
+                listContainer.appendChild(tierHeader);
+                
+                items.slice(0, 8).forEach(d => {
+                    const item = document.createElement('div');
+                    item.className = 'combination-item';
+                    item.draggable = true;
+                    item.dataset.combination = d.combination;
+                    
+                    item.style.borderColor = this.patentColors[d.patentStatus] || '#64ffda';
+                    
+                    item.innerHTML = `
+                        <span style="font-weight: bold; color: #64ffda;">${d.combination}</span><br>
+                        <span style="font-size: 10px; color: #8892b0;">
+                        ${d.adjustedScore.toFixed(1)}% | ${d.adjustedMarket.toFixed(1)}B | ${d.appearances}x
+                        </span>
+                    `;
+                    
+                    item.title = `Score: ${d.adjustedScore.toFixed(1)}%\nMarket: ${d.adjustedMarket.toFixed(1)}B\nAppearances: ${d.appearances}\nPatent: ${d.patentStatus}`;
+                    
+                    item.addEventListener('dragstart', (e) => {
+                        e.dataTransfer.setData('text/plain', d.combination);
+                        item.classList.add('dragging');
+                    });
+                    
+                    item.addEventListener('dragend', () => {
+                        item.classList.remove('dragging');
+                    });
+                    
+                    item.addEventListener('click', () => this.addToPortfolio(d));
+                    
+                    listContainer.appendChild(item);
+                });
+            });
+            
+            this.updatePortfolioGrid();
+        },
+        
+        updatePortfolioGrid() {
+            console.log('Updating portfolio grid...');
+            const gridContainer = document.getElementById('portfolioGrid');
+            
+            // Clear existing content
+            while (gridContainer.firstChild) {
+                gridContainer.removeChild(gridContainer.firstChild);
+            }
+
+            if (this.portfolio.size === 0) {
+                const placeholder = document.createElement('div');
+                placeholder.style.cssText = 'text-align: center; color: #8892b0; font-size: 14px;';
+                placeholder.textContent = 'Add combinations here to build your portfolio';
+                gridContainer.appendChild(placeholder);
+                return;
+            }
+            
+            const data = Array.from(this.portfolio).map(combo => {
+                const item = this.aggregatedData.get(combo);
+                if (!item) {
+                    console.warn(`No data found for combination: ${combo}`);
+                }
+                return item;
+            }).filter(d => d);
+            
+            console.log('Processing portfolio data:', data);
+            
+            if (data.length === 0) {
+                console.error('No valid data found for portfolio items');
+                const errorDiv = document.createElement('div');
+                errorDiv.style.cssText = 'color: #ef4444; text-align: center;';
+                errorDiv.textContent = 'Error: No valid data for portfolio items';
+                gridContainer.appendChild(errorDiv);
+                return;
+            }
+
+            // Group data by normalized family name
+            const dataByFamily = new Map();
+            
+            data.forEach(d => {
+                let familyName = 'uncategorized';
+                
+                if (d.families && d.families.size > 0) {
+                    const firstFamily = Array.from(d.families)[0];
+                    familyName = firstFamily.toLowerCase().replace(/\s*family\s*/i, '').trim();
+                } else if (d.family) {
+                    familyName = d.family.toLowerCase().replace(/\s*family\s*/i, '').trim();
+                }
+                
+                if (!dataByFamily.has(familyName)) {
+                    dataByFamily.set(familyName, []);
+                }
+                dataByFamily.get(familyName).push(d);
+            });
+
+            console.log('Grouped by families:', dataByFamily);
+
+            const orderedFamilies = ['oxygen', 'nitrogen', 'sulfur', 'phosphorus', 'halogen', 'metal', 'hybrid', 'uncategorized'];
+
+            // Create HTML for each family group
+            orderedFamilies.forEach(family => {
+                if (dataByFamily.has(family)) {
+                    const familyData = dataByFamily.get(family);
+                    const familyDisplayName = family.charAt(0).toUpperCase() + family.slice(1);
+                    
+                    // Create family group container
+                    const familyGroup = document.createElement('div');
+                    familyGroup.className = 'portfolio-group';
+                    
+                    // Add family title
+                    const titleDiv = document.createElement('div');
+                    titleDiv.className = 'portfolio-group-title';
+                    titleDiv.textContent = familyDisplayName;
+                    familyGroup.appendChild(titleDiv);
+
+                    // Add each item in the family
+                    familyData.forEach(d => {
+                        const nodeDiv = document.createElement('div');
+                        nodeDiv.className = 'portfolio-node';
+                        
+                        // Set border color based on patent status
+                        nodeDiv.style.borderColor = this.patentColors[d.patentStatus] || '#64ffda';
+                        
+                        // Name
+                        const nameDiv = document.createElement('div');
+                        nameDiv.className = 'combo-name';
+                        nameDiv.textContent = d.combination;
+                        nodeDiv.appendChild(nameDiv);
+                        
+                        // Details
+                        const detailsDiv = document.createElement('div');
+                        detailsDiv.className = 'combo-details';
+                        detailsDiv.textContent = `Score: ${d.adjustedScore.toFixed(1)}% | Market: $${d.adjustedMarket.toFixed(1)}B`;
+                        nodeDiv.appendChild(detailsDiv);
+                        
+                        // Patent status
+                        const patentDiv = document.createElement('div');
+                        patentDiv.className = 'combo-patent';
+                        patentDiv.textContent = `Patent: ${d.patentStatus || 'unknown'}`;
+                        nodeDiv.appendChild(patentDiv);
+                        
+                        // Event listeners
+                        nodeDiv.addEventListener('mouseover', (event) => this.showTooltip(event, d));
+                        nodeDiv.addEventListener('mouseout', () => this.hideTooltip());
+                        nodeDiv.addEventListener('dblclick', () => {
+                            console.log('Removing from portfolio:', d.combination);
+                            this.portfolio.delete(d.combination);
+                            this.updatePortfolioGrid();
+                            this.updatePortfolioMetrics();
+                        });
+                        
+                        familyGroup.appendChild(nodeDiv);
+                    });
+                    
+                    gridContainer.appendChild(familyGroup);
+                }
+            });
+
+            // Handle any uncategorized families not in the ordered list
+            dataByFamily.forEach((familyData, family) => {
+                if (!orderedFamilies.includes(family)) {
+                    console.log('Adding non-standard family:', family);
+                    const familyDisplayName = family.charAt(0).toUpperCase() + family.slice(1);
+                    
+                    const familyGroup = document.createElement('div');
+                    familyGroup.className = 'portfolio-group';
+                    
+                    const titleDiv = document.createElement('div');
+                    titleDiv.className = 'portfolio-group-title';
+                    titleDiv.textContent = familyDisplayName;
+                    familyGroup.appendChild(titleDiv);
+
+                    familyData.forEach(d => {
+                        const nodeDiv = document.createElement('div');
+                        nodeDiv.className = 'portfolio-node';
+                        
+                        nodeDiv.style.borderColor = this.patentColors[d.patentStatus] || '#64ffda';
+                        
+                        const nameDiv = document.createElement('div');
+                        nameDiv.className = 'combo-name';
+                        nameDiv.textContent = d.combination;
+                        nodeDiv.appendChild(nameDiv);
+                        
+                        const detailsDiv = document.createElement('div');
+                        detailsDiv.className = 'combo-details';
+                        detailsDiv.textContent = `Score: ${d.adjustedScore.toFixed(1)}% | Market: $${d.adjustedMarket.toFixed(1)}B`;
+                        nodeDiv.appendChild(detailsDiv);
+                        
+                        const patentDiv = document.createElement('div');
+                        patentDiv.className = 'combo-patent';
+                        patentDiv.textContent = `Patent: ${d.patentStatus || 'unknown'}`;
+                        nodeDiv.appendChild(patentDiv);
+                        
+                        nodeDiv.addEventListener('mouseover', (event) => this.showTooltip(event, d));
+                        nodeDiv.addEventListener('mouseout', () => this.hideTooltip());
+                        nodeDiv.addEventListener('dblclick', () => {
+                            console.log('Removing from portfolio:', d.combination);
+                            this.portfolio.delete(d.combination);
+                            this.updatePortfolioGrid();
+                            this.updatePortfolioMetrics();
+                        });
+                        
+                        familyGroup.appendChild(nodeDiv);
+                    });
+                    
+                    gridContainer.appendChild(familyGroup);
+                }
+            });
+
+            console.log(`Portfolio grid updated with ${data.length} items in ${dataByFamily.size} families`);
+            console.log('Grid container children:', gridContainer.children.length);
+        },
+        
+        addToPortfolio(combination) {
+            console.log(`Attempting to add ${combination.combination} to portfolio...`);
+            if (this.portfolio.has(combination.combination)) {
+                console.log('Combination already in portfolio, skipping.');
+                return;
+            }
+            this.portfolio.add(combination.combination);
+            this.updatePortfolioGrid();
+            this.updatePortfolioMetrics();
+            console.log(`${combination.combination} successfully added to portfolio.`);
+        },
+        
+        updatePortfolioMetrics() {
+            console.log('Updating portfolio metrics...');
+            let totalValue = 0;
+            let totalRisk = 0;
+            let avgTime = 0;
+            let patentCoverage = 0;
+            
+            this.portfolio.forEach(combo => {
+                const data = this.aggregatedData.get(combo);
+                if (data) {
+                    totalValue += data.adjustedMarket;
+                    totalRisk += data.stdScore;
+                    avgTime += (100 - data.avgPracticality) / 2;
+                    if (data.patentStatus === 'open' || data.patentStatus === 'potential') {
+                        patentCoverage++;
+                    }
+                }
+            });
+            
+            const portfolioSize = this.portfolio.size || 1;
+            
+            document.getElementById('portfolioValue').textContent = `$${totalValue.toFixed(1)}B`;
+            document.getElementById('portfolioRisk').textContent = `${(100 - totalRisk / portfolioSize).toFixed(0)}%`;
+            document.getElementById('portfolioTime').textContent = `${Math.round(avgTime / portfolioSize)}mo`;
+            document.getElementById('portfolioCoverage').textContent = `${Math.round(patentCoverage / portfolioSize * 100)}%`;
+            
+            this.updateSpiderChart();
+        },
+        
+        updateSpiderChart() {
+            const svg = d3.select('#spiderChart');
+            svg.selectAll('*').remove();
+            
+            const width = 280;
+            const height = 200;
+            const radius = Math.min(width, height) / 2 - 20;
+            
+            svg.attr('viewBox', `0 0 ${width} ${height}`);
+            
+            const metrics = {
+                Innovation: 0,
+                Market: 0,
+                Feasibility: 0,
+                IP_Strength: 0,
+                Stability: 0
+            };
+            
+            this.portfolio.forEach(combo => {
+                const data = this.aggregatedData.get(combo);
+                metrics.Innovation += data.adjustedScore / 100;
+                metrics.Market += Math.min(1, data.adjustedMarket / 50);
+                metrics.Feasibility += data.avgPracticality / 100;
+                metrics.IP_Strength += (data.patentStatus === 'open' ? 1 : 0.5);
+                metrics.Stability += data.avgStability / 100;
+            });
+            
+            const portfolioSize = Math.max(1, this.portfolio.size);
+            Object.keys(metrics).forEach(key => {
+                metrics[key] = metrics[key] / portfolioSize;
+            });
+            
+            const angleSlice = Math.PI * 2 / Object.keys(metrics).length;
+            const axes = Object.keys(metrics);
+            
+            const g = svg.append('g')
+                .attr('transform', `translate(${width/2},${height/2})`);
+            
+            const levels = 5;
+            for (let level = 1; level <= levels; level++) {
+                const levelRadius = radius * level / levels;
+                
+                const points = axes.map((axis, i) => {
+                    const angle = i * angleSlice - Math.PI / 2;
+                    return {
+                        x: Math.cos(angle) * levelRadius,
+                        y: Math.sin(angle) * levelRadius
+                    };
+                });
+                
+                g.append('polygon')
+                    .attr('points', points.map(p => `${p.x},${p.y}`).join(' '))
+                    .style('fill', 'none')
+                    .style('stroke', 'rgba(100, 255, 218, 0.2)')
+                    .style('stroke-width', 1);
+            }
+            
+            axes.forEach((axis, i) => {
+                const angle = i * angleSlice - Math.PI / 2;
+                const x = Math.cos(angle) * radius;
+                const y = Math.sin(angle) * radius;
+                
+                g.append('line')
+                    .attr('x1', 0)
+                    .attr('y1', 0)
+                    .attr('x2', x)
+                    .attr('y2', y)
+                    .style('stroke', 'rgba(100, 255, 218, 0.3)')
+                    .style('stroke-width', 1);
+                
+                g.append('text')
+                    .attr('x', x * 1.1)
+                    .attr('y', y * 1.1)
+                    .style('fill', '#8892b0')
+                    .style('font-size', '10px')
+                    .style('text-anchor', 'middle')
+                    .text(axis.replace('_', ' '));
+            });
+            
+            const dataPoints = axes.map((axis, i) => {
+                const angle = i * angleSlice - Math.PI / 2;
+                const value = metrics[axis];
+                return {
+                    x: Math.cos(angle) * radius * value,
+                    y: Math.sin(angle) * radius * value
+                };
+            });
+            
+            g.append('polygon')
+                .attr('points', dataPoints.map(p => `${p.x},${p.y}`).join(' '))
+                .style('fill', 'rgba(100, 255, 218, 0.3)')
+                .style('stroke', '#64ffda')
+                .style('stroke-width', 2);
+        },
+        
+        selectCombination(combination) {
+            console.log('User selected combination:', combination.combination);
+            this.selectedCombination = combination;
+            
+            if (combination.patentPriority > 50) {
+                this.switchToTab('patent');
+                
+                setTimeout(() => {
+                    d3.selectAll('#patentScatter .patent-point')
+                        .style('opacity', d => d.combination === combination.combination ? 1 : 0.2)
+                        .attr('stroke-width', d => d.combination === combination.combination ? 3 : 1);
+                }, 100);
+            } else {
+                this.switchToTab('portfolio');
+                this.addToPortfolio(combination);
+            }
+        },
+        
+        switchToTab(tabName) {
+            console.log('Switching to tab:', tabName);
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-panel').forEach(p => {
+                 p.classList.remove('active');
+                 p.style.display = 'none';
+            });
+            
+            const targetTab = document.querySelector(`.tab[data-tab="${tabName}"]`);
+            const targetPanel = document.getElementById(`${tabName}-panel`);
+            
+            if (targetTab && targetPanel) {
+                targetTab.classList.add('active');
+                targetPanel.classList.add('active');
+                
+                if (tabName === 'overview') {
+                    targetPanel.style.display = 'grid';
+                    targetPanel.style.gridTemplateRows = '60% 40%';
+                    targetPanel.style.gap = '20px';
+                    targetPanel.style.padding = '20px';
+                } else if (tabName === 'portfolio') {
+                    targetPanel.style.display = 'grid';
+                    targetPanel.style.gridTemplateColumns = '250px 1fr 300px';
+                    targetPanel.style.gap = '20px';
+                    targetPanel.style.padding = '20px';
+                } else {
+                    targetPanel.style.display = 'block';
+                    targetPanel.style.padding = '20px';
+                }
+                
+                if (this.aggregatedData.size > 0) {
+                    if (tabName === 'patent') this.updatePatentStrategy();
+                    if (tabName === 'portfolio') this.updatePortfolioBuilder();
+                }
+            }
+        },
+        
+        showTooltip(event, data) {
+            const tooltip = document.getElementById('tooltip');
+            
+            const apps = Array.from(data.applications).slice(0, 3).join('<br>• ');
+            
+            tooltip.innerHTML = `
+                <strong style="color: #64ffda; font-size: 13px;">${data.combination}</strong><br>
+                <hr style="border-color: rgba(100,255,218,0.2); margin: 5px 0;">
+                <strong>Performance Metrics:</strong><br>
+                • Avg Score: ${data.avgScore.toFixed(1)}% (raw)<br>
+                • Adjusted Score: ${data.adjustedScore.toFixed(1)}% (with penalties)<br>
+                • Consistency: ${(data.consistency * 100).toFixed(0)}% (1/std.dev)<br>
+                • Market: ${data.avgMarket.toFixed(1)}B → ${data.adjustedMarket.toFixed(1)}B (adjusted)<br>
+                <hr style="border-color: rgba(100,255,218,0.2); margin: 5px 0;">
+                <strong>Strategic Info:</strong><br>
+                • Patent Status: ${data.patentStatus}<br>
+                • Patent Priority: ${data.patentPriority.toFixed(0)}<br>
+                • Appears in ${data.appearances} runs<br>
+                • Families: ${Array.from(data.families).join(', ')}<br>
+                <hr style="border-color: rgba(100,255,218,0.2); margin: 5px 0;">
+                <strong>Applications:</strong><br>
+                • ${apps || 'No specific applications'}
+                <hr style="border-color: rgba(100,255,218,0.2); margin: 5px 0;">
+                <small style="color: #8892b0;">
+                Click to select | Double-click in portfolio to remove
+                </small>
+            `;
+            
+            tooltip.style.display = 'block';
+            tooltip.style.left = Math.min(event.pageX + 10, window.innerWidth - 320) + 'px';
+            tooltip.style.top = Math.min(event.pageY + 10, window.innerHeight - 300) + 'px';
+        },
+        
+        hideTooltip() {
+            document.getElementById('tooltip').style.display = 'none';
+        }
+    };
+    
+    // Initialize on load
+    document.addEventListener('DOMContentLoaded', () => {
+        StrategicAnalyzer.init();
+    });
+    </script>
+</body>
+</html>

@@ -1,0 +1,3310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8"> 
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HydroGraph Reactive Graphene Explorer</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #0a0e27 0%, #1a1f3a 50%, #0d1117 100%);
+            color: #e4e9f0;
+            overflow: hidden;
+            height: 100vh;
+        }
+        
+        .main-container {
+            display: flex;
+            height: 100vh;
+        }
+        
+        .control-panel {
+            width: 400px;
+            background: rgba(20, 27, 45, 0.95);
+            border-right: 1px solid rgba(100, 255, 218, 0.2);
+            padding: 20px;
+            overflow-y: auto;
+            box-shadow: 5px 0 20px rgba(0, 0, 0, 0.3);
+            scrollbar-width: thin;
+            scrollbar-color: #64ffda rgba(30, 41, 59, 0.6);
+        }
+
+        .control-panel::-webkit-scrollbar { width: 8px; }
+        .control-panel::-webkit-scrollbar-track { background: rgba(30, 41, 59, 0.6); }
+        .control-panel::-webkit-scrollbar-thumb {
+            background-color: #64ffda;
+            border-radius: 4px;
+            border: 2px solid rgba(30, 41, 59, 0.6);
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid rgba(100, 255, 218, 0.3);
+        }
+        
+        .header h1 {
+            font-size: 24px;
+            background: linear-gradient(135deg, #64ffda 0%, #48cae4 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 8px;
+        }
+        
+        .subtitle { color: #8892b0; font-size: 13px; }
+        
+        .control-section {
+            background: rgba(30, 41, 59, 0.6);
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 15px;
+            border: 1px solid rgba(100, 255, 218, 0.1);
+        }
+
+        .control-section label {
+            display: block;
+            font-size: 12px;
+            color: #b0c0d8;
+            margin: 8px 0;
+            cursor: pointer;
+        }
+        .control-section label input {
+            margin-right: 8px;
+            accent-color: #64ffda;
+        }
+        
+        .helper-tooltip {
+            display: inline-block;
+            margin-left: 8px;
+            font-size: 11px;
+            font-family: monospace;
+            color: #8892b0;
+            border: 1px solid #8892b0;
+            border-radius: 50%;
+            width: 16px;
+            height: 16px;
+            line-height: 16px;
+            text-align: center;
+            cursor: help;
+            font-weight: bold;
+        }
+        .helper-tooltip:hover {
+            color: #64ffda;
+            border-color: #64ffda;
+        }
+
+        .about-section-intro {
+            font-size: 13px;
+            color: #e4e9f0;
+            margin-bottom: 12px;
+            line-height: 1.5;
+        }
+        .about-section-intro strong { color: #64ffda; }
+        .about-section-steps { list-style: none; padding-left: 0; }
+        .about-section-steps li {
+            position: relative;
+            padding-left: 25px;
+            font-size: 12px;
+            color: #8892b0;
+            margin-bottom: 8px;
+            line-height: 1.4;
+        }
+        .about-section-steps li::before {
+            content: '✓';
+            position: absolute;
+            left: 0;
+            top: 0;
+            color: #64ffda;
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        .section-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #64ffda;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .section-title::before { content: '◆'; color: #8b5cf6; font-size: 10px; }
+        
+        button {
+            padding: 8px 12px;
+            background: linear-gradient(135deg, rgba(139, 92, 246, 0.2), rgba(100, 255, 218, 0.2));
+            border: 1px solid rgba(100, 255, 218, 0.3);
+            border-radius: 6px;
+            color: #e4e9f0;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin: 2px;
+        }
+        
+        button:hover {
+            background: linear-gradient(135deg, rgba(139, 92, 246, 0.4), rgba(100, 255, 218, 0.4));
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(100, 255, 218, 0.3);
+        }
+        
+        button.active {
+            background: linear-gradient(135deg, rgba(100, 255, 218, 0.4), rgba(139, 92, 246, 0.4));
+            border-color: #64ffda;
+            box-shadow: 0 0 10px rgba(100, 255, 218, 0.5);
+        }
+        
+        .button-group { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 10px; }
+        
+        input[type="range"] {
+            width: 100%;
+            margin: 10px 0;
+            height: 6px;
+            background: linear-gradient(90deg, #8b5cf6 0%, #64ffda 100%);
+            border-radius: 3px;
+            outline: none;
+            -webkit-appearance: none;
+        }
+        
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 18px;
+            height: 18px;
+            background: radial-gradient(circle, #64ffda, #8b5cf6);
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 0 10px rgba(100, 255, 218, 0.5);
+        }
+        
+        select {
+            width: 100%;
+            padding: 8px;
+            background: rgba(30, 41, 59, 0.8);
+            border: 1px solid rgba(100, 255, 218, 0.2);
+            border-radius: 6px;
+            color: #e4e9f0;
+            font-size: 12px;
+            outline: none;
+        }
+        
+        .visualization-container { flex: 1; position: relative; display: flex; flex-direction: column; }
+        
+        .top-bar {
+            background: rgba(20, 27, 45, 0.95);
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid rgba(100, 255, 218, 0.2);
+        }
+        
+        .stats { display: flex; gap: 30px; }
+        
+        .stat-item { display: flex; flex-direction: column; cursor: help; }
+        
+        .stat-label {
+            font-size: 11px;
+            color: #8892b0;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .stat-value {
+            font-size: 20px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #64ffda 0%, #8b5cf6 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        #tree-container {
+            flex: 1;
+            position: relative;
+            background: radial-gradient(ellipse at center, rgba(20, 27, 45, 0.8), transparent);
+            overflow: hidden;
+        }
+        
+        #tree-svg { width: 100%; height: 100%; }
+        
+        .loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            display: none;
+            z-index: 1000;
+        }
+        
+        .loading-spinner {
+            width: 60px;
+            height: 60px;
+            border: 3px solid rgba(100, 255, 218, 0.1);
+            border-top: 3px solid #64ffda;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .node-info {
+            background: linear-gradient(135deg, rgba(30, 41, 59, 0.9), rgba(20, 27, 45, 0.9));
+            border-radius: 10px;
+            padding: 15px;
+            max-height: 400px;
+            overflow-y: auto;
+            display: none;
+            scrollbar-width: thin;
+            scrollbar-color: #8b5cf6 rgba(30, 41, 59, 0.1);
+        }
+        .node-info::-webkit-scrollbar { width: 6px; }
+        .node-info::-webkit-scrollbar-track { background: rgba(30, 41, 59, 0.1); }
+        .node-info::-webkit-scrollbar-thumb { background-color: #8b5cf6; border-radius: 3px; }
+
+        
+        .node-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #64ffda;
+            margin-bottom: 10px;
+        }
+        
+        .metric-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(100, 255, 218, 0.1);
+        }
+        
+        .metric-label { font-size: 12px; color: #8892b0; cursor: help; }
+        
+        .metric-value { font-size: 13px; font-weight: 600; color: #e4e9f0; }
+        
+        .metric-bar {
+            height: 4px;
+            background: rgba(100, 255, 218, 0.1);
+            border-radius: 2px;
+            margin-top: 4px;
+            overflow: hidden;
+        }
+        
+        .metric-fill { height: 100%; border-radius: 2px; transition: width 0.5s ease; }
+        
+        .app-tag {
+            display: inline-block;
+            background: rgba(100, 255, 218, 0.1);
+            border: 1px solid rgba(100, 255, 218, 0.3);
+            border-radius: 12px;
+            padding: 3px 8px;
+            margin: 2px;
+            font-size: 10px;
+            color: #64ffda;
+        }
+        
+        .market-tag {
+            display: inline-block;
+            background: rgba(255, 215, 0, 0.1);
+            border: 1px solid rgba(255, 215, 0, 0.3);
+            border-radius: 12px;
+            padding: 3px 8px;
+            margin: 2px;
+            font-size: 10px;
+            color: #ffd700;
+        }
+        
+        .legend {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+            margin-top: 10px;
+        }
+        
+        .legend-item { display: flex; align-items: center; gap: 6px; font-size: 11px; }
+        
+        .legend-color {
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            box-shadow: 0 0 5px currentColor;
+        }
+        
+        .fab-container {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            z-index: 100;
+        }
+        
+        .fab {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, rgba(139, 92, 246, 0.9), rgba(100, 255, 218, 0.9));
+            border: none;
+            color: white;
+            font-size: 20px;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            transition: all 0.3s ease;
+        }
+        
+        .fab:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 20px rgba(100, 255, 218, 0.5);
+        }
+        
+        .tooltip {
+            position: absolute;
+            background: rgba(20, 27, 45, 0.98);
+            border: 1px solid rgba(100, 255, 218, 0.5);
+            border-radius: 8px;
+            padding: 10px;
+            font-size: 11px;
+            pointer-events: none;
+            z-index: 1000;
+            display: none;
+            max-width: 300px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+        }
+        
+        .search-box { margin-bottom: 15px; }
+        
+        .search-box input {
+            width: 100%;
+            padding: 10px;
+            background: rgba(30, 41, 59, 0.8);
+            border: 1px solid rgba(100, 255, 218, 0.2);
+            border-radius: 20px;
+            color: #e4e9f0;
+            font-size: 13px;
+            outline: none;
+        }
+        
+        .search-box input:focus {
+            border-color: #64ffda;
+            box-shadow: 0 0 15px rgba(100, 255, 218, 0.2);
+        }
+
+        /* Styles for Gold List */
+        #goldList {
+            background: rgba(30, 41, 59, 0.8);
+            border: 2px solid #ffd700;
+        }
+        #goldList table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 11px;
+        }
+        #goldList th, #goldList td {
+            padding: 6px;
+            text-align: left;
+            border-bottom: 1px solid rgba(255, 215, 0, 0.2);
+        }
+        #goldList th {
+            color: #ffd700;
+            font-weight: bold;
+        }
+        #goldList td {
+            vertical-align: top;
+        }
+        .gold-rank {
+            font-weight: bold;
+            color: #ffd700;
+        }
+        .combo-path {
+            color: #64ffda;
+            font-size: 10px;
+        }
+        .market-list {
+            font-size: 10px;
+            color: #8892b0;
+        }
+        
+        /* PATENT ADDITIONS - New styles for patent features */
+        .patent-badge {
+            display: inline-block;
+            padding: 2px 6px;
+            border-radius: 10px;
+            font-size: 9px;
+            font-weight: bold;
+            margin-left: 4px;
+        }
+        
+        .patent-covered { background: #22C55E; color: white; }
+        .patent-partial { background: #86EFAC; color: #166534; }
+        .patent-potential { background: #60A5FA; color: white; }
+        .patent-open { background: #E5E7EB; color: #6B7280; }
+        .patent-potentially-blocked { background: #FDE047; color: #854D0E; }
+        .patent-blocked { background: #EF4444; color: white; }
+        
+        .patent-icon {
+            display: inline-block;
+            margin-right: 4px;
+        }
+        
+        .patent-row {
+            font-size: 11px;
+            color: #8892b0;
+            margin-top: 4px;
+            padding-top: 4px;
+            border-top: 1px dashed rgba(100, 255, 218, 0.2);
+        }
+    </style>
+</head>
+<body>
+    <div class="main-container">
+        <div class="control-panel">
+            <div class="header">
+                <h1>HydroGraph Reactive Graphene Explorer</h1>
+                <div class="subtitle">Visualizing Functionalized Additive Potential</div>
+            </div>
+
+            <div class="search-box">
+                <input type="text" id="searchInput" placeholder="Search: high conductivity sensor -metal ORR..." list="search-suggestions">
+                <datalist id="search-suggestions"></datalist>
+            </div>
+
+            <div class="control-section">
+                <div class="section-title">
+                    Simulation Controls
+                    <span class="helper-tooltip" title="Generate a new fractal data set. 'Large' is more complex and may be slower.">?</span>
+                </div>
+                <div class="button-group">
+                    <button id="smallBtn" onclick="app.generateTree('small')" title="Generate a small data set (~50 nodes)">Small (50)</button>
+                    <button id="mediumBtn" onclick="app.generateTree('medium')" title="Generate a medium data set (~200 nodes)">Medium (200)</button>
+                    <button id="largeBtn" onclick="app.generateTree('large')" title="Generate a large data set (500+ nodes)">Large (500+)</button>
+                </div>
+                <label title="Set the maximum depth (levels) of the fractal tree">Tree Depth: <span id="depthValue">3</span></label>
+                <input type="range" id="depthSlider" min="2" max="5" value="3" title="Set the maximum depth (levels) of the fractal tree">
+                <label title="Set the number of child nodes (branches) for each parent node">Branching Factor: <span id="branchValue">3</span></label>
+                <input type="range" id="branchSlider" min="2" max="8" value="3" title="Set the number of child nodes (branches) for each parent node">
+                <button onclick="app.regenerateTree()" style="width: 100%; margin-top: 10px;" title="Re-build the tree using the current Depth and Branching settings">
+                    Regenerate with Current Settings
+                </button>
+            </div>
+
+            <div class="control-section">
+                <div class="section-title">
+                    Realism Settings
+                    <span class="helper-tooltip" title="Apply scientific principles to the simulation. Changes apply on 'Regenerate'.">?</span>
+                </div>
+                <label>
+                    <input type="checkbox" id="saturationEffects" checked> 
+                    Saturation Effects (same group diminishing)
+                </label>
+                <label>
+                    <input type="checkbox" id="stericHindrance" checked>
+                    Steric Hindrance (bulky group interference)
+                </label>
+                <label>
+                    <input type="checkbox" id="distanceDecay" checked>
+                    Distance Decay (further = weaker)
+                </label>
+                <label>Coverage Model:</label>
+                <select id="coverageModel">
+                    <option value="sparse">Sparse (<2%)</option>
+                    <option value="typical" selected>Typical (2-5%)</option>
+                    <option value="dense">Dense (>5%)</option>
+                </select>
+            </div>
+
+            <div class="control-section">
+                 <div class="section-title">
+                    Data Layout & Shading
+                    <span class="helper-tooltip" title="Change the visual layout of the data network and how nodes are colored.">?</span>
+                </div>
+                <div class="button-group">
+                    <button id="treeBtn" onclick="app.changeLayout('tree')" class="active" title="View data as a top-down hierarchy">Tree</button>
+                    <button id="radialBtn" onclick="app.changeLayout('radial')" title="View data as a circular, radial tree">Radial</button>
+                    <button id="forceBtn" onclick="app.changeLayout('force')" title="View data as an interactive physics simulation (drag nodes)">Force</button>
+                </div>
+                <label style="margin-top: 10px;">Color by Metric:</label>
+                <select id="colorMetric" onchange="app.updateColorScheme()" title="Change the color-coding of all nodes based on the selected property">
+                    <option value="family">Chemical Family</option>
+                    <option value="bindingEnergy">Binding Energy</option>
+                    <option value="conductivity">Conductivity</option>
+                    <option value="biocompatibility">Biocompatibility</option>
+                    <option value="stability">Stability</option>
+                    <option value="practicalityScore">Synthesizability</option>
+                    <option value="commercialPotential">Commercial Potential</option>
+                    <option value="goldScore">Gold Score</option>
+                    <option value="marketPotential">Market Potential ($B)</option>
+                    <option value="patentStatus">Patent Status</option>
+                </select>
+            </div>
+
+            <div class="control-section">
+                <div class="section-title">
+                    Query & Analysis Filters
+                    <span class="helper-tooltip" title="Highlight nodes that match specific high-performance criteria or application areas.">?</span>
+                </div>
+                <div class="button-group">
+                    <button onclick="app.showTopPerformers('bindingEnergy')" title="Highlight the 10 nodes with the strongest binding energy (most negative eV)">Top Binding</button>
+                    <button onclick="app.showTopPerformers('conductivity')" title="Highlight the 10 nodes with the highest conductivity">Top Conductivity</button>
+                    <button onclick="app.showTopPerformers('biocompatibility')" title="Highlight the 10 nodes with the best biocompatibility">Top Biocompat</button>
+                    <button onclick="app.showTopPerformers('stability')" title="Highlight the 10 nodes with the highest stability">Top Stability</button>
+                </div>
+                <div class="button-group">
+                    <button onclick="app.showApplicationCategory('sensors')" title="Highlight all nodes with applications in Sensors or Detection">Sensors</button>
+                    <button onclick="app.showApplicationCategory('energy')" title="Highlight all nodes with applications in Energy Storage or Generation">Energy</button>
+                    <button onclick="app.showApplicationCategory('medical')" title="Highlight all nodes with Biomedical or Drug Delivery applications">Medical</button>
+                    <button onclick="app.resetFilters()" title="Remove all active filters and highlighting">Clear Filters</button>
+                </div>
+                <div class="button-group">
+                    <button onclick="app.showGoldList()" title="Show top 'Gold' combos by refined score (stability + practicality + untapped markets)">Gold Rush 🏆</button>
+                    <button onclick="app.showMarketOpportunities()" title="Show biggest market opportunities">Market Map 💰</button>
+                    <button onclick="app.showPatentAnalysis()" title="Show patent landscape analysis">Patent Intel 📋</button>
+                </div>
+            </div>
+
+            <div class="control-section">
+                <div class="section-title">
+                    Filter by Chemical Family
+                    <span class="helper-tooltip" title="Isolate nodes belonging to a specific chemical functional group.">?</span>
+                </div>
+                <div class="button-group">
+                    <button onclick="app.filterByFamily('oxygen')" title="Show only nodes from the Oxygen family">Oxygen</button>
+                    <button onclick="app.filterByFamily('nitrogen')" title="Show only nodes from the Nitrogen family">Nitrogen</button>
+                    <button onclick="app.filterByFamily('sulfur')" title="Show only nodes from the Sulfur family">Sulfur</button>
+                    <button onclick="app.filterByFamily('phosphorus')" title="Show only nodes from the Phosphorus family">Phosphorus</button>
+                </div>
+                <div class="button-group">
+                    <button onclick="app.filterByFamily('halogen')" title="Show only nodes from the Halogen family">Halogen</button>
+                    <button onclick="app.filterByFamily('metal')" title="Show only nodes from the Metal Coordination family">Metal</button>
+                    <button onclick="app.filterByFamily('hybrid')" title="Show only nodes from the Hybrid family">Hybrid</button>
+                    <button onclick="app.filterByFamily('boron')" title="Show only nodes from the Boron family">Boron</button>
+                    <button onclick="app.filterByFamily('silicon')" title="Show only nodes from the Silicon family">Silicon</button>
+                    <button onclick="app.filterByFamily('alkyl')" title="Show only nodes from the Alkyl/Organic family">Alkyl</button>
+                    <button onclick="app.resetFilters()" title="Remove family filter and show all nodes">Show All</button>
+                </div>
+            </div>
+
+            <div class="control-section node-info" id="nodeInfo">
+                <div class="node-title" id="nodeTitle" title="Detailed data for the currently selected node">Select a node</div>
+                <div class="metric-row">
+                    <span class="metric-label" title="The simplified chemical structure notation (SMILES)">Formula:</span>
+                    <span class="metric-value" id="nodeFormula">-</span>
+                </div>
+                <div class="metric-row">
+                    <span class="metric-label" title="The chemical group this additive belongs to">Family:</span>
+                    <span class="metric-value" id="nodeFamily">-</span>
+                </div>
+                <div class="metric-row">
+                    <span class="metric-label" title="CUMULATIVE Energy required to bind the additive (more negative = stronger bond)">Binding Energy:</span>
+                    <span class="metric-value" id="nodeBindingEnergy">-</span>
+                </div>
+                <div class="metric-bar">
+                    <div class="metric-fill" id="bindingEnergyBar" style="background: linear-gradient(90deg, #8b5cf6, #48cae4);"></div>
+                </div>
+                <div class="metric-row">
+                    <span class="metric-label" title="CUMULATIVE material's relative electrical conductivity (100% = pristine)">Conductivity:</span>
+                    <span class="metric-value" id="nodeConductivity">-</span>
+                </div>
+                <div class="metric-bar">
+                    <div class="metric-fill" id="conductivityBar" style="background: linear-gradient(90deg, #64ffda, #10b981);"></div>
+                </div>
+                <div class="metric-row">
+                    <span class="metric-label" title="CUMULATIVE material's suitability for use in biological systems (higher = safer)">Biocompatibility:</span>
+                    <span class="metric-value" id="nodeBiocompat">-</span>
+                </div>
+                <div class="metric-bar">
+                    <div class="metric-fill" id="biocompatBar" style="background: linear-gradient(90deg, #a78bfa, #f472b6);"></div>
+                </div>
+                <div class="metric-row">
+                    <span class="metric-label" title="Gold Score - combines stability, practicality, and untapped market potential">Gold Score:</span>
+                    <span class="metric-value" id="nodeGoldScore">-</span>
+                </div>
+                <div class="metric-bar">
+                    <div class="metric-fill" id="goldScoreBar" style="background: linear-gradient(90deg, #f59e0b, #ffd700);"></div>
+                </div>
+                <div class="metric-row">
+                    <span class="metric-label" title="Total addressable market potential in billions USD">Market Potential:</span>
+                    <span class="metric-value" id="nodeMarketPotential">-</span>
+                </div>
+                <!-- PATENT ADDITION: Patent status row -->
+                <div class="metric-row" id="patentStatusRow">
+                    <span class="metric-label" title="Intellectual property status for this combination">Patent Status:</span>
+                    <span class="metric-value" id="nodePatentStatus">-</span>
+                </div>
+                <div class="metric-row">
+                    <span class="metric-label" title="Potential real-world uses for this specific material combination">Applications:</span>
+                </div>
+                <div id="nodeApplications" style="margin-top: 5px;"></div>
+                <div class="metric-row" style="margin-top: 10px;">
+                    <span class="metric-label" title="Market opportunities and sectors">Target Markets:</span>
+                </div>
+                <div id="nodeMarkets" style="margin-top: 5px;"></div>
+            </div>
+
+            <div class="control-section" id="goldList" style="display: none;">
+                <div class="section-title">Top Gold Combos 🏆</div>
+                <div id="goldTable"></div>
+            </div>
+
+            <div class="control-section">
+                <div class="section-title">Data Legend</div>
+                <div class="legend" id="legend"></div>
+            </div>
+
+            <div class="control-section" id="methodology-section">
+                <div class="section-title">
+                    About This Simulation
+                    <span class="helper-tooltip" title="This data is not static; it is a cumulative scientific model that calculates properties for each new material.">?</span>
+                </div>
+                <p class="about-section-intro">
+                    This tool runs a <strong>cumulative fractal simulation</strong>. Unlike a simple database, each node's properties are calculated based on its parent and a set of scientific rules.
+                </p>
+                <ul class="about-section-steps">
+                    <li><strong>Fractal Generation:</strong> New nodes have a 70% probability of staying in the same chemical family, modeling realistic reaction pathways.</li>
+                    <li><strong>Cumulative Properties:</strong> Binding Energy is <strong>additive</strong> (chains get stronger), while Conductivity is <strong>multiplicative</strong> (each new group adds defects, reducing conductivity).</li>
+                    <li><strong>Saturation Effects:</strong> Attaching the same group (e.g., COOH onto COOH) has diminishing returns, modeling occupied reaction sites.</li>
+                    <li><strong>Distance Decay:</strong> Groups added at deeper levels (further from the graphene plane) have less impact on base properties.</li>
+                    <li><strong>Steric Hindrance:</strong> Bulky groups (like SO3H) are modeled to physically interfere with subsequent reactions, reducing their effectiveness.</li>
+                    <li><strong>Synergy Score (⚡):</strong> Favorable chemical pairs (like acid-base COOH+NH2) get a "synergy" boost, resulting in a much higher modeled Stability.</li>
+                    <li><strong>Practicality Score:</strong> A modeled score (0-1) of how "easy" it is to synthesize a specific functional chain, with deeper complexity becoming exponentially harder.</li>
+                    <li><strong>Commercial Potential:</strong> A final weighted metric combining stability, conductivity, practicality, and other factors to estimate the node's overall value.</li>
+                    <li><strong>Gold Score:</strong> Refined potential emphasizing high stability, practicality, and untapped markets via first-principles inference.</li>
+                    <li><strong>Market Inference:</strong> Uses first-principles rules to identify untapped opportunities based on material properties.</li>
+                    <li><strong>Patent Intelligence:</strong> Real-world IP landscape integrated from Hydrograph's patents and competitor analysis.</li>
+                </ul>
+            </div>
+
+        </div> <div class="visualization-container">
+            <div class="top-bar">
+                <div class="stats">
+                    <div class="stat-item" title="The total number of additives (nodes) in the current simulation">
+                        <span class="stat-label">Total Nodes</span>
+                        <span class="stat-value" id="totalNodes">0</span>
+                    </div>
+                    <div class="stat-item" title="The maximum depth (number of fractal levels) of the generated tree">
+                        <span class="stat-label">Tree Depth</span>
+                        <span class="stat-value" id="currentDepth">3</span>
+                    </div>
+                    <div class="stat-item" title="Displays the currently active filter or query">
+                        <span class="stat-label">Active Filter</span>
+                        <span class="stat-value" id="activeFilter">None</span>
+                    </div>
+                </div>
+                <div class="button-group">
+                    <button onclick="app.exportData()" title="Download the current tree data as a JSON file">Export Data</button>
+                    <button onclick="app.exportCSV()" title="Download Gold List as CSV">Export CSV</button>
+                    <button onclick="app.resetView()" title="Center the view and clear all filters">Reset View</button>
+                </div>
+            </div>
+
+            <div id="tree-container">
+                <div class="loading" id="loading">
+                    <div class="loading-spinner"></div>
+                    <p style="color: #64ffda;">Generating scientific fractal model...</p>
+                </div>
+                <svg id="tree-svg"></svg>
+            </div>
+
+            <div class="fab-container">
+                <button class="fab" onclick="app.zoomIn()" title="Zoom In">+</button>
+                <button class="fab" onclick="app.zoomOut()" title="Zoom Out">−</button>
+                <button class="fab" onclick="app.centerView()" title="Center View">⊙</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="tooltip" id="tooltip"></div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+    
+    <script>
+    //==============================================================
+    // 1. ADVANCED SEMANTIC SEARCH INFRASTRUCTURE (GLOBAL)
+    //==============================================================
+
+    // --- 1a. Hierarchical Application Ontology ---
+    const applicationOntology = {
+        energy: {
+            storage: {
+                batteries: ['lithium-ion', 'solid-state', 'anode', 'cathode', 'SEI layer'],
+                supercapacitors: ['EDLC', 'pseudocapacitor', 'energy density', 'power density'],
+                hydrogen: ['storage', 'spillover', 'MOF composite', 'gravimetric capacity']
+            },
+            conversion: {
+                fuelCells: ['PEM', 'SOFC', 'ORR', 'HER', 'proton exchange', 'catalyst'],
+                solar: ['photovoltaic', 'DSSC', 'perovskite', 'charge transport', 'work function'],
+                thermoelectric: ['Seebeck', 'ZT value', 'thermal conductivity', 'power factor']
+            },
+            transmission: ['conductor', 'cable', 'grid', 'power line', 'EMI shielding']
+        },
+        medical: {
+            therapeutics: {
+                drugDelivery: ['targeted', 'controlled release', 'pH-responsive', 'carrier', 'loading'],
+                cancer: ['photothermal', 'photodynamic', 'chemotherapy', 'tumor targeting'],
+                antimicrobial: ['antibacterial', 'antiviral', 'antifungal', 'biofilm', 'resistance']
+            },
+            diagnostics: {
+                biosensors: ['glucose', 'DNA', 'protein', 'pathogen', 'biomarker', 'LOD'],
+                imaging: ['MRI contrast', 'fluorescence', 'CT', 'photoacoustic', 'NIR'],
+                labOnChip: ['microfluidic', 'POC', 'ELISA', 'immunoassay', 'lateral flow']
+            },
+            regenerative: {
+                tissueEng: ['scaffold', 'stem cell', 'differentiation', 'ECM', 'bioprinting'],
+                implants: ['osseointegration', 'biocompatible', 'bone', 'dental', 'orthopedic'],
+                woundHealing: ['bandage', 'antimicrobial', 'healing', 'dressing', 'chronic wounds']
+            }
+        },
+        environmental: {
+            remediation: {
+                water: ['filtration', 'desalination', 'heavy metal', 'adsorption', 'membrane'],
+                air: ['CO2 capture', 'VOC', 'particulate', 'photocatalysis', 'air filter'],
+                soil: ['bioremediation', 'pesticide', 'contamination', 'phytoremediation']
+            },
+            monitoring: {
+                sensors: ['gas sensor', 'water quality', 'pollution', 'environmental', 'IoT'],
+                indicators: ['pH', 'temperature', 'humidity', 'chemical', 'biological']
+            }
+        },
+        construction: {
+            concrete: ['cement', 'strength', 'durability', 'crack resistance', 'self-healing'],
+            coatings: ['anticorrosion', 'protective', 'barrier', 'weathering', 'UV resistant'],
+            composites: ['fiber', 'matrix', 'reinforcement', 'lightweight', 'structural']
+        },
+        electronics: {
+            devices: ['transistor', 'FET', 'diode', 'memristor', 'flexible', 'printed'],
+            sensors: ['strain', 'pressure', 'touch', 'temperature', 'wearable', 'IoT'],
+            energy: ['transparent conductor', 'electrode', 'interconnect', 'heat spreader']
+        }
+    };
+
+    // Create inverse index for fast lookup
+    const applicationIndex = {};
+    function buildApplicationIndex() {
+        function indexTerms(obj, path = []) {
+            for (const [key, value] of Object.entries(obj)) {
+                const newPath = [...path, key];
+                const keyLower = key.toLowerCase();
+                if (!applicationIndex[keyLower]) applicationIndex[keyLower] = [];
+                applicationIndex[keyLower].push(newPath);
+
+                if (Array.isArray(value)) {
+                    value.forEach(term => {
+                        const termLower = term.toLowerCase();
+                        if (!applicationIndex[termLower]) {
+                            applicationIndex[termLower] = [];
+                        }
+                        applicationIndex[termLower].push(newPath);
+                    });
+                } else if (typeof value === 'object' && value !== null) {
+                    indexTerms(value, newPath);
+                }
+            }
+        }
+        indexTerms(applicationOntology);
+        console.log("Application Ontology Index built.");
+    }
+
+    // --- 1b. Smart Synonym & Abbreviation Handling ---
+    const synonymDatabase = {
+        'orr': ['oxygen reduction reaction', 'oxygen reduction'],
+        'her': ['hydrogen evolution reaction', 'hydrogen evolution'],
+        'pem': ['proton exchange membrane', 'polymer electrolyte membrane'],
+        'edlc': ['electric double layer capacitor', 'supercapacitor'],
+        'lod': ['limit of detection', 'detection limit'],
+        'poc': ['point of care', 'point-of-care'],
+        'fet': ['field effect transistor', 'field-effect transistor'],
+        'bio': ['biological', 'biomedical', 'biomaterial'],
+        'nano': ['nanoscale', 'nanostructured', 'nanomaterial'],
+        'composite': ['composites', 'nanocomposite', 'hybrid material'],
+        'sensor': ['sensors', 'sensing', 'detector', 'detection'],
+        'battery': ['batteries', 'cell', 'energy storage'],
+        'graphene': ['graphene oxide', 'reduced graphene', 'functionalized graphene'],
+        'carbon': ['carbon-based', 'carbonaceous', 'carbon material'],
+        'metal': ['metallic', 'metal-based', 'metallized'],
+        'conductive': ['conductor', 'conducting', 'conductivity', 'electrical'],
+        'resistant': ['resistance', 'proof', 'protective', 'barrier'],
+        'compatible': ['compatibility', 'biocompatible', 'cytocompatible']
+    };
+
+    // Expand search terms with synonyms
+    function expandSearchTerms(term) {
+        const termLower = term.toLowerCase();
+        const expanded = new Set([termLower]);
+        
+        for (const [key, synonyms] of Object.entries(synonymDatabase)) {
+            if (key === termLower) {
+                synonyms.forEach(syn => expanded.add(syn.toLowerCase()));
+            }
+            if (synonyms.some(syn => syn.toLowerCase() === termLower)) {
+                expanded.add(key.toLowerCase());
+                synonyms.forEach(syn => expanded.add(syn.toLowerCase()));
+            }
+        }
+        
+        const stem = termLower.replace(/ing$|ed$|s$|er$|est$|tion$|ment$/, '');
+        if (stem.length > 3 && stem !== termLower) expanded.add(stem);
+        
+        return Array.from(expanded);
+    }
+
+    // --- 1c. Fuzzy Matching & Typo Tolerance ---
+    function levenshteinDistance(str1 = "", str2 = "") {
+        const matrix = [];
+        for (let i = 0; i <= str2.length; i++) { matrix[i] = [i]; }
+        for (let j = 0; j <= str1.length; j++) { matrix[0][j] = j; }
+        for (let i = 1; i <= str2.length; i++) {
+            for (let j = 1; j <= str1.length; j++) {
+                if (str2.charAt(i - 1) === str1.charAt(j - 1)) {
+                    matrix[i][j] = matrix[i - 1][j - 1];
+                } else {
+                    matrix[i][j] = Math.min(
+                        matrix[i - 1][j - 1] + 1,
+                        matrix[i][j - 1] + 1,
+                        matrix[i - 1][j] + 1
+                    );
+                }
+            }
+        }
+        return matrix[str2.length][str1.length];
+    }
+
+    function fuzzyMatch(searchTerm, target, threshold = 2) {
+        if (!searchTerm || !target) return false;
+        const distance = levenshteinDistance(searchTerm.toLowerCase(), target.toLowerCase());
+        return distance <= threshold;
+    }
+
+    // --- 1d. Relevance Scoring System ---
+    function calculateRelevanceScore(node, searchTerms) {
+        let score = 0;
+        const termWeights = {};
+        
+        (searchTerms || []).forEach(term => {
+            if (node.name && node.name.toLowerCase().includes(term)) {
+                score += 10;
+                termWeights[term] = 10;
+            }
+            
+            if (node.family && node.family.toLowerCase().includes(term)) {
+                score += 7;
+                termWeights[term] = Math.max(termWeights[term] || 0, 7);
+            }
+            
+            if (node.applications) {
+                node.applications.forEach(appText => {
+                    const appLower = appText.toLowerCase();
+                    if (appLower.includes(term)) {
+                        score += 5;
+                        termWeights[term] = Math.max(termWeights[term] || 0, 5);
+                    }
+                    
+                    const ontologyPaths = applicationIndex[term] || [];
+                    ontologyPaths.forEach(path => {
+                        if (path.length > 0 && appLower.includes(path[path.length - 1])) {
+                            score += 4;
+                        }
+                    });
+                });
+            }
+            
+            if (!termWeights[term]) {
+                if (fuzzyMatch(term, node.name, 1) || (node.family && fuzzyMatch(term, node.family, 1))) {
+                    score += 1;
+                    termWeights[term] = 1;
+                }
+            }
+        });
+        
+        const matchedTerms = Object.keys(termWeights).length;
+        score += matchedTerms * 2;
+        score *= Math.pow(0.95, node.depth || 0);
+        
+        return score;
+    }
+
+    // --- 1e. Advanced Query Parser ---
+    class QueryParser {
+        constructor() {
+            this.propertyKeywords = {
+                conductivity: ['conductive', 'conductor', 'electrical', 'conducting', 'conductivity'],
+                bindingEnergy: ['binding', 'adhesion', 'attachment', 'bonding', 'bindingenergy'],
+                biocompatibility: ['biocompatible', 'bio-friendly', 'non-toxic', 'cytocompatible', 'biocompatibility'],
+                stability: ['stable', 'durable', 'robust', 'long-lasting', 'stability'],
+                practicalityScore: ['practical', 'easy', 'synthesizable', 'practicalityscore'],
+                commercialPotential: ['commercial', 'potential', 'valuable', 'commercialpotential']
+            };
+            
+            this.modifiers = {
+                high: (val) => val > 0.7,
+                low: (val) => val < 0.3,
+                medium: (val) => val >= 0.3 && val <= 0.7,
+                excellent: (val) => val > 0.85,
+                poor: (val) => val < 0.2,
+                strong: (val) => val < -3.5,
+                weak: (val) => val > -1.5
+            };
+        }
+        
+        parse(query) {
+            const result = {
+                terms: [],
+                properties: [],
+                applications: [],
+                exclude: [],
+                expandedTerms: []
+            };
+            
+            const phrases = query.match(/"([^"]+)"/g) || [];
+            phrases.forEach(phrase => {
+                result.terms.push(phrase.replace(/"/g, '').toLowerCase());
+                query = query.replace(phrase, '');
+            });
+            
+            const exclusions = query.match(/-(\w+)/g) || [];
+            exclusions.forEach(exc => {
+                result.exclude.push(exc.substring(1).toLowerCase());
+                query = query.replace(exc, '');
+            });
+            
+            const words = query.toLowerCase().split(/\s+/).filter(w => w.length > 0);
+            for (let i = 0; i < words.length; i++) {
+                const word = words[i];
+                
+                if (this.modifiers[word] && i + 1 < words.length) {
+                    const nextWord = words[i + 1];
+                    for (const [propName, keywords] of Object.entries(this.propertyKeywords)) {
+                        if (keywords.includes(nextWord)) {
+                            result.properties.push({
+                                property: propName,
+                                modifier: word,
+                                test: this.modifiers[word]
+                            });
+                            words[i] = '';
+                            words[i + 1] = '';
+                            i++;
+                            break;
+                        }
+                    }
+                }
+            }
+            
+            words.filter(w => w && w.length > 1).forEach(term => {
+                result.terms.push(term);
+                
+                if (applicationIndex[term]) {
+                    result.applications.push(...applicationIndex[term]);
+                }
+            });
+            
+            const allTerms = new Set();
+            result.terms.forEach(term => {
+                expandSearchTerms(term).forEach(t => allTerms.add(t));
+            });
+            result.expandedTerms = Array.from(allTerms);
+            
+            return result;
+        }
+    }
+
+    //==============================================================
+    // PATENT DATABASE ADDITION - Comprehensive patent intelligence
+    //==============================================================
+    const patentDatabase = {
+        // COVERED - Hydrograph has patents
+        'COOH': {
+            status: 'covered',
+            patents: ['WO2020257229A2'],
+            synopsis: 'Protected: >90% COOH via Fenton oxidation',
+            competitors: []
+        },
+        'Pristine': {
+            status: 'covered',
+            patents: ['US9440857B2'],
+            synopsis: 'Core tech: Detonation synthesis',
+            competitors: []
+        },
+        'OH': {
+            status: 'partial',
+            patents: ['WO2020257229A2'],
+            synopsis: 'Partial: <10% via Fenton',
+            competitors: [{company: 'Haydale', risk: 'medium'}]
+        },
+        'NH2': {
+            status: 'partial',
+            patents: ['WO2020264110A1'],
+            synopsis: 'Partial: Ink applications only',
+            competitors: [{company: 'Haydale', risk: 'high'}]
+        },
+        'COOCH3': {
+            status: 'potential',
+            patents: [],
+            synopsis: '$30B CO2 membrane opportunity',
+            competitors: []
+        },
+        'PO3H2': {
+            status: 'potential',
+            patents: [],
+            synopsis: '$60B biomedical opportunity',
+            competitors: []
+        },
+        'N(CH3)2': {
+            status: 'potential',
+            patents: [],
+            synopsis: 'Membrane applications potential',
+            competitors: []
+        },
+        'SO3H': {
+            status: 'blocked',
+            patents: [],
+            synopsis: 'Blocked: Haydale plasma patents',
+            competitors: [{company: 'Haydale', risk: 'high'}]
+        },
+        'CF3': {
+            status: 'blocked',
+            patents: [],
+            synopsis: 'Blocked: XG Sciences fluorination',
+            competitors: [{company: 'XG Sciences', risk: 'high'}]
+        },
+        'NO2': {
+            status: 'potentially_blocked',
+            patents: [],
+            synopsis: 'Risk: GGG nitrogen patents',
+            competitors: [{company: 'Global Graphene Group', risk: 'medium'}]
+        },
+        'CHO': {
+            status: 'potentially_blocked',
+            patents: [],
+            synopsis: 'Risk: NanoXplore oxidation',
+            competitors: [{company: 'NanoXplore', risk: 'medium'}]
+        },
+        'Fe-N4': {
+            status: 'potentially_blocked',
+            patents: [],
+            synopsis: 'Risk: Metal coordination patents',
+            competitors: [{company: 'Various', risk: 'medium'}]
+        },
+        'Cu-N2': {
+            status: 'potentially_blocked',
+            patents: [],
+            synopsis: 'Risk: Copper catalyst patents',
+            competitors: [{company: 'Various', risk: 'medium'}]
+        },
+        'Pt-Cl2': {
+            status: 'blocked',
+            patents: [],
+            synopsis: 'Blocked: Platinum catalyst IP',
+            competitors: [{company: 'Various', risk: 'high'}]
+        }
+        // Default for unlisted groups will be 'open'
+    };
+
+    function getPatentStatus(nodeName) {
+        const info = patentDatabase[nodeName];
+        if (!info) return 'open';
+        return info.status;
+    }
+
+    function getPatentColor(status) {
+        const colors = {
+            covered: '#22C55E',
+            partial: '#86EFAC',
+            potential: '#60A5FA',
+            open: '#E5E7EB',
+            potentially_blocked: '#FDE047',
+            blocked: '#EF4444'
+        };
+        return colors[status] || colors.open;
+    }
+
+    function getPatentIcon(status) {
+        const icons = {
+            covered: '🟢',
+            partial: '🟢',
+            potential: '🔵',
+            open: '⚪',
+            potentially_blocked: '🟡',
+            blocked: '🔴'
+        };
+        return icons[status] || '⚪';
+    }
+
+    function getPathwayPatentStatus(pathway) {
+        const statuses = pathway.map(name => getPatentStatus(name));
+        // Return most restrictive status
+        if (statuses.includes('blocked')) return 'blocked';
+        if (statuses.includes('potentially_blocked')) return 'potentially_blocked';
+        if (statuses.includes('open')) return 'open';
+        if (statuses.includes('potential')) return 'potential';
+        if (statuses.includes('partial')) return 'partial';
+        return 'covered';
+    }
+
+    //==============================================================
+    // 2. MAIN APPLICATION OBJECT
+    //==============================================================
+    const app = {
+        // State variables
+        treeData: null,
+        svg: null,
+        g: null,
+        simulation: null,
+        currentLayout: 'tree',
+        zoom: null,
+        currentDepth: 3,
+        currentBranching: 3,
+        selectedNode: null,
+        lastSearchQuery: '',
+				
+		// --- 2a. Comprehensive graphene database (Base values for simulation) ---
+		grapheneFamilies: {
+			oxygen: {
+				name: "Oxygen Family",
+				color: "#ff6b6b",
+				additives: [
+					{ name: "COOH", smiles: "C(=O)O", bindingEnergy: -3.5, conductivity: 0.3, biocompatibility: 0.85, stability: 0.7,
+					  applications: ["Cement +70% strength", "Composites", "Ion exchange", "Water treatment", "Hydrophilic coatings"] },
+					{ name: "OH", smiles: "O", bindingEnergy: -2.8, conductivity: 0.4, biocompatibility: 0.9, stability: 0.75,
+					  applications: ["Biosensors", "Drug delivery", "Hydrogels", "Biomedical coatings", "Water purification"] },
+					{ name: "C=O", smiles: "C=O", bindingEnergy: -2.2, conductivity: 0.5, biocompatibility: 0.7, stability: 0.8,
+					  applications: ["Energy storage", "Catalysis", "Gas sensors", "Photocatalysis", "Supercapacitors"] },
+					{ name: "O-epoxy", smiles: "O1CC1", bindingEnergy: -2.5, conductivity: 0.35, biocompatibility: 0.75, stability: 0.65,
+					  applications: ["Polymer composites", "Adhesives", "Crosslinking", "Epoxy resins", "Surface modification"] },
+					{ name: "CHO", smiles: "C=O", bindingEnergy: -2.3, conductivity: 0.45, biocompatibility: 0.65, stability: 0.7,
+					  applications: ["Chemical sensors", "Organic synthesis", "Aldehyde detection", "Bioconjugation"] },
+					{ name: "COOCH3", smiles: "C(=O)OC", bindingEnergy: -2.9, conductivity: 0.38, biocompatibility: 0.72, stability: 0.78,
+					  applications: ["Esterification", "Polymer grafting", "Drug loading", "Organic electronics"] },
+					{ name: "Peroxide", smiles: "OO", bindingEnergy: -2.6, conductivity: 0.35, biocompatibility: 0.8, stability: 0.7,
+					  applications: ["Water remediation membranes", "Hydrogels", "Oxidative catalysis"] },
+					{ name: "Ether", smiles: "COC", bindingEnergy: -2.1, conductivity: 0.45, biocompatibility: 0.85, stability: 0.75,
+					  applications: ["Flexible coatings", "Polymer blends", "Gas separation"] },
+					// NEW LIT-BACKED: From 2025 Nature on LDH decoration for PU toughness
+					{ name: "ZnAl-LDH-O", smiles: "[Zn]1O[Al](O[Zn]1)(O)O", bindingEnergy: -3.6, conductivity: 0.55, biocompatibility: 0.82, stability: 0.88,
+					  applications: ["Toughened coatings", "Corrosion barriers", "Construction composites ($25B)"] },
+					// NEW LIT-BACKED: Benzenesulfonic from 2024 ACS for PEMs
+					{ name: "Ph-SO3", smiles: "c1ccccc1S(=O)(=O)O", bindingEnergy: -3.3, conductivity: 0.4, biocompatibility: 0.75, stability: 0.85,
+					  applications: ["Proton membranes", "Fuel cells", "Ion transport ($45B)"] },
+					// NEW SPECULATIVE: H-density flat bands from 2025 RSC DFT
+					{ name: "H-O-hybrid", smiles: "CO", bindingEnergy: -2.4, conductivity: 0.65, biocompatibility: 0.85, stability: 0.82,
+					  applications: ["Flat-band electronics", "Quantum sensors", "Untapped valleytronics ($60B)"] },
+					// NEW SPECULATIVE: Ammonia-O from 2025 exfoliation principles
+					{ name: "NH2-O", smiles: "NO", bindingEnergy: -3.0, conductivity: 0.5, biocompatibility: 0.88, stability: 0.8,
+					  applications: ["Exfoliation aids", "Dispersion enhancers", "Green processing ($15B)"] },
+					// NEW LIT-BACKED: Peroxide variant from IL/GO lubes 2023-25 ACS
+					{ name: "ROO", smiles: "CO O", bindingEnergy: -2.7, conductivity: 0.4, biocompatibility: 0.78, stability: 0.72,
+					  applications: ["Lubricant additives", "Tribology", "Low-friction coatings ($20B)"] },
+					// NEW SPECULATIVE: Epoxy-dimer for denser coverage
+					{ name: "Epoxy-dimer", smiles: "O1CC1OCC2CO2", bindingEnergy: -2.8, conductivity: 0.35, biocompatibility: 0.7, stability: 0.78,
+					  applications: ["Dense crosslinking", "Adhesives upgrade", "Self-healing infra ($25B)"] }
+				]
+			},
+			nitrogen: {
+				name: "Nitrogen Family",
+				color: "#4ecdc4",
+				additives: [
+					{ name: "NH2", smiles: "N", bindingEnergy: -2.9, conductivity: 0.7, biocompatibility: 0.95, stability: 0.8,
+					  applications: ["DNA sensors", "Transistors", "Drug delivery", "Neural interfaces", "Protein immobilization"] },
+					{ name: "NO2", smiles: "N(=O)=O", bindingEnergy: -2.4, conductivity: 0.6, biocompatibility: 0.5, stability: 0.75,
+					  applications: ["Explosives detection", "Gas sensors", "Catalysts", "Environmental monitoring"] },
+					{ name: "C≡N", smiles: "C#N", bindingEnergy: -2.1, conductivity: 0.75, biocompatibility: 0.6, stability: 0.85,
+					  applications: ["Electrochemistry", "Batteries", "Corrosion protection", "Ion sensors", "Fuel cells"] },
+					{ name: "NH3+", smiles: "[NH3+]", bindingEnergy: -3.2, conductivity: 0.8, biocompatibility: 0.7, stability: 0.65,
+					  applications: ["Ion transport", "pH buffering", "Membranes", "Antimicrobial surfaces"] },
+					{ name: "NHCO", smiles: "NC=O", bindingEnergy: -3.0, conductivity: 0.5, biocompatibility: 0.92, stability: 0.79,
+					  applications: ["Peptide conjugation", "Wound healing", "Biomedical implants", "Tissue engineering"] },
+					{ name: "N(CH3)2", smiles: "N(C)C", bindingEnergy: -2.7, conductivity: 0.55, biocompatibility: 0.88, stability: 0.77,
+					  applications: ["Gene delivery", "Cell adhesion", "Controlled release", "Smart materials"] },
+					{ name: "Pyridine-N", smiles: "n1ccccc1", bindingEnergy: -2.5, conductivity: 0.7, biocompatibility: 0.85, stability: 0.8,
+					  applications: ["DNA biosensors", "Catalysis", "Electronics"] },
+					{ name: "Imidazole", smiles: "c1cnc[nH]1", bindingEnergy: -3.0, conductivity: 0.65, biocompatibility: 0.9, stability: 0.82,
+					  applications: ["Metal coordination", "pH sensors", "Bioconjugation"] },
+					// NEW LIT-BACKED: Azido from CuAAC membranes 2025 ACS
+					{ name: "Azido", smiles: "[N-]=[N+]=N", bindingEnergy: -2.6, conductivity: 0.75, biocompatibility: 0.90, stability: 0.78,
+					  applications: ["Click membranes", "Bio-conjugation", "Neural diagnostics ($25B)"] },
+					// NEW SPECULATIVE: Peptide-loop from bio-mimic DFT
+					{ name: "Peptide-loop", smiles: "NC1CCNC1=O", bindingEnergy: -2.9, conductivity: 0.65, biocompatibility: 0.98, stability: 0.85,
+					  applications: ["Enzyme mimics", "Synthetic biology", "Regenerative scaffolds ($45B)"] },
+					// NEW LIT-BACKED: Ammonia-N from 2025 Nature exfoliation
+					{ name: "NH3", smiles: "N", bindingEnergy: -2.5, conductivity: 0.7, biocompatibility: 0.92, stability: 0.8,
+					  applications: ["Exfoliation", "Dispersion", "Environmental sensors ($35B)"] },
+					// NEW SPECULATIVE: N-flatband from 2025 RSC H-N hybrids
+					{ name: "N-H-flat", smiles: "N", bindingEnergy: -2.7, conductivity: 0.85, biocompatibility: 0.88, stability: 0.83,
+					  applications: ["Quantum flat bands", "Valleytronics", "Computing interconnects ($75B)"] },
+					// NEW LIT-BACKED: NO variant from gas sensors 2024
+					{ name: "NO", smiles: "N=O", bindingEnergy: -2.3, conductivity: 0.6, biocompatibility: 0.7, stability: 0.76,
+					  applications: ["Gas detection", "NOx remediation", "Air quality IoT ($25B)"] }
+				]
+			},
+			sulfur: {
+				name: "Sulfur Family",
+				color: "#ffd93d",
+				additives: [
+					{ name: "SH", smiles: "S", bindingEnergy: -2.3, conductivity: 0.6, biocompatibility: 0.7, stability: 0.75,
+					  applications: ["Heavy metal detection", "Gold binding", "Self-assembly", "Protein anchoring"] },
+					{ name: "SO3H", smiles: "S(=O)(=O)O", bindingEnergy: -3.8, conductivity: 0.85, biocompatibility: 0.6, stability: 0.7,
+					  applications: ["Fuel cells", "Proton exchange", "Solid acid catalysts", "Water splitting"] },
+					{ name: "SO2", smiles: "S(=O)=O", bindingEnergy: -2.7, conductivity: 0.55, biocompatibility: 0.65, stability: 0.8,
+					  applications: ["Gas sensors", "Environmental remediation", "SO2 detection", "Air purification"] },
+					{ name: "S-S", smiles: "SS", bindingEnergy: -2.0, conductivity: 0.5, biocompatibility: 0.75, stability: 0.85,
+					  applications: ["Self-healing materials", "Redox batteries", "Polymer crosslinking", "Smart materials"] },
+					// NEW LIT-BACKED: Thiol-ene from UV coatings 2025
+					{ name: "Thiol-ene", smiles: "C=CCS", bindingEnergy: -2.8, conductivity: 0.65, biocompatibility: 0.70, stability: 0.85,
+					  applications: ["UV-crosslink", "Self-healing", "Coatings ($20B)"] },
+					// NEW LIT-BACKED: Gold-thiolate from SERS 2025 ACS
+					{ name: "Gold-thiolate", smiles: "[Au]SC", bindingEnergy: -2.7, conductivity: 0.90, biocompatibility: 0.75, stability: 0.82,
+					  applications: ["Plasmonic SERS", "Antibacterial", "Sensors ($35B)"] },
+					// NEW SPECULATIVE: S-metal cluster from DFT CO adsorbers
+					{ name: "S-M-cluster", smiles: "S[Fe]", bindingEnergy: -3.5, conductivity: 0.8, biocompatibility: 0.68, stability: 0.84,
+					  applications: ["CO capture", "Gas remediation", "Environmental ($70B)"] }
+				]
+			},
+			phosphorus: {
+				name: "Phosphorus Family",
+				color: "#10b981",
+				additives: [
+					{ name: "PO3H2", smiles: "P(=O)(O)O", bindingEnergy: -3.4, conductivity: 0.7, biocompatibility: 0.85, stability: 0.8,
+					  applications: ["Flame retardants", "Bone tissue", "Ion exchange", "Proton conductors"] },
+					{ name: "P(OH)2", smiles: "P(O)O", bindingEnergy: -3.1, conductivity: 0.58, biocompatibility: 0.82, stability: 0.77,
+					  applications: ["Membranes", "Water treatment", "Catalysis", "Corrosion inhibitors"] },
+					{ name: "PO4H2-", smiles: "[O-]P(=O)(O)O", bindingEnergy: -3.6, conductivity: 0.75, biocompatibility: 0.9, stability: 0.75,
+					  applications: ["Biomineralization", "Bone implants", "Dental materials", "Bioceramics"] },
+					// NEW LIT-BACKED: P-retardant variant from PLA composites 2025 ACS
+					{ name: "P-N-retard", smiles: "P(=O)(N)O", bindingEnergy: -3.5, conductivity: 0.68, biocompatibility: 0.84, stability: 0.81,
+					  applications: ["Flame-retardant polymers", "Composites", "Safety materials ($20B)"] },
+					// NEW SPECULATIVE: P-cage from DFT pores
+					{ name: "P-oxa-cage", smiles: "P1OCCO1", bindingEnergy: -3.7, conductivity: 0.6, biocompatibility: 0.8, stability: 0.86,
+					  applications: ["Molecular sieves", "Desalination", "Water filtration ($45B)"] }
+				]
+			},
+			halogen: {
+				name: "Halogen Family",
+				color: "#f472b6",
+				additives: [
+					{ name: "F", smiles: "F", bindingEnergy: -2.0, conductivity: 0.3, biocompatibility: 0.6, stability: 0.9,
+					  applications: ["Hydrophobic coatings", "Electronics passivation", "Anti-fouling", "Chemical resistance"] },
+					{ name: "Cl", smiles: "Cl", bindingEnergy: -1.8, conductivity: 0.35, biocompatibility: 0.55, stability: 0.85,
+					  applications: ["Antimicrobial", "Water disinfection", "Chemical sensors", "Halogenated polymers"] },
+					{ name: "CF3", smiles: "C(F)(F)F", bindingEnergy: -2.4, conductivity: 0.25, biocompatibility: 0.65, stability: 0.95,
+					  applications: ["Superhydrophobic", "Low surface energy", "Fluoropolymers", "Protective coatings"] },
+					// NEW SPECULATIVE: Br for spin-orbit from Rashba principles
+					{ name: "Br", smiles: "Br", bindingEnergy: -2.2, conductivity: 0.4, biocompatibility: 0.58, stability: 0.88,
+					  applications: ["Spin-orbit tuning", "Quantum devices", "Valley filters ($60B)"] },
+					// NEW LIT-BACKED: I-variant from passivation 2024
+					{ name: "I", smiles: "I", bindingEnergy: -2.1, conductivity: 0.45, biocompatibility: 0.6, stability: 0.87,
+					  applications: ["Passivation layers", "Solar perovskites", "Energy conversion ($55B)"] }
+				]
+			},
+			metal: {
+				name: "Metal Coordination",
+				color: "#ef4444",
+				additives: [
+					{ name: "Fe-N4", smiles: "[Fe]N4", bindingEnergy: -4.0, conductivity: 0.9, biocompatibility: 0.7, stability: 0.8,
+					  applications: ["Oxygen reduction", "Fuel cells", "Catalysis", "Magnetic materials", "Sensors"] },
+					{ name: "Cu-N2", smiles: "[Cu]N2", bindingEnergy: -3.5, conductivity: 0.95, biocompatibility: 0.6, stability: 0.75,
+					  applications: ["CO2 reduction", "Antibacterial", "Electronics", "Thermal management"] },
+					{ name: "Pt-Cl2", smiles: "[Pt](Cl)Cl", bindingEnergy: -4.5, conductivity: 0.98, biocompatibility: 0.5, stability: 0.85,
+					  applications: ["Hydrogen evolution", "Chemotherapy", "Catalysis", "Fuel cells"] },
+					// NEW LIT-BACKED: ZnAl from 2025 Nature LDH
+					{ name: "ZnAl", smiles: "[Zn][Al]", bindingEnergy: -3.9, conductivity: 0.85, biocompatibility: 0.75, stability: 0.82,
+					  applications: ["LDH hybrids", "Tough composites", "Construction ($25B)"] },
+					// NEW LIT-BACKED: Li-O from DFT anodes 2025
+					{ name: "Li-O", smiles: "[Li]OC(=O)", bindingEnergy: -3.8, conductivity: 0.92, biocompatibility: 0.65, stability: 0.80,
+					  applications: ["SEI layers", "Li-ion anodes", "Batteries ($80B)"] },
+					// NEW SPECULATIVE: Ferrocene-ene from redox DFT
+					{ name: "Ferrocene-ene", smiles: "C1=CC=C(C=C1)[Fe]2(C=CC=C2)C=CC", bindingEnergy: -3.5, conductivity: 0.85, biocompatibility: 0.70, stability: 0.88,
+					  applications: ["Redox memristors", "Neuromorphic", "Computing ($30B)"] },
+					// NEW LIT-BACKED: Metal-CO from 2025 DFT adsorbers
+					{ name: "Fe-CO", smiles: "[Fe]C=O", bindingEnergy: -4.2, conductivity: 0.88, biocompatibility: 0.68, stability: 0.79,
+					  applications: ["CO sensors", "Gas capture", "Remediation ($70B)"] }
+				]
+			},
+			hybrid: {
+				name: "Hybrid Family",
+				color: "#a78bfa",
+				additives: [
+					{ name: "COOH-NH2", smiles: "C(=O)ON", bindingEnergy: -3.7, conductivity: 0.45, biocompatibility: 0.88, stability: 0.72,
+					  applications: ["Smart materials", "pH-responsive", "Dual sensors", "Bioconjugation"] },
+					{ name: "OH-NH2", smiles: "ON", bindingEnergy: -3.0, conductivity: 0.5, biocompatibility: 0.93, stability: 0.76,
+					  applications: ["Biocompatible materials", "Cell culture", "Tissue scaffolds", "Hydrogels"] },
+					{ name: "SH-COOH", smiles: "SC(=O)O", bindingEnergy: -3.4, conductivity: 0.55, biocompatibility: 0.75, stability: 0.74,
+					  applications: ["Metal binding", "Environmental cleanup", "Bioremediation", "Heavy metal sensors"] },
+					{ name: "B(OH)2", smiles: "B(O)O", bindingEnergy: -3.1, conductivity: 0.4, biocompatibility: 0.78, stability: 0.8,
+					  applications: ["Glucose sensors", "Drug delivery", "Smart polymers", "pH sensors"] },
+					// NEW LIT-BACKED: Porphyrin-azide simplified from PDT 2025
+					{ name: "Porphyrin-azide", smiles: "c1cc2c(c(c1)N3C=C(C(=C3c4ccc(cc4)N5C=C(C(=C5c6ccc(cc6)N7C=C(C(=C7c8ccc(cc8)N9C=CC(=C9C=C)C=C)C=C)C=C)C=C)C=C)C=C)C=C", bindingEnergy: -3.2, conductivity: 0.70, biocompatibility: 0.95, stability: 0.85,
+					  applications: ["NIR imaging", "PDT cancer", "Bio-diagnostics ($40B)"] },
+					// NEW SPECULATIVE: ML-azine from gen-chem 2025
+					{ name: "ML-pore azine", smiles: "C1=NN=C(C=N1)C2=NN=C(C=N2)C=3C=NN=C(C=N3)", bindingEnergy: -3.4, conductivity: 0.75, biocompatibility: 0.80, stability: 0.87,
+					  applications: ["Sub-nm pores", "Precision desal", "Filtration ($30B)"] },
+					// NEW LIT-BACKED: O-N from mixed membranes 2025 ACS
+					{ name: "O-N-membrane", smiles: "ON", bindingEnergy: -3.1, conductivity: 0.55, biocompatibility: 0.85, stability: 0.78,
+					  applications: ["Mixed-matrix", "CO2 separation", "Gas membranes ($65B)"] },
+					// NEW SPECULATIVE: Hybrid-flat from bilayer DFT
+					{ name: "MXene-hybrid", smiles: "C[Ti]", bindingEnergy: -3.6, conductivity: 0.82, biocompatibility: 0.72, stability: 0.84,
+					  applications: ["Bilayer electronics", "Flexible devices", "Wearables ($40B)"] }
+				]
+			},
+			boron: {
+				name: "Boron Family",
+				color: "#8b5cf6",
+				additives: [
+					{ name: "B(OH)2", smiles: "B(O)O", bindingEnergy: -2.8, conductivity: 0.85, biocompatibility: 0.75, stability: 0.85,
+					  applications: ["p-type semiconductors", "Thermoelectrics ZT boost", "Catalysis"] },
+					{ name: "B-N", smiles: "BN", bindingEnergy: -3.2, conductivity: 0.9, biocompatibility: 0.7, stability: 0.9,
+					  applications: ["FET transistors", "Insulating layers", "High-temp electronics"] },
+					{ name: "BC3", smiles: "BC3", bindingEnergy: -2.1, conductivity: 0.95, biocompatibility: 0.8, stability: 0.88,
+					  applications: ["Bandgap engineering", "Solar cells", "Sensors"] },
+					// NEW LIT-BACKED: Boraphenalenyl from 2024 JACS
+					{ name: "Boraphenalenyl", smiles: "B1C=CC=C2C1=CC=C3C2=CC=C3", bindingEnergy: -3.0, conductivity: 0.88, biocompatibility: 0.75, stability: 0.90,
+					  applications: ["Redox energy", "Thermoelectrics", "ZT boost ($10B)"] },
+					// NEW SPECULATIVE: Rashba-B from spin-orbit DFT
+					{ name: "Rashba-split B", smiles: "BCl", bindingEnergy: -3.1, conductivity: 0.95, biocompatibility: 0.70, stability: 0.88,
+					  applications: ["Spin-orbit filters", "Quantum valleytronics", "Devices ($60B)"] },
+					// NEW LIT-BACKED: B-H from flat-band 2025
+					{ name: "B-H", smiles: "B", bindingEnergy: -2.6, conductivity: 0.9, biocompatibility: 0.78, stability: 0.86,
+					  applications: ["Flat-band doping", "Optoelectronics", "Solar ($55B)"] }
+				]
+			},
+			silicon: {
+				name: "Silicon Family",
+				color: "#06b6d4",
+				additives: [
+					{ name: "SiH3", smiles: "Si", bindingEnergy: -2.4, conductivity: 0.7, biocompatibility: 0.8, stability: 0.8,
+					  applications: ["Li-ion anodes", "Hybrids", "Solar perovskites"] },
+					{ name: "SiO2", smiles: "O=[Si]=O", bindingEnergy: -3.1, conductivity: 0.6, biocompatibility: 0.85, stability: 0.85,
+					  applications: ["Protective coatings", "Membranes", "Composites"] },
+					{ name: "Si-Ph", smiles: "C[Si]", bindingEnergy: -2.7, conductivity: 0.75, biocompatibility: 0.75, stability: 0.82,
+					  applications: ["Organic electronics", "Batteries", "Sensors"] },
+					// NEW SPECULATIVE: Silazane from thermal links
+					{ name: "Silazane", smiles: "[SiH2]NH", bindingEnergy: -2.9, conductivity: 0.80, biocompatibility: 0.80, stability: 0.92,
+					  applications: ["Thermal crosslinks", "Hypersonics", "Aerospace ($25B)"] },
+					// NEW LIT-BACKED: Si-halogen from passivation 2024
+					{ name: "Si-Cl", smiles: "Cl[Si]", bindingEnergy: -2.8, conductivity: 0.72, biocompatibility: 0.7, stability: 0.83,
+					  applications: ["Passivation", "Electronics", "Flexible FETs ($45B)"] }
+				]
+			},
+			alkyl: {
+				name: "Alkyl/Organic Family",
+				color: "#f59e0b",
+				additives: [
+					{ name: "CH3", smiles: "C", bindingEnergy: -1.5, conductivity: 0.8, biocompatibility: 0.85, stability: 0.75,
+					  applications: ["Hydrophobic coatings", "Anti-fouling", "Polymers"] },
+					{ name: "C6H5", smiles: "c1ccccc1", bindingEnergy: -2.0, conductivity: 0.85, biocompatibility: 0.8, stability: 0.8,
+					  applications: ["Organics grafting", "Drug delivery", "Electronics"] },
+					{ name: "PEG", smiles: "OCCO", bindingEnergy: -2.2, conductivity: 0.7, biocompatibility: 0.95, stability: 0.78,
+					  applications: ["Solubilization", "Implants", "Coatings"] },
+					// NEW SPECULATIVE: Dendrimer-tail from shielding
+					{ name: "Dendrimer-tail", smiles: "CC(C)C(C)C(C)C", bindingEnergy: -2.5, conductivity: 0.82, biocompatibility: 0.85, stability: 0.91,
+					  applications: ["Steric shields", "Plastic upgrades", "Composites ($25B)"] },
+					// NEW LIT-BACKED: Alkyl-polymer from PLA 2025
+					{ name: "Alkyl-PLA", smiles: "CCOC(=O)C", bindingEnergy: -2.3, conductivity: 0.75, biocompatibility: 0.9, stability: 0.8,
+					  applications: ["Biodegradable resins", "3D printing", "Medical devices ($55B)"] },
+					// NEW SPECULATIVE: Alkyl-dend from fractal principles
+					{ name: "C-dend", smiles: "CC(C)(C)C", bindingEnergy: -2.4, conductivity: 0.78, biocompatibility: 0.82, stability: 0.89,
+					  applications: ["Fractal shielding", "Lightweight composites", "Structural ($45B)"] }
+				]
+			}
+		},
+
+        // --- 2b. Search History & Learning System ---
+        searchHistory: {
+            queries: [],
+            clickedResults: new Map(),
+            
+            recordSearch(query, results) {
+                if (!query.trim()) return;
+                this.queries.push({
+                    query: query,
+                    timestamp: Date.now(),
+                    resultCount: results.length
+                });
+                if (this.queries.length > 100) this.queries.shift();
+            },
+            
+            recordClick(query, node) {
+                if (!query.trim() || !node) return;
+                
+                if (!this.clickedResults.has(query)) {
+                    this.clickedResults.set(query, new Map());
+                }
+                const queryClicks = this.clickedResults.get(query);
+                const newCount = (queryClicks.get(node.id) || 0) + 1;
+                queryClicks.set(node.id, newCount);
+            },
+            
+            getClickBoost(query, node) {
+                if (!query.trim()) return 0;
+                
+                const similarQueries = this.queries.filter(q => 
+                    levenshteinDistance(q.query, query) < 3);
+                
+                similarQueries.push({ query: query }); 
+                
+                let boost = 0;
+                similarQueries.forEach(q => {
+                    const clicked = this.clickedResults.get(q.query);
+                    if (clicked && clicked.has(node.id)) {
+                        boost += 5 * clicked.get(node.id);
+                    }
+                });
+                return boost;
+            }
+        },
+
+        // --- 3. APPLICATION INITIALIZATION & CORE FUNCTIONS ---
+
+        init() {
+            console.log('Initializing Graphene Fractal Explorer...');
+            
+            buildApplicationIndex(); // CRITICAL: Build index on load
+            
+            if (typeof d3 === 'undefined') {
+                alert('Error: D3.js library failed to load. Please refresh the page.');
+                return;
+            }
+            
+            this.initializeVisualization();
+            this.setupEventListeners();
+            this.generateTree('medium'); // CRITICAL: This now creates data AND calls populateSearchSuggestions
+            this.updateLegend('family');
+            
+            console.log('Initialization complete');
+        },
+
+        setupEventListeners() {
+            document.getElementById('depthSlider').addEventListener('input', (e) => {
+                document.getElementById('depthValue').textContent = e.target.value;
+                this.currentDepth = parseInt(e.target.value);
+            });
+            
+            document.getElementById('branchSlider').addEventListener('input', (e) => {
+                document.getElementById('branchValue').textContent = e.target.value;
+                this.currentBranching = parseInt(e.target.value);
+            });
+            
+            document.getElementById('searchInput').addEventListener('input', (e) => {
+                this.searchNodes(e.target.value);
+            });
+        },
+
+        populateSearchSuggestions() {
+            const suggestions = new Set();
+            
+            const collectTerms = (node) => {
+                if (node.name) suggestions.add(node.name);
+                if (node.family) suggestions.add(node.family);
+                if (node.applications) {
+                    node.applications.forEach(appText => {
+                        suggestions.add(appText);
+                        appText.split(/\s+/).forEach(word => {
+                            if (word.length > 3) suggestions.add(word.toLowerCase());
+                        });
+                    });
+                }
+                if (node.children) node.children.forEach(collectTerms);
+            };
+            
+            if (this.treeData) {
+                collectTerms(this.treeData);
+            }
+            
+            const commonQueries = [
+                'high conductivity sensor',
+                'biocompatible coating',
+                'fuel cell catalyst',
+                'drug delivery',
+                'cement strength',
+                'strong binding',
+                'excellent stability',
+                'untapped market',
+                'easy synthesis',
+                '$50B opportunity'
+            ];
+            commonQueries.forEach(q => suggestions.add(q));
+
+            const datalist = document.getElementById('search-suggestions');
+            datalist.innerHTML = '';
+            
+            [...suggestions].sort().forEach(item => {
+                const option = document.createElement('option');
+                option.value = item;
+                datalist.appendChild(option);
+            });
+        },
+
+        initializeVisualization() {
+            const container = document.getElementById('tree-container');
+            const width = container.clientWidth;
+            const height = container.clientHeight;
+
+            this.svg = d3.select('#tree-svg')
+                .attr('width', width)
+                .attr('height', height);
+
+            this.g = this.svg.append('g');
+
+            this.zoom = d3.zoom()
+                .scaleExtent([0.1, 10])
+                .on('zoom', (event) => {
+                    this.g.attr('transform', event.transform);
+                });
+
+            this.svg.call(this.zoom);
+        },
+
+        generateTree(size) {
+            const loading = document.getElementById('loading');
+            loading.style.display = 'block';
+
+            setTimeout(() => {
+                let depth, branches;
+                
+                switch(size) {
+                    case 'small': depth = 3; branches = 2; break;
+                    case 'large': depth = 5; branches = 3; break;
+                    default: depth = 4; branches = 3;
+                }
+                
+                document.getElementById('depthSlider').value = depth;
+                document.getElementById('depthValue').textContent = depth;
+                document.getElementById('branchSlider').value = branches;
+                document.getElementById('branchValue').textContent = branches;
+                
+                this.currentDepth = depth;
+                this.currentBranching = branches;
+                
+                this.treeData = this.createFractalTree(depth, branches);
+                this.updateVisualization();
+                this.populateSearchSuggestions(); // CRITICAL: Run AFTER tree is built
+                
+                loading.style.display = 'none';
+            }, 100);
+        },
+
+        regenerateTree() {
+            const loading = document.getElementById('loading');
+            loading.style.display = 'block';
+
+            setTimeout(() => {
+                this.treeData = this.createFractalTree(this.currentDepth, this.currentBranching);
+                this.updateVisualization();
+                this.populateSearchSuggestions(); // CRITICAL: Run AFTER tree is built
+                loading.style.display = 'none';
+            }, 100);
+        },
+
+        // --- 4. NEW SCIENTIFIC SIMULATION ENGINE ---
+
+        createFractalTree(maxDepth, branchingFactor) {
+            const root = {
+                id: 0,
+                name: "Pristine Graphene",
+                smiles: "C=C",
+                bindingEnergy: 0,
+                conductivity: 1.0,
+                biocompatibility: 0.5,
+                stability: 1.0,
+                applications: ["Base material", "Electronics", "Composites"],
+                family: "root",
+                color: "#64ffda",
+                depth: 0,
+                functionalPath: [],
+                coveragePercent: 0,
+                children: [],
+                // PATENT ADDITION
+                patentStatus: 'covered',
+                patentSynopsis: 'Core tech: Detonation synthesis'
+            };
+
+            let nodeId = 1;
+            const families = Object.keys(this.grapheneFamilies);
+
+
+			const addChildren = (parent, currentDepth) => {
+				if (currentDepth >= maxDepth) return;
+
+				const useSaturation = document.getElementById('saturationEffects').checked;
+				const useSterics = document.getElementById('stericHindrance').checked;
+				const useDistance = document.getElementById('distanceDecay').checked;
+
+				const numChildren = currentDepth === 0 ?
+					Math.min(branchingFactor, families.length) : branchingFactor;
+
+				for (let i = 0; i < numChildren; i++) {
+					let familyKey;
+
+					if (currentDepth === 0) {
+						if (i === 0 && families.includes('oxygen')) {
+							familyKey = 'oxygen';
+						} else {
+							familyKey = families[i % families.length];
+						}
+					} else {
+						if (Math.random() < 0.7 && parent.family !== 'root' && parent.family !== 'hybrid') {
+							familyKey = parent.family;
+						} else {
+							familyKey = families[Math.floor(Math.random() * families.length)];
+						}
+					}
+
+					const family = this.grapheneFamilies[familyKey];
+					const additive = family.additives[Math.floor(Math.random() * family.additives.length)];
+
+					// Scientific calculations
+					const pathCount = parent.functionalPath.filter(g => g === additive.name).length;
+					// CORRECTED: Use 'let' for reassignable variables
+					let saturationFactor = useSaturation ? Math.pow(0.7, pathCount) : 1.0;
+					let stericFactor = useSterics ? (1 - (this.getBulkiness(parent.name) * this.getBulkiness(additive.name) * 0.1)) : 1.0;
+
+					// Prevent chemically impossible same-group-twice
+					if (parent.name === additive.name) {
+						saturationFactor *= 0.3;
+					}
+
+					// Penalize unrealistic combinations requiring external materials
+					if ((parent.family === 'metal' && additive.family === 'metal') ||
+						parent.name.includes('MXene') || parent.name.includes('Gold')) {
+						saturationFactor *= 0.5;
+						stericFactor *= 0.7;
+					}
+
+					const distanceFactor = useDistance ? Math.pow(0.85, currentDepth) : 1.0;
+					const estimatedCoverage = (currentDepth + 1) * 0.8;
+					const coverageFactor = Math.max(0.3, 1 - estimatedCoverage * 0.05);
+					const electronicFactor = this.getElectronicCoupling(parent.name, additive.name);
+
+					const child = {
+						id: nodeId++,
+						name: additive.name,
+						smiles: additive.smiles,
+						bindingEnergy: parent.bindingEnergy +
+							(additive.bindingEnergy * saturationFactor * distanceFactor * stericFactor),
+						conductivity: Math.max(0.05,
+							parent.conductivity * (0.4 + additive.conductivity * 0.6) * Math.max(0.5, coverageFactor)),
+						biocompatibility: currentDepth === 0 ?
+							additive.biocompatibility :
+							(parent.biocompatibility * 0.3 + additive.biocompatibility * 0.7),
+						stability: Math.max(0.3,
+							Math.min(parent.stability, additive.stability) * (0.9 + 0.1 * electronicFactor)),
+						applications: [],
+						family: familyKey,
+						familyName: family.name,
+						color: family.color,
+						depth: currentDepth + 1,
+						functionalPath: [...parent.functionalPath, additive.name],
+						coveragePercent: estimatedCoverage,
+						diversityScore: this.calculateDiversity([...parent.functionalPath, additive.name]),
+						synergyScore: electronicFactor,
+						practicalityScore: this.getPracticalityScore(additive.name, currentDepth),
+						chemicallyValid: this.isChemicallyValid(parent, additive),
+						children: [],
+						// PATENT ADDITION
+						patentStatus: getPatentStatus(additive.name),
+						patentSynopsis: this.getPatentSynopsis(additive.name)
+					};
+
+					child.applications = this.mergeApplications(parent.applications, additive.applications, currentDepth, child);
+
+					child.bindingEnergy += (Math.random() - 0.5) * 0.2;
+					child.conductivity *= (0.95 + Math.random() * 0.1);
+					child.biocompatibility = Math.max(0, Math.min(1, child.biocompatibility * (0.95 + Math.random() * 0.1)));
+					child.stability = Math.max(0, Math.min(1, child.stability * (0.95 + Math.random() * 0.1)));
+
+					parent.children.push(child);
+					addChildren(child, currentDepth + 1);
+				}
+			};
+
+
+
+            addChildren(root, 0);
+            this.calculateTreeMetrics(root); // Calculate Gold Scores and Markets for entire tree
+
+            const totalNodes = this.countNodes(root);
+            document.getElementById('totalNodes').textContent = totalNodes;
+            document.getElementById('currentDepth').textContent = maxDepth;
+
+            return root;
+        },
+
+        // PATENT ADDITION - Get synopsis for node
+        getPatentSynopsis(nodeName) {
+            const info = patentDatabase[nodeName];
+            if (!info) return 'Open: Freedom to operate';
+            return info.synopsis;
+        },
+
+        // --- 4b. NEW: Scientific/Business Helper Functions ---
+        getBulkiness(groupName) {
+            const bulkiness = {
+                'H': 0.1, 'F': 0.2, 'OH': 0.3, 'NH2': 0.3,
+                'CH3': 0.5, 'COOH': 0.7, 'SO3H': 0.8,
+                'PO3H2': 0.9, 'CF3': 0.6, 'Fe-N4': 0.8,
+                'Pristine Graphene': 0, 'C=O': 0.4, 'O-epoxy': 0.4,
+				// NEW
+				'Guanidine': 0.6, 'Azido': 0.4, 'Thiol-ene': 0.65, 'Boraphenalenyl': 0.75, 'Li-O': 0.5,
+				'Ferrocene-ene': 0.85, 'Silazane': 0.7, 'Porphyrin-azide': 0.9, 'Gold-thiolate': 0.8, 'Penta-O': 0.55,
+				'Rashba-split B': 0.45, 'Peptide-loop': 0.7, 'ML-pore azine': 0.6, 'Dendrimer-tail': 0.95,
+				'ZnAl-LDH-O': 0.85, 'Ph-SO3': 0.7, 'H-O-hybrid': 0.3, 'NH2-O': 0.4, 'ROO': 0.5,
+				'Epoxy-dimer': 0.6, 'NH3': 0.35, 'N-H-flat': 0.3, 'NO': 0.4, 'S-M-cluster': 0.8,
+				'P-N-retard': 0.75, 'P-oxa-cage': 0.65, 'Br': 0.3, 'I': 0.35, 'ZnAl': 0.8,
+				'Fe-CO': 0.7, 'O-N-membrane': 0.5, 'MXene-hybrid': 0.75, 'B-H': 0.25,
+				'Si-Cl': 0.4, 'Alkyl-PLA': 0.6, 'C-dend': 0.9
+				
+            };
+            return bulkiness[groupName] || 0.5;
+        },
+		
+
+
+        getElectronicCoupling(group1, group2) {
+            if (!group1 || !group2 || group1 === "Pristine Graphene") return 1.0;
+            const key = [group1, group2].sort().join('-');
+            const coupling = {
+                'COOH-NH2': 1.3,
+                'COOH-COOH': 0.7,
+                'NH2-NH2': 0.8,
+                'COOH-OH': 1.1,
+                'NH2-SO3H': 1.4,
+                'Fe-N4-OH': 1.2,
+                'F-OH': 0.6,
+				// NEW
+				'NH2-Guanidine': 1.2, 'Azido-NH2': 1.1, 'Thiol-ene-SH': 1.3, 'B-N-Boraphenalenyl': 1.4,
+				'Li-O-COOH': 1.25, 'Ferrocene-ene-Fe-N4': 1.3, 'Silazane-SiH3': 1.1, 'Porphyrin-azide-NH2': 1.2,
+				'Gold-thiolate-SH': 1.35, 'Penta-O-O-epoxy': 1.15, 'Rashba-split B-BN': 1.4, 'Peptide-loop-NHCO': 1.2,
+				'ML-pore azine-C≡N': 1.1, 'Dendrimer-tail-CH3': 0.9, 'ZnAl-LDH-O-OH': 1.2, 'Ph-SO3-SO3H': 1.1
+            };
+            return coupling[key] || 1.0;
+        },
+
+        calculateDiversity(path) {
+            const unique = new Set(path).size;
+            const total = path.length;
+            return total > 0 ? (unique / total) : 1;
+        },
+
+        getPracticalityScore(groupName, depth) {
+            const basePracticality = {
+                'OH': 0.95,
+                'COOH': 0.95,
+                'NH2': 0.8,
+                'F': 0.7,
+                'PO3H2': 0.6,
+                'Fe-N4': 0.4,
+				// NEW
+				'Guanidine': 0.85, 'Azido': 0.9, 'Thiol-ene': 0.88, 'Boraphenalenyl': 0.65, 'Li-O': 0.75,
+				'Ferrocene-ene': 0.7, 'Silazane': 0.8, 'Porphyrin-azide': 0.55, 'Gold-thiolate': 0.7, 'Penta-O': 0.6,
+				'Rashba-split B': 0.65, 'Peptide-loop': 0.75, 'ML-pore azine': 0.7, 'Dendrimer-tail': 0.6,
+				'ZnAl-LDH-O': 0.8, 'Ph-SO3': 0.85, 'H-O-hybrid': 0.9, 'NH2-O': 0.85, 'ROO': 0.8,
+				'Epoxy-dimer': 0.75, 'NH3': 0.95, 'N-H-flat': 0.85, 'NO': 0.8, 'S-M-cluster': 0.65,
+				'P-N-retard': 0.7, 'P-oxa-cage': 0.6, 'Br': 0.75, 'I': 0.7, 'ZnAl': 0.8,
+				'Fe-CO': 0.65, 'O-N-membrane': 0.85, 'MXene-hybrid': 0.7, 'B-H': 0.9,
+				'Si-Cl': 0.75, 'Alkyl-PLA': 0.85, 'C-dend': 0.65
+				
+            };
+            const score = basePracticality[groupName] || 0.5;
+            return Math.max(0.1, score * Math.pow(0.8, depth));
+        },
+		
+		
+		isChemicallyValid(parent, additive) {
+			// Check if this combination makes chemical sense
+			if (!parent || !additive) return true;
+			
+			// Can't add same functional group twice in a row
+			if (parent.name === additive.name) return false;
+			
+			// Thiol-ene is a reaction, not a repeatable group
+			if (parent.name === 'Thiol-ene' && additive.name === 'Thiol-ene') return false;
+			
+			// Can't add metal to metal without intermediate
+			if (parent.family === 'metal' && additive.family === 'metal') return false;
+			
+			// MXenes are substrates, not functional groups
+			if (parent.name.includes('MXene') && additive.name.includes('MXene')) return false;
+			
+			return true;
+		},
+		
+
+        mergeApplications(parentApps, additiveApps, depth, node) {
+            if (depth === 0) return additiveApps || [];
+            
+            let combined = new Set(parentApps || []);
+            (additiveApps || []).forEach(app => {
+                const appLower = app.toLowerCase();
+                if (depth <= 2 || appLower.includes('composite') || appLower.includes('coating') || appLower.includes('strength')) {
+                    combined.add(app);
+                } else if (depth <= 3 && Math.random() < 0.3) {
+                    combined.add(app);
+                }
+            });
+
+            // First-principles inference
+            if (node) {
+                const inferences = this.inferApplications(node);
+                inferences.forEach(app => combined.add(app));
+            }
+
+            return Array.from(combined).slice(0, 10);
+        },
+
+
+// ============== inferApplications function ==============
+
+        inferApplications(node) {
+            const rules = {
+                'highConduct_stable': { 
+                    cond: node.conductivity > 0.8 && node.stability > 0.8, 
+                    apps: ['6G antennas ($50B untapped)', 'Energy-harvesting IoT ($10B)', 'Quantum computing interconnects ($30B)'] 
+                },
+                'bioEasy': { 
+                    cond: node.biocompatibility > 0.9 && node.practicalityScore > 0.8, 
+                    apps: ['Precision agriculture sensors ($10B)', 'Food safety monitors ($15B)', 'Neural implants ($25B untapped)'] 
+                },
+                'strongAnchor': { 
+                    cond: node.bindingEnergy < -5 && node.practicalityScore > 0.7, 
+                    apps: ['CO₂ capture membranes ($30B green)', 'Instant desal filters ($20B water)', 'Space habitat coatings ($40B untapped)'] 
+                },
+                'resilientHybrid': { 
+                    cond: node.diversityScore > 0.7 && node.stability > 0.8, 
+                    apps: ['Earthquake-resistant infra ($15B)', 'Self-healing materials ($25B)', 'Extreme weather coatings ($20B)'] 
+                },
+                'flexBio': { 
+                    cond: node.conductivity > 0.7 && node.biocompatibility > 0.8, 
+                    apps: ['Wearable health monitors ($40B)', 'e-Skin robotics ($35B untapped)', 'Bio-integrated electronics ($50B)'] 
+                },
+                'ultraStable': {
+                    cond: node.stability > 0.9 && node.conductivity > 0.6,
+                    apps: ['Nuclear reactor components ($20B)', 'Deep space electronics ($30B untapped)', 'Hypersonic vehicle skins ($25B)']
+                },
+                'easyDrop': {
+                    cond: node.practicalityScore > 0.85 && node.stability > 0.7,
+                    apps: ['Retrofit legacy plastics (+4x life, $50B)', 'Drop-in cement additive ($30B)', 'Paint upgrade ($20B coatings)']
+                },
+                'greenChem': {
+                    cond: node.biocompatibility > 0.85 && !node.name.includes('F') && !node.name.includes('Cl'),
+                    apps: ['Green chemistry catalyst ($15B)', 'Biodegradable electronics ($20B)', 'Sustainable textiles ($25B)']
+                },
+                'energyHarvest': {
+                    cond: node.conductivity > 0.75 && node.stability > 0.75,
+                    apps: ['Piezoelectric roads ($30B)', 'Wave energy harvesters ($20B)', 'Vibration sensors ($15B IoT)']
+                },
+                'smartResponsive': {
+                    cond: node.synergyScore > 1.2 && node.biocompatibility > 0.7,
+                    apps: ['Smart drug delivery ($40B pharma)', 'Responsive textiles ($15B)', 'Adaptive prosthetics ($20B)']
+                },
+				// NEW: Quantum for high cond/low disruption
+				'quantumValley': {
+					cond: node.conductivity > 0.9 && node.bindingEnergy > -3,
+					apps: ['Valley filters ($60B)', 'Spin-orbit devices ($50B untapped)', 'Topological insulators ($85B)']
+				},
+				// NEW: Bio-mimic for high biocompat/peptides
+				'bioMimic': {
+					cond: node.biocompatibility > 0.95 && node.diversityScore > 0.6,
+					apps: ['Enzyme mimics ($45B)', 'Synthetic biology scaffolds ($50B)', 'Tissue bioprinting ($35B)']
+				},
+				// NEW: Pore-selective for desal/high stability
+				'poreSelective': {
+					cond: node.stability > 0.85 && node.practicalityScore > 0.7,
+					apps: ['Sub-nm sieves ($30B desal)', 'Precision filtration ($40B water)', 'Gas separation ($65B)']
+				},
+				// NEW: Shielding for dend/high diversity
+				'stericShield': {
+					cond: node.diversityScore > 0.8 && node.stability > 0.85,
+					apps: ['Fractal composites ($25B)', 'Plastic retrofits ($50B)', 'Lightweight aerospace ($60B)']
+				}
+            };
+            
+            let inferred = [];
+            Object.values(rules).forEach(rule => { 
+                if (rule.cond) {
+                    rule.apps.forEach(app => {
+                        if (!inferred.some(existing => existing.includes(app.split('(')[0].trim()))) {
+                            inferred.push(app);
+                        }
+                    });
+                } 
+            });
+            
+            // Legacy upgrade special case
+            if (node.stability > 0.8 && node.practicalityScore > 0.7) {
+                inferred.push('Legacy material upgrade: +50% performance ($100B total addressable)');
+            }
+            
+            // FALLBACK: If no rules matched, generate generic market applications based on properties
+            if (inferred.length === 0) {
+                if (node.conductivity > 0.7) {
+                    inferred.push(`High-performance electronics ($${Math.round(node.conductivity * 50)}B market)`);
+                }
+                if (node.biocompatibility > 0.8) {
+                    inferred.push(`Biomedical applications ($${Math.round(node.biocompatibility * 40)}B market)`);
+                }
+                if (node.stability > 0.8) {
+                    inferred.push(`Durable coatings ($${Math.round(node.stability * 30)}B market)`);
+                }
+                if (node.bindingEnergy < -3) {
+                    inferred.push(`Strong adhesives ($${Math.round(Math.abs(node.bindingEnergy) * 8)}B market)`);
+                }
+                
+                // Ultimate fallback
+                if (inferred.length === 0) {
+                    inferred.push(`Specialty materials ($${Math.max(5, Math.round(node.commercialPotential * 20))}B market)`);
+                }
+            }
+            
+            return inferred.slice(0, 5);
+        },
+
+
+        calculateTreeMetrics(node) {
+            node.effectiveFunctionalization = (node.coveragePercent || 0) * (node.practicalityScore || 0);
+            
+            node.commercialPotential = (
+                Math.min(1, Math.abs(node.bindingEnergy / 4)) * 0.3 +
+                node.conductivity * 0.2 +
+                node.biocompatibility * 0.2 +
+                node.stability * 0.2 +
+                (node.practicalityScore || 0) * 0.1
+            );
+            
+            // Gold Score - PATENT ADDITION: Factor in patent status
+            const untappedMultiplier = (node.applications || []).some(app => 
+                app.includes('untapped') || app.includes(')')) ? 1.7 : 1.0;
+            const validityMultiplier = (node.chemicallyValid === false) ? 0.2 : 1.0;
+            
+            // PATENT MULTIPLIER
+            let patentMultiplier = 1.0;
+            if (node.patentStatus === 'covered') patentMultiplier = 1.2;
+            else if (node.patentStatus === 'partial') patentMultiplier = 1.1;
+            else if (node.patentStatus === 'potential') patentMultiplier = 1.5;
+            else if (node.patentStatus === 'open') patentMultiplier = 1.3;
+            else if (node.patentStatus === 'potentially_blocked') patentMultiplier = 0.7;
+            else if (node.patentStatus === 'blocked') patentMultiplier = 0.3;
+            
+            node.goldScore = node.commercialPotential * (node.stability * node.practicalityScore * node.practicalityScore) * untappedMultiplier * validityMultiplier * patentMultiplier;
+            
+            // Extract market potential
+            node.marketPotential = this.extractMarketPotential(node.applications || [], node);
+            
+            if (node.children) {
+                node.children.forEach(child => this.calculateTreeMetrics(child));
+            }
+        },
+
+        // Estimation engine for Market Potential
+        extractMarketPotential(applications, node) {
+            let totalMarket = 0;
+            let hasExplicitMarket = false;
+            
+            // First try to extract explicit market values
+            applications.forEach(app => {
+                const match = app.match(/\$(\d+)B/);
+                if (match) {
+                    totalMarket += parseInt(match[1]);
+                    hasExplicitMarket = true;
+                }
+            });
+            
+            // If no explicit market value found, estimate based on application categories
+            if (!hasExplicitMarket && applications.length > 0) {
+                const baseMarkets = {
+                    // Energy & Infrastructure - Revolutionary potential
+                    'cement': 50, 'concrete': 250, 'construction': 45, 'composites': 60, 'coatings': 35,
+                    'energy storage': 60, 'batteries': 80, 'fuel cells': 45, 'supercapacitors': 35,
+                    'solar': 55, 'catalysis': 40, 'photocatalysis': 25,
+                    'power': 50, 'grid': 45, 'transmission': 35,
+                    
+                    // Medical & Biotech - Game-changing applications
+                    'biosensors': 40, 'drug delivery': 75, 'medical': 55, 'biomedical': 55,
+                    'tissue': 35, 'implants': 45, 'wound': 20, 'antimicrobial': 30,
+                    'diagnostics': 45, 'cancer': 100, 'neural': 60,
+                    'regenerative': 50, 'therapeutic': 65, 'biomarker': 35,
+                    
+                    // Electronics & Computing - Next-gen tech
+                    'sensors': 35, 'transistors': 40, 'electronics': 70, 'flexible': 45,
+                    'gas sensor': 25, 'detection': 30, 'monitoring': 25,
+                    'quantum': 30, 'computing': 75, 'memory': 50,
+                    'wearable': 40, 'iot': 55, '5g': 60, '6g': 90,
+                    
+                    // Environmental - Critical global needs
+                    'water': 40, 'filtration': 35, 'purification': 40, 'remediation': 30,
+                    'environmental': 35, 'air': 25, 'membrane': 40,
+                    'co2': 65, 'carbon capture': 70, 'climate': 80,
+                    'desalination': 50, 'desal': 50,
+                    
+                    // Materials & Chemicals - Platform technologies
+                    'polymer': 30, 'adhesives': 20, 'crosslinking': 15, 'grafting': 15,
+                    'corrosion': 25, 'protective': 20, 'hydrophobic': 15, 'hydrophilic': 15,
+                    'flame retardant': 20, 'self-healing': 35, 'smart materials': 45,
+                    'nano': 40, 'advanced materials': 55,
+                    
+                    // Aerospace & Defense - High-value applications
+                    'aerospace': 75, 'space': 70, 'defense': 50, 'military': 45,
+                    'hypersonic': 40, 'satellite': 35, 'rocket': 30,
+                    
+                    // Agriculture & Food - Emerging markets
+                    'agriculture': 40, 'food': 35, 'crop': 25, 'pesticide': 20,
+                    'precision agriculture': 30, 'agri': 25,
+                    
+					// Generic multipliers for transformative tech
+					'revolutionary': 1.5, 'breakthrough': 1.4, 'advanced': 1.8, 
+					'next-gen': 2.0, 'novel': 1.3, 'innovative': 1.3,
+					'untapped': 1.8, 'emerging': 1.4, 'disruptive': 1.5,
+					// NEW
+					'valleytronics': 15, 'synthetic biology': 25, 'pd t': 100, 'sers': 35, 'ldh': 1.8,
+					'spin-orbit': 12, 'flat-band': 10, 'enzyme': 45, 'sub-nm': 30, 'fractal': 25,
+					'tribology': 20, 'exfoliation': 15, 'co sensor': 70, 'bioprinting': 35,
+					'topological': 8, 'se i': 80, 'neuromorphic': 10
+                };
+                
+                // Calculate market based on application keywords
+                applications.forEach(app => {
+                    const appLower = app.toLowerCase();
+                    let appMarket = 10; // Base market for any application
+                    
+                    // Check for specific market categories
+                    for (const [keyword, value] of Object.entries(baseMarkets)) {
+                        if (appLower.includes(keyword)) {
+                            if (typeof value === 'number' && value > 3) { // This is a category value
+                                appMarket = Math.max(appMarket, value);
+                            }
+                        }
+                    }
+                    
+                    // Apply multipliers for transformative potential
+                    for (const [keyword, multiplier] of Object.entries(baseMarkets)) {
+                        if (typeof multiplier === 'number' && multiplier <= 3 && appLower.includes(keyword)) { // This is a multiplier
+                            appMarket *= multiplier;
+                        }
+                    }
+                    
+                    totalMarket += Math.round(appMarket);
+                });
+                
+                // Scale based on node properties
+                if (node) {
+                    // Quality multiplier emphasizing revolutionary potential
+                    const qualityMultiplier = 
+                        Math.pow(node.stability || 0.5, 0.7) *                         Math.pow(node.practicalityScore || 0.5, 0.5) *                         Math.pow(Math.max(node.conductivity || 0.5, node.biocompatibility || 0.5), 0.8);
+                    
+                    totalMarket = Math.round(totalMarket * (0.9 + qualityMultiplier * 0.45));
+                    
+                    // Modest bonus for diverse functionalization
+                    if (node.diversityScore > 0.7) {
+                        totalMarket = Math.round(totalMarket * 1.1);
+                    }
+                    
+                    // Bonus for high-performance materials
+                    if (node.conductivity > 0.8 || node.stability > 0.85) {
+                        totalMarket = Math.round(totalMarket * 1.15);
+                    }
+                    
+                    // Ensure minimum market for any functional material
+                    totalMarket = Math.max(0.25, totalMarket); // 250M minimum
+                }
+            }
+            
+			// Reality check for materials requiring partnerships
+			if (node && node.name) {
+				if (node.name.includes('Gold') || node.name.includes('MXene') || 
+					node.name.includes('ZnAl') || node.name.includes('Pt-') || 
+					node.name.includes('Cu-') || node.name.includes('Fe-N4')) {
+					// These require partnerships/external processing
+					totalMarket = Math.round(totalMarket * 0.6);
+				}
+			}
+
+            return Math.round(totalMarket); // Return a rounded integer (since we sum in billions)
+        },
+
+        // --- 5. VISUALIZATION & D3 RENDERING ---
+
+        countNodes(node) {
+            let count = 1;
+            if (node.children && node.children.length > 0) {
+                node.children.forEach(child => {
+                    count += this.countNodes(child);
+                });
+            }
+            return count;
+        },
+
+        updateVisualization() {
+            this.g.selectAll('*').remove();
+
+            if (!this.treeData) return;
+
+            switch(this.currentLayout) {
+                case 'tree': this.renderTreeLayout(); break;
+                case 'radial': this.renderRadialLayout(); break;
+                case 'force': this.renderForceLayout(); break;
+            }
+            this.updateColorScheme();
+        },
+
+        renderTreeLayout() {
+            const container = document.getElementById('tree-container');
+            const width = container.clientWidth;
+            const height = container.clientHeight;
+
+            const treeLayout = d3.tree().size([width - 100, height - 100]);
+            const root = d3.hierarchy(this.treeData);
+            const treeNodes = treeLayout(root);
+
+            // Draw links
+            this.g.selectAll('.link')
+                .data(treeNodes.links())
+                .enter().append('path')
+                .attr('class', 'link')
+                .attr('d', d3.linkVertical().x(d => d.x + 50).y(d => d.y + 50))
+                .attr('fill', 'none')
+                .attr('stroke', d => {
+                    // PATENT ADDITION: Color links by patent status if in patent mode
+                    if (document.getElementById('colorMetric').value === 'patentStatus') {
+                        return getPatentColor(d.target.data.patentStatus);
+                    }
+                    return d.target.data.color || '#64ffda';
+                })
+                .attr('stroke-width', d => Math.max(1, 3 - d.target.depth * 0.5))
+                .attr('opacity', 0.6);
+
+            // Draw nodes
+            const nodes = this.g.selectAll('.node')
+                .data(treeNodes.descendants())
+                .enter().append('g')
+                .attr('class', 'node')
+                .attr('transform', d => `translate(${d.x + 50},${d.y + 50})`);
+
+            nodes.append('circle')
+                .attr('r', d => {
+                    const baseSize = d.depth === 0 ? 12 : 8;
+                    const potential = d.data.commercialPotential || 0.5;
+                    return baseSize * (0.5 + potential);
+                })
+                .attr('fill', d => {
+                    const color = d.data.color || '#64ffda';
+                    const practicality = d.data.practicalityScore || 1.0;
+                    return d3.color(color).darker(2 - (2 * practicality));
+                })
+                .attr('stroke', '#fff')
+                .attr('stroke-width', d => {
+                    const diversity = d.data.diversityScore || 0;
+                    return 2 + diversity * 2;
+                })
+                .style('cursor', 'pointer')
+                .on('click', (event, d) => this.selectNode(d.data))
+                .on('mouseover', (event, d) => this.showTooltip(event, d.data))
+                .on('mouseout', () => this.hideTooltip());
+
+            nodes.append('text')
+                .attr('dy', d => d.depth === 0 ? 24 : 20)
+                .attr('text-anchor', 'middle')
+                .attr('transform', d => {
+                    if (d.depth >= 3) {
+                        const angle = d.depth % 2 === 0 ? -45 : 45;
+                        const offset = d.depth % 2 === 0 ? -5 : 5;
+                        return `rotate(${angle}) translate(0, ${offset})`;
+                    }
+                    return '';
+                })
+                .text(d => d.data.name)
+                .style('font-size', d => {
+                    if (d.depth === 0) return '13px';
+                    if (d.depth >= 4) return '8px';
+                    if (d.depth >= 3) return '9px';
+                    return '10px';
+                })
+                .style('fill', '#e4e9f0')
+                .style('font-weight', d => d.depth === 0 ? 'bold' : 'normal')
+                .style('pointer-events', 'none')
+                .style('opacity', d => d.depth >= 4 ? 0.8 : 1);
+
+            // Synergy badge
+            nodes.filter(d => (d.data.synergyScore || 0) > 1.2)
+                .append('text')
+                .attr('class', 'synergy-badge')
+                .attr('dy', d => d.depth === 0 ? -22 : -18)
+                .attr('text-anchor', 'middle')
+                .text('⚡')
+                .style('fill', '#ffd700')
+                .style('font-size', '12px')
+                .style('pointer-events', 'none');
+
+            // Gold badge for high gold score
+            nodes.filter(d => (d.data.goldScore || 0) > 0.5)
+                .append('text')
+                .attr('class', 'gold-badge')
+                .attr('dy', d => d.depth === 0 ? -22 : -18)
+                .attr('dx', 15)
+                .attr('text-anchor', 'middle')
+                .text('💎')
+                .style('fill', '#ffd700')
+                .style('font-size', '10px')
+                .style('pointer-events', 'none');
+
+            // PATENT ADDITION: Patent status indicator
+            nodes.filter(d => d.data.patentStatus && d.data.patentStatus !== 'open')
+                .append('text')
+                .attr('class', 'patent-indicator')
+                .attr('dy', d => d.depth === 0 ? -22 : -18)
+                .attr('dx', -15)
+                .attr('text-anchor', 'middle')
+                .text(d => getPatentIcon(d.data.patentStatus))
+                .style('font-size', '10px')
+                .style('pointer-events', 'none');
+        },
+
+        renderRadialLayout() {
+            const container = document.getElementById('tree-container');
+            const width = container.clientWidth;
+            const height = container.clientHeight;
+            const radius = Math.min(width, height) / 2 - 100;
+
+            const treeLayout = d3.tree()
+                .size([2 * Math.PI, radius])
+                .separation((a, b) => (a.parent == b.parent ? 1 : 2) / a.depth);
+
+            const root = d3.hierarchy(this.treeData);
+            const treeNodes = treeLayout(root);
+            const centerX = width / 2;
+            const centerY = height / 2;
+
+            // Links
+            this.g.selectAll('.link')
+                .data(treeNodes.links())
+                .enter().append('path')
+                .attr('class', 'link')
+                .attr('d', d3.linkRadial().angle(d => d.x).radius(d => d.y))
+                .attr('transform', `translate(${centerX},${centerY})`)
+                .attr('fill', 'none')
+                .attr('stroke', d => {
+                    if (document.getElementById('colorMetric').value === 'patentStatus') {
+                        return getPatentColor(d.target.data.patentStatus);
+                    }
+                    return d.target.data.color || '#64ffda';
+                })
+                .attr('stroke-width', d => Math.max(1, 3 - d.target.depth * 0.5))
+                .attr('opacity', 0.6);
+
+            // Nodes
+            const nodes = this.g.selectAll('.node')
+                .data(treeNodes.descendants())
+                .enter().append('g')
+                .attr('class', 'node')
+                .attr('transform', d => `translate(${centerX + d.y * Math.cos(d.x - Math.PI / 2)},${centerY + d.y * Math.sin(d.x - Math.PI / 2)})`);
+
+            nodes.append('circle')
+                .attr('r', d => {
+                    const baseSize = d.depth === 0 ? 12 : 8;
+                    const potential = d.data.commercialPotential || 0.5;
+                    return baseSize * (0.5 + potential);
+                })
+                .attr('fill', d => {
+                    const color = d.data.color || '#64ffda';
+                    const practicality = d.data.practicalityScore || 1.0;
+                    return d3.color(color).darker(2 - (2 * practicality));
+                })
+                .attr('stroke', '#fff')
+                .attr('stroke-width', d => {
+                    const diversity = d.data.diversityScore || 0;
+                    return 2 + diversity * 2;
+                })
+                .style('cursor', 'pointer')
+                .on('click', (event, d) => this.selectNode(d.data))
+                .on('mouseover', (event, d) => this.showTooltip(event, d.data))
+                .on('mouseout', () => this.hideTooltip());
+
+            nodes.append('text')
+                .attr('dy', d => d.depth === 0 ? 24 : 20)
+                .attr('text-anchor', 'middle')
+                .attr('transform', d => {
+                    if (d.depth >= 3) {
+                        const angle = (d.x * 180 / Math.PI - 90) % 360;
+                        const rotation = angle > 90 && angle < 270 ? angle + 180 : angle;
+                        return `rotate(${rotation})`;
+                    }
+                    return '';
+                })
+                .text(d => d.data.name)
+                .style('font-size', d => {
+                    if (d.depth === 0) return '13px';
+                    if (d.depth >= 4) return '8px';
+                    if (d.depth >= 3) return '9px';
+                    return '10px';
+                })
+                .style('fill', '#e4e9f0')
+                .style('font-weight', d => d.depth === 0 ? 'bold' : 'normal')
+                .style('pointer-events', 'none')
+                .style('opacity', d => d.depth >= 4 ? 0.8 : 1);
+
+            // Badges
+            nodes.filter(d => (d.data.synergyScore || 0) > 1.2)
+                .append('text')
+                .attr('class', 'synergy-badge')
+                .attr('dy', d => d.depth === 0 ? -22 : -18)
+                .attr('text-anchor', 'middle')
+                .text('⚡')
+                .style('fill', '#ffd700')
+                .style('font-size', '12px')
+                .style('pointer-events', 'none');
+
+            nodes.filter(d => (d.data.goldScore || 0) > 0.5)
+                .append('text')
+                .attr('class', 'gold-badge')
+                .attr('dy', d => d.depth === 0 ? -22 : -18)
+                .attr('dx', 15)
+                .attr('text-anchor', 'middle')
+                .text('💎')
+                .style('fill', '#ffd700')
+                .style('font-size', '10px')
+                .style('pointer-events', 'none');
+
+            // Patent indicators
+            nodes.filter(d => d.data.patentStatus && d.data.patentStatus !== 'open')
+                .append('text')
+                .attr('class', 'patent-indicator')
+                .attr('dy', d => d.depth === 0 ? -22 : -18)
+                .attr('dx', -15)
+                .attr('text-anchor', 'middle')
+                .text(d => getPatentIcon(d.data.patentStatus))
+                .style('font-size', '10px')
+                .style('pointer-events', 'none');
+        },
+
+        renderForceLayout() {
+            const container = document.getElementById('tree-container');
+            const width = container.clientWidth;
+            const height = container.clientHeight;
+
+            const root = d3.hierarchy(this.treeData);
+            const nodesData = root.descendants();
+            const linksData = root.links();
+
+            this.simulation = d3.forceSimulation(nodesData)
+                .force('link', d3.forceLink(linksData).id(d => d.id).distance(50).strength(1))
+                .force('charge', d3.forceManyBody().strength(-300))
+                .force('center', d3.forceCenter(width / 2, height / 2))
+                .force('collision', d3.forceCollide().radius(20));
+
+            const link = this.g.selectAll('.link')
+                .data(linksData)
+                .enter().append('line')
+                .attr('class', 'link')
+                .attr('stroke', d => {
+                    if (document.getElementById('colorMetric').value === 'patentStatus') {
+                        return getPatentColor(d.target.data.patentStatus);
+                    }
+                    return d.target.data.color || '#64ffda';
+                })
+                .attr('stroke-width', 2)
+                .attr('opacity', 0.6);
+
+            const node = this.g.selectAll('.node')
+                .data(nodesData)
+                .enter().append('g')
+                .attr('class', 'node')
+                .call(d3.drag()
+                    .on('start', (event, d) => this.dragstarted(event, d))
+                    .on('drag', (event, d) => this.dragged(event, d))
+                    .on('end', (event, d) => this.dragended(event, d)));
+
+            node.append('circle')
+                .attr('r', d => {
+                    const baseSize = d.depth === 0 ? 12 : 8;
+                    const potential = d.data.commercialPotential || 0.5;
+                    return baseSize * (0.5 + potential);
+                })
+                .attr('fill', d => {
+                    const color = d.data.color || '#64ffda';
+                    const practicality = d.data.practicalityScore || 1.0;
+                    return d3.color(color).darker(2 - (2 * practicality));
+                })
+                .attr('stroke', '#fff')
+                .attr('stroke-width', d => {
+                    const diversity = d.data.diversityScore || 0;
+                    return 2 + diversity * 2;
+                })
+                .style('cursor', 'pointer')
+                .on('click', (event, d) => this.selectNode(d.data))
+                .on('mouseover', (event, d) => this.showTooltip(event, d.data))
+                .on('mouseout', () => this.hideTooltip());
+
+            node.append('text')
+                .attr('dy', 20)
+                .attr('text-anchor', 'middle')
+                .text(d => d.data.name)
+                .style('font-size', '10px')
+                .style('fill', '#e4e9f0')
+                .style('pointer-events', 'none');
+
+            // Badges
+            node.filter(d => (d.data.synergyScore || 0) > 1.2)
+                .append('text')
+                .attr('class', 'synergy-badge')
+                .attr('dy', -18)
+                .attr('text-anchor', 'middle')
+                .text('⚡')
+                .style('fill', '#ffd700')
+                .style('font-size', '12px')
+                .style('pointer-events', 'none');
+
+            node.filter(d => (d.data.goldScore || 0) > 0.5)
+                .append('text')
+                .attr('class', 'gold-badge')
+                .attr('dy', -18)
+                .attr('dx', 15)
+                .attr('text-anchor', 'middle')
+                .text('💎')
+                .style('fill', '#ffd700')
+                .style('font-size', '10px')
+                .style('pointer-events', 'none');
+
+            // Patent indicators
+            node.filter(d => d.data.patentStatus && d.data.patentStatus !== 'open')
+                .append('text')
+                .attr('class', 'patent-indicator')
+                .attr('dy', -18)
+                .attr('dx', -15)
+                .attr('text-anchor', 'middle')
+                .text(d => getPatentIcon(d.data.patentStatus))
+                .style('font-size', '10px')
+                .style('pointer-events', 'none');
+
+            this.simulation.on('tick', () => {
+                link
+                    .attr('x1', d => d.source.x)
+                    .attr('y1', d => d.source.y)
+                    .attr('x2', d => d.target.x)
+                    .attr('y2', d => d.target.y);
+                node.attr('transform', d => `translate(${d.x},${d.y})`);
+            });
+        },
+
+        dragstarted(event, d) {
+            if (!event.active) this.simulation.alphaTarget(0.3).restart();
+            d.fx = d.x;
+            d.fy = d.y;
+        },
+        
+        dragged(event, d) {
+            d.fx = event.x;
+            d.fy = event.y;
+        },
+        
+        dragended(event, d) {
+            if (!event.active) this.simulation.alphaTarget(0);
+            d.fx = null;
+            d.fy = null;
+        },
+
+        // --- 6. UI INTERACTION & INFO DISPLAY ---
+
+        selectNode(nodeData) {
+            this.searchHistory.recordClick(this.lastSearchQuery, nodeData);
+            
+            this.selectedNode = nodeData;
+            
+            document.getElementById('nodeInfo').style.display = 'block';
+            document.getElementById('nodeTitle').textContent = nodeData.name;
+					
+			document.getElementById('nodeFormula').textContent = nodeData.functionalPath && nodeData.functionalPath.length > 0 
+				? nodeData.functionalPath.join(' → ') 
+				: nodeData.name;
+				
+            document.getElementById('nodeFamily').textContent = nodeData.familyName || nodeData.family || '-';
+            document.getElementById('nodeBindingEnergy').textContent = 
+                nodeData.bindingEnergy ? `${nodeData.bindingEnergy.toFixed(2)} eV` : '0 eV';
+            document.getElementById('nodeConductivity').textContent = 
+                `${(nodeData.conductivity * 100).toFixed(0)}%`;
+            document.getElementById('nodeBiocompat').textContent = 
+                `${(nodeData.biocompatibility * 100).toFixed(0)}%`;
+            document.getElementById('nodeGoldScore').textContent = 
+                `${((nodeData.goldScore || 0) * 100).toFixed(0)}%`;
+            document.getElementById('nodeMarketPotential').textContent = 
+                nodeData.marketPotential ? `$${nodeData.marketPotential}B` : '$0B';
+
+            // PATENT ADDITION: Show patent status
+            const patentElement = document.getElementById('nodePatentStatus');
+            if (patentElement) {
+                const status = nodeData.patentStatus || 'open';
+                patentElement.innerHTML = `
+                    <span class="patent-badge patent-${status}">
+                        ${getPatentIcon(status)} ${status.toUpperCase()}
+                    </span>
+                    <span class="patent-row">${nodeData.patentSynopsis || 'No patent information'}</span>
+                `;
+            }
+
+            // Update progress bars
+            document.getElementById('bindingEnergyBar').style.width = 
+                `${Math.min(100, Math.abs(nodeData.bindingEnergy) / 20 * 100)}%`;
+            document.getElementById('conductivityBar').style.width = 
+                `${(nodeData.conductivity || 0) * 100}%`;
+            document.getElementById('biocompatBar').style.width = 
+                `${(nodeData.biocompatibility || 0) * 100}%`;
+            document.getElementById('goldScoreBar').style.width = 
+                `${(nodeData.goldScore || 0) * 100}%`;
+
+            // Update applications
+            const appsContainer = document.getElementById('nodeApplications');
+            appsContainer.innerHTML = '';
+            if (nodeData.applications && nodeData.applications.length > 0) {
+                nodeData.applications.forEach(appText => {
+                    if (appText.includes(')')) return;
+                    const tag = document.createElement('span');
+                    tag.className = 'app-tag';
+                    tag.textContent = appText;
+                    tag.title = appText;
+                    appsContainer.appendChild(tag);
+                });
+            } else {
+                 const noAppTag = document.createElement('span');
+                 noAppTag.style.fontSize = '12px';
+                 noAppTag.style.color = '#8892b0';
+                 noAppTag.textContent = 'No specific applications listed.';
+                 appsContainer.appendChild(noAppTag);
+            }
+
+            // Update markets
+            const marketsContainer = document.getElementById('nodeMarkets');
+            marketsContainer.innerHTML = '';
+            const markets = this.extractMarkets(nodeData.applications || []);
+            markets.forEach(market => {
+                const tag = document.createElement('span');
+                tag.className = 'market-tag';
+                tag.textContent = market;
+                tag.title = market;
+                marketsContainer.appendChild(tag);
+            });
+
+            // Highlight selected node
+            this.g.selectAll('.node circle')
+                .transition()
+                .duration(300)
+                .style('stroke', function(d) {
+                    const currentNode = d.data || d;
+                    return currentNode.id === nodeData.id ? '#FFD700' : '#fff';
+                })
+                .style('stroke-width', function(d) {
+                    const currentNode = d.data || d;
+                    const baseStroke = 2 + (currentNode.diversityScore || 0) * 2;
+                    return currentNode.id === nodeData.id ? baseStroke + 2 : baseStroke;
+                });
+        },
+
+        extractMarkets(applications) {
+            const markets = new Set();
+            applications.forEach(app => {
+                if (app.includes('(')) {
+                    const marketName = app.replace(/\s*\([^)]+\)/, '');
+                    markets.add(marketName);
+                }
+            });
+            return Array.from(markets);
+        },
+
+        showTooltip(event, nodeData) {
+            if (!nodeData) return;
+            const tooltip = document.getElementById('tooltip');
+
+            let html = '';
+            html += '<strong style="color: ' + (nodeData.color || '#64ffda') + '; font-size: 13px;">' + nodeData.name + ' (L' + nodeData.depth + ')</strong><br>';
+            html += '<span style="font-size: 10px; color: #8892b0;">' + (nodeData.functionalPath ? nodeData.functionalPath.join(' → ') : nodeData.family) + '</span>';
+            html += '<hr style="border-color: rgba(100,255,218,0.1); margin: 4px 0;">';
+            html += '<strong>Gold Score:</strong> ' + ((nodeData.goldScore || 0) * 100).toFixed(0) + '%<br>';
+            html += '<strong>Market Potential:</strong> $' + (nodeData.marketPotential || 0) + 'B<br>';
+            html += '<strong>Commercial Potential:</strong> ' + ((nodeData.commercialPotential || 0) * 100).toFixed(0) + '%<br>';
+            html += '<strong>Patent Status:</strong> ' + getPatentIcon(nodeData.patentStatus) + ' ' + (nodeData.patentStatus || 'open') + '<br>';
+            html += '<strong>Synthesizability:</strong> ' + ((nodeData.practicalityScore || 0) * 100).toFixed(0) + '%<br>';
+            html += '<strong>Conductivity:</strong> ' + ((nodeData.conductivity || 0) * 100).toFixed(0) + '%<br>';
+            html += '<strong>Binding Energy:</strong> ' + (nodeData.bindingEnergy || 0).toFixed(2) + ' eV<br>';
+            html += '<strong>Diversity:</strong> ' + ((nodeData.diversityScore || 0) * 100).toFixed(0) + '%';
+
+            tooltip.innerHTML = html;
+            tooltip.style.left = event.pageX + 15 + 'px';
+            tooltip.style.top = event.pageY + 15 + 'px';
+            tooltip.style.display = 'block';
+        },
+
+        hideTooltip() {
+            document.getElementById('tooltip').style.display = 'none';
+        },
+
+        changeLayout(layout) {
+            this.currentLayout = layout;
+            
+            ['tree', 'radial', 'force'].forEach(l => {
+                const btn = document.getElementById(`${l}Btn`);
+                btn.classList.toggle('active', l === layout);
+            });
+            
+            if (this.simulation) {
+                this.simulation.stop();
+            }
+            this.updateVisualization();
+            this.centerView();
+        },
+
+        // --- 7. FILTERING & ANALYSIS FUNCTIONS ---
+
+        filterByFamily(family) {
+            const familyData = this.grapheneFamilies[family];
+            if (!familyData) return;
+            
+            document.getElementById('activeFilter').textContent = familyData.name;
+            document.getElementById('searchInput').value = family;
+            
+            this.g.selectAll('.node circle')
+                .transition()
+                .duration(300)
+                .attr('opacity', function(d) {
+                    const node = d.data || d;
+                    return node.family === family || node.family === 'root' ? 1 : 0.1;
+                });
+            
+            this.g.selectAll('.link, line')
+                .transition()
+                .duration(300)
+                .attr('opacity', d => (d.target.data.family === family) ? 0.6 : 0.05);
+        },
+
+        showTopPerformers(metric) {
+            const allNodes = [];
+            const collectNodes = (node) => {
+                if (node.family !== 'root') allNodes.push(node);
+                if (node.children) node.children.forEach(collectNodes);
+            };
+            if(this.treeData) collectNodes(this.treeData);
+            
+            allNodes.sort((a, b) => {
+                if (metric === 'bindingEnergy') {
+                    return (a[metric] || 0) - (b[metric] || 0);
+                }
+                return (b[metric] || 0) - (a[metric] || 0);
+            });
+            
+            const topNodeIds = new Set(allNodes.slice(0, 10).map(n => n.id));
+            
+            document.getElementById('activeFilter').textContent = `Top 10 ${metric}`;
+            document.getElementById('searchInput').value = `high ${metric}`;
+            
+            this.g.selectAll('.node circle')
+                .transition()
+                .duration(500)
+                .attr('opacity', function(d) {
+                    const node = d.data || d;
+                    return topNodeIds.has(node.id) || node.family === 'root' ? 1 : 0.1;
+                })
+                .attr('r', function(d) {
+                    const node = d.data || d;
+                    const baseSize = d.depth === 0 ? 12 : 8;
+                    const potential = node.commercialPotential || 0.5;
+                    const baseR = baseSize * (0.5 + potential);
+                    return topNodeIds.has(node.id) ? baseR * 1.5 : baseR;
+                });
+        },
+
+        showApplicationCategory(categoryKey) {
+            document.getElementById('searchInput').value = categoryKey;
+            this.searchNodes(categoryKey);
+        },
+
+        // NEW: Show Gold List with Patent Info
+        showGoldList() {
+            if (!this.treeData) return;
+            
+            const allNodes = [];
+            const collectNodes = (node) => {
+                if (node.family !== 'root') allNodes.push(node);
+                if (node.children) node.children.forEach(collectNodes);
+            };
+            collectNodes(this.treeData);
+            
+            allNodes.sort((a, b) => (b.goldScore || 0) - (a.goldScore || 0));
+            const top10 = allNodes.slice(0, 10);
+            
+            let html = '<table>';
+            html += '<tr><th>Rank</th><th>Combo</th><th>Gold Score</th><th>Patent</th><th>Market</th><th>Key Features</th></tr>';
+            
+            top10.forEach((n, i) => {
+                const combo = n.functionalPath.join(' → ');
+                const score = (n.goldScore * 100).toFixed(0) + '%';
+                const market = '$' + (n.marketPotential || 0) + 'B';
+                const patentBadge = `<span class="patent-badge patent-${n.patentStatus}">${getPatentIcon(n.patentStatus)}</span>`;
+                
+                const features = [];
+                if (n.stability > 0.8) features.push('High Stability');
+                if (n.practicalityScore > 0.7) features.push('Easy Synth');
+                if (n.conductivity > 0.7) features.push('Conductive');
+                if (n.biocompatibility > 0.8) features.push('Biocompatible');
+                
+                const topApps = n.applications
+                    .filter(app => app.includes('(') || app.includes('untapped'))
+                    .slice(0, 2)
+                    .map(app => {
+                        const cleanApp = app.replace(/\([^)]+\)/, '').trim();
+                        return `<div class="market-list">• ${cleanApp}</div>`;
+                    })
+                    .join('');
+                
+                html += `<tr>
+                    <td class="gold-rank">#${i + 1}</td>
+                    <td><div class="combo-path">${combo}</div></td>
+                    <td>${score}</td>
+                    <td>${patentBadge}</td>
+                    <td>${market}</td>
+                    <td>${features.join(', ')}<br>${topApps}</td>
+                </tr>`;
+            });
+            html += '</table>';
+            
+            document.getElementById('goldTable').innerHTML = html;
+            document.getElementById('goldList').style.display = 'block';
+            
+            const topIds = new Set(top10.map(n => n.id));
+            this.g.selectAll('.node circle')
+                .transition().duration(500)
+                .attr('opacity', d => topIds.has((d.data || d).id) || (d.data || d).family === 'root' ? 1 : 0.2)
+                .attr('r', d => {
+                    const node = d.data || d;
+                    const baseSize = node.depth === 0 ? 12 : 8;
+                    const potential = node.commercialPotential || 0.5;
+                    const baseR = baseSize * (0.5 + potential);
+                    return topIds.has(node.id) ? baseR * 1.2 : baseR;
+                })
+                .attr('stroke', d => topIds.has((d.data || d).id) ? '#ffd700' : '#fff');
+            
+            document.getElementById('activeFilter').textContent = 'Gold Rush Mode';
+        },
+
+        // PATENT ADDITION: Show Patent Analysis
+        showPatentAnalysis() {
+            if (!this.treeData) return;
+            
+            const patentStats = {
+                covered: [],
+                partial: [],
+                potential: [],
+                open: [],
+                potentially_blocked: [],
+                blocked: []
+            };
+            
+            const collectPatentNodes = (node) => {
+                if (node.patentStatus) {
+                    patentStats[node.patentStatus].push(node);
+                }
+                if (node.children) node.children.forEach(collectPatentNodes);
+            };
+            collectPatentNodes(this.treeData);
+            
+            let html = '<table>';
+            html += '<tr><th>Patent Status</th><th>Count</th><th>Top Combos</th><th>Avg Market</th></tr>';
+            
+            Object.entries(patentStats).forEach(([status, nodes]) => {
+                if (nodes.length === 0) return;
+                
+                nodes.sort((a, b) => (b.goldScore || 0) - (a.goldScore || 0));
+                const topNodes = nodes.slice(0, 3);
+                const avgMarket = Math.round(nodes.reduce((sum, n) => sum + (n.marketPotential || 0), 0) / nodes.length);
+                
+                const combos = topNodes.map(n => 
+                    `<div class="combo-path">${n.functionalPath.slice(-2).join('→')}</div>`
+                ).join('');
+                
+                const statusBadge = `<span class="patent-badge patent-${status}">${getPatentIcon(status)} ${status.toUpperCase()}</span>`;
+                
+                html += `<tr>
+                    <td>${statusBadge}</td>
+                    <td>${nodes.length}</td>
+                    <td>${combos}</td>
+                    <td>$${avgMarket}B</td>
+                </tr>`;
+            });
+            html += '</table>';
+            
+            // Add summary
+            const totalCovered = patentStats.covered.length + patentStats.partial.length;
+            const totalOpen = patentStats.open.length + patentStats.potential.length;
+            const totalBlocked = patentStats.blocked.length + patentStats.potentially_blocked.length;
+            
+            html += `<div style="margin-top: 10px; padding: 10px; background: rgba(100,255,218,0.1); border-radius: 4px;">
+                <strong>Patent Summary:</strong><br>
+                Protected: ${totalCovered} nodes<br>
+                Opportunities: ${totalOpen} nodes<br>
+                Blocked/Risk: ${totalBlocked} nodes
+            </div>`;
+            
+            document.getElementById('goldTable').innerHTML = html;
+            document.getElementById('goldList').style.display = 'block';
+            document.getElementById('activeFilter').textContent = 'Patent Analysis';
+            
+            // Highlight based on patent status
+            this.g.selectAll('.node circle')
+                .transition().duration(500)
+                .attr('opacity', 1)
+                .attr('stroke', d => {
+                    const status = (d.data || d).patentStatus;
+                    return getPatentColor(status);
+                })
+                .attr('stroke-width', 3);
+        },
+
+        showMarketOpportunities() {
+            if (!this.treeData) return;
+            
+            const marketMap = new Map();
+            
+            const collectMarkets = (node) => {
+                if (node.marketPotential > 0) {
+                    node.applications.forEach(app => {
+                        const match = app.match(/([^(]+)\s*\(\$(\d+)B[^)]*\)/);
+                        if (match) {
+                            const sector = match[1].trim();
+                            const value = parseInt(match[2]);
+                            if (!marketMap.has(sector)) {
+                                marketMap.set(sector, { value: value, nodes: [] });
+                            }
+                            marketMap.get(sector).nodes.push(node);
+                        }
+                    });
+                }
+                if (node.children) node.children.forEach(collectMarkets);
+            };
+            
+            if (this.treeData) collectMarkets(this.treeData);
+            
+            const sortedMarkets = Array.from(marketMap.entries())
+                .sort((a, b) => b[1].value - a[1].value)
+                .slice(0, 15);
+            
+            let html = '<table>';
+            html += '<tr><th>Market Opportunity</th><th>Size</th><th>Top Combos</th></tr>';
+            
+            sortedMarkets.forEach(([sector, data]) => {
+                const topNodes = data.nodes
+                    .sort((a, b) => (b.goldScore || 0) - (a.goldScore || 0))
+                    .slice(0, 3);
+                
+                const combos = topNodes.map(n => 
+                    `<div class="combo-path">${n.functionalPath.slice(-2).join('→')}</div>`
+                ).join('');
+                
+                html += `<tr>
+                    <td>${sector}</td>
+                    <td class="gold-rank">$${data.value}B</td>
+                    <td>${combos}</td>
+                </tr>`;
+            });
+            html += '</table>';
+            
+            document.getElementById('goldTable').innerHTML = html;
+            document.getElementById('goldList').style.display = 'block';
+            document.getElementById('activeFilter').textContent = 'Market Opportunities';
+            
+            this.g.selectAll('.node circle')
+                .transition().duration(500)
+                .attr('opacity', d => {
+                    const node = d.data || d;
+                    return (node.marketPotential || 0) > 20 ? 1 : 0.2;
+                })
+                .attr('r', d => {
+                    const node = d.data || d;
+                    const baseSize = node.depth === 0 ? 12 : 8;
+                    const marketScale = Math.min(2, 1 + (node.marketPotential || 0) / 100);
+                    return baseSize * marketScale;
+                });
+        },
+
+        updateColorScheme() {
+            const metric = document.getElementById('colorMetric').value;
+            
+            this.g.selectAll('.node circle')
+                .transition()
+                .duration(500)
+                .attr('fill', (d) => { 
+                    const node = d.data || d;
+                    if (!node) return '#fff';
+                    
+                    if (node.family === 'root') return '#64ffda';
+                    
+                    let value;
+                    switch(metric) {
+                        case 'family':
+                            const color = node.color || '#64ffda';
+                            const practicality = node.practicalityScore || 1.0;
+                            return d3.color(color).darker(2 - (2 * practicality));
+                        case 'bindingEnergy':
+                            value = Math.min(1, Math.max(0, Math.abs(node.bindingEnergy) / 20));
+                            return d3.interpolateViridis(value);
+                        case 'conductivity':
+                            return d3.interpolatePlasma(node.conductivity);
+                        case 'biocompatibility':
+                            return d3.interpolateRdYlGn(node.biocompatibility);
+                        case 'stability':
+                            return d3.interpolateCividis(node.stability);
+                        case 'practicalityScore':
+                            return d3.interpolateRdYlGn(node.practicalityScore);
+                        case 'commercialPotential':
+                            const minPotential = 0.5;
+                            const maxPotential = 0.8;
+                            let normValue = (node.commercialPotential - minPotential) / (maxPotential - minPotential);
+                            value = Math.max(0, Math.min(1, normValue));
+                            return d3.interpolateInferno(value);
+                        case 'goldScore':
+                            return d3.interpolateOrRd(node.goldScore || 0);
+                        case 'marketPotential':
+                            value = Math.min(1, (node.marketPotential || 0) / 100);
+                            return d3.interpolateRdYlGn(value);
+                        case 'patentStatus':
+                            return getPatentColor(node.patentStatus || 'open');
+                        default:
+                            return node.color || '#64ffda';
+                    }
+                });
+            
+            this.updateLegend(metric);
+        },
+
+        updateLegend(metric) {
+            const legend = document.getElementById('legend');
+            legend.innerHTML = '';
+
+            if (metric === 'family') {
+                Object.keys(this.grapheneFamilies).forEach(key => {
+                    const family = this.grapheneFamilies[key];
+                    legend.innerHTML += `
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: ${family.color};"></div>
+                            <span>${family.name.replace(' Family', '').replace(' Coordination', '')}</span>
+                        </div>`;
+                });
+                legend.innerHTML += `
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #64ffda;"></div>
+                        <span>Pristine</span>
+                    </div>`;
+            } else if (metric === 'patentStatus') {
+                const statuses = [
+                    { key: 'covered', label: 'Covered', color: '#22C55E' },
+                    { key: 'partial', label: 'Partial', color: '#86EFAC' },
+                    { key: 'potential', label: 'Potential', color: '#60A5FA' },
+                    { key: 'open', label: 'Open', color: '#E5E7EB' },
+                    { key: 'potentially_blocked', label: 'Risk', color: '#FDE047' },
+                    { key: 'blocked', label: 'Blocked', color: '#EF4444' }
+                ];
+                statuses.forEach(s => {
+                    legend.innerHTML += `
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: ${s.color};"></div>
+                            <span>${s.label}</span>
+                        </div>`;
+                });
+            } else {
+                const scales = {
+                    bindingEnergy: { scale: d3.interpolateViridis, labels: ['Weak (0eV)', 'Strong (20eV+)'] },
+                    conductivity: { scale: d3.interpolatePlasma, labels: ['Insulator', 'Conductive'] },
+                    biocompatibility: { scale: d3.interpolateRdYlGn, labels: ['Toxic', 'Biocompatible'] },
+                    stability: { scale: d3.interpolateCividis, labels: ['Unstable', 'Stable'] },
+                    practicalityScore: { scale: d3.interpolateRdYlGn, labels: ['Impractical', 'Synthesizable'] },
+                    commercialPotential: { scale: d3.interpolateInferno, labels: ['~50%', '80%+'] },
+                    goldScore: { scale: d3.interpolateOrRd, labels: ['Low', 'High Gold'] },
+                    marketPotential: { scale: d3.interpolateRdYlGn, labels: ['$0B', '$100B+'] }
+                };
+                const spec = scales[metric];
+                if (!spec) return;
+
+                const { scale, labels } = spec;
+                
+                const gradientColors = d3.range(0, 1.01, 0.25).map(t => scale(t));
+                legend.innerHTML = `
+                    <div style="grid-column: 1 / -1; height: 14px; border-radius: 7px; background: linear-gradient(to right, ${gradientColors.join(',')});"></div>
+                    <div style="grid-column: 1 / -1; display: flex; justify-content: space-between; font-size: 10px; color: #8892b0;">
+                        <span>${labels[0]}</span>
+                        <span>${labels[1]}</span>
+                    </div>
+                `;
+            }
+        },
+
+        // --- 8. SEARCH IMPLEMENTATION ---
+
+        searchNodes(searchQuery) {
+            this.lastSearchQuery = searchQuery.toLowerCase().trim();
+            
+            const parser = new QueryParser();
+            const parsed = parser.parse(this.lastSearchQuery);
+            
+            if (!this.lastSearchQuery) {
+                this.resetFilters();
+                return;
+            }
+            
+            const nodeScores = new Map();
+            
+            const calculateScores = (node) => {
+                let isExcluded = false;
+                if (parsed.exclude.length > 0) {
+                    const nodeText = `${node.name.toLowerCase()} ${node.family.toLowerCase()} ${(node.applications || []).join(' ').toLowerCase()}`;
+                    isExcluded = parsed.exclude.some(exc => nodeText.includes(exc));
+                }
+                if (isExcluded) {
+                    nodeScores.set(node, 0);
+                } else {
+                    let score = calculateRelevanceScore(node, parsed.expandedTerms);
+                    
+                    let propertyMatch = true;
+                    if (parsed.properties.length > 0) {
+                        propertyMatch = parsed.properties.every(prop => {
+                           return prop.test(node[prop.property]);
+                        });
+
+                        if (propertyMatch) {
+                            score += 10 * parsed.properties.length;
+                        }
+                    }
+
+                    if (!propertyMatch) {
+                        score = 0;
+                    } else if (propertyMatch && parsed.properties.length > 0 && score === 0 && parsed.expandedTerms.length === 0) {
+                        score = 10;
+                    } else if (score === 0 && parsed.expandedTerms.length > 0 && parsed.properties.length === 0) {
+                        score = 0;
+                    }
+                    
+                    if (score > 0) {
+                        const clickBoost = this.searchHistory.getClickBoost(this.lastSearchQuery, node);
+                        score += clickBoost;
+                    }
+                    
+                    nodeScores.set(node, score);
+                }
+                
+                if (node.children) {
+                    node.children.forEach(calculateScores);
+                }
+            };
+            
+            if (this.treeData) calculateScores(this.treeData);
+            
+            const scores = Array.from(nodeScores.values()).filter(s => s > 0);
+            scores.sort((a, b) => b - a);
+            const threshold = scores.length > 0 ? (scores[Math.floor(scores.length * 0.3)] || 1) : 1;
+            const maxScore = scores.length > 0 ? scores[0] : threshold;
+            
+            this.searchHistory.recordSearch(this.lastSearchQuery, scores);
+
+            this.g.selectAll('.node circle')
+                .transition()
+                .duration(300)
+                .attr('opacity', (d) => {
+                    const node = d.data || d;
+                    const score = nodeScores.get(node) || 0;
+                    if (node.family === 'root') return 1.0;
+                    if (score === 0) return 0.05;
+                    const scoreRatio = Math.min(1, score / (threshold + 0.1));
+                    return 0.2 + (scoreRatio * 0.8);
+                })
+                .attr('r', (d) => {
+                    const node = d.data || d;
+                    const score = nodeScores.get(node) || 0;
+                    const baseSize = d.depth === 0 ? 12 : 8;
+                    const potential = node.commercialPotential || 0.5;
+                    const baseR = baseSize * (0.5 + potential);
+
+                    if (score > 0 && maxScore > 0) {
+                        return baseR * (1 + Math.min(1, score / maxScore));
+                    }
+                    return baseR;
+                });
+            
+            const summary = this.generateSearchSummary(parsed, scores.length);
+            document.getElementById('activeFilter').textContent = summary;
+        },
+
+        generateSearchSummary(parsed, resultCount) {
+            const parts = [];
+            
+            if (parsed.properties.length > 0) {
+                const propDesc = parsed.properties.map(p => 
+                    `${p.modifier} ${p.property}`).join(', ');
+                parts.push(propDesc);
+            }
+            
+            if (parsed.applications.length > 0) {
+                const apps = [...new Set(parsed.applications.map(a_path => a_path[0]))].join('/');
+                parts.push(apps);
+            }
+            
+            if (parsed.terms.length > 0) {
+                parts.push(parsed.terms.slice(0, 2).join(', '));
+            }
+            
+            if (parsed.exclude.length > 0) {
+                parts.push(`NOT ${parsed.exclude.join('/')}`);
+            }
+            
+            const summaryText = parts.join(' + ') || 'Search';
+            return `${summaryText} (${resultCount} results)`;
+        },
+
+        resetFilters() {
+            document.getElementById('activeFilter').textContent = 'None';
+            document.getElementById('searchInput').value = '';
+            document.getElementById('goldList').style.display = 'none';
+            this.lastSearchQuery = '';
+            
+            this.g.selectAll('.node circle')
+                .transition()
+                .duration(300)
+                .attr('opacity', 1)
+                .attr('r', d => {
+                    const baseSize = d.depth === 0 ? 12 : 8;
+                    const potential = (d.data || d).commercialPotential || 0.5;
+                    return baseSize * (0.5 + potential);
+                })
+                .attr('stroke', '#fff')
+                .attr('stroke-width', d => {
+                    const diversity = (d.data || d).diversityScore || 0;
+                    return 2 + diversity * 2;
+                });
+            
+            this.g.selectAll('.link, line')
+                .transition()
+                .duration(300)
+                .attr('opacity', 0.6);
+        },
+
+        // --- 9. VIEW CONTROLS & EXPORT ---
+
+        zoomIn() {
+            this.svg.transition().duration(300).call(this.zoom.scaleBy, 1.3);
+        },
+        zoomOut() {
+            this.svg.transition().duration(300).call(this.zoom.scaleBy, 0.7);
+        },
+
+        centerView() {
+            const container = document.getElementById('tree-container');
+            const width = container.clientWidth;
+            const height = container.clientHeight;
+            let transform = d3.zoomIdentity;
+            
+            if (this.currentLayout === 'force') {
+                 transform = d3.zoomIdentity.translate(0, 0).scale(1);
+            }
+
+            this.svg.transition().duration(750).call(
+                this.zoom.transform,
+                transform
+            );
+        },
+
+        resetView() {
+            this.centerView();
+            this.resetFilters();
+        },
+
+        exportData() {
+            const data = {
+                metadata: {
+                    project: "HydroGraph Reactive Graphene Explorer",
+                    generated: new Date().toISOString(),
+                    totalNodes: this.countNodes(this.treeData),
+                    depth: this.currentDepth,
+                    branching: this.currentBranching,
+                    layout: this.currentLayout,
+                    version: "3.03-Patent"
+                },
+                tree: this.treeData
+            };
+            
+            const json = JSON.stringify(data, (key, value) => {
+                if (key === 'parent' || key === 'target' || key === 'source') return undefined;
+                return value;
+            }, 2);
+            
+            const blob = new Blob([json], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `graphene-gold-data-${Date.now()}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            console.log('Data exported successfully!');
+        },
+
+        exportCSV() {
+            if (!this.treeData) return;
+            
+            const allNodes = [];
+            const collectNodes = (node) => {
+                if (node.family !== 'root') allNodes.push(node);
+                if (node.children) node.children.forEach(collectNodes);
+            };
+            collectNodes(this.treeData);
+            
+            allNodes.sort((a, b) => (b.goldScore || 0) - (a.goldScore || 0));
+            const top50 = allNodes.slice(0, 50);
+            
+            let csv = 'Rank,Combination,Gold Score (%),Patent Status,Market Potential ($B),Stability,Practicality,Conductivity (%),Biocompatibility (%),Top Application 1,Top Application 2,Chemical Family\n';
+            
+            top50.forEach((node, index) => {
+                const combo = node.functionalPath.join(' -> ');
+                const goldScore = ((node.goldScore || 0) * 100).toFixed(1);
+                const patentStatus = node.patentStatus || 'open';
+                const market = node.marketPotential || 0;
+                const stability = (node.stability * 100).toFixed(1);
+                const practicality = (node.practicalityScore * 100).toFixed(1);
+                const conductivity = (node.conductivity * 100).toFixed(1);
+                const biocompat = (node.biocompatibility * 100).toFixed(1);
+  
+                const apps = node.applications
+                    .filter(app => app.includes('(') || app.includes('untapped'))
+                    .slice(0, 2)
+                    .map(app => '"' + app.replace(/"/g, '""') + '"');
+                
+                if (apps.length === 0 && node.applications.length > 0) {
+                    node.applications.slice(0, 2).forEach(app => {
+                        apps.push('"' + app.replace(/"/g, '""') + '"');
+                    });
+                }
+                
+                while (apps.length < 2) apps.push('""');
+                
+                csv += `${index + 1},"${combo}",${goldScore},${patentStatus},${market},${stability},${practicality},${conductivity},${biocompat},${apps[0]},${apps[1]},"${node.familyName || node.family}"\n`;
+            });
+            
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `hydrograph-gold-list-${Date.now()}.csv`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            console.log('CSV exported successfully!');
+        }
+    }; // END OF APP OBJECT
+
+    //==============================================================
+    // 3. APP INITIALIZER
+    //==============================================================
+    document.addEventListener('DOMContentLoaded', () => {
+        app.init();
+    });
+    </script>
+</body>
+</html>				
