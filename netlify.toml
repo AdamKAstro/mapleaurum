@@ -1,6 +1,11 @@
 [build]
   functions = "functions"
   publish = "dist"
+  
+[[redirects]]
+  from = "/graphene-explorer"
+  to = "/"
+  status = 302
 
 [[redirects]]
   from = "/webhook"
